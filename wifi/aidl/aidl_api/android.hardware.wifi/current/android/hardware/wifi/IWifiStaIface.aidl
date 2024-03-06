@@ -61,6 +61,14 @@ interface IWifiStaIface {
   void stopRssiMonitoring(in int cmdId);
   void stopSendingKeepAlivePackets(in int cmdId);
   void setDtimMultiplier(in int multiplier);
+  android.hardware.wifi.CachedScanData getCachedScanData();
+  android.hardware.wifi.TwtCapabilities twtGetCapabilities();
+  void twtSessionSetup(in int cmdId, in android.hardware.wifi.TwtRequest twtRequest);
+  void twtSessionUpdate(in int cmdId, in int sessionId, in android.hardware.wifi.TwtRequest twtRequest);
+  void twtSessionSuspend(in int cmdId, in int sessionId);
+  void twtSessionResume(in int cmdId, in int sessionId);
+  void twtSessionTeardown(in int cmdId, in int sessionId);
+  void twtSessionGetStats(in int cmdId, in int sessionId);
   @Backing(type="int") @VintfStability
   enum FeatureSetMask {
     APF = (1 << 0) /* 1 */,
@@ -77,5 +85,7 @@ interface IWifiStaIface {
     TDLS_OFFCHANNEL = (1 << 11) /* 2048 */,
     ND_OFFLOAD = (1 << 12) /* 4096 */,
     KEEP_ALIVE = (1 << 13) /* 8192 */,
+    ROAMING_MODE_CONTROL = (1 << 14) /* 16384 */,
+    CACHED_SCAN_DATA = (1 << 15) /* 32768 */,
   }
 }

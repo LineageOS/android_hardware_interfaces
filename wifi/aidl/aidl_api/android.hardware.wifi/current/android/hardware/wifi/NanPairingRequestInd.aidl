@@ -41,4 +41,5 @@ parcelable NanPairingRequestInd {
   android.hardware.wifi.NanPairingRequestType requestType;
   boolean enablePairingCache;
   android.hardware.wifi.NanIdentityResolutionAttribute peerNira;
+  @nullable android.hardware.wifi.common.OuiKeyedData[] vendorData;
 }

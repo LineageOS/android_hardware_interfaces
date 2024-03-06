@@ -1,7 +1,7 @@
 {
     "properties": [
         {
-            "property": "Constants::kMixedTypePropertyForTest",
+            "property": "TestVendorProperty::MIXED_TYPE_PROPERTY_FOR_TEST",
             "defaultValue": {
                 "floatValues": [
                     4.5
@@ -28,7 +28,7 @@
             "changeMode": "VehiclePropertyChangeMode::ON_CHANGE"
         },
         {
-            "property": "Constants::VENDOR_EXTENSION_BOOLEAN_PROPERTY",
+            "property": "TestVendorProperty::VENDOR_EXTENSION_BOOLEAN_PROPERTY",
             "areas": [
                 {
                     "defaultValue": {
@@ -67,7 +67,7 @@
             "changeMode": "VehiclePropertyChangeMode::ON_CHANGE"
         },
         {
-            "property": "Constants::VENDOR_EXTENSION_FLOAT_PROPERTY",
+            "property": "TestVendorProperty::VENDOR_EXTENSION_FLOAT_PROPERTY",
             "areas": [
                 {
                     "defaultValue": {
@@ -94,7 +94,7 @@
             "changeMode": "VehiclePropertyChangeMode::ON_CHANGE"
         },
         {
-            "property": "Constants::VENDOR_EXTENSION_INT_PROPERTY",
+            "property": "TestVendorProperty::VENDOR_EXTENSION_INT_PROPERTY",
             "areas": [
                 {
                     "defaultValue": {
@@ -131,7 +131,7 @@
             "changeMode": "VehiclePropertyChangeMode::ON_CHANGE"
         },
         {
-            "property": "Constants::VENDOR_EXTENSION_STRING_PROPERTY",
+            "property": "TestVendorProperty::VENDOR_EXTENSION_STRING_PROPERTY",
             "defaultValue": {
                 "stringValue": "Vendor String Property"
             },
@@ -139,7 +139,7 @@
             "changeMode": "VehiclePropertyChangeMode::ON_CHANGE"
         },
         {
-            "property": "Constants::PLACEHOLDER_PROPERTY_INT",
+            "property": "TestVendorProperty::PLACEHOLDER_PROPERTY_INT",
             "defaultValue": {
                 "int32Values": [
                     0
@@ -149,7 +149,7 @@
             "changeMode": "VehiclePropertyChangeMode::ON_CHANGE"
         },
         {
-            "property": "Constants::PLACEHOLDER_PROPERTY_FLOAT",
+            "property": "TestVendorProperty::PLACEHOLDER_PROPERTY_FLOAT",
             "defaultValue": {
                 "floatValues": [
                     0.0
@@ -159,7 +159,7 @@
             "changeMode": "VehiclePropertyChangeMode::ON_CHANGE"
         },
         {
-            "property": "Constants::PLACEHOLDER_PROPERTY_BOOLEAN",
+            "property": "TestVendorProperty::PLACEHOLDER_PROPERTY_BOOLEAN",
             "defaultValue": {
                 "int32Values": [
                     0
@@ -169,7 +169,7 @@
             "changeMode": "VehiclePropertyChangeMode::ON_CHANGE"
         },
         {
-            "property": "Constants::PLACEHOLDER_PROPERTY_STRING",
+            "property": "TestVendorProperty::PLACEHOLDER_PROPERTY_STRING",
             "defaultValue": {
                 "stringValue": "Test"
             },
@@ -177,12 +177,12 @@
             "changeMode": "VehiclePropertyChangeMode::ON_CHANGE"
         },
         {
-            "property": "Constants::ECHO_REVERSE_BYTES",
+            "property": "TestVendorProperty::ECHO_REVERSE_BYTES",
             "access": "VehiclePropertyAccess::READ_WRITE",
             "changeMode": "VehiclePropertyChangeMode::ON_CHANGE"
         },
         {
-            "property": "Constants::VENDOR_PROPERTY_ID",
+            "property": "TestVendorProperty::VENDOR_PROPERTY_FOR_ERROR_CODE_TESTING",
             "access": "VehiclePropertyAccess::READ_WRITE",
             "changeMode": "VehiclePropertyChangeMode::ON_CHANGE"
         },
@@ -194,13 +194,13 @@
                 ]
             },
             "configArray": [
-                "Constants::kMixedTypePropertyForTest",
+                "TestVendorProperty::MIXED_TYPE_PROPERTY_FOR_TEST",
                 "VehicleVendorPermission::PERMISSION_GET_VENDOR_CATEGORY_INFO",
                 "VehicleVendorPermission::PERMISSION_SET_VENDOR_CATEGORY_INFO",
-                "Constants::VENDOR_EXTENSION_INT_PROPERTY",
+                "TestVendorProperty::VENDOR_EXTENSION_INT_PROPERTY",
                 "VehicleVendorPermission::PERMISSION_GET_VENDOR_CATEGORY_SEAT",
                 "VehicleVendorPermission::PERMISSION_NOT_ACCESSIBLE",
-                "Constants::VENDOR_EXTENSION_FLOAT_PROPERTY",
+                "TestVendorProperty::VENDOR_EXTENSION_FLOAT_PROPERTY",
                 "VehicleVendorPermission::PERMISSION_DEFAULT",
                 "VehicleVendorPermission::PERMISSION_DEFAULT"
             ]

@@ -36,4 +36,5 @@ package android.hardware.graphics.composer3;
 parcelable RefreshRateChangedDebugData {
   long display;
   int vsyncPeriodNanos;
+  int refreshPeriodNanos;
 }

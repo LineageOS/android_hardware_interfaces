@@ -68,4 +68,11 @@ Return<void> RadioIndication::rilConnected(V1_0::RadioIndicationType type) {
     return {};
 }
 
+Return<void> RadioIndication::onImeiMappingChanged(V1_0::RadioIndicationType type,
+                                    ::aidl::android::hardware::radio::modem::ImeiInfo imeiInfo) {
+    LOG_CALL << type;
+    modemCb()->onImeiMappingChanged(toAidl(type), imeiInfo);
+    return {};
+}
+
 }  // namespace android::hardware::radio::compat

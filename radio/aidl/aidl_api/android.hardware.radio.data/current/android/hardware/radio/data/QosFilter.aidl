@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.data;
+/* @hide */
 @JavaDerive(toString=true) @VintfStability
 parcelable QosFilter {
   String[] localAddresses;
@@ -47,7 +48,7 @@ parcelable QosFilter {
   const byte DIRECTION_DOWNLINK = 0;
   const byte DIRECTION_UPLINK = 1;
   const byte DIRECTION_BIDIRECTIONAL = 2;
-  const byte PROTOCOL_UNSPECIFIED = (-1);
+  const byte PROTOCOL_UNSPECIFIED = (-1) /* -1 */;
   const byte PROTOCOL_TCP = 6;
   const byte PROTOCOL_UDP = 17;
   const byte PROTOCOL_ESP = 50;

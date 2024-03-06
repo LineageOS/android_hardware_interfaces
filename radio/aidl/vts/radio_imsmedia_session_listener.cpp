@@ -49,3 +49,7 @@ ndk::ScopedAStatus ImsMediaSessionListener::onCallQualityChanged(
         const CallQuality& /*in_callQuality*/) {
     return ndk::ScopedAStatus::ok();
 }
+ndk::ScopedAStatus ImsMediaSessionListener::notifyRtpReceptionStats(
+        const RtpReceptionStats& /*in_stats*/) {
+    return ndk::ScopedAStatus::ok();
+}

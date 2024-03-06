@@ -16,8 +16,10 @@
 
 package android.hardware.radio.ims;
 
+/** @hide */
 @VintfStability
 @Backing(type="int")
+@JavaDerive(toString=true)
 enum ImsStreamType {
     /** Media Stream Type - Audio **/
     AUDIO = 1,

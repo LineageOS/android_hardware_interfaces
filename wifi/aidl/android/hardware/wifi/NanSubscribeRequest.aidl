@@ -21,6 +21,7 @@ import android.hardware.wifi.NanDiscoveryCommonConfig;
 import android.hardware.wifi.NanPairingConfig;
 import android.hardware.wifi.NanSrfType;
 import android.hardware.wifi.NanSubscribeType;
+import android.hardware.wifi.common.OuiKeyedData;
 
 /**
  * Subscribe request. Specifies a subscribe discovery operation.
@@ -76,4 +77,9 @@ parcelable NanSubscribeRequest {
      * The Identity key for pairing, will generate NIRA for verification by the peer
      */
     byte[16] identityKey;
+    /**
+     * Optional vendor-specific parameters. Null value indicates
+     * that no vendor data is provided.
+     */
+    @nullable OuiKeyedData[] vendorData;
 }

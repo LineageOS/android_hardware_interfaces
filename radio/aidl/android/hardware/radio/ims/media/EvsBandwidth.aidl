@@ -15,9 +15,14 @@
  */
 
 package android.hardware.radio.ims.media;
-/** EVS Speech codec bandwidths, See 3gpp spec 26.441 Table 1 */
+
+/**
+ * EVS Speech codec bandwidths, See 3gpp spec 26.441 Table 1
+ * @hide
+ */
 @VintfStability
 @Backing(type="int")
+@JavaDerive(toString=true)
 enum EvsBandwidth {
     NONE = 0,
     NARROW_BAND = 1 << 0,

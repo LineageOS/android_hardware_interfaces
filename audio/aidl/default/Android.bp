@@ -97,8 +97,11 @@ cc_library {
     shared_libs: [
         "android.hardware.bluetooth.audio-impl",
         "libaudio_aidl_conversion_common_ndk",
+        "libaudioutils",
         "libbluetooth_audio_session_aidl",
+        "liblog",
         "libmedia_helper",
+        "libmediautils_vendor",
         "libstagefright_foundation",
     ],
     export_shared_lib_headers: [
@@ -130,6 +133,7 @@ cc_binary {
         "android.hardware.bluetooth.audio-impl",
         "libaudio_aidl_conversion_common_ndk",
         "libbluetooth_audio_session_aidl",
+        "liblog",
         "libmedia_helper",
         "libstagefright_foundation",
     ],

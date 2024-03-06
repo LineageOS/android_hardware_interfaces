@@ -35,12 +35,12 @@ package android.hardware.graphics.common;
 /* @hide */
 @Backing(type="long") @VintfStability
 enum PlaneLayoutComponentType {
-  Y = 1,
-  CB = 2,
-  CR = 4,
-  R = 1024,
-  G = 2048,
-  B = 4096,
-  RAW = 1048576,
-  A = 1073741824,
+  Y = (1 << 0) /* 1 */,
+  CB = (1 << 1) /* 2 */,
+  CR = (1 << 2) /* 4 */,
+  R = (1 << 10) /* 1024 */,
+  G = (1 << 11) /* 2048 */,
+  B = (1 << 12) /* 4096 */,
+  RAW = (1 << 20) /* 1048576 */,
+  A = (1 << 30) /* 1073741824 */,
 }

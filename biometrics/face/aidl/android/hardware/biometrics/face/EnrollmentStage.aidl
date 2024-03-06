@@ -18,6 +18,7 @@ package android.hardware.biometrics.face;
 
 /**
  * Enrollment stages that can be mapped to the enrollment UI actions in the framework.
+ * @hide
  */
 @VintfStability
 @Backing(type="byte")

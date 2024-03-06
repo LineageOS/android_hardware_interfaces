@@ -38,4 +38,31 @@ interface IWifiStaIfaceEventCallback {
   oneway void onBackgroundScanFailure(in int cmdId);
   oneway void onBackgroundScanResults(in int cmdId, in android.hardware.wifi.StaScanData[] scanDatas);
   oneway void onRssiThresholdBreached(in int cmdId, in byte[6] currBssid, in int currRssi);
+  oneway void onTwtFailure(in int cmdId, in android.hardware.wifi.IWifiStaIfaceEventCallback.TwtErrorCode error);
+  oneway void onTwtSessionCreate(in int cmdId, in android.hardware.wifi.TwtSession twtSession);
+  oneway void onTwtSessionUpdate(in int cmdId, in android.hardware.wifi.TwtSession twtSession);
+  oneway void onTwtSessionTeardown(in int cmdId, in int twtSessionId, in android.hardware.wifi.IWifiStaIfaceEventCallback.TwtTeardownReasonCode reasonCode);
+  oneway void onTwtSessionStats(in int cmdId, in int twtSessionId, in android.hardware.wifi.TwtSessionStats twtSessionStats);
+  oneway void onTwtSessionSuspend(in int cmdId, in int twtSessionId);
+  oneway void onTwtSessionResume(in int cmdId, in int twtSessionId);
+  @Backing(type="byte") @VintfStability
+  enum TwtErrorCode {
+    FAILURE_UNKNOWN,
+    ALREADY_RESUMED,
+    ALREADY_SUSPENDED,
+    INVALID_PARAMS,
+    MAX_SESSION_REACHED,
+    NOT_AVAILABLE,
+    NOT_SUPPORTED,
+    PEER_NOT_SUPPORTED,
+    PEER_REJECTED,
+    TIMEOUT,
+  }
+  @Backing(type="byte") @VintfStability
+  enum TwtTeardownReasonCode {
+    UNKNOWN,
+    LOCALLY_REQUESTED,
+    INTERNALLY_INITIATED,
+    PEER_INITIATED,
+  }
 }

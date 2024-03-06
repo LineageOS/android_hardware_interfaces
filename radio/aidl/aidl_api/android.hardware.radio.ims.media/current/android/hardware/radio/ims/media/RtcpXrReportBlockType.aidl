@@ -32,7 +32,8 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.ims.media;
-@Backing(type="int") @VintfStability
+/* @hide */
+@Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum RtcpXrReportBlockType {
   RTCPXR_NONE = 0,
   RTCPXR_LOSS_RLE_REPORT_BLOCK = (1 << 0) /* 1 */,

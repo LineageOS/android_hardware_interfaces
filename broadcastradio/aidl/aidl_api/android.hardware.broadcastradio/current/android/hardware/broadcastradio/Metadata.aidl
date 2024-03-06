@@ -50,4 +50,12 @@ union Metadata {
   String dabServiceNameShort;
   String dabComponentName;
   String dabComponentNameShort;
+  String genre;
+  String commentShortDescription;
+  String commentActualText;
+  String commercial;
+  String[] ufids;
+  String hdStationNameShort;
+  String hdStationNameLong;
+  int hdSubChannelsAvailable;
 }

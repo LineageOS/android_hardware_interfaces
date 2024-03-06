@@ -34,4 +34,8 @@ enum CoolingType {
     POWER_AMPLIFIER,
     DISPLAY,
     SPEAKER,
+    WIFI,
+    CAMERA,
+    FLASHLIGHT,
+    USB_PORT,
 }

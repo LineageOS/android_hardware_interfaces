@@ -20,6 +20,7 @@ import android.hardware.radio.RadioError;
 import android.hardware.radio.voice.CfData;
 import android.hardware.radio.voice.SsInfoData;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable StkCcUnsolSsResult {

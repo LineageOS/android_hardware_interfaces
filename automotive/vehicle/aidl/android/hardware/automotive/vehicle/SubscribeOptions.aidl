@@ -39,4 +39,29 @@ parcelable SubscribeOptions {
      * This value indicates how many updates per second client wants to receive.
      */
     float sampleRate;
+
+    /**
+     * Requested resolution of property updates.
+     *
+     * This value indicates the resolution at which continuous property updates should be sent to
+     * the platform. For example, if resolution is 0.01, the subscribed property value should be
+     * rounded to two decimal places. If the incoming resolution value is not an integer multiple of
+     * 10, VHAL should return a StatusCode::INVALID_ARG.
+     */
+    float resolution = 0.0f;
+
+    /**
+     * Whether to enable variable update rate.
+     *
+     * This only applies for continuous property. If variable update rate is
+     * enabled, for each given areaId, if VHAL supports variable update rate for
+     * the [propId, areaId], VHAL must ignore duplicate property value events
+     * and only sends changed value events (a.k.a treat continuous as an
+     * on-change property).
+     *
+     * If VHAL does not support variable update rate for the [propId, areaId],
+     * indicated by 'supportVariableUpdateRate' in 'VehicleAreaConfig', or if
+     * this property is not a continuous property, this option must be ignored.
+     */
+    boolean enableVariableUpdateRate;
 }

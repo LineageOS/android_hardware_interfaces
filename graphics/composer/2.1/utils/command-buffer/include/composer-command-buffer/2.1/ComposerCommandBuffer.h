@@ -679,6 +679,10 @@ class CommandReaderBase {
 
     uint32_t read() { return mData[mDataRead++]; }
 
+    bool isReadSizeValid(uint32_t size) const {
+        return mDataRead * sizeof(uint32_t) + size <= mDataSize;
+    }
+
     int32_t readSigned() {
         int32_t val;
         memcpy(&val, &mData[mDataRead++], sizeof(val));
@@ -760,7 +764,7 @@ class CommandReaderBase {
     std::unique_ptr<uint32_t[]> mData;
     uint32_t mDataRead;
 
-   private:
+  private:
     std::unique_ptr<CommandQueueType> mQueue;
     uint32_t mDataMaxSize;
 

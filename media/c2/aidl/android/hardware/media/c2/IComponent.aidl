@@ -17,6 +17,7 @@
 package android.hardware.media.c2;
 
 import android.hardware.common.NativeHandle;
+
 import android.hardware.media.c2.IComponentInterface;
 import android.hardware.media.c2.IConfigurable;
 import android.hardware.media.c2.IGraphicBufferAllocator;

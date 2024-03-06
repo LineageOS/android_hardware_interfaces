@@ -21,6 +21,7 @@ package android.hardware.radio.network;
  *
  * <p>Also refer to "UE's usage setting" as defined in 3gpp 24.301 section 3.1 and 3gpp 23.221
  * Annex A.
+ * @hide
  */
 @VintfStability
 @Backing(type="int")

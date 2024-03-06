@@ -16,6 +16,7 @@
 
 package android.hardware.wifi.supplicant;
 
+import android.hardware.wifi.common.OuiKeyedData;
 import android.hardware.wifi.supplicant.AuthAlgMask;
 import android.hardware.wifi.supplicant.DppConnectionKeys;
 import android.hardware.wifi.supplicant.EapMethod;
@@ -1141,4 +1142,27 @@ interface ISupplicantStaNetwork {
      *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
      */
     void setStrictConservativePeerMode(in boolean enable);
+
+    /**
+     * Disables Extremely High Throughput (EHT) mode, aka Wi-Fi 7 support, for the network. When
+     * EHT is disabled, the device ceases to transmit EHT related Information Elements (IEs),
+     * including multi-link IEs and EHT capability, in subsequent messages such as (Re)Association
+     * requests to the Access Point (AP).
+     *
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    void disableEht();
+
+    /**
+     * Set additional vendor-provided configuration data.
+     *
+     * @param vendorData List of |OuiKeyedData| containing the vendor-provided
+     *         configuration data.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    void setVendorData(in OuiKeyedData[] vendorData);
 }

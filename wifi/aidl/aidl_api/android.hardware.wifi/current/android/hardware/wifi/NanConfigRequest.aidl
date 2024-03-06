@@ -45,4 +45,5 @@ parcelable NanConfigRequest {
   char rssiWindowSize;
   int macAddressRandomizationIntervalSec;
   android.hardware.wifi.NanBandSpecificConfig[3] bandSpecificConfig;
+  @nullable android.hardware.wifi.common.OuiKeyedData[] vendorData;
 }

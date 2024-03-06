@@ -22,6 +22,7 @@ import android.hardware.biometrics.face.AcquiredInfo;
  * Metadata of an individual frame. Can be used by the framework to provide user feedback.
  * This parcelable is part of AuthenticationFrame and EnrollmentFrame, and shouldn't be used
  * independently of those parcelables.
+ * @hide
  */
 @VintfStability
 parcelable BaseFrame {

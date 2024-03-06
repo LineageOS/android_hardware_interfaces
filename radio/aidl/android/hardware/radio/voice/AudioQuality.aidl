@@ -19,6 +19,7 @@ package android.hardware.radio.voice;
 /**
  * Audio codec which is used on GSM, UMTS, and CDMA. These values must be opaque to the Android
  * framework. Only for display.
+ * @hide
  */
 @VintfStability
 @Backing(type="int")

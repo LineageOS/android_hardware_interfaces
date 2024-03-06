@@ -15,13 +15,11 @@
  */
 #pragma once
 
-#include <mapper-vts/2.1/MapperVts.h>
 #include <math/half.h>
 #include <math/vec3.h>
 #include <renderengine/ExternalTexture.h>
 #include <renderengine/RenderEngine.h>
 #include <ui/GraphicBuffer.h>
-#include <ui/GraphicBufferAllocator.h>
 #include <ui/PixelFormat.h>
 #include <ui/Rect.h>
 #include <ui/Region.h>
@@ -29,7 +27,6 @@
 
 namespace aidl::android::hardware::graphics::composer3::vts {
 
-using ::android::hardware::graphics::mapper::V2_1::IMapper;
 using ::android::renderengine::DisplaySettings;
 using ::android::renderengine::ExternalTexture;
 using ::android::renderengine::RenderEngineCreationArgs;
@@ -48,6 +45,7 @@ class TestRenderEngine {
     };
     void drawLayers();
     void checkColorBuffer(const std::vector<Color>& expectedColors);
+    void checkColorBuffer(const ::android::sp<::android::GraphicBuffer>& buffer);
 
     ::android::renderengine::RenderEngine& getInternalRenderEngine() { return *mRenderEngine; }
 

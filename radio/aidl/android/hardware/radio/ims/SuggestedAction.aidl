@@ -16,6 +16,7 @@
 
 package android.hardware.radio.ims;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 @Backing(type="int")
@@ -34,4 +35,18 @@ enum SuggestedAction {
      * management timer value as per the carrier requirements.
      */
     TRIGGER_PLMN_BLOCK_WITH_TIMEOUT,
+    /**
+     * Indicates that the IMS registration on current RAT failed multiple times.
+     * The radio shall block the current RAT and search for other available RATs in the
+     * background. If no other RAT is available that meets the carrier requirements, the
+     * radio may remain on the current RAT for internet service. The radio clears all
+     * RATs marked as unavailable if {@link IRadioIms#updateImsRegistrationInfo()} API
+     * with REGISTERED state is invoked.
+     */
+    TRIGGER_RAT_BLOCK,
+    /**
+     * Indicates that the radio clears all RATs marked as unavailable and tries to find
+     * an available RAT that meets the carrier requirements.
+     */
+    TRIGGER_CLEAR_RAT_BLOCK,
 }

@@ -34,8 +34,8 @@
 package android.hardware.wifi.supplicant;
 @Backing(type="int") @VintfStability
 enum TlsVersion {
-  TLS_V1_0 = 0,
-  TLS_V1_1 = 1,
-  TLS_V1_2 = 2,
-  TLS_V1_3 = 3,
+  TLS_V1_0,
+  TLS_V1_1,
+  TLS_V1_2,
+  TLS_V1_3,
 }

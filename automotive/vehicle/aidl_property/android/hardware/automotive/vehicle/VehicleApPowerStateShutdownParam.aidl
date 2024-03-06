@@ -45,4 +45,8 @@ enum VehicleApPowerStateShutdownParam {
      * AP can enter hibernation (suspend to disk) instead of shutting down completely.
      */
     CAN_HIBERNATE = 6,
+    /**
+     * AP must shutdown (gracefully) without a delay.
+     */
+    EMERGENCY_SHUTDOWN = 7,
 }

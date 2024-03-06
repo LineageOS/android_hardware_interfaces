@@ -490,6 +490,18 @@ enum CameraMetadataTag {
      */
     ANDROID_CONTROL_AUTOFRAMING_STATE,
     /**
+     * android.control.lowLightBoostInfoLuminanceRange [static, float[], public]
+     *
+     * <p>The operating luminance range of low light boost measured in lux (lx).</p>
+     */
+    ANDROID_CONTROL_LOW_LIGHT_BOOST_INFO_LUMINANCE_RANGE,
+    /**
+     * android.control.lowLightBoostState [dynamic, enum, public]
+     *
+     * <p>Current state of the low light boost AE mode.</p>
+     */
+    ANDROID_CONTROL_LOW_LIGHT_BOOST_STATE,
+    /**
      * android.demosaic.mode [controls, enum, system]
      *
      * <p>Controls the quality of the demosaicing
@@ -559,6 +571,36 @@ enum CameraMetadataTag {
      * unit.</p>
      */
     ANDROID_FLASH_STATE,
+    /**
+     * android.flash.strengthLevel [dynamic, int32, public]
+     *
+     * <p>Flash strength level to be used when manual flash control is active.</p>
+     */
+    ANDROID_FLASH_STRENGTH_LEVEL,
+    /**
+     * android.flash.singleStrengthMaxLevel [static, int32, public]
+     *
+     * <p>Maximum flash brightness level for manual flash control in SINGLE mode.</p>
+     */
+    ANDROID_FLASH_SINGLE_STRENGTH_MAX_LEVEL,
+    /**
+     * android.flash.singleStrengthDefaultLevel [static, int32, public]
+     *
+     * <p>Default flash brightness level for manual flash control in SINGLE mode.</p>
+     */
+    ANDROID_FLASH_SINGLE_STRENGTH_DEFAULT_LEVEL,
+    /**
+     * android.flash.torchStrengthMaxLevel [static, int32, public]
+     *
+     * <p>Maximum flash brightness level for manual flash control in TORCH mode</p>
+     */
+    ANDROID_FLASH_TORCH_STRENGTH_MAX_LEVEL,
+    /**
+     * android.flash.torchStrengthDefaultLevel [static, int32, public]
+     *
+     * <p>Default flash brightness level for manual flash control in TORCH mode</p>
+     */
+    ANDROID_FLASH_TORCH_STRENGTH_DEFAULT_LEVEL,
     /**
      * android.flash.info.available [static, enum, public]
      *
@@ -1300,8 +1342,8 @@ enum CameraMetadataTag {
     /**
      * android.sensor.frameDuration [dynamic, int64, public]
      *
-     * <p>Duration from start of frame exposure to
-     * start of next frame exposure.</p>
+     * <p>Duration from start of frame readout to
+     * start of next frame readout.</p>
      */
     ANDROID_SENSOR_FRAME_DURATION,
     /**
@@ -1838,6 +1880,18 @@ enum CameraMetadataTag {
      */
     ANDROID_STATISTICS_OIS_Y_SHIFTS,
     /**
+     * android.statistics.lensIntrinsicTimestamps [dynamic, int64[], ndk_public]
+     *
+     * <p>An array of timestamps of lens intrinsics samples, in nanoseconds.</p>
+     */
+    ANDROID_STATISTICS_LENS_INTRINSIC_TIMESTAMPS,
+    /**
+     * android.statistics.lensIntrinsicSamples [dynamic, float[], ndk_public]
+     *
+     * <p>An array of intra-frame lens intrinsics.</p>
+     */
+    ANDROID_STATISTICS_LENS_INTRINSIC_SAMPLES,
+    /**
      * android.statistics.info.availableFaceDetectModes [static, byte[], public]
      *
      * <p>List of face detection modes for ANDROID_STATISTICS_FACE_DETECT_MODE that are
@@ -2211,6 +2265,13 @@ enum CameraMetadataTag {
      */
     ANDROID_LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID,
     /**
+     * android.logicalMultiCamera.activePhysicalSensorCropRegion [dynamic, int32[], public]
+     *
+     * <p>The current region of the active physical sensor that will be read out for this
+     * capture.</p>
+     */
+    ANDROID_LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_SENSOR_CROP_REGION,
+    /**
      * android.distortionCorrection.mode [dynamic, enum, public]
      *
      * <p>Mode of operation for the lens distortion correction block.</p>
@@ -2282,7 +2343,8 @@ enum CameraMetadataTag {
      *
      * <p>Whether this camera device can support identical set of stream combinations
      * involving HEIC image format, compared to the
-     * <a href="https://developer.android.com/reference/android/hardware/camera2/CameraDevice.html#legacy-level-guaranteed-configurations">table of combinations</a> involving JPEG image format required for the device's hardware
+     * <a href="https://developer.android.com/reference/android/hardware/camera2/CameraDevice#legacy-level-guaranteed-configurations">table of combinations</a>
+     * involving JPEG image format required for the device's hardware
      * level and capabilities.</p>
      */
     ANDROID_HEIC_INFO_SUPPORTED = CameraMetadataSectionStart.ANDROID_HEIC_INFO_START,

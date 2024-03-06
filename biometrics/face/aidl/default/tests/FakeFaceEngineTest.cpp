@@ -45,6 +45,7 @@ class TestSessionCallback : public BnSessionCallback {
     };
     ::ndk::ScopedAStatus onEnrollmentProgress(int32_t enrollmentId, int32_t remaining) override {
         if (remaining == 0) mLastEnrolled = enrollmentId;
+        mRemaining = remaining;
         return ndk::ScopedAStatus::ok();
     };
 
@@ -128,6 +129,7 @@ class TestSessionCallback : public BnSessionCallback {
     bool mAuthenticatorIdInvalidated = false;
     bool mLockoutPermanent = false;
     int mInteractionDetectedCount = 0;
+    int mRemaining = -1;
 };
 
 class FakeFaceEngineTest : public ::testing::Test {
@@ -193,7 +195,7 @@ TEST_F(FakeFaceEngineTest, AuthenticatorIdInvalidate) {
 }
 
 TEST_F(FakeFaceEngineTest, Enroll) {
-    FaceHalProperties::next_enrollment("1,0:30:true,1:0:true,2:0:true,3:0:true,4:0:true");
+    FaceHalProperties::next_enrollment("1,0:1000-[21,5,6,7,1],1100-[1118,1108,1]:true");
     keymaster::HardwareAuthToken hat{.mac = {2, 4}};
     mEngine.enrollImpl(mCallback.get(), hat, {} /*enrollmentType*/, {} /*features*/,
                        mCancel.get_future());
@@ -201,10 +203,11 @@ TEST_F(FakeFaceEngineTest, Enroll) {
     ASSERT_EQ(1, FaceHalProperties::enrollments().size());
     ASSERT_EQ(1, FaceHalProperties::enrollments()[0].value());
     ASSERT_EQ(1, mCallback->mLastEnrolled);
+    ASSERT_EQ(0, mCallback->mRemaining);
 }
 
 TEST_F(FakeFaceEngineTest, EnrollFails) {
-    FaceHalProperties::next_enrollment("1,0:30:true,1:0:true,2:0:true,3:0:true,4:0:false");
+    FaceHalProperties::next_enrollment("1,0:1000-[21,5,6,7,1],1100-[1118,1108,1]:false");
     keymaster::HardwareAuthToken hat{.mac = {2, 4}};
     mEngine.enrollImpl(mCallback.get(), hat, {} /*enrollmentType*/, {} /*features*/,
                        mCancel.get_future());
@@ -213,7 +216,7 @@ TEST_F(FakeFaceEngineTest, EnrollFails) {
 }
 
 TEST_F(FakeFaceEngineTest, EnrollCancel) {
-    FaceHalProperties::next_enrollment("1,0:30:true,1:0:true,2:0:true,3:0:true,4:0:false");
+    FaceHalProperties::next_enrollment("1:2000-[21,8,9],300:false");
     keymaster::HardwareAuthToken hat{.mac = {2, 4}};
     mCancel.set_value();
     mEngine.enrollImpl(mCallback.get(), hat, {} /*enrollmentType*/, {} /*features*/,
@@ -221,7 +224,7 @@ TEST_F(FakeFaceEngineTest, EnrollCancel) {
     ASSERT_EQ(Error::CANCELED, mCallback->mError);
     ASSERT_EQ(-1, mCallback->mLastEnrolled);
     ASSERT_EQ(0, FaceHalProperties::enrollments().size());
-    ASSERT_FALSE(FaceHalProperties::next_enrollment().has_value());
+    ASSERT_TRUE(FaceHalProperties::next_enrollment().has_value());
 }
 
 TEST_F(FakeFaceEngineTest, Authenticate) {
@@ -245,7 +248,7 @@ TEST_F(FakeFaceEngineTest, AuthenticateFailedForUnEnrolled) {
     FaceHalProperties::enrollments({3});
     FaceHalProperties::enrollment_hit(100);
     mEngine.authenticateImpl(mCallback.get(), 0 /* operationId*/, mCancel.get_future());
-    ASSERT_EQ(Error::UNABLE_TO_PROCESS, mCallback->mError);
+    ASSERT_EQ(Error::TIMEOUT, mCallback->mError);
     ASSERT_TRUE(mCallback->mAuthenticateFailed);
 }
 

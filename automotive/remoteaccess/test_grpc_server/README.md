@@ -141,7 +141,7 @@ interface.
 * The android lunch target: sdk_car_x86_64-userdebug and
   cf_x86_64_auto-userdebug already contains the default remote access HAL. For
   other lunch target, you can add the default remote access HAL by adding
-  'android.hardware.automotive.remoteaccess@V1-default-service' to
+  'android.hardware.automotive.remoteaccess@V2-default-service' to
   'PRODUCT_PACKAGES' variable in mk file, see `device/generic/car/common/car.mk`
   as example.
 

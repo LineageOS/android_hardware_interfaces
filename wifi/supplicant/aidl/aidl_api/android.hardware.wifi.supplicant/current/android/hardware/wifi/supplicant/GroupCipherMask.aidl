@@ -34,12 +34,12 @@
 package android.hardware.wifi.supplicant;
 @Backing(type="int") @VintfStability
 enum GroupCipherMask {
-  WEP40 = 2,
-  WEP104 = 4,
-  TKIP = 8,
-  CCMP = 16,
-  GTK_NOT_USED = 16384,
-  GCMP_256 = 256,
-  SMS4 = 128,
-  GCMP_128 = 64,
+  WEP40 = (1 << 1) /* 2 */,
+  WEP104 = (1 << 2) /* 4 */,
+  TKIP = (1 << 3) /* 8 */,
+  CCMP = (1 << 4) /* 16 */,
+  GTK_NOT_USED = (1 << 14) /* 16384 */,
+  GCMP_256 = (1 << 8) /* 256 */,
+  SMS4 = (1 << 7) /* 128 */,
+  GCMP_128 = (1 << 6) /* 64 */,
 }

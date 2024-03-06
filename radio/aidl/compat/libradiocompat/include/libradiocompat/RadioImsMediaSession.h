@@ -38,6 +38,8 @@ class RadioImsMediaSession : public RadioCompatBase,
     ::ndk::ScopedAStatus setMediaQualityThreshold(
             const ::aidl::android::hardware::radio::ims::media::MediaQualityThreshold& in_threshold)
             override;
+    ::ndk::ScopedAStatus requestRtpReceptionStats(int32_t in_intervalMs) override;
+    ::ndk::ScopedAStatus adjustDelay(int32_t in_delayMs) override;
 
   protected:
   public:

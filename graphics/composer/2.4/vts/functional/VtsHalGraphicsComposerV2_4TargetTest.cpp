@@ -22,7 +22,6 @@
 
 #include <android-base/logging.h>
 #include <android-base/properties.h>
-#include <android/hardware/graphics/mapper/2.0/IMapper.h>
 #include <composer-command-buffer/2.4/ComposerCommandBuffer.h>
 #include <composer-vts/2.4/ComposerVts.h>
 #include <composer-vts/2.4/GraphicsComposerCallback.h>
@@ -30,9 +29,7 @@
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/ServiceManagement.h>
-#include <mapper-vts/2.0/MapperVts.h>
-#include <mapper-vts/3.0/MapperVts.h>
-#include <mapper-vts/4.0/MapperVts.h>
+#include <ui/GraphicBuffer.h>
 #include <utils/Timers.h>
 
 namespace android {
@@ -51,9 +48,7 @@ using common::V1_2::ColorMode;
 using common::V1_2::Dataspace;
 using common::V1_2::PixelFormat;
 using V2_1::Layer;
-using V2_1::vts::NativeHandleWrapper;
 using V2_2::Transform;
-using V2_2::vts::Gralloc;
 
 using ContentType = IComposerClient::ContentType;
 using DisplayCapability = IComposerClient::DisplayCapability;
@@ -102,8 +97,6 @@ class GraphicsComposerHidlTest : public ::testing::TestWithParam<std::string> {
             mComposerClient->setVsyncEnabled(display.get(), false);
         }
         mComposerCallback->setVsyncAllowed(false);
-
-        ASSERT_NO_FATAL_FAILURE(mGralloc = std::make_unique<Gralloc>());
 
         mWriter = std::make_unique<CommandWriterBase>(1024);
         mReader = std::make_unique<TestCommandReader>();
@@ -157,12 +150,15 @@ class GraphicsComposerHidlTest : public ::testing::TestWithParam<std::string> {
 
     void execute() { mComposerClient->execute(mReader.get(), mWriter.get()); }
 
-    NativeHandleWrapper allocate(int32_t width, int32_t height) {
-        return mGralloc->allocate(
-                width, height, /*layerCount*/ 1,
-                static_cast<common::V1_1::PixelFormat>(PixelFormat::RGBA_8888),
+    sp<GraphicBuffer> allocate(int32_t width, int32_t height) {
+        auto result = sp<GraphicBuffer>::make(
+                width, height, static_cast<int32_t>(PixelFormat::RGBA_8888), /*layerCount*/ 1,
                 static_cast<uint64_t>(BufferUsage::CPU_WRITE_OFTEN | BufferUsage::CPU_READ_OFTEN |
                                       BufferUsage::COMPOSER_OVERLAY));
+        if (result->initCheck() != STATUS_OK) {
+            return nullptr;
+        }
+        return result;
     }
 
     struct TestParameters {
@@ -256,7 +252,6 @@ class GraphicsComposerHidlTest : public ::testing::TestWithParam<std::string> {
     std::unique_ptr<CommandWriterBase> mWriter;
     std::unique_ptr<TestCommandReader> mReader;
     sp<GraphicsComposerCallback> mComposerCallback;
-    std::unique_ptr<Gralloc> mGralloc;
 };
 
 TEST_P(GraphicsComposerHidlTest, getDisplayCapabilitiesBadDisplay) {
@@ -458,7 +453,7 @@ void GraphicsComposerHidlTest::sendRefreshFrame(const VtsDisplay& display,
         mWriter->setLayerBlendMode(IComposerClient::BlendMode::NONE);
         mWriter->setLayerSurfaceDamage(
                 std::vector<IComposerClient::Rect>(1, display.getFrameRect()));
-        mWriter->setLayerBuffer(0, handle.get(), -1);
+        mWriter->setLayerBuffer(0, handle->handle, -1);
         mWriter->setLayerDataspace(Dataspace::UNKNOWN);
 
         mWriter->validateDisplay();
@@ -476,7 +471,7 @@ void GraphicsComposerHidlTest::sendRefreshFrame(const VtsDisplay& display,
         ASSERT_NE(nullptr, handle.get());
 
         mWriter->selectLayer(layer);
-        mWriter->setLayerBuffer(0, handle.get(), -1);
+        mWriter->setLayerBuffer(0, handle->handle, -1);
         mWriter->setLayerSurfaceDamage(std::vector<IComposerClient::Rect>(1, {0, 0, 10, 10}));
         mWriter->validateDisplay();
         execute();
@@ -544,10 +539,12 @@ void GraphicsComposerHidlTest::Test_setActiveConfigWithConstraints(const TestPar
                       setActiveConfigWithConstraints(display, config2, constraints, &timeline));
 
             EXPECT_TRUE(timeline.newVsyncAppliedTimeNanos >= constraints.desiredTimeNanos);
-            // Refresh rate should change within a reasonable time
-            constexpr std::chrono::nanoseconds kReasonableTimeForChange = 1s;  // 1 second
-            EXPECT_TRUE(timeline.newVsyncAppliedTimeNanos - constraints.desiredTimeNanos <=
-                        kReasonableTimeForChange.count());
+            if (configGroup1 == configGroup2) {
+                // Refresh rate should change within a reasonable time
+                constexpr std::chrono::nanoseconds kReasonableTimeForChange = 1s;
+                EXPECT_TRUE(timeline.newVsyncAppliedTimeNanos - constraints.desiredTimeNanos <=
+                            kReasonableTimeForChange.count());
+            }
 
             if (timeline.refreshRequired) {
                 if (params.refreshMiss) {

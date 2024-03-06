@@ -43,12 +43,14 @@ using ::aidl::android::hardware::automotive::vehicle::IVehicleCallback;
 using ::aidl::android::hardware::automotive::vehicle::SetValueResults;
 using ::aidl::android::hardware::automotive::vehicle::SubscribeOptions;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropErrors;
+using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyStatus;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValues;
 using ::ndk::ScopedAStatus;
 using ::ndk::SpAIBinder;
+using ::testing::Contains;
 using ::testing::ElementsAre;
-using ::testing::WhenSorted;
+using ::testing::UnorderedElementsAre;
 
 class PropertyCallback final : public BnVehicleCallback {
   public:
@@ -114,6 +116,8 @@ class SubscriptionManagerTest : public testing::Test {
 
     void clearEvents() { return getCallback()->clearEvents(); }
 
+    std::shared_ptr<MockVehicleHardware> getHardware() { return mHardware; }
+
   private:
     std::unique_ptr<SubscriptionManager> mManager;
     std::shared_ptr<PropertyCallback> mCallback;
@@ -131,6 +135,9 @@ TEST_F(SubscriptionManagerTest, testSubscribeGlobalContinuous) {
 
     auto result = getManager()->subscribe(getCallbackClient(), options, true);
     ASSERT_TRUE(result.ok()) << "failed to subscribe: " << result.error().message();
+
+    ASSERT_THAT(getHardware()->getSubscribedContinuousPropIdAreaIds(),
+                UnorderedElementsAre(std::pair<int32_t, int32_t>(0, 0)));
 
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
@@ -240,6 +247,8 @@ TEST_F(SubscriptionManagerTest, testUnsubscribeGlobalContinuous) {
     result = getManager()->unsubscribe(getCallbackClient()->asBinder().get());
     ASSERT_TRUE(result.ok()) << "failed to unsubscribe: " << result.error().message();
 
+    ASSERT_EQ(getHardware()->getSubscribedContinuousPropIdAreaIds().size(), 0u);
+
     // Wait for the last events to come.
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
@@ -316,7 +325,7 @@ TEST_F(SubscriptionManagerTest, testUnsubscribeByCallback) {
     EXPECT_TRUE(getEvents().empty());
 }
 
-TEST_F(SubscriptionManagerTest, testUnsubscribeFailure) {
+TEST_F(SubscriptionManagerTest, testUnsubscribeUnsubscribedPropId) {
     std::vector<SubscribeOptions> options = {
             {
                     .propId = 0,
@@ -334,14 +343,21 @@ TEST_F(SubscriptionManagerTest, testUnsubscribeFailure) {
     // Property ID: 2 was not subscribed.
     result = getManager()->unsubscribe(getCallbackClient()->asBinder().get(),
                                        std::vector<int32_t>({0, 1, 2}));
-    ASSERT_FALSE(result.ok()) << "unsubscribe an unsubscribed property must fail";
+    ASSERT_TRUE(result.ok()) << "unsubscribe an unsubscribed property must do nothing";
 
-    // Since property 0 and property 1 was not unsubscribed successfully, we should be able to
-    // unsubscribe them again.
-    result = getManager()->unsubscribe(getCallbackClient()->asBinder().get(),
-                                       std::vector<int32_t>({0, 1}));
-    ASSERT_TRUE(result.ok()) << "a failed unsubscription must not unsubscribe any properties"
-                             << result.error().message();
+    std::vector<VehiclePropValue> updatedValues = {
+            {
+                    .prop = 0,
+                    .areaId = 0,
+            },
+            {
+                    .prop = 1,
+                    .areaId = 0,
+            },
+    };
+    auto clients = getManager()->getSubscribedClients(std::vector<VehiclePropValue>(updatedValues));
+
+    ASSERT_EQ(clients.size(), 0u) << "all subscribed properties must be unsubscribed";
 }
 
 TEST_F(SubscriptionManagerTest, testSubscribeOnchange) {
@@ -370,6 +386,11 @@ TEST_F(SubscriptionManagerTest, testSubscribeOnchange) {
     ASSERT_TRUE(result.ok()) << "failed to subscribe: " << result.error().message();
     result = getManager()->subscribe(client2, options2, false);
     ASSERT_TRUE(result.ok()) << "failed to subscribe: " << result.error().message();
+    ASSERT_THAT(getHardware()->getSubscribedOnChangePropIdAreaIds(),
+                UnorderedElementsAre(std::pair<int32_t, int32_t>(0, 0),
+                                     std::pair<int32_t, int32_t>(0, 1),
+                                     std::pair<int32_t, int32_t>(1, 0)));
+    ASSERT_EQ(getHardware()->getSubscribedContinuousPropIdAreaIds().size(), 0u);
 
     std::vector<VehiclePropValue> updatedValues = {
             {
@@ -389,11 +410,11 @@ TEST_F(SubscriptionManagerTest, testSubscribeOnchange) {
                     .areaId = 1,
             },
     };
-    auto clients = getManager()->getSubscribedClients(updatedValues);
+    auto clients = getManager()->getSubscribedClients(std::vector<VehiclePropValue>(updatedValues));
 
     ASSERT_THAT(clients[client1],
-                WhenSorted(ElementsAre(&updatedValues[0], &updatedValues[1], &updatedValues[2])));
-    ASSERT_THAT(clients[client2], ElementsAre(&updatedValues[0]));
+                UnorderedElementsAre(updatedValues[0], updatedValues[1], updatedValues[2]));
+    ASSERT_THAT(clients[client2], ElementsAre(updatedValues[0]));
 }
 
 TEST_F(SubscriptionManagerTest, testSubscribeInvalidOption) {
@@ -480,9 +501,11 @@ TEST_F(SubscriptionManagerTest, testUnsubscribeOnchange) {
                     .areaId = 0,
             },
     };
-    auto clients = getManager()->getSubscribedClients(updatedValues);
+    auto clients = getManager()->getSubscribedClients(std::vector<VehiclePropValue>(updatedValues));
 
-    ASSERT_THAT(clients[getCallbackClient()], ElementsAre(&updatedValues[1]));
+    ASSERT_THAT(clients[getCallbackClient()], ElementsAre(updatedValues[1]));
+    ASSERT_THAT(getHardware()->getSubscribedOnChangePropIdAreaIds(),
+                UnorderedElementsAre(std::pair<int32_t, int32_t>(1, 0)));
 }
 
 TEST_F(SubscriptionManagerTest, testCheckSampleRateHzValid) {
@@ -495,6 +518,257 @@ TEST_F(SubscriptionManagerTest, testCheckSampleRateHzInvalidTooSmall) {
 
 TEST_F(SubscriptionManagerTest, testCheckSampleRateHzInvalidZero) {
     ASSERT_FALSE(SubscriptionManager::checkSampleRateHz(0));
+}
+
+TEST_F(SubscriptionManagerTest, testSubscribe_enableVur) {
+    std::vector<SubscribeOptions> options = {{
+            .propId = 0,
+            .areaIds = {0},
+            .sampleRate = 10.0,
+            .enableVariableUpdateRate = true,
+    }};
+
+    auto result = getManager()->subscribe(getCallbackClient(), options, true);
+    ASSERT_TRUE(result.ok()) << "failed to subscribe: " << result.error().message();
+
+    ASSERT_THAT(getHardware()->getSubscribeOptions(), ElementsAre(options[0]));
+}
+
+TEST_F(SubscriptionManagerTest, testSubscribe_VurStateChange) {
+    std::vector<SubscribeOptions> options = {{
+            .propId = 0,
+            .areaIds = {0},
+            .sampleRate = 10.0,
+            .enableVariableUpdateRate = true,
+    }};
+
+    auto result = getManager()->subscribe(getCallbackClient(), options, true);
+    ASSERT_TRUE(result.ok()) << "failed to subscribe: " << result.error().message();
+
+    ASSERT_THAT(getHardware()->getSubscribeOptions(), ElementsAre(options[0]));
+
+    getHardware()->clearSubscribeOptions();
+    result = getManager()->subscribe(getCallbackClient(), options, true);
+    ASSERT_TRUE(result.ok()) << "failed to subscribe: " << result.error().message();
+
+    ASSERT_TRUE(getHardware()->getSubscribeOptions().empty());
+
+    std::vector<SubscribeOptions> newOptions = {{
+            .propId = 0,
+            .areaIds = {0},
+            .sampleRate = 10.0,
+            .enableVariableUpdateRate = false,
+    }};
+    result = getManager()->subscribe(getCallbackClient(), newOptions, true);
+    ASSERT_TRUE(result.ok()) << "failed to subscribe: " << result.error().message();
+
+    ASSERT_THAT(getHardware()->getSubscribeOptions(), ElementsAre(newOptions[0]));
+}
+
+TEST_F(SubscriptionManagerTest, testSubscribe_enableVur_filterUnchangedEvents) {
+    SpAIBinder binder1 = ndk::SharedRefBase::make<PropertyCallback>()->asBinder();
+    std::shared_ptr<IVehicleCallback> client1 = IVehicleCallback::fromBinder(binder1);
+    SpAIBinder binder2 = ndk::SharedRefBase::make<PropertyCallback>()->asBinder();
+    std::shared_ptr<IVehicleCallback> client2 = IVehicleCallback::fromBinder(binder2);
+    SubscribeOptions client1Option = {
+            .propId = 0,
+            .areaIds = {0},
+            .sampleRate = 10.0,
+            .enableVariableUpdateRate = false,
+    };
+    auto result = getManager()->subscribe(client1, {client1Option}, true);
+    ASSERT_TRUE(result.ok()) << "failed to subscribe: " << result.error().message();
+
+    ASSERT_THAT(getHardware()->getSubscribeOptions(), UnorderedElementsAre(client1Option));
+
+    getHardware()->clearSubscribeOptions();
+    SubscribeOptions client2Option = {
+            .propId = 0,
+            .areaIds = {0, 1},
+            .sampleRate = 20.0,
+            .enableVariableUpdateRate = true,
+    };
+
+    result = getManager()->subscribe(client2, {client2Option}, true);
+    ASSERT_TRUE(result.ok()) << "failed to subscribe: " << result.error().message();
+
+    ASSERT_THAT(getHardware()->getSubscribeOptions(),
+                UnorderedElementsAre(
+                        SubscribeOptions{
+                                .propId = 0,
+                                .areaIds = {0},
+                                .sampleRate = 20.0,
+                                // This is enabled for client2, but disabled for client1.
+                                .enableVariableUpdateRate = false,
+                        },
+                        SubscribeOptions{
+                                .propId = 0,
+                                .areaIds = {1},
+                                .sampleRate = 20.0,
+                                .enableVariableUpdateRate = true,
+                        }));
+
+    std::vector<VehiclePropValue> propertyEvents = {{
+                                                            .prop = 0,
+                                                            .areaId = 0,
+                                                            .value = {.int32Values = {0}},
+                                                            .timestamp = 1,
+                                                    },
+                                                    {
+                                                            .prop = 0,
+                                                            .areaId = 1,
+                                                            .value = {.int32Values = {1}},
+                                                            .timestamp = 1,
+                                                    }};
+    auto clients =
+            getManager()->getSubscribedClients(std::vector<VehiclePropValue>(propertyEvents));
+
+    ASSERT_THAT(clients[client1], UnorderedElementsAre(propertyEvents[0]));
+    ASSERT_THAT(clients[client2], UnorderedElementsAre(propertyEvents[0], propertyEvents[1]));
+
+    // If the same property events happen again with a new timestamp.
+    // VUR is disabled for client1, enabled for client2.
+    clients = getManager()->getSubscribedClients({{
+            .prop = 0,
+            .areaId = 0,
+            .value = {.int32Values = {0}},
+            .timestamp = 2,
+    }});
+
+    ASSERT_FALSE(clients.find(client1) == clients.end())
+            << "Must not filter out property events if VUR is not enabled";
+    ASSERT_TRUE(clients.find(client2) == clients.end())
+            << "Must filter out property events if VUR is enabled";
+}
+
+TEST_F(SubscriptionManagerTest, testSubscribe_enableVur_mustNotFilterStatusChange) {
+    SpAIBinder binder1 = ndk::SharedRefBase::make<PropertyCallback>()->asBinder();
+    std::shared_ptr<IVehicleCallback> client1 = IVehicleCallback::fromBinder(binder1);
+    SpAIBinder binder2 = ndk::SharedRefBase::make<PropertyCallback>()->asBinder();
+    std::shared_ptr<IVehicleCallback> client2 = IVehicleCallback::fromBinder(binder2);
+    SubscribeOptions client1Option = {
+            .propId = 0,
+            .areaIds = {0},
+            .sampleRate = 10.0,
+            .enableVariableUpdateRate = false,
+    };
+    auto result = getManager()->subscribe(client1, {client1Option}, true);
+    ASSERT_TRUE(result.ok()) << "failed to subscribe: " << result.error().message();
+
+    ASSERT_THAT(getHardware()->getSubscribeOptions(), UnorderedElementsAre(client1Option));
+
+    getHardware()->clearSubscribeOptions();
+    SubscribeOptions client2Option = {
+            .propId = 0,
+            .areaIds = {0, 1},
+            .sampleRate = 20.0,
+            .enableVariableUpdateRate = true,
+    };
+
+    result = getManager()->subscribe(client2, {client2Option}, true);
+    ASSERT_TRUE(result.ok()) << "failed to subscribe: " << result.error().message();
+
+    ASSERT_THAT(getHardware()->getSubscribeOptions(),
+                UnorderedElementsAre(
+                        SubscribeOptions{
+                                .propId = 0,
+                                .areaIds = {0},
+                                .sampleRate = 20.0,
+                                // This is enabled for client2, but disabled for client1.
+                                .enableVariableUpdateRate = false,
+                        },
+                        SubscribeOptions{
+                                .propId = 0,
+                                .areaIds = {1},
+                                .sampleRate = 20.0,
+                                .enableVariableUpdateRate = true,
+                        }));
+
+    VehiclePropValue propValue1 = {
+            .prop = 0,
+            .areaId = 0,
+            .value = {.int32Values = {0}},
+            .timestamp = 1,
+    };
+    auto clients = getManager()->getSubscribedClients(std::vector<VehiclePropValue>({propValue1}));
+
+    ASSERT_THAT(clients[client1], UnorderedElementsAre(propValue1));
+
+    // A new event with the same value, but different status must not be filtered out.
+    VehiclePropValue propValue2 = {
+            .prop = 0,
+            .areaId = 0,
+            .value = {.int32Values = {0}},
+            .status = VehiclePropertyStatus::UNAVAILABLE,
+            .timestamp = 2,
+    };
+    clients = getManager()->getSubscribedClients({propValue2});
+
+    ASSERT_THAT(clients[client1], UnorderedElementsAre(propValue2))
+            << "Must not filter out property events that has status change";
+}
+
+TEST_F(SubscriptionManagerTest, testSubscribe_enableVur_timestampUpdated_filterOutdatedEvent) {
+    SpAIBinder binder1 = ndk::SharedRefBase::make<PropertyCallback>()->asBinder();
+    std::shared_ptr<IVehicleCallback> client1 = IVehicleCallback::fromBinder(binder1);
+    SpAIBinder binder2 = ndk::SharedRefBase::make<PropertyCallback>()->asBinder();
+    std::shared_ptr<IVehicleCallback> client2 = IVehicleCallback::fromBinder(binder2);
+    std::vector<SubscribeOptions> options = {{
+            .propId = 0,
+            .areaIds = {0},
+            .sampleRate = 10.0,
+            .enableVariableUpdateRate = true,
+    }};
+
+    // client1 subscribe with VUR enabled.
+    auto result = getManager()->subscribe(client1, options, true);
+    ASSERT_TRUE(result.ok()) << "failed to subscribe: " << result.error().message();
+
+    // Let client2 subscribe with VUR disabled so that we enabled VUR in DefaultVehicleHal layer.
+    result = getManager()->subscribe(client2,
+                                     {{
+                                             .propId = 0,
+                                             .areaIds = {0},
+                                             .sampleRate = 10.0,
+                                             .enableVariableUpdateRate = false,
+                                     }},
+                                     true);
+    ASSERT_TRUE(result.ok()) << "failed to subscribe: " << result.error().message();
+
+    VehiclePropValue value0 = {
+            .prop = 0,
+            .areaId = 0,
+            .value = {.int32Values = {0}},
+            .timestamp = 1,
+    };
+    auto clients = getManager()->getSubscribedClients({value0});
+
+    ASSERT_THAT(clients[client1], UnorderedElementsAre(value0));
+
+    // A new event with the same value arrived. This must update timestamp to 3.
+    VehiclePropValue value1 = {
+            .prop = 0,
+            .areaId = 0,
+            .value = {.int32Values = {0}},
+            .timestamp = 3,
+    };
+    clients = getManager()->getSubscribedClients({value1});
+
+    ASSERT_TRUE(clients.find(client1) == clients.end())
+            << "Must filter out duplicate property events if VUR is enabled";
+
+    // The latest timestamp is 3, so even though the value is not the same, this is outdated and
+    // must be ignored.
+    VehiclePropValue value2 = {
+            .prop = 0,
+            .areaId = 0,
+            .value = {.int32Values = {1}},
+            .timestamp = 2,
+    };
+    clients = getManager()->getSubscribedClients({value1});
+
+    ASSERT_TRUE(clients.find(client1) == clients.end())
+            << "Must filter out outdated property events if VUR is enabled";
 }
 
 }  // namespace vehicle

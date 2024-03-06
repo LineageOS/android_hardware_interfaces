@@ -217,6 +217,10 @@ interface IGnss {
      * Starts a location output stream using the IGnssCallback gnssLocationCb(), following the
      * settings from the most recent call to setPositionMode().
      *
+     * When a location output stream is in progress, calling setPositionMode() does not change the
+     * settings of the current location output stream. stop() and start() must be called to make the
+     * new settings effective.
+     *
      * This output must operate independently of any GNSS location batching operations,
      * see the IGnssBatching for details.
      */
@@ -306,6 +310,10 @@ interface IGnss {
     /**
      * Sets the GnssPositionMode parameter, its associated recurrence value, the time between fixes,
      * requested fix accuracy, time to first fix.
+     *
+     * If a location output stream is in progress, calling this method does not affect the settings
+     * of current location output stream. stop() and start() must be called to make the new settings
+     * effective.
      */
     void setPositionMode(in PositionModeOptions options);
 

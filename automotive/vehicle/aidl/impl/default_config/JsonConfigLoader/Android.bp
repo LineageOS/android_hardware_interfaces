@@ -35,14 +35,17 @@ cc_library {
 cc_library {
     name: "VehicleHalJsonConfigLoaderEnableTestProperties",
     vendor: true,
-    srcs: ["src/*.cpp"],
+    srcs: [
+        "src/*.cpp",
+        ":VhalTestVendorProperties",
+    ],
     local_include_dirs: ["include"],
     export_include_dirs: ["include"],
     defaults: ["VehicleHalDefaults"],
     static_libs: ["VehicleHalUtils"],
     header_libs: [
-        "VehicleHalTestUtilHeaders",
         "IVehicleGeneratedHeaders",
+        "libbinder_headers",
     ],
     cflags: ["-DENABLE_VEHICLE_HAL_TEST_PROPERTIES"],
     shared_libs: ["libjsoncpp"],

@@ -86,4 +86,14 @@ enum Capability {
      * @see IComposerCallback.onRefreshRateChangedDebug
      */
     REFRESH_RATE_CHANGED_CALLBACK_DEBUG = 7,
+
+    /**
+     * Specifies that the device HAL supports the batching of layer creation and destruction
+     * for better performance.
+     *
+     * @see IComposerClient.executeCommands
+     * @see LayerCommand.layerLifecycleBatchCommandType
+     * @see LayerCommand.newBufferSlotCount
+     */
+    LAYER_LIFECYCLE_BATCH_COMMAND = 8,
 }

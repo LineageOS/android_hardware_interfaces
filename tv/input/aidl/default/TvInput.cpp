@@ -43,6 +43,9 @@ void TvInput::init() {
                                       new TvStreamConfigWrapper(11, 360, 480, false))}};
     mStreamConfigs[3] = {{5, shared_ptr<TvStreamConfigWrapper>(
                                      new TvStreamConfigWrapper(5, 1080, 1920, false))}};
+
+    mQueue = shared_ptr<AidlMessageQueue<int8_t, SynchronizedReadWrite>>(
+            new (std::nothrow) AidlMessageQueue<int8_t, SynchronizedReadWrite>(8));
 }
 
 ::ndk::ScopedAStatus TvInput::setCallback(const shared_ptr<ITvInputCallback>& in_callback) {
@@ -74,7 +77,9 @@ void TvInput::init() {
         return ::ndk::ScopedAStatus::fromServiceSpecificError(STATUS_INVALID_ARGUMENTS);
     }
 
+    // When calling notifyTvMessage, make sure to verify against this map.
     mTvMessageEventEnabled[deviceId][streamId][in_type] = enabled;
+
     return ::ndk::ScopedAStatus::ok();
 }
 
@@ -82,11 +87,17 @@ void TvInput::init() {
         MQDescriptor<int8_t, SynchronizedReadWrite>* out_queue, int32_t in_deviceId,
         int32_t in_streamId) {
     ALOGV("%s", __FUNCTION__);
+    ::ndk::ScopedAStatus status = ::ndk::ScopedAStatus::ok();
     if (mStreamConfigs.count(in_deviceId) == 0) {
         ALOGW("Device with id %d isn't available", in_deviceId);
-        return ::ndk::ScopedAStatus::fromServiceSpecificError(STATUS_INVALID_ARGUMENTS);
+        status = ::ndk::ScopedAStatus::fromServiceSpecificError(STATUS_INVALID_ARGUMENTS);
+    } else if (!mQueue->isValid()) {
+        ALOGE("Tv Message Queue was not properly initialized");
+        status = ::ndk::ScopedAStatus::fromServiceSpecificError(STATUS_INVALID_STATE);
+    } else {
+        *out_queue = mQueue->dupeDesc();
     }
-    return ::ndk::ScopedAStatus::ok();
+    return status;
 }
 
 ::ndk::ScopedAStatus TvInput::getStreamConfigurations(int32_t in_deviceId,

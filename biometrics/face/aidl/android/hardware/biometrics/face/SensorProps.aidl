@@ -19,6 +19,9 @@ package android.hardware.biometrics.face;
 import android.hardware.biometrics.common.CommonProps;
 import android.hardware.biometrics.face.FaceSensorType;
 
+/**
+ * @hide
+ */
 @VintfStability
 parcelable SensorProps {
     /**

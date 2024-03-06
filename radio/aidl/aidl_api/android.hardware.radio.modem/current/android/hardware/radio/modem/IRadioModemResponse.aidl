@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.modem;
+/* @hide */
 @VintfStability
 interface IRadioModemResponse {
   oneway void acknowledgeRequest(in int serial);

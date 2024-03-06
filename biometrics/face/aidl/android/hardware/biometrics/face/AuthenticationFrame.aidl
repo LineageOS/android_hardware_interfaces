@@ -20,6 +20,7 @@ import android.hardware.biometrics.face.BaseFrame;
 
 /**
  * Describes an individual frame captured during authentication.
+ * @hide
  */
 @VintfStability
 parcelable AuthenticationFrame {

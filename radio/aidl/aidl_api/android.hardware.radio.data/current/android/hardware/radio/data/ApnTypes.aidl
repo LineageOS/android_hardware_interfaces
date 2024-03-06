@@ -32,22 +32,24 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.data;
+/* @hide */
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum ApnTypes {
   NONE = 0,
-  DEFAULT = (1 << 0),
-  MMS = (1 << 1),
-  SUPL = (1 << 2),
-  DUN = (1 << 3),
-  HIPRI = (1 << 4),
-  FOTA = (1 << 5),
-  IMS = (1 << 6),
-  CBS = (1 << 7),
-  IA = (1 << 8),
-  EMERGENCY = (1 << 9),
-  MCX = (1 << 10),
-  XCAP = (1 << 11),
-  VSIM = (1 << 12),
-  BIP = (1 << 13),
-  ENTERPRISE = (1 << 14),
+  DEFAULT = (1 << 0) /* 1 */,
+  MMS = (1 << 1) /* 2 */,
+  SUPL = (1 << 2) /* 4 */,
+  DUN = (1 << 3) /* 8 */,
+  HIPRI = (1 << 4) /* 16 */,
+  FOTA = (1 << 5) /* 32 */,
+  IMS = (1 << 6) /* 64 */,
+  CBS = (1 << 7) /* 128 */,
+  IA = (1 << 8) /* 256 */,
+  EMERGENCY = (1 << 9) /* 512 */,
+  MCX = (1 << 10) /* 1024 */,
+  XCAP = (1 << 11) /* 2048 */,
+  VSIM = (1 << 12) /* 4096 */,
+  BIP = (1 << 13) /* 8192 */,
+  ENTERPRISE = (1 << 14) /* 16384 */,
+  RCS = (1 << 15) /* 32768 */,
 }

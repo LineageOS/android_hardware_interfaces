@@ -35,6 +35,7 @@ import android.hardware.radio.messaging.SmsWriteArgs;
  * duration of a method call. If clients provide colliding serials (including passing the same
  * serial to different methods), multiple responses (one for each method call) must still be served.
  * setResponseFunctions must work with IRadioMessagingResponse and IRadioMessagingIndication.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioMessaging {
@@ -49,6 +50,8 @@ oneway interface IRadioMessaging {
      * @param ackPdu acknowledgement TPDU in hexadecimal format
      *
      * Response function is IRadioMessagingResponse.acknowledgeIncomingGsmSmsWithPduResponse()
+     *
+     * This is available when android.hardware.telephony.messaging is defined.
      */
     void acknowledgeIncomingGsmSmsWithPdu(in int serial, in boolean success, in String ackPdu);
 
@@ -60,6 +63,8 @@ oneway interface IRadioMessaging {
      * @param smsAck Cdma Sms ack to be sent described by CdmaSmsAck
      *
      * Response function is IRadioMessagingResponse.acknowledgeLastIncomingCdmaSmsResponse()
+     *
+     * This is available when android.hardware.telephony.cdma is defined.
      */
     void acknowledgeLastIncomingCdmaSms(in int serial, in CdmaSmsAck smsAck);
 
@@ -74,6 +79,8 @@ oneway interface IRadioMessaging {
      *        in TS 23.040, 9.2.3.22.
      *
      * Response function is IRadioMessagingResponse.acknowledgeLastIncomingGsmSmsResponse()
+     *
+     * This is available when android.hardware.telephony.messaging is defined.
      */
     void acknowledgeLastIncomingGsmSms(
             in int serial, in boolean success, in SmsAcknowledgeFailCause cause);
@@ -85,6 +92,8 @@ oneway interface IRadioMessaging {
      * @param index record index of the message to delete
      *
      * Response function is IRadioMessagingResponse.deleteSmsOnRuimResponse()
+     *
+     * This is available when android.hardware.telephony.cdma is defined.
      */
     void deleteSmsOnRuim(in int serial, in int index);
 
@@ -95,6 +104,8 @@ oneway interface IRadioMessaging {
      * @param index Record index of the message to delete.
      *
      * Response function is IRadioMessagingResponse.deleteSmsOnSimResponse()
+     *
+     * This is available when android.hardware.telephony.messaging is defined.
      */
     void deleteSmsOnSim(in int serial, in int index);
 
@@ -104,6 +115,8 @@ oneway interface IRadioMessaging {
      * @param serial Serial number of request.
      *
      * Response function is IRadioMessagingResponse.getCdmaBroadcastConfigResponse()
+     *
+     * This is available when android.hardware.telephony.cdma is defined.
      */
     void getCdmaBroadcastConfig(in int serial);
 
@@ -113,6 +126,8 @@ oneway interface IRadioMessaging {
      * @param serial Serial number of request.
      *
      * Response function is IRadioMessagingResponse.getGsmBroadcastConfigResponse()
+     *
+     * This is available when android.hardware.telephony.messaging is defined.
      */
     void getGsmBroadcastConfig(in int serial);
 
@@ -122,6 +137,8 @@ oneway interface IRadioMessaging {
      * @param serial Serial number of request.
      *
      * Response function is IRadioMessagingResponse.getSmscAddressResponse()
+     *
+     * This is available when android.hardware.telephony.messaging is defined.
      */
     void getSmscAddress(in int serial);
 
@@ -133,6 +150,8 @@ oneway interface IRadioMessaging {
      *        false if memory capacity is exceeded
      *
      * Response function is IRadioMessagingResponse.reportSmsMemoryStatusResponse()
+     *
+     * This is available when android.hardware.telephony.messaging is defined.
      */
     void reportSmsMemoryStatus(in int serial, in boolean available);
 
@@ -140,6 +159,8 @@ oneway interface IRadioMessaging {
      * When response type received from a radio indication or radio response is
      * RadioIndicationType:UNSOLICITED_ACK_EXP or RadioResponseType:SOLICITED_ACK_EXP respectively,
      * acknowledge the receipt of those messages by sending responseAcknowledgement().
+     *
+     * This is available when android.hardware.telephony.messaging is defined.
      */
     void responseAcknowledgement();
 
@@ -150,6 +171,8 @@ oneway interface IRadioMessaging {
      * @param sms CdmaSmsMessage to be sent
      *
      * Response function is IRadioMessagingResponse.sendCdmaSmsResponse()
+     *
+     * This is available when android.hardware.telephony.cdma is defined.
      */
     void sendCdmaSms(in int serial, in CdmaSmsMessage sms);
 
@@ -161,6 +184,8 @@ oneway interface IRadioMessaging {
      * @param sms CdmaSmsMessage to be sent
      *
      * Response function is IRadioMessagingResponse.sendCdmaSmsExpectMoreResponse()
+     *
+     * This is available when android.hardware.telephony.cdma is defined.
      */
     void sendCdmaSmsExpectMore(in int serial, in CdmaSmsMessage sms);
 
@@ -173,6 +198,8 @@ oneway interface IRadioMessaging {
      * @param message ImsSmsMessage to be sent
      *
      * Response function is IRadioMessagingResponse.sendImsSmsResponse()
+     *
+     * This is available when android.hardware.telephony.ims is defined.
      */
     void sendImsSms(in int serial, in ImsSmsMessage message);
 
@@ -185,6 +212,8 @@ oneway interface IRadioMessaging {
      * @param message GsmSmsMessage to be sent
      *
      * Response function is IRadioMessagingResponse.sendSmsResponse()
+     *
+     * This is available when android.hardware.telephony.messaging is defined.
      */
     void sendSms(in int serial, in GsmSmsMessage message);
 
@@ -199,6 +228,8 @@ oneway interface IRadioMessaging {
      * @param message GsmSmsMessage to be sent
      *
      * Response function is IRadioMessagingResponse.sendSmsExpectMoreResponse()
+     *
+     * This is available when android.hardware.telephony.messaging is defined.
      */
     void sendSmsExpectMore(in int serial, in GsmSmsMessage message);
 
@@ -210,6 +241,8 @@ oneway interface IRadioMessaging {
      *        true = activate, false = turn off
      *
      * Response function is IRadioMessagingResponse.setCdmaBroadcastActivationResponse()
+     *
+     * This is available when android.hardware.telephony.cdma is defined.
      */
     void setCdmaBroadcastActivation(in int serial, in boolean activate);
 
@@ -220,6 +253,8 @@ oneway interface IRadioMessaging {
      * @param configInfo CDMA Broadcast SMS config to be set.
      *
      * Response function is IRadioMessagingResponse.setCdmaBroadcastConfigResponse()
+     *
+     * This is available when android.hardware.telephony.cdma is defined.
      */
     void setCdmaBroadcastConfig(in int serial, in CdmaBroadcastSmsConfigInfo[] configInfo);
 
@@ -231,6 +266,8 @@ oneway interface IRadioMessaging {
      *        Cell Broadcast SMS. true = activate, false = turn off
      *
      * Response function is IRadioMessagingResponse.setGsmBroadcastActivationResponse()
+     *
+     * This is available when android.hardware.telephony.messaging is defined.
      */
     void setGsmBroadcastActivation(in int serial, in boolean activate);
 
@@ -241,6 +278,8 @@ oneway interface IRadioMessaging {
      * @param configInfo Setting of GSM/WCDMA Cell broadcast config
      *
      * Response function is IRadioMessagingResponse.setGsmBroadcastConfigResponse()
+     *
+     * This is available when android.hardware.telephony.messaging is defined.
      */
     void setGsmBroadcastConfig(in int serial, in GsmBroadcastSmsConfigInfo[] configInfo);
 
@@ -249,6 +288,8 @@ oneway interface IRadioMessaging {
      *
      * @param radioMessagingResponse Object containing response functions
      * @param radioMessagingIndication Object containing radio indications
+     *
+     * This is available when android.hardware.telephony.messaging is defined.
      */
     void setResponseFunctions(in IRadioMessagingResponse radioMessagingResponse,
             in IRadioMessagingIndication radioMessagingIndication);
@@ -260,6 +301,8 @@ oneway interface IRadioMessaging {
      * @param smsc Short Message Service Center address to set
      *
      * Response function is IRadioMessagingResponse.setSmscAddressResponse()
+     *
+     * This is available when android.hardware.telephony.messaging is defined.
      */
     void setSmscAddress(in int serial, in String smsc);
 
@@ -270,6 +313,8 @@ oneway interface IRadioMessaging {
      * @param cdmaSms CdmaSmsWriteArgs
      *
      * Response function is IRadioMessagingResponse.writeSmsToRuimResponse()
+     *
+     * This is available when android.hardware.telephony.cdma is defined.
      */
     void writeSmsToRuim(in int serial, in CdmaSmsWriteArgs cdmaSms);
 
@@ -280,6 +325,8 @@ oneway interface IRadioMessaging {
      * @param smsWriteArgs SmsWriteArgs
      *
      * Response function is IRadioMessagingResponse.writeSmsToSimResponse()
+     *
+     * This is available when android.hardware.telephony.messaging is defined.
      */
     void writeSmsToSim(in int serial, in SmsWriteArgs smsWriteArgs);
 }

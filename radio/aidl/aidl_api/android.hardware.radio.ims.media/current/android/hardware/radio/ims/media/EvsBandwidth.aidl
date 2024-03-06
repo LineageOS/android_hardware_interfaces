@@ -32,7 +32,8 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.ims.media;
-@Backing(type="int") @VintfStability
+/* @hide */
+@Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum EvsBandwidth {
   NONE = 0,
   NARROW_BAND = (1 << 0) /* 1 */,

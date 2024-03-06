@@ -34,12 +34,12 @@
 package android.hardware.wifi.supplicant;
 @Backing(type="int") @VintfStability
 enum QosPolicyClassifierParamsMask {
-  SRC_IP = 1,
-  DST_IP = 2,
-  SRC_PORT = 4,
-  DST_PORT_RANGE = 8,
-  PROTOCOL_NEXT_HEADER = 16,
-  FLOW_LABEL = 32,
-  DOMAIN_NAME = 64,
-  DSCP = 128,
+  SRC_IP = (1 << 0) /* 1 */,
+  DST_IP = (1 << 1) /* 2 */,
+  SRC_PORT = (1 << 2) /* 4 */,
+  DST_PORT_RANGE = (1 << 3) /* 8 */,
+  PROTOCOL_NEXT_HEADER = (1 << 4) /* 16 */,
+  FLOW_LABEL = (1 << 5) /* 32 */,
+  DOMAIN_NAME = (1 << 6) /* 64 */,
+  DSCP = (1 << 7) /* 128 */,
 }

@@ -115,7 +115,9 @@ ScopedAStatus Gnss::start() {
     mGnssMeasurementInterface->setLocationEnabled(true);
     this->reportGnssStatusValue(IGnssCallback::GnssStatusValue::SESSION_BEGIN);
     mThread = std::thread([this]() {
-        this->reportSvStatus();
+        if (!mGnssMeasurementEnabled || mMinIntervalMs <= mGnssMeasurementIntervalMs) {
+            this->reportSvStatus();
+        }
         if (!mFirstFixReceived) {
             std::this_thread::sleep_for(std::chrono::milliseconds(TTFF_MILLIS));
             mFirstFixReceived = true;
@@ -124,7 +126,9 @@ ScopedAStatus Gnss::start() {
             if (!mIsActive) {
                 break;
             }
-            this->reportSvStatus();
+            if (!mGnssMeasurementEnabled || mMinIntervalMs <= mGnssMeasurementIntervalMs) {
+                this->reportSvStatus();
+            }
             this->reportNmea();
 
             auto currentLocation = getLocationFromHW();
@@ -384,6 +388,14 @@ ndk::ScopedAStatus Gnss::getExtensionMeasurementCorrections(
     *iMeasurementCorrections =
             SharedRefBase::make<measurement_corrections::MeasurementCorrectionsInterface>();
     return ndk::ScopedAStatus::ok();
+}
+
+void Gnss::setGnssMeasurementEnabled(const bool enabled) {
+    mGnssMeasurementEnabled = enabled;
+}
+
+void Gnss::setGnssMeasurementInterval(const long intervalMs) {
+    mGnssMeasurementIntervalMs = intervalMs;
 }
 
 }  // namespace aidl::android::hardware::gnss

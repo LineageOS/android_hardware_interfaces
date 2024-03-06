@@ -35,6 +35,9 @@ aidl_interface {
         java: {
             platform_apis: true,
         },
+        rust: {
+            enabled: true,
+        },
     },
     versions_with_info: [
         {
@@ -42,6 +45,6 @@ aidl_interface {
             imports: [],
         },
     ],
-    frozen: true,
+    frozen: false,
 
 }

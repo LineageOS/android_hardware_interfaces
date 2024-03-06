@@ -59,6 +59,8 @@ IWifiChip::FeatureSetMask convertLegacyChipFeatureToAidl(uint64_t feature) {
             return IWifiChip::FeatureSetMask::P2P_RAND_MAC;
         case WIFI_FEATURE_AFC_CHANNEL:
             return IWifiChip::FeatureSetMask::SET_AFC_CHANNEL_ALLOWANCE;
+        case WIFI_FEATURE_SET_VOIP_MODE:
+            return IWifiChip::FeatureSetMask::SET_VOIP_MODE;
     };
     CHECK(false) << "Unknown legacy feature: " << feature;
     return {};
@@ -92,6 +94,10 @@ IWifiStaIface::FeatureSetMask convertLegacyStaIfaceFeatureToAidl(uint64_t featur
             return IWifiStaIface::FeatureSetMask::ND_OFFLOAD;
         case WIFI_FEATURE_MKEEP_ALIVE:
             return IWifiStaIface::FeatureSetMask::KEEP_ALIVE;
+        case WIFI_FEATURE_ROAMING_MODE_CONTROL:
+            return IWifiStaIface::FeatureSetMask::ROAMING_MODE_CONTROL;
+        case WIFI_FEATURE_CACHED_SCAN_RESULTS:
+            return IWifiStaIface::FeatureSetMask::CACHED_SCAN_DATA;
     };
     CHECK(false) << "Unknown legacy feature: " << feature;
     return {};
@@ -109,7 +115,8 @@ bool convertLegacyChipFeaturesToAidl(uint64_t legacy_feature_set, uint32_t* aidl
                                       WIFI_FEATURE_INFRA_60G,
                                       WIFI_FEATURE_SET_LATENCY_MODE,
                                       WIFI_FEATURE_P2P_RAND_MAC,
-                                      WIFI_FEATURE_AFC_CHANNEL};
+                                      WIFI_FEATURE_AFC_CHANNEL,
+                                      WIFI_FEATURE_SET_VOIP_MODE};
     for (const auto feature : features) {
         if (feature & legacy_feature_set) {
             *aidl_feature_set |= static_cast<uint32_t>(convertLegacyChipFeatureToAidl(feature));
@@ -457,7 +464,8 @@ bool convertLegacyStaIfaceFeaturesToAidl(uint64_t legacy_feature_set, uint32_t* 
          {WIFI_FEATURE_GSCAN, WIFI_FEATURE_LINK_LAYER_STATS, WIFI_FEATURE_RSSI_MONITOR,
           WIFI_FEATURE_CONTROL_ROAMING, WIFI_FEATURE_IE_WHITELIST, WIFI_FEATURE_SCAN_RAND,
           WIFI_FEATURE_INFRA_5G, WIFI_FEATURE_HOTSPOT, WIFI_FEATURE_PNO, WIFI_FEATURE_TDLS,
-          WIFI_FEATURE_TDLS_OFFCHANNEL, WIFI_FEATURE_CONFIG_NDO, WIFI_FEATURE_MKEEP_ALIVE}) {
+          WIFI_FEATURE_TDLS_OFFCHANNEL, WIFI_FEATURE_CONFIG_NDO, WIFI_FEATURE_MKEEP_ALIVE,
+          WIFI_FEATURE_ROAMING_MODE_CONTROL, WIFI_FEATURE_CACHED_SCAN_RESULTS}) {
         if (feature & legacy_feature_set) {
             *aidl_feature_set |= static_cast<uint32_t>(convertLegacyStaIfaceFeatureToAidl(feature));
         }
@@ -1147,6 +1155,8 @@ legacy_hal::fw_roaming_state_t convertAidlRoamingStateToLegacy(StaRoamingState s
             return legacy_hal::ROAMING_ENABLE;
         case StaRoamingState::DISABLED:
             return legacy_hal::ROAMING_DISABLE;
+        case StaRoamingState::AGGRESSIVE:
+            return legacy_hal::ROAMING_AGGRESSIVE;
     };
     CHECK(false);
 }
@@ -2088,6 +2098,17 @@ bool convertAidlNanDataPathInitiatorRequestToLegacy(
     memcpy(legacy_request->scid, aidl_request.securityConfig.scid.data(), legacy_request->scid_len);
     legacy_request->publish_subscribe_id = static_cast<uint8_t>(aidl_request.discoverySessionId);
 
+    legacy_request->csia_capabilities |=
+            aidl_request.securityConfig.enable16ReplyCountersForTksa ? 0x1 : 0x0;
+    legacy_request->csia_capabilities |=
+            aidl_request.securityConfig.enable16ReplyCountersForGtksa ? 0x8 : 0x0;
+    if (aidl_request.securityConfig.supportGtkAndIgtk) {
+        legacy_request->csia_capabilities |= aidl_request.securityConfig.supportBigtksa ? 0x4 : 0x2;
+    }
+    legacy_request->csia_capabilities |= aidl_request.securityConfig.enableNcsBip256 ? 0x16 : 0x0;
+    legacy_request->gtk_protection =
+            aidl_request.securityConfig.requiresEnhancedFrameProtection ? 1 : 0;
+
     return true;
 }
 
@@ -2169,6 +2190,17 @@ bool convertAidlNanDataPathIndicationResponseToLegacy(
     }
     memcpy(legacy_request->scid, aidl_request.securityConfig.scid.data(), legacy_request->scid_len);
     legacy_request->publish_subscribe_id = static_cast<uint8_t>(aidl_request.discoverySessionId);
+
+    legacy_request->csia_capabilities |=
+            aidl_request.securityConfig.enable16ReplyCountersForTksa ? 0x1 : 0x0;
+    legacy_request->csia_capabilities |=
+            aidl_request.securityConfig.enable16ReplyCountersForGtksa ? 0x8 : 0x0;
+    if (aidl_request.securityConfig.supportGtkAndIgtk) {
+        legacy_request->csia_capabilities |= aidl_request.securityConfig.supportBigtksa ? 0x4 : 0x2;
+    }
+    legacy_request->csia_capabilities |= aidl_request.securityConfig.enableNcsBip256 ? 0x16 : 0x0;
+    legacy_request->gtk_protection =
+            aidl_request.securityConfig.requiresEnhancedFrameProtection ? 1 : 0;
 
     return true;
 }
@@ -2394,8 +2426,11 @@ legacy_hal::wifi_rtt_type convertAidlRttTypeToLegacy(RttType type) {
     switch (type) {
         case RttType::ONE_SIDED:
             return legacy_hal::RTT_TYPE_1_SIDED;
-        case RttType::TWO_SIDED:
-            return legacy_hal::RTT_TYPE_2_SIDED;
+        case RttType::TWO_SIDED_11MC:
+            // Same as RttType::TWO_SIDED
+            return legacy_hal::RTT_TYPE_2_SIDED_11MC;
+        case RttType::TWO_SIDED_11AZ_NTB:
+            return legacy_hal::RTT_TYPE_2_SIDED_11AZ_NTB;
     };
     CHECK(false);
 }
@@ -2404,8 +2439,11 @@ RttType convertLegacyRttTypeToAidl(legacy_hal::wifi_rtt_type type) {
     switch (type) {
         case legacy_hal::RTT_TYPE_1_SIDED:
             return RttType::ONE_SIDED;
-        case legacy_hal::RTT_TYPE_2_SIDED:
-            return RttType::TWO_SIDED;
+        case legacy_hal::RTT_TYPE_2_SIDED_11MC:
+            // Same as legacy_hal::RTT_TYPE_2_SIDED
+            return RttType::TWO_SIDED_11MC;
+        case legacy_hal::RTT_TYPE_2_SIDED_11AZ_NTB:
+            return RttType::TWO_SIDED_11AZ_NTB;
     };
     CHECK(false) << "Unknown legacy type: " << type;
 }
@@ -2485,6 +2523,8 @@ legacy_hal::wifi_rtt_preamble convertAidlRttPreambleToLegacy(RttPreamble type) {
             return legacy_hal::WIFI_RTT_PREAMBLE_HE;
         case RttPreamble::EHT:
             return legacy_hal::WIFI_RTT_PREAMBLE_EHT;
+        case RttPreamble::INVALID:
+            return legacy_hal::WIFI_RTT_PREAMBLE_INVALID;
     };
     CHECK(false);
 }
@@ -2501,6 +2541,8 @@ RttPreamble convertLegacyRttPreambleToAidl(legacy_hal::wifi_rtt_preamble type) {
             return RttPreamble::HE;
         case legacy_hal::WIFI_RTT_PREAMBLE_EHT:
             return RttPreamble::EHT;
+        case legacy_hal::WIFI_RTT_PREAMBLE_INVALID:
+            return RttPreamble::INVALID;
     };
     CHECK(false) << "Unknown legacy type: " << type;
 }
@@ -2690,6 +2732,21 @@ bool convertAidlRttConfigToLegacy(const RttConfig& aidl_config,
     return true;
 }
 
+bool convertAidlRttConfigToLegacyV3(const RttConfig& aidl_config,
+                                    legacy_hal::wifi_rtt_config_v3* legacy_config) {
+    if (!legacy_config) {
+        return false;
+    }
+    *legacy_config = {};
+    if (!convertAidlRttConfigToLegacy(aidl_config, &(legacy_config->rtt_config))) {
+        return false;
+    }
+    legacy_config->tx_ltf_repetition_count = aidl_config.txLtfRepetitionCount;
+    legacy_config->ntb_min_measurement_time_millis = aidl_config.ntbMinMeasurementTimeMillis;
+    legacy_config->ntb_max_measurement_time_millis = aidl_config.ntbMaxMeasurementTimeMillis;
+    return true;
+}
+
 bool convertAidlVectorOfRttConfigToLegacy(
         const std::vector<RttConfig>& aidl_configs,
         std::vector<legacy_hal::wifi_rtt_config>* legacy_configs) {
@@ -2699,7 +2756,24 @@ bool convertAidlVectorOfRttConfigToLegacy(
     *legacy_configs = {};
     for (const auto& aidl_config : aidl_configs) {
         legacy_hal::wifi_rtt_config legacy_config;
-        if (!convertAidlRttConfigToLegacy(aidl_config, &legacy_config)) {
+        if (!convertAidlRttConfigToLegacy(aidl_config, &(legacy_config))) {
+            return false;
+        }
+        legacy_configs->push_back(legacy_config);
+    }
+    return true;
+}
+
+bool convertAidlVectorOfRttConfigToLegacyV3(
+        const std::vector<RttConfig>& aidl_configs,
+        std::vector<legacy_hal::wifi_rtt_config_v3>* legacy_configs) {
+    if (!legacy_configs) {
+        return false;
+    }
+    *legacy_configs = {};
+    for (const auto& aidl_config : aidl_configs) {
+        legacy_hal::wifi_rtt_config_v3 legacy_config;
+        if (!convertAidlRttConfigToLegacyV3(aidl_config, &legacy_config)) {
             return false;
         }
         legacy_configs->push_back(legacy_config);
@@ -2768,6 +2842,34 @@ bool convertLegacyRttResponderToAidl(const legacy_hal::wifi_rtt_responder& legac
     return true;
 }
 
+RttPreamble convertLegacyRttPreambleBitmapToAidl(byte legacyPreambleBitmap) {
+    int32_t aidlPreambleBitmap = 0;
+    for (const auto flag : {legacy_hal::WIFI_RTT_PREAMBLE_LEGACY, legacy_hal::WIFI_RTT_PREAMBLE_HT,
+                            legacy_hal::WIFI_RTT_PREAMBLE_VHT, legacy_hal::WIFI_RTT_PREAMBLE_HE,
+                            legacy_hal::WIFI_RTT_PREAMBLE_EHT}) {
+        if (legacyPreambleBitmap & flag) {
+            aidlPreambleBitmap |= static_cast<std::underlying_type<RttPreamble>::type>(
+                    convertLegacyRttPreambleToAidl(flag));
+        }
+    }
+
+    return static_cast<RttPreamble>(aidlPreambleBitmap);
+}
+
+RttBw convertLegacyRttBwBitmapToAidl(byte legacyBwBitmap) {
+    int32_t aidlBwBitmap = 0;
+    for (const auto flag :
+         {legacy_hal::WIFI_RTT_BW_5, legacy_hal::WIFI_RTT_BW_10, legacy_hal::WIFI_RTT_BW_20,
+          legacy_hal::WIFI_RTT_BW_40, legacy_hal::WIFI_RTT_BW_80, legacy_hal::WIFI_RTT_BW_160,
+          legacy_hal::WIFI_RTT_BW_320}) {
+        if (legacyBwBitmap & flag) {
+            aidlBwBitmap |=
+                    static_cast<std::underlying_type<RttBw>::type>(convertLegacyRttBwToAidl(flag));
+        }
+    }
+    return static_cast<RttBw>(aidlBwBitmap);
+}
+
 bool convertLegacyRttCapabilitiesToAidl(
         const legacy_hal::wifi_rtt_capabilities& legacy_capabilities,
         RttCapabilities* aidl_capabilities) {
@@ -2780,28 +2882,44 @@ bool convertLegacyRttCapabilitiesToAidl(
     aidl_capabilities->lciSupported = legacy_capabilities.lci_support;
     aidl_capabilities->lcrSupported = legacy_capabilities.lcr_support;
     aidl_capabilities->responderSupported = legacy_capabilities.responder_supported;
-    int32_t preambleSupport = 0;
-    for (const auto flag : {legacy_hal::WIFI_RTT_PREAMBLE_LEGACY, legacy_hal::WIFI_RTT_PREAMBLE_HT,
-                            legacy_hal::WIFI_RTT_PREAMBLE_VHT, legacy_hal::WIFI_RTT_PREAMBLE_HE,
-                            legacy_hal::WIFI_RTT_PREAMBLE_EHT}) {
-        if (legacy_capabilities.preamble_support & flag) {
-            preambleSupport |= static_cast<std::underlying_type<RttPreamble>::type>(
-                    convertLegacyRttPreambleToAidl(flag));
-        }
-    }
-    aidl_capabilities->preambleSupport = static_cast<RttPreamble>(preambleSupport);
-    int32_t bwSupport = 0;
-    for (const auto flag :
-         {legacy_hal::WIFI_RTT_BW_5, legacy_hal::WIFI_RTT_BW_10, legacy_hal::WIFI_RTT_BW_20,
-          legacy_hal::WIFI_RTT_BW_40, legacy_hal::WIFI_RTT_BW_80, legacy_hal::WIFI_RTT_BW_160,
-          legacy_hal::WIFI_RTT_BW_320}) {
-        if (legacy_capabilities.bw_support & flag) {
-            bwSupport |=
-                    static_cast<std::underlying_type<RttBw>::type>(convertLegacyRttBwToAidl(flag));
-        }
-    }
-    aidl_capabilities->bwSupport = static_cast<RttBw>(bwSupport);
+    aidl_capabilities->preambleSupport =
+            convertLegacyRttPreambleBitmapToAidl(legacy_capabilities.preamble_support);
+    aidl_capabilities->bwSupport = convertLegacyRttBwBitmapToAidl(legacy_capabilities.bw_support);
     aidl_capabilities->mcVersion = legacy_capabilities.mc_version;
+    // Initialize 11az parameters to default
+    aidl_capabilities->azPreambleSupport = RttPreamble::INVALID;
+    aidl_capabilities->azBwSupport = RttBw::BW_UNSPECIFIED;
+    aidl_capabilities->ntbInitiatorSupported = false;
+    aidl_capabilities->ntbResponderSupported = false;
+    aidl_capabilities->maxTxLtfRepetitionCount = 0;
+    return true;
+}
+
+bool convertLegacyRttCapabilitiesV3ToAidl(
+        const legacy_hal::wifi_rtt_capabilities_v3& legacy_capabilities_v3,
+        RttCapabilities* aidl_capabilities) {
+    if (!aidl_capabilities) {
+        return false;
+    }
+    *aidl_capabilities = {};
+    aidl_capabilities->rttOneSidedSupported =
+            legacy_capabilities_v3.rtt_capab.rtt_one_sided_supported;
+    aidl_capabilities->rttFtmSupported = legacy_capabilities_v3.rtt_capab.rtt_ftm_supported;
+    aidl_capabilities->lciSupported = legacy_capabilities_v3.rtt_capab.lci_support;
+    aidl_capabilities->lcrSupported = legacy_capabilities_v3.rtt_capab.lcr_support;
+    aidl_capabilities->responderSupported = legacy_capabilities_v3.rtt_capab.responder_supported;
+    aidl_capabilities->preambleSupport =
+            convertLegacyRttPreambleBitmapToAidl(legacy_capabilities_v3.rtt_capab.preamble_support);
+    aidl_capabilities->bwSupport =
+            convertLegacyRttBwBitmapToAidl(legacy_capabilities_v3.rtt_capab.bw_support);
+    aidl_capabilities->mcVersion = legacy_capabilities_v3.rtt_capab.mc_version;
+    aidl_capabilities->azPreambleSupport =
+            convertLegacyRttPreambleBitmapToAidl(legacy_capabilities_v3.az_preamble_support);
+    aidl_capabilities->azBwSupport =
+            convertLegacyRttBwBitmapToAidl(legacy_capabilities_v3.az_bw_support);
+    aidl_capabilities->ntbInitiatorSupported = legacy_capabilities_v3.ntb_initiator_supported;
+    aidl_capabilities->ntbResponderSupported = legacy_capabilities_v3.ntb_responder_supported;
+    aidl_capabilities->maxTxLtfRepetitionCount = legacy_capabilities_v3.max_tx_ltf_repetition_count;
     return true;
 }
 
@@ -2876,6 +2994,9 @@ bool convertLegacyVectorOfRttResultToAidl(
         }
         aidl_result.channelFreqMHz = 0;
         aidl_result.packetBw = RttBw::BW_UNSPECIFIED;
+        aidl_result.txLtfRepetitionCount = 0;
+        aidl_result.ntbMinMeasurementTimeMillis = 0;
+        aidl_result.ntbMaxMeasurementTimeMillis = 0;
         aidl_results->push_back(aidl_result);
     }
     return true;
@@ -2896,6 +3017,33 @@ bool convertLegacyVectorOfRttResultV2ToAidl(
         aidl_result.channelFreqMHz =
                 legacy_result->frequency != UNSPECIFIED ? legacy_result->frequency : 0;
         aidl_result.packetBw = convertLegacyRttBwToAidl(legacy_result->packet_bw);
+        aidl_result.txLtfRepetitionCount = 0;
+        aidl_result.ntbMinMeasurementTimeMillis = 0;
+        aidl_result.ntbMaxMeasurementTimeMillis = 0;
+        aidl_results->push_back(aidl_result);
+    }
+    return true;
+}
+
+bool convertLegacyVectorOfRttResultV3ToAidl(
+        const std::vector<const legacy_hal::wifi_rtt_result_v3*>& legacy_results,
+        std::vector<RttResult>* aidl_results) {
+    if (!aidl_results) {
+        return false;
+    }
+    *aidl_results = {};
+    for (const auto legacy_result : legacy_results) {
+        RttResult aidl_result;
+        if (!convertLegacyRttResultToAidl(legacy_result->rtt_result.rtt_result, &aidl_result)) {
+            return false;
+        }
+        aidl_result.channelFreqMHz = legacy_result->rtt_result.frequency != UNSPECIFIED
+                                             ? legacy_result->rtt_result.frequency
+                                             : 0;
+        aidl_result.packetBw = convertLegacyRttBwToAidl(legacy_result->rtt_result.packet_bw);
+        aidl_result.txLtfRepetitionCount = legacy_result->tx_ltf_repetition_count;
+        aidl_result.ntbMinMeasurementTimeMillis = legacy_result->ntb_min_measurement_time_millis;
+        aidl_result.ntbMaxMeasurementTimeMillis = legacy_result->ntb_max_measurement_time_millis;
         aidl_results->push_back(aidl_result);
     }
     return true;
@@ -3178,6 +3326,8 @@ bool convertAidlNanBootstrappingInitiatorRequestToLegacy(
     legacy_request->cookie_length = aidl_request.cookie.size();
 
     memcpy(legacy_request->cookie, aidl_request.cookie.data(), legacy_request->cookie_length);
+    legacy_request->publish_subscribe_id = static_cast<uint8_t>(aidl_request.discoverySessionId);
+    legacy_request->comeback = aidl_request.isComeback ? 0x1 : 0x0;
 
     return true;
 }
@@ -3195,6 +3345,7 @@ bool convertAidlNanBootstrappingIndicationResponseToLegacy(
     legacy_request->service_instance_id = aidl_request.bootstrappingInstanceId;
     legacy_request->rsp_code = aidl_request.acceptRequest ? NAN_BOOTSTRAPPING_REQUEST_ACCEPT
                                                           : NAN_BOOTSTRAPPING_REQUEST_REJECT;
+    legacy_request->publish_subscribe_id = static_cast<uint8_t>(aidl_request.discoverySessionId);
 
     return true;
 }
@@ -3359,6 +3510,195 @@ bool convertLegacyIfaceCombinationsMatrixToChipMode(
     }
 
     chip_mode->availableCombinations = driver_Combinations_vec;
+    return true;
+}
+
+bool convertCachedScanReportToAidl(const legacy_hal::WifiCachedScanReport& report,
+                                   CachedScanData* aidl_scan_data) {
+    if (!aidl_scan_data) {
+        return false;
+    }
+    *aidl_scan_data = {};
+
+    std::vector<CachedScanResult> aidl_scan_results;
+    for (const auto& result : report.results) {
+        CachedScanResult aidl_scan_result;
+        if (!convertCachedScanResultToAidl(result, report.ts, &aidl_scan_result)) {
+            return false;
+        }
+        aidl_scan_results.push_back(aidl_scan_result);
+    }
+    aidl_scan_data->cachedScanResults = aidl_scan_results;
+
+    aidl_scan_data->scannedFrequenciesMhz = report.scanned_freqs;
+    return true;
+}
+
+bool convertCachedScanResultToAidl(const legacy_hal::wifi_cached_scan_result& legacy_scan_result,
+                                   uint64_t ts_us, CachedScanResult* aidl_scan_result) {
+    if (!aidl_scan_result) {
+        return false;
+    }
+    *aidl_scan_result = {};
+    aidl_scan_result->timeStampInUs = ts_us - legacy_scan_result.age_ms * 1000;
+    if (aidl_scan_result->timeStampInUs < 0) {
+        aidl_scan_result->timeStampInUs = 0;
+        return false;
+    }
+    size_t max_len_excluding_null = sizeof(legacy_scan_result.ssid) - 1;
+    size_t ssid_len = strnlen((const char*)legacy_scan_result.ssid, max_len_excluding_null);
+    aidl_scan_result->ssid =
+            std::vector<uint8_t>(legacy_scan_result.ssid, legacy_scan_result.ssid + ssid_len);
+    aidl_scan_result->bssid = std::array<uint8_t, 6>();
+    std::copy(legacy_scan_result.bssid, legacy_scan_result.bssid + 6,
+              std::begin(aidl_scan_result->bssid));
+    aidl_scan_result->frequencyMhz = legacy_scan_result.chanspec.primary_frequency;
+    aidl_scan_result->channelWidthMhz =
+            convertLegacyWifiChannelWidthToAidl(legacy_scan_result.chanspec.width);
+    aidl_scan_result->rssiDbm = legacy_scan_result.rssi;
+    aidl_scan_result->preambleType = convertScanResultFlagsToPreambleType(legacy_scan_result.flags);
+    return true;
+}
+
+WifiRatePreamble convertScanResultFlagsToPreambleType(int flags) {
+    if ((flags & WIFI_CACHED_SCAN_RESULT_FLAGS_EHT_OPS_PRESENT) > 0) {
+        return WifiRatePreamble::EHT;
+    }
+    if ((flags & WIFI_CACHED_SCAN_RESULT_FLAGS_HE_OPS_PRESENT) > 0) {
+        return WifiRatePreamble::HE;
+    }
+    if ((flags & WIFI_CACHED_SCAN_RESULT_FLAGS_VHT_OPS_PRESENT) > 0) {
+        return WifiRatePreamble::VHT;
+    }
+    if ((flags & WIFI_CACHED_SCAN_RESULT_FLAGS_HT_OPS_PRESENT) > 0) {
+        return WifiRatePreamble::HT;
+    }
+    return WifiRatePreamble::OFDM;
+}
+
+bool convertTwtCapabilitiesToAidl(legacy_hal::wifi_twt_capabilities legacy_twt_capabs,
+                                  TwtCapabilities* aidl_twt_capabs) {
+    if (!aidl_twt_capabs) {
+        return false;
+    }
+    aidl_twt_capabs->isTwtRequesterSupported = legacy_twt_capabs.is_twt_requester_supported;
+    aidl_twt_capabs->isTwtResponderSupported = legacy_twt_capabs.is_twt_responder_supported;
+    aidl_twt_capabs->isBroadcastTwtSupported = legacy_twt_capabs.is_flexible_twt_supported;
+    if (legacy_twt_capabs.min_wake_duration_micros > legacy_twt_capabs.max_wake_duration_micros) {
+        return false;
+    }
+    aidl_twt_capabs->minWakeDurationMicros = legacy_twt_capabs.min_wake_duration_micros;
+    aidl_twt_capabs->maxWakeDurationMicros = legacy_twt_capabs.max_wake_duration_micros;
+    if (legacy_twt_capabs.min_wake_interval_micros > legacy_twt_capabs.max_wake_interval_micros) {
+        return false;
+    }
+    aidl_twt_capabs->minWakeIntervalMicros = legacy_twt_capabs.min_wake_interval_micros;
+    aidl_twt_capabs->maxWakeIntervalMicros = legacy_twt_capabs.max_wake_interval_micros;
+    return true;
+}
+
+bool convertAidlTwtRequestToLegacy(const TwtRequest aidl_twt_request,
+                                   legacy_hal::wifi_twt_request* legacy_twt_request) {
+    if (legacy_twt_request == nullptr) {
+        return false;
+    }
+    legacy_twt_request->mlo_link_id = aidl_twt_request.mloLinkId;
+    if (aidl_twt_request.minWakeDurationMicros > aidl_twt_request.maxWakeDurationMicros) {
+        return false;
+    }
+    legacy_twt_request->min_wake_duration_micros = aidl_twt_request.minWakeDurationMicros;
+    legacy_twt_request->max_wake_duration_micros = aidl_twt_request.maxWakeDurationMicros;
+    if (aidl_twt_request.minWakeIntervalMicros > aidl_twt_request.maxWakeIntervalMicros) {
+        return false;
+    }
+    legacy_twt_request->min_wake_interval_micros = aidl_twt_request.minWakeIntervalMicros;
+    legacy_twt_request->max_wake_interval_micros = aidl_twt_request.maxWakeIntervalMicros;
+    return true;
+}
+
+IWifiStaIfaceEventCallback::TwtErrorCode convertLegacyHalTwtErrorCodeToAidl(
+        legacy_hal::wifi_twt_error_code legacy_error_code) {
+    switch (legacy_error_code) {
+        case WIFI_TWT_ERROR_CODE_TIMEOUT:
+            return IWifiStaIfaceEventCallback::TwtErrorCode::TIMEOUT;
+        case WIFI_TWT_ERROR_CODE_PEER_REJECTED:
+            return IWifiStaIfaceEventCallback::TwtErrorCode::PEER_REJECTED;
+        case WIFI_TWT_ERROR_CODE_PEER_NOT_SUPPORTED:
+            return IWifiStaIfaceEventCallback::TwtErrorCode::PEER_NOT_SUPPORTED;
+        case WIFI_TWT_ERROR_CODE_NOT_SUPPORTED:
+            return IWifiStaIfaceEventCallback::TwtErrorCode::NOT_SUPPORTED;
+        case WIFI_TWT_ERROR_CODE_NOT_AVAILABLE:
+            return IWifiStaIfaceEventCallback::TwtErrorCode::NOT_AVAILABLE;
+        case WIFI_TWT_ERROR_CODE_MAX_SESSION_REACHED:
+            return IWifiStaIfaceEventCallback::TwtErrorCode::MAX_SESSION_REACHED;
+        case WIFI_TWT_ERROR_CODE_INVALID_PARAMS:
+            return IWifiStaIfaceEventCallback::TwtErrorCode::INVALID_PARAMS;
+        case WIFI_TWT_ERROR_CODE_ALREADY_SUSPENDED:
+            return IWifiStaIfaceEventCallback::TwtErrorCode::ALREADY_SUSPENDED;
+        case WIFI_TWT_ERROR_CODE_ALREADY_RESUMED:
+            return IWifiStaIfaceEventCallback::TwtErrorCode::ALREADY_RESUMED;
+        default:
+            return IWifiStaIfaceEventCallback::TwtErrorCode::FAILURE_UNKNOWN;
+    }
+}
+
+IWifiStaIfaceEventCallback::TwtTeardownReasonCode convertLegacyHalTwtReasonCodeToAidl(
+        legacy_hal::wifi_twt_teardown_reason_code legacy_reason_code) {
+    switch (legacy_reason_code) {
+        case WIFI_TWT_TEARDOWN_REASON_CODE_LOCALLY_REQUESTED:
+            return IWifiStaIfaceEventCallback::TwtTeardownReasonCode::LOCALLY_REQUESTED;
+        case WIFI_TWT_TEARDOWN_REASON_CODE_INTERNALLY_INITIATED:
+            return IWifiStaIfaceEventCallback::TwtTeardownReasonCode::INTERNALLY_INITIATED;
+        case WIFI_TWT_TEARDOWN_REASON_CODE_PEER_INITIATED:
+            return IWifiStaIfaceEventCallback::TwtTeardownReasonCode::PEER_INITIATED;
+        default:
+            return IWifiStaIfaceEventCallback::TwtTeardownReasonCode::UNKNOWN;
+    }
+}
+
+bool convertLegacyHalTwtSessionToAidl(legacy_hal::wifi_twt_session twt_session,
+                                      TwtSession* aidl_twt_session) {
+    if (aidl_twt_session == nullptr) {
+        return false;
+    }
+
+    aidl_twt_session->sessionId = twt_session.session_id;
+    aidl_twt_session->mloLinkId = twt_session.mlo_link_id;
+    aidl_twt_session->wakeDurationMicros = twt_session.wake_duration_micros;
+    aidl_twt_session->wakeIntervalMicros = twt_session.wake_interval_micros;
+    switch (twt_session.negotiation_type) {
+        case WIFI_TWT_NEGO_TYPE_INDIVIDUAL:
+            aidl_twt_session->negotiationType = TwtSession::TwtNegotiationType::INDIVIDUAL;
+            break;
+        case WIFI_TWT_NEGO_TYPE_BROADCAST:
+            aidl_twt_session->negotiationType = TwtSession::TwtNegotiationType::BROADCAST;
+            break;
+        default:
+            return false;
+    }
+    aidl_twt_session->isTriggerEnabled = twt_session.is_trigger_enabled;
+    aidl_twt_session->isAnnounced = twt_session.is_announced;
+    aidl_twt_session->isImplicit = twt_session.is_implicit;
+    aidl_twt_session->isProtected = twt_session.is_protected;
+    aidl_twt_session->isUpdatable = twt_session.is_updatable;
+    aidl_twt_session->isSuspendable = twt_session.is_suspendable;
+    aidl_twt_session->isResponderPmModeEnabled = twt_session.is_responder_pm_mode_enabled;
+    return true;
+}
+
+bool convertLegacyHalTwtSessionStatsToAidl(legacy_hal::wifi_twt_session_stats twt_stats,
+                                           TwtSessionStats* aidl_twt_stats) {
+    if (aidl_twt_stats == nullptr) {
+        return false;
+    }
+
+    aidl_twt_stats->avgTxPktCount = twt_stats.avg_pkt_num_tx;
+    aidl_twt_stats->avgRxPktCount = twt_stats.avg_pkt_num_rx;
+    aidl_twt_stats->avgTxPktSize = twt_stats.avg_tx_pkt_size;
+    aidl_twt_stats->avgRxPktSize = twt_stats.avg_rx_pkt_size;
+    aidl_twt_stats->avgEospDurationMicros = twt_stats.avg_eosp_dur_us;
+    aidl_twt_stats->eospCount = twt_stats.eosp_count;
+
     return true;
 }
 

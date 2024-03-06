@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.voice;
+/* @hide */
 @JavaDerive(toString=true) @VintfStability
 parcelable EmergencyNumber {
   String number;
@@ -40,8 +41,8 @@ parcelable EmergencyNumber {
   int categories;
   String[] urns;
   int sources;
-  const int SOURCE_NETWORK_SIGNALING = (1 << 0);
-  const int SOURCE_SIM = (1 << 1);
-  const int SOURCE_MODEM_CONFIG = (1 << 2);
-  const int SOURCE_DEFAULT = (1 << 3);
+  const int SOURCE_NETWORK_SIGNALING = (1 << 0) /* 1 */;
+  const int SOURCE_SIM = (1 << 1) /* 2 */;
+  const int SOURCE_MODEM_CONFIG = (1 << 2) /* 4 */;
+  const int SOURCE_DEFAULT = (1 << 3) /* 8 */;
 }

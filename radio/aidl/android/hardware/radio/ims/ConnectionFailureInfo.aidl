@@ -16,10 +16,10 @@
 
 package android.hardware.radio.ims;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable ConnectionFailureInfo {
-
     @VintfStability
     @Backing(type="int")
     enum ConnectionFailureReason {

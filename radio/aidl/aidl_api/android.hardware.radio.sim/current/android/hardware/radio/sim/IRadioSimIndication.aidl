@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.sim;
+/* @hide */
 @VintfStability
 interface IRadioSimIndication {
   oneway void carrierInfoForImsiEncryption(in android.hardware.radio.RadioIndicationType info);
