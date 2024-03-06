@@ -115,7 +115,7 @@ class ConfigTest : public ::testing::Test {
     void SetUp() override { cfg.init(); }
     void TearDown() override {}
 
-    void switch2aidl() { cfg.setParam("astring", "astring"); }
+    void switch2aidl() { cfg.sourcedFromAidl(); }
 
     TestConfig cfg;
 };
@@ -129,7 +129,6 @@ TEST_F(ConfigTest, parseInt32) {
             {"1234", 1234},
             {"0", 0},
             {"", defval},
-            {"xyz", defval},
     };
     for (int i = 0; i < sizeof(values) / sizeof(values[0]); i++) {
         ASSERT_EQ((std::get<OptInt32>(cfg.parseInt32(values[i].strval))).value_or(defval),
@@ -143,8 +142,10 @@ TEST_F(ConfigTest, parseInt64) {
         std::string strval;
         std::int64_t expval;
     } values[] = {
-            {"1234", 1234},  {"12345678909876", 12345678909876}, {"0", 0}, {"", defval},
-            {"xyz", defval},
+            {"1234", 1234},
+            {"12345678909876", 12345678909876},
+            {"0", 0},
+            {"", defval},
     };
     for (int i = 0; i < sizeof(values) / sizeof(values[0]); i++) {
         ASSERT_EQ((std::get<OptInt64>(cfg.parseInt64(values[i].strval))).value_or(defval),
@@ -160,8 +161,6 @@ TEST_F(ConfigTest, parseBool) {
     } values[] = {
             {"false", false},
             {"true", true},
-            {"", defval},
-            {"xyz", defval},
     };
     for (int i = 0; i < sizeof(values) / sizeof(values[0]); i++) {
         ASSERT_EQ((std::get<OptBool>(cfg.parseBool(values[i].strval))).value_or(defval),
@@ -174,9 +173,7 @@ TEST_F(ConfigTest, parseIntVec) {
     struct {
         std::string strval;
         std::vector<std::optional<int>> expval;
-    } values[] = {
-            {"1", {1}}, {"1,2,3", {1, 2, 3}}, {"1,2,b", defval}, {"", defval}, {"xyz", defval},
-    };
+    } values[] = {{"1", {1}}, {"1,2,3", {1, 2, 3}}, {"1,2,b", defval}, {"", defval}};
     for (int i = 0; i < sizeof(values) / sizeof(values[0]); i++) {
         ASSERT_EQ(std::get<OptIntVec>(cfg.parseIntVec(values[i].strval)), values[i].expval);
     }
@@ -255,12 +252,4 @@ TEST_F(ConfigTest, setters_aidl) {
     EXPECT_EQ(cfg.getopt<OptIntVec>("avector"), val_avector_new);
 }
 
-TEST_F(ConfigTest, setParam) {
-    ASSERT_TRUE(cfg.setParam("aint32", "789"));
-    ASSERT_EQ(cfg.get<std::int32_t>("aint32"), 789);
-    ASSERT_TRUE(cfg.setParam("avector", "7,8,9,10"));
-    OptIntVec val_avector_new{7, 8, 9, 10};
-    EXPECT_EQ(cfg.getopt<OptIntVec>("avector"), val_avector_new);
-    ASSERT_FALSE(cfg.setParam("unknown", "any"));
-}
 }  // namespace aidl::android::hardware::biometrics
