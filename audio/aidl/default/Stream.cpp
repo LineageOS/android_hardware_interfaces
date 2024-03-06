@@ -21,6 +21,7 @@
 #include <Utils.h>
 #include <android-base/logging.h>
 #include <android/binder_ibinder_platform.h>
+#include <cutils/properties.h>
 #include <utils/SystemClock.h>
 #include <utils/Trace.h>
 
@@ -652,16 +653,34 @@ ndk::ScopedAStatus StreamCommonImpl::initInstance(
          isBitPositionFlagSet(flags.template get<AudioIoFlags::Tag::input>(),
                               AudioInputFlags::FAST)) ||
         (flags.getTag() == AudioIoFlags::Tag::output &&
-         isBitPositionFlagSet(flags.template get<AudioIoFlags::Tag::output>(),
-                              AudioOutputFlags::FAST))) {
+         (isBitPositionFlagSet(flags.template get<AudioIoFlags::Tag::output>(),
+                               AudioOutputFlags::FAST) ||
+          isBitPositionFlagSet(flags.template get<AudioIoFlags::Tag::output>(),
+                               AudioOutputFlags::SPATIALIZER)))) {
         // FAST workers should be run with a SCHED_FIFO scheduler, however the host process
         // might be lacking the capability to request it, thus a failure to set is not an error.
         pid_t workerTid = mWorker->getTid();
         if (workerTid > 0) {
-            struct sched_param param;
-            param.sched_priority = 3;  // Must match SchedulingPolicyService.PRIORITY_MAX (Java).
+            constexpr int32_t kRTPriorityMin = 1;  // SchedulingPolicyService.PRIORITY_MIN (Java).
+            constexpr int32_t kRTPriorityMax = 3;  // SchedulingPolicyService.PRIORITY_MAX (Java).
+            int priorityBoost = kRTPriorityMax;
+            if (flags.getTag() == AudioIoFlags::Tag::output &&
+                isBitPositionFlagSet(flags.template get<AudioIoFlags::Tag::output>(),
+                                     AudioOutputFlags::SPATIALIZER)) {
+                const int32_t sptPrio =
+                        property_get_int32("audio.spatializer.priority", kRTPriorityMin);
+                if (sptPrio >= kRTPriorityMin && sptPrio <= kRTPriorityMax) {
+                    priorityBoost = sptPrio;
+                } else {
+                    LOG(WARNING) << __func__ << ": invalid spatializer priority: " << sptPrio;
+                    return ndk::ScopedAStatus::ok();
+                }
+            }
+            struct sched_param param = {
+                    .sched_priority = priorityBoost,
+            };
             if (sched_setscheduler(workerTid, SCHED_FIFO | SCHED_RESET_ON_FORK, &param) != 0) {
-                PLOG(WARNING) << __func__ << ": failed to set FIFO scheduler for a fast thread";
+                PLOG(WARNING) << __func__ << ": failed to set FIFO scheduler and priority";
             }
         } else {
             LOG(WARNING) << __func__ << ": invalid worker tid: " << workerTid;
