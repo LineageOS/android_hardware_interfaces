@@ -136,10 +136,12 @@ void StreamRemoteSubmix::shutdown() {
     mCurrentRoute->exitStandby(mIsInput);
     RETURN_STATUS_IF_ERROR(mIsInput ? inRead(buffer, frameCount, actualFrameCount)
                                     : outWrite(buffer, frameCount, actualFrameCount));
+    mFramesSinceStart += *actualFrameCount;
+    if (!mIsInput) return ::android::OK;
+    // Only input streams need to block, for output this is implemented by MonoPipe.
     const long bufferDurationUs =
             (*actualFrameCount) * MICROS_PER_SECOND / mContext.getSampleRate();
     const auto totalDurationUs = (::android::uptimeNanos() - mStartTimeNs) / NANOS_PER_MICROSECOND;
-    mFramesSinceStart += *actualFrameCount;
     const long totalOffsetUs =
             mFramesSinceStart * MICROS_PER_SECOND / mContext.getSampleRate() - totalDurationUs;
     LOG(VERBOSE) << __func__ << ": totalOffsetUs " << totalOffsetUs;
@@ -275,8 +277,9 @@ size_t StreamRemoteSubmix::getStreamPipeSizeInFrames() {
     char* buff = (char*)buffer;
     size_t actuallyRead = 0;
     long remainingFrames = frameCount;
-    const int64_t deadlineTimeNs = ::android::uptimeNanos() +
-                                   getDelayInUsForFrameCount(frameCount) * NANOS_PER_MICROSECOND;
+    const int64_t deadlineTimeNs =
+            ::android::uptimeNanos() +
+            getDelayInUsForFrameCount(frameCount) * NANOS_PER_MICROSECOND / 2;
     while (remainingFrames > 0) {
         ssize_t framesRead = source->read(buff, remainingFrames);
         LOG(VERBOSE) << __func__ << ": frames read " << framesRead;
