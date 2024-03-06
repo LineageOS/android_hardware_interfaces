@@ -211,10 +211,8 @@ class Module : public BnModule {
         const int32_t rawSizeFrames =
                 aidl::android::hardware::audio::common::frameCountFromDurationMs(latencyMs,
                                                                                  sampleRateHz);
-        if (latencyMs >= 5) return rawSizeFrames;
-        int32_t powerOf2 = 1;
-        while (powerOf2 < rawSizeFrames) powerOf2 <<= 1;
-        return powerOf2;
+        // Round up to nearest 16 frames since in the framework this is the size of a mixer burst.
+        return (rawSizeFrames + 15) & ~15;
     }
 
     ndk::ScopedAStatus bluetoothParametersUpdated();
