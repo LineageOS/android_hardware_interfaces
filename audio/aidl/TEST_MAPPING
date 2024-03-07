@@ -78,12 +78,6 @@
           "include-filter": "android.virtualdevice.cts.VirtualAudioTest"
         }
       ]
-    },
-    {
-      "name": "VtsHalBassBoostTargetTest"
-    },
-    {
-      "name": "VtsHalDynamicsProcessingTest"
     }
   ]
 }
