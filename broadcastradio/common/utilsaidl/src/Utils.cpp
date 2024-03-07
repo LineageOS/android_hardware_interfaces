@@ -296,7 +296,12 @@ bool isValid(const ProgramSelector& sel) {
          sel.primaryId.type > IdentifierType::VENDOR_END)) {
         return false;
     }
-    return isValid(sel.primaryId);
+    for (auto it = begin(sel); it != end(sel); it++) {
+        if (!isValid(*it)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 ProgramIdentifier makeIdentifier(IdentifierType type, int64_t value) {

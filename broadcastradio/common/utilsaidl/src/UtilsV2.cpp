@@ -135,7 +135,12 @@ bool isValidV2(const ProgramSelector& sel) {
          sel.primaryId.type > IdentifierType::VENDOR_END)) {
         return false;
     }
-    return isValidV2(sel.primaryId);
+    for (auto it = begin(sel); it != end(sel); it++) {
+        if (!isValidV2(*it)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 bool isValidMetadataV2(const Metadata& metadata) {

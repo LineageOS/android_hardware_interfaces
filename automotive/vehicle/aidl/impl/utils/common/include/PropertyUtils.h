@@ -97,6 +97,8 @@ constexpr int ALL_WHEELS =
 constexpr int HVAC_LEFT = SEAT_1_LEFT | SEAT_2_LEFT | SEAT_2_CENTER;
 constexpr int HVAC_RIGHT = SEAT_1_RIGHT | SEAT_2_RIGHT;
 constexpr int HVAC_ALL = HVAC_LEFT | HVAC_RIGHT;
+constexpr int HVAC_FRONT_ROW = SEAT_1_LEFT | SEAT_1_RIGHT;
+constexpr int HVAC_REAR_ROW = SEAT_2_LEFT | SEAT_2_CENTER | SEAT_2_RIGHT;
 
 }  // namespace vehicle
 }  // namespace automotive
