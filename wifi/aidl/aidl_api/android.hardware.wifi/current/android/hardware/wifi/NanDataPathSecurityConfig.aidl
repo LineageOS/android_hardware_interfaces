@@ -39,4 +39,10 @@ parcelable NanDataPathSecurityConfig {
   byte[32] pmk;
   byte[] passphrase;
   byte[16] scid;
+  boolean enable16ReplyCountersForTksa;
+  boolean enable16ReplyCountersForGtksa;
+  boolean supportGtkAndIgtk;
+  boolean supportBigtksa;
+  boolean enableNcsBip256;
+  boolean requiresEnhancedFrameProtection;
 }

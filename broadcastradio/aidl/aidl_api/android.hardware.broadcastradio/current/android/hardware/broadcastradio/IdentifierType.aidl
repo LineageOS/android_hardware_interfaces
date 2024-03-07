@@ -47,6 +47,13 @@ enum IdentifierType {
   DAB_FREQUENCY_KHZ,
   DRMO_SERVICE_ID,
   DRMO_FREQUENCY_KHZ,
-  SXM_SERVICE_ID = (DRMO_FREQUENCY_KHZ + 2),
+  /**
+   * @deprecated SiriusXM Satellite Radio is not supported.
+   */
+  SXM_SERVICE_ID = (DRMO_FREQUENCY_KHZ + 2) /* 12 */,
+  /**
+   * @deprecated SiriusXM Satellite Radio is not supported.
+   */
   SXM_CHANNEL,
+  HD_STATION_LOCATION,
 }

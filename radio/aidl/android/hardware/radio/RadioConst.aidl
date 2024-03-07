@@ -16,6 +16,7 @@
 
 package android.hardware.radio;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable RadioConst {

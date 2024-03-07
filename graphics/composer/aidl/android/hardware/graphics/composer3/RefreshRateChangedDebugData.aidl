@@ -27,4 +27,15 @@ parcelable RefreshRateChangedDebugData {
      * The display vsync period in nanoseconds.
      */
     int vsyncPeriodNanos;
+
+    /**
+     * The refresh period of the display in nanoseconds.
+     * On VRR (Variable Refresh Rate) displays, refreshPeriodNanos can be different from the
+     * vsyncPeriodNanos because not every vsync cycle of the display is a refresh cycle.
+     * This should be set to the current refresh period.
+     * On non-VRR displays this value should be equal to vsyncPeriodNanos
+     *
+     * @see vsyncPeriodNanos
+     */
+    int refreshPeriodNanos;
 }

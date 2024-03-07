@@ -232,6 +232,7 @@ binder_status_t Health::dump(int fd, const char**, uint32_t) {
     } else {
         ::android::base::WriteStringToFd(res.getDescription(), fd);
     }
+    ::android::base::WriteStringToFd("\n", fd);
 
     fsync(fd);
     return STATUS_OK;

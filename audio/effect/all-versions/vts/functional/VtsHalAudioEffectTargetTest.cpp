@@ -169,13 +169,15 @@ static const Uuid LOUDNESS_ENHANCER_EFFECT_TYPE = {
     0xfe3199be, 0xaed0, 0x413f, 0x87bb,
     std::array<uint8_t, 6>{{0x11, 0x26, 0x0e, 0xb6, 0x3c, 0xf1}}};
 
-enum { PARAM_FACTORY_NAME, PARAM_EFFECT_UUID };
-using EffectParameter = std::tuple<std::string, Uuid>;
+enum { PARAM_FACTORY_NAME, PARAM_EFFECT_UUID, PARAM_USE_AFTER_CLOSE };
+using EffectParameter = std::tuple<std::string, Uuid, bool>;
 
 static inline std::string EffectParameterToString(
         const ::testing::TestParamInfo<EffectParameter>& info) {
-    return ::android::hardware::PrintInstanceNameToString(::testing::TestParamInfo<std::string>{
-            std::get<PARAM_FACTORY_NAME>(info.param), info.index});
+    std::string prefix = std::get<PARAM_USE_AFTER_CLOSE>(info.param) ? "UseAfterClose_" : "";
+    return prefix.append(
+            ::android::hardware::PrintInstanceNameToString(::testing::TestParamInfo<std::string>{
+                    std::get<PARAM_FACTORY_NAME>(info.param), info.index}));
 }
 
 // The main test class for Audio Effect HIDL HAL.
@@ -191,6 +193,13 @@ class AudioEffectHidlTest : public ::testing::TestWithParam<EffectParameter> {
         Return<Result> ret = effect->init();
         ASSERT_TRUE(ret.isOk());
         ASSERT_EQ(Result::OK, ret);
+
+        useAfterClose = std::get<PARAM_USE_AFTER_CLOSE>(GetParam());
+        if (useAfterClose) {
+            Return<Result> ret = effect->close();
+            ASSERT_TRUE(ret.isOk());
+            ASSERT_EQ(Result::OK, ret);
+        }
     }
 
     void TearDown() override {
@@ -205,13 +214,33 @@ class AudioEffectHidlTest : public ::testing::TestWithParam<EffectParameter> {
 
     Uuid getEffectType() const { return std::get<PARAM_EFFECT_UUID>(GetParam()); }
 
+    void checkResult(const Result& result);
+    void checkResultForUseAfterClose(const Result& result);
     void findAndCreateEffect(const Uuid& type);
     void findEffectInstance(const Uuid& type, Uuid* uuid);
     void getChannelCount(uint32_t* channelCount);
 
     sp<IEffectsFactory> effectsFactory;
     sp<IEffect> effect;
+    bool useAfterClose;
 };
+
+void AudioEffectHidlTest::checkResult(const Result& result) {
+    if (!useAfterClose) {
+        ASSERT_EQ(Result::OK, result);
+    } else {
+        ASSERT_NO_FATAL_FAILURE(checkResultForUseAfterClose(result));
+    }
+}
+
+void AudioEffectHidlTest::checkResultForUseAfterClose(const Result& result) {
+    if (useAfterClose) {
+        // The actual error does not matter. It's important that the effect did not crash
+        // while executing any command after a call to "close", and that the returned status
+        // is not OK.
+        ASSERT_NE(Result::OK, result);
+    }
+}
 
 void AudioEffectHidlTest::findAndCreateEffect(const Uuid& type) {
     Uuid effectUuid;
@@ -257,7 +286,11 @@ void AudioEffectHidlTest::getChannelCount(uint32_t* channelCount) {
         }
     });
     ASSERT_TRUE(ret.isOk());
-    ASSERT_EQ(Result::OK, retval);
+    ASSERT_NO_FATAL_FAILURE(checkResult(retval));
+    if (useAfterClose) {
+        *channelCount = 1;
+        return;
+    }
 #if MAJOR_VERSION <= 6
     ASSERT_TRUE(audio_channel_mask_is_valid(
         static_cast<audio_channel_mask_t>(currentConfig.outputCfg.channels)));
@@ -276,7 +309,7 @@ TEST_P(AudioEffectHidlTest, Close) {
     description("Verify that an effect can be closed");
     Return<Result> ret = effect->close();
     EXPECT_TRUE(ret.isOk());
-    EXPECT_EQ(Result::OK, ret);
+    ASSERT_NO_FATAL_FAILURE(checkResult(ret));
 }
 
 TEST_P(AudioEffectHidlTest, GetDescriptor) {
@@ -290,7 +323,8 @@ TEST_P(AudioEffectHidlTest, GetDescriptor) {
         }
     });
     EXPECT_TRUE(ret.isOk());
-    EXPECT_EQ(Result::OK, retval);
+    ASSERT_NO_FATAL_FAILURE(checkResult(retval));
+    if (useAfterClose) return;
     EXPECT_EQ(getEffectType(), actualType);
 }
 
@@ -307,7 +341,8 @@ TEST_P(AudioEffectHidlTest, GetSetConfig) {
         }
     });
     EXPECT_TRUE(ret.isOk());
-    EXPECT_EQ(Result::OK, retval);
+    EXPECT_NO_FATAL_FAILURE(checkResult(retval));
+    if (useAfterClose) return;
     Return<Result> ret2 = effect->setConfig(currentConfig, nullptr, nullptr);
     EXPECT_TRUE(ret2.isOk());
     EXPECT_EQ(Result::OK, ret2);
@@ -336,7 +371,8 @@ TEST_P(AudioEffectHidlTest, SetConfigInvalidArguments) {
         }
     });
     EXPECT_TRUE(ret.isOk());
-    EXPECT_EQ(Result::OK, retval);
+    EXPECT_NO_FATAL_FAILURE(checkResult(retval));
+    if (useAfterClose) return;
     for (const auto& invalidInputCfg : generateInvalidConfigs(currentConfig.inputCfg)) {
         EffectConfig invalidConfig = currentConfig;
         invalidConfig.inputCfg = invalidInputCfg;
@@ -356,27 +392,35 @@ TEST_P(AudioEffectHidlTest, SetConfigInvalidArguments) {
 
 TEST_P(AudioEffectHidlTest, GetConfigReverse) {
     description("Verify that GetConfigReverse does not crash");
-    Return<void> ret = effect->getConfigReverse([&](Result, const EffectConfig&) {});
+    Result retval = Result::OK;
+    Return<void> ret = effect->getConfigReverse([&](Result r, const EffectConfig&) { retval = r; });
     EXPECT_TRUE(ret.isOk());
+    EXPECT_NO_FATAL_FAILURE(checkResultForUseAfterClose(retval));
 }
 
 TEST_P(AudioEffectHidlTest, GetSupportedAuxChannelsConfigs) {
     description("Verify that GetSupportedAuxChannelsConfigs does not crash");
+    Result retval = Result::OK;
     Return<void> ret = effect->getSupportedAuxChannelsConfigs(
-        0, [&](Result, const hidl_vec<EffectAuxChannelsConfig>&) {});
+            0, [&](Result r, const hidl_vec<EffectAuxChannelsConfig>&) { retval = r; });
     EXPECT_TRUE(ret.isOk());
+    EXPECT_NO_FATAL_FAILURE(checkResultForUseAfterClose(retval));
 }
 
 TEST_P(AudioEffectHidlTest, GetAuxChannelsConfig) {
     description("Verify that GetAuxChannelsConfig does not crash");
-    Return<void> ret = effect->getAuxChannelsConfig([&](Result, const EffectAuxChannelsConfig&) {});
+    Result retval = Result::OK;
+    Return<void> ret = effect->getAuxChannelsConfig(
+            [&](Result r, const EffectAuxChannelsConfig&) { retval = r; });
     EXPECT_TRUE(ret.isOk());
+    EXPECT_NO_FATAL_FAILURE(checkResultForUseAfterClose(retval));
 }
 
 TEST_P(AudioEffectHidlTest, SetAuxChannelsConfig) {
     description("Verify that SetAuxChannelsConfig does not crash");
     Return<Result> ret = effect->setAuxChannelsConfig(EffectAuxChannelsConfig());
     EXPECT_TRUE(ret.isOk());
+    EXPECT_NO_FATAL_FAILURE(checkResultForUseAfterClose(ret));
 }
 
 // Not generated automatically because AudioBuffer contains
@@ -427,45 +471,56 @@ TEST_P(AudioEffectHidlTest, Reset) {
     description("Verify that Reset preserves effect configuration");
     Result retval = Result::NOT_INITIALIZED;
     EffectConfig originalConfig;
-    Return<void> ret = effect->getConfig([&](Result r, const EffectConfig& conf) {
-        retval = r;
-        if (r == Result::OK) {
-            originalConfig = conf;
-        }
-    });
-    ASSERT_TRUE(ret.isOk());
-    ASSERT_EQ(Result::OK, retval);
+    if (!useAfterClose) {
+        Return<void> ret = effect->getConfig([&](Result r, const EffectConfig& conf) {
+            retval = r;
+            if (r == Result::OK) {
+                originalConfig = conf;
+            }
+        });
+        ASSERT_TRUE(ret.isOk());
+        ASSERT_EQ(Result::OK, retval);
+    }
     Return<Result> ret2 = effect->reset();
     EXPECT_TRUE(ret2.isOk());
-    EXPECT_EQ(Result::OK, ret2);
-    EffectConfig configAfterReset;
-    ret = effect->getConfig([&](Result r, const EffectConfig& conf) {
-        retval = r;
-        if (r == Result::OK) {
-            configAfterReset = conf;
-        }
-    });
-    EXPECT_EQ(originalConfig, configAfterReset);
+    EXPECT_NO_FATAL_FAILURE(checkResult(ret2));
+    if (!useAfterClose) {
+        EffectConfig configAfterReset;
+        Return<void> ret = effect->getConfig([&](Result r, const EffectConfig& conf) {
+            retval = r;
+            if (r == Result::OK) {
+                configAfterReset = conf;
+            }
+        });
+        EXPECT_EQ(originalConfig, configAfterReset);
+    }
 }
 
 TEST_P(AudioEffectHidlTest, DisableEnableDisable) {
     description("Verify Disable -> Enable -> Disable sequence for an effect");
     Return<Result> ret = effect->disable();
     EXPECT_TRUE(ret.isOk());
-    // Note: some legacy effects may return -EINVAL (INVALID_ARGUMENTS),
-    //       more canonical is to return -ENOSYS (NOT_SUPPORTED)
-    EXPECT_TRUE(ret == Result::NOT_SUPPORTED || ret == Result::INVALID_ARGUMENTS);
+    if (!useAfterClose) {
+        // Note: some legacy effects may return -EINVAL (INVALID_ARGUMENTS),
+        //       more canonical is to return -ENOSYS (NOT_SUPPORTED)
+        EXPECT_TRUE(ret == Result::NOT_SUPPORTED || ret == Result::INVALID_ARGUMENTS);
+    } else {
+        EXPECT_NO_FATAL_FAILURE(checkResultForUseAfterClose(ret));
+    }
     ret = effect->enable();
     EXPECT_TRUE(ret.isOk());
-    EXPECT_EQ(Result::OK, ret);
+    EXPECT_NO_FATAL_FAILURE(checkResult(ret));
     ret = effect->disable();
     EXPECT_TRUE(ret.isOk());
-    EXPECT_EQ(Result::OK, ret);
+    EXPECT_NO_FATAL_FAILURE(checkResult(ret));
 }
 
 #if MAJOR_VERSION >= 7
 TEST_P(AudioEffectHidlTest, SetDeviceInvalidDeviceAddress) {
     description("Verify that invalid device address is rejected by SetDevice");
+    if (useAfterClose) {
+        GTEST_SKIP() << "Does not make sense for the useAfterClose case";
+    }
     DeviceAddress device{.deviceType = "random_string"};
     Return<Result> ret = effect->setDevice(device);
     EXPECT_TRUE(ret.isOk());
@@ -482,13 +537,13 @@ TEST_P(AudioEffectHidlTest, SetDevice) {
     Return<Result> ret = effect->setDevice(device);
 #endif
     EXPECT_TRUE(ret.isOk());
-    EXPECT_EQ(Result::OK, ret);
+    EXPECT_NO_FATAL_FAILURE(checkResult(ret));
 }
 
 TEST_P(AudioEffectHidlTest, SetAndGetVolume) {
     description("Verify that SetAndGetVolume method works for an effect");
     uint32_t channelCount;
-    getChannelCount(&channelCount);
+    ASSERT_NO_FATAL_FAILURE(getChannelCount(&channelCount));
     hidl_vec<uint32_t> volumes;
     volumes.resize(channelCount);
     for (uint32_t i = 0; i < channelCount; ++i) {
@@ -498,13 +553,13 @@ TEST_P(AudioEffectHidlTest, SetAndGetVolume) {
     Return<void> ret =
         effect->setAndGetVolume(volumes, [&](Result r, const hidl_vec<uint32_t>&) { retval = r; });
     EXPECT_TRUE(ret.isOk());
-    EXPECT_EQ(Result::OK, retval);
+    EXPECT_NO_FATAL_FAILURE(checkResult(retval));
 }
 
 TEST_P(AudioEffectHidlTest, VolumeChangeNotification) {
     description("Verify that effect accepts VolumeChangeNotification");
     uint32_t channelCount;
-    getChannelCount(&channelCount);
+    ASSERT_NO_FATAL_FAILURE(getChannelCount(&channelCount));
     hidl_vec<uint32_t> volumes;
     volumes.resize(channelCount);
     for (uint32_t i = 0; i < channelCount; ++i) {
@@ -512,25 +567,29 @@ TEST_P(AudioEffectHidlTest, VolumeChangeNotification) {
     }
     Return<Result> ret = effect->volumeChangeNotification(volumes);
     EXPECT_TRUE(ret.isOk());
-    EXPECT_EQ(Result::OK, ret);
+    EXPECT_NO_FATAL_FAILURE(checkResult(ret));
 }
 
 TEST_P(AudioEffectHidlTest, SetAudioMode) {
     description("Verify that SetAudioMode works for an effect");
     Return<Result> ret = effect->setAudioMode(AudioMode::NORMAL);
     EXPECT_TRUE(ret.isOk());
-    EXPECT_EQ(Result::OK, ret);
+    EXPECT_NO_FATAL_FAILURE(checkResult(ret));
 }
 
 TEST_P(AudioEffectHidlTest, SetConfigReverse) {
     description("Verify that SetConfigReverse does not crash");
     Return<Result> ret = effect->setConfigReverse(EffectConfig(), nullptr, nullptr);
     EXPECT_TRUE(ret.isOk());
+    EXPECT_NO_FATAL_FAILURE(checkResultForUseAfterClose(ret));
 }
 
 #if MAJOR_VERSION >= 7
 TEST_P(AudioEffectHidlTest, SetInputDeviceInvalidDeviceAddress) {
     description("Verify that invalid device address is rejected by SetInputDevice");
+    if (useAfterClose) {
+        GTEST_SKIP() << "Does not make sense for the useAfterClose case";
+    }
     DeviceAddress device{.deviceType = "random_string"};
     Return<Result> ret = effect->setInputDevice(device);
     EXPECT_TRUE(ret.isOk());
@@ -548,11 +607,15 @@ TEST_P(AudioEffectHidlTest, SetInputDevice) {
     Return<Result> ret = effect->setInputDevice(device);
 #endif
     EXPECT_TRUE(ret.isOk());
+    EXPECT_NO_FATAL_FAILURE(checkResultForUseAfterClose(ret));
 }
 
 #if MAJOR_VERSION >= 7
 TEST_P(AudioEffectHidlTest, SetInvalidAudioSource) {
     description("Verify that an invalid audio source is rejected by SetAudioSource");
+    if (useAfterClose) {
+        GTEST_SKIP() << "Does not make sense for the useAfterClose case";
+    }
     Return<Result> ret = effect->setAudioSource("random_string");
     ASSERT_TRUE(ret.isOk());
     EXPECT_TRUE(ret == Result::INVALID_ARGUMENTS || ret == Result::NOT_SUPPORTED)
@@ -568,12 +631,14 @@ TEST_P(AudioEffectHidlTest, SetAudioSource) {
     Return<Result> ret = effect->setAudioSource(toString(xsd::AudioSource::AUDIO_SOURCE_MIC));
 #endif
     EXPECT_TRUE(ret.isOk());
+    EXPECT_NO_FATAL_FAILURE(checkResultForUseAfterClose(ret));
 }
 
 TEST_P(AudioEffectHidlTest, Offload) {
     description("Verify that calling Offload method does not crash");
     Return<Result> ret = effect->offload(EffectOffloadParameter{});
     EXPECT_TRUE(ret.isOk());
+    EXPECT_NO_FATAL_FAILURE(checkResultForUseAfterClose(ret));
 }
 
 TEST_P(AudioEffectHidlTest, PrepareForProcessing) {
@@ -582,7 +647,7 @@ TEST_P(AudioEffectHidlTest, PrepareForProcessing) {
     Return<void> ret = effect->prepareForProcessing(
         [&](Result r, const MQDescriptorSync<Result>&) { retval = r; });
     EXPECT_TRUE(ret.isOk());
-    EXPECT_EQ(Result::OK, retval);
+    EXPECT_NO_FATAL_FAILURE(checkResult(retval));
 }
 
 TEST_P(AudioEffectHidlTest, SetProcessBuffers) {
@@ -601,7 +666,7 @@ TEST_P(AudioEffectHidlTest, SetProcessBuffers) {
     ASSERT_TRUE(success);
     Return<Result> ret2 = effect->setProcessBuffers(buffer, buffer);
     EXPECT_TRUE(ret2.isOk());
-    EXPECT_EQ(Result::OK, ret2);
+    EXPECT_NO_FATAL_FAILURE(checkResult(ret2));
 }
 
 TEST_P(AudioEffectHidlTest, Command) {
@@ -615,6 +680,7 @@ TEST_P(AudioEffectHidlTest, SetParameter) {
     description("Verify that SetParameter does not crash");
     Return<Result> ret = effect->setParameter(hidl_vec<uint8_t>(), hidl_vec<uint8_t>());
     EXPECT_TRUE(ret.isOk());
+    EXPECT_NO_FATAL_FAILURE(checkResultForUseAfterClose(ret));
 }
 
 TEST_P(AudioEffectHidlTest, GetParameter) {
@@ -629,6 +695,9 @@ TEST_P(AudioEffectHidlTest, GetParameterInvalidMaxReplySize) {
     const bool isNewDeviceLaunchingOnTPlus = property_get_int32("ro.vendor.api_level", 0) >= 33;
     if (!isNewDeviceLaunchingOnTPlus) {
         GTEST_SKIP() << "The test only applies to devices launching on T or later";
+    }
+    if (useAfterClose) {
+        GTEST_SKIP() << "Does not make sense for the useAfterClose case";
     }
     // Use a non-empty parameter to avoid being rejected by any earlier checks.
     hidl_vec<uint8_t> parameter;
@@ -647,16 +716,20 @@ TEST_P(AudioEffectHidlTest, GetParameterInvalidMaxReplySize) {
 
 TEST_P(AudioEffectHidlTest, GetSupportedConfigsForFeature) {
     description("Verify that GetSupportedConfigsForFeature does not crash");
+    Result retval = Result::OK;
     Return<void> ret = effect->getSupportedConfigsForFeature(
-        0, 0, 0, [&](Result, uint32_t, const hidl_vec<uint8_t>&) {});
+            0, 0, 0, [&](Result r, uint32_t, const hidl_vec<uint8_t>&) { retval = r; });
     EXPECT_TRUE(ret.isOk());
+    EXPECT_NO_FATAL_FAILURE(checkResultForUseAfterClose(retval));
 }
 
 TEST_P(AudioEffectHidlTest, GetCurrentConfigForFeature) {
     description("Verify that GetCurrentConfigForFeature does not crash");
-    Return<void> ret =
-        effect->getCurrentConfigForFeature(0, 0, [&](Result, const hidl_vec<uint8_t>&) {});
+    Result retval = Result::OK;
+    Return<void> ret = effect->getCurrentConfigForFeature(
+            0, 0, [&](Result r, const hidl_vec<uint8_t>&) { retval = r; });
     EXPECT_TRUE(ret.isOk());
+    EXPECT_NO_FATAL_FAILURE(checkResultForUseAfterClose(retval));
 }
 
 TEST_P(AudioEffectHidlTest, SetCurrentConfigForFeature) {
@@ -670,6 +743,9 @@ TEST_P(AudioEffectHidlTest, GetSupportedConfigsForFeatureInvalidConfigSize) {
     const bool isNewDeviceLaunchingOnTPlus = property_get_int32("ro.vendor.api_level", 0) >= 33;
     if (!isNewDeviceLaunchingOnTPlus) {
         GTEST_SKIP() << "The test only applies to devices launching on T or later";
+    }
+    if (useAfterClose) {
+        GTEST_SKIP() << "Does not make sense for the useAfterClose case";
     }
     // Use very large size to ensure that the service does not crash.
     const uint32_t veryLargeConfigSize = std::numeric_limits<uint32_t>::max() - 100;
@@ -686,6 +762,9 @@ TEST_P(AudioEffectHidlTest, GetCurrentConfigForFeatureInvalidConfigSize) {
     const bool isNewDeviceLaunchingOnTPlus = property_get_int32("ro.vendor.api_level", 0) >= 33;
     if (!isNewDeviceLaunchingOnTPlus) {
         GTEST_SKIP() << "The test only applies to devices launching on T or later";
+    }
+    if (useAfterClose) {
+        GTEST_SKIP() << "Does not make sense for the useAfterClose case";
     }
     // Use very large size to ensure that the service does not crash.
     const uint32_t veryLargeConfigSize = std::numeric_limits<uint32_t>::max() - 100;
@@ -729,7 +808,8 @@ void EqualizerAudioEffectHidlTest::getNumBands(uint16_t* numBands) {
         }
     });
     ASSERT_TRUE(ret.isOk());
-    ASSERT_EQ(Result::OK, retval);
+    ASSERT_NO_FATAL_FAILURE(checkResult(retval));
+    if (useAfterClose) *numBands = 1;
 }
 
 void EqualizerAudioEffectHidlTest::getLevelRange(int16_t* minLevel, int16_t* maxLevel) {
@@ -742,7 +822,11 @@ void EqualizerAudioEffectHidlTest::getLevelRange(int16_t* minLevel, int16_t* max
         }
     });
     ASSERT_TRUE(ret.isOk());
-    ASSERT_EQ(Result::OK, retval);
+    ASSERT_NO_FATAL_FAILURE(checkResult(retval));
+    if (useAfterClose) {
+        *minLevel = 0;
+        *maxLevel = 255;
+    }
 }
 
 void EqualizerAudioEffectHidlTest::getBandFrequencyRange(uint16_t band, uint32_t* minFreq,
@@ -757,7 +841,7 @@ void EqualizerAudioEffectHidlTest::getBandFrequencyRange(uint16_t band, uint32_t
             }
         });
     ASSERT_TRUE(ret.isOk());
-    ASSERT_EQ(Result::OK, retval);
+    ASSERT_NO_FATAL_FAILURE(checkResult(retval));
     ret = equalizer->getBandCenterFrequency(band, [&](Result r, uint32_t center) {
         retval = r;
         if (retval == Result::OK) {
@@ -765,7 +849,12 @@ void EqualizerAudioEffectHidlTest::getBandFrequencyRange(uint16_t band, uint32_t
         }
     });
     ASSERT_TRUE(ret.isOk());
-    ASSERT_EQ(Result::OK, retval);
+    ASSERT_NO_FATAL_FAILURE(checkResult(retval));
+    if (useAfterClose) {
+        *minFreq = 20;
+        *centerFreq = 10000;
+        *maxFreq = 20000;
+    }
 }
 
 void EqualizerAudioEffectHidlTest::getPresetCount(size_t* count) {
@@ -777,37 +866,38 @@ void EqualizerAudioEffectHidlTest::getPresetCount(size_t* count) {
         }
     });
     ASSERT_TRUE(ret.isOk());
-    ASSERT_EQ(Result::OK, retval);
+    ASSERT_NO_FATAL_FAILURE(checkResult(retval));
+    if (useAfterClose) *count = 1;
 }
 
 TEST_P(EqualizerAudioEffectHidlTest, GetNumBands) {
     description("Verify that Equalizer effect reports at least one band");
     uint16_t numBands = 0;
-    getNumBands(&numBands);
+    ASSERT_NO_FATAL_FAILURE(getNumBands(&numBands));
     EXPECT_GT(numBands, 0);
 }
 
 TEST_P(EqualizerAudioEffectHidlTest, GetLevelRange) {
     description("Verify that Equalizer effect reports adequate band level range");
     int16_t minLevel = 0x7fff, maxLevel = 0;
-    getLevelRange(&minLevel, &maxLevel);
+    ASSERT_NO_FATAL_FAILURE(getLevelRange(&minLevel, &maxLevel));
     EXPECT_GT(maxLevel, minLevel);
 }
 
 TEST_P(EqualizerAudioEffectHidlTest, GetSetBandLevel) {
     description("Verify that manipulating band levels works for Equalizer effect");
     uint16_t numBands = 0;
-    getNumBands(&numBands);
+    ASSERT_NO_FATAL_FAILURE(getNumBands(&numBands));
     ASSERT_GT(numBands, 0);
     int16_t levels[3]{0x7fff, 0, 0};
-    getLevelRange(&levels[0], &levels[2]);
+    ASSERT_NO_FATAL_FAILURE(getLevelRange(&levels[0], &levels[2]));
     ASSERT_GT(levels[2], levels[0]);
     levels[1] = (levels[2] + levels[0]) / 2;
     for (uint16_t i = 0; i < numBands; ++i) {
         for (size_t j = 0; j < ARRAY_SIZE(levels); ++j) {
             Return<Result> ret = equalizer->setBandLevel(i, levels[j]);
             EXPECT_TRUE(ret.isOk());
-            EXPECT_EQ(Result::OK, ret);
+            EXPECT_NO_FATAL_FAILURE(checkResult(ret));
             Result retval = Result::NOT_INITIALIZED;
             int16_t actualLevel;
             Return<void> ret2 = equalizer->getBandLevel(i, [&](Result r, int16_t l) {
@@ -817,8 +907,10 @@ TEST_P(EqualizerAudioEffectHidlTest, GetSetBandLevel) {
                 }
             });
             EXPECT_TRUE(ret2.isOk());
-            EXPECT_EQ(Result::OK, retval);
-            EXPECT_EQ(levels[j], actualLevel);
+            EXPECT_NO_FATAL_FAILURE(checkResult(retval));
+            if (!useAfterClose) {
+                EXPECT_EQ(levels[j], actualLevel);
+            }
         }
     }
 }
@@ -826,11 +918,11 @@ TEST_P(EqualizerAudioEffectHidlTest, GetSetBandLevel) {
 TEST_P(EqualizerAudioEffectHidlTest, GetBandCenterFrequencyAndRange) {
     description("Verify that Equalizer effect reports adequate band frequency range");
     uint16_t numBands = 0;
-    getNumBands(&numBands);
+    ASSERT_NO_FATAL_FAILURE(getNumBands(&numBands));
     ASSERT_GT(numBands, 0);
     for (uint16_t i = 0; i < numBands; ++i) {
         uint32_t minFreq = 0xffffffff, centerFreq = 0xffffffff, maxFreq = 0xffffffff;
-        getBandFrequencyRange(i, &minFreq, &centerFreq, &maxFreq);
+        ASSERT_NO_FATAL_FAILURE(getBandFrequencyRange(i, &minFreq, &centerFreq, &maxFreq));
         // Note: NXP legacy implementation reports "1" as upper bound for last band,
         // so this check fails.
         EXPECT_GE(maxFreq, centerFreq);
@@ -841,7 +933,7 @@ TEST_P(EqualizerAudioEffectHidlTest, GetBandCenterFrequencyAndRange) {
 TEST_P(EqualizerAudioEffectHidlTest, GetBandForFrequency) {
     description("Verify that Equalizer effect supports GetBandForFrequency correctly");
     uint16_t numBands = 0;
-    getNumBands(&numBands);
+    ASSERT_NO_FATAL_FAILURE(getNumBands(&numBands));
     ASSERT_GT(numBands, 0);
     for (uint16_t i = 0; i < numBands; ++i) {
         uint32_t freqs[3]{0, 0, 0};
@@ -861,8 +953,10 @@ TEST_P(EqualizerAudioEffectHidlTest, GetBandForFrequency) {
                 }
             });
             EXPECT_TRUE(ret.isOk());
-            EXPECT_EQ(Result::OK, retval);
-            EXPECT_EQ(i, actualBand) << "Frequency: " << freqs[j];
+            EXPECT_NO_FATAL_FAILURE(checkResult(retval));
+            if (!useAfterClose) {
+                EXPECT_EQ(i, actualBand) << "Frequency: " << freqs[j];
+            }
         }
     }
 }
@@ -870,19 +964,19 @@ TEST_P(EqualizerAudioEffectHidlTest, GetBandForFrequency) {
 TEST_P(EqualizerAudioEffectHidlTest, GetPresetNames) {
     description("Verify that Equalizer effect reports at least one preset");
     size_t presetCount;
-    getPresetCount(&presetCount);
+    ASSERT_NO_FATAL_FAILURE(getPresetCount(&presetCount));
     EXPECT_GT(presetCount, 0u);
 }
 
 TEST_P(EqualizerAudioEffectHidlTest, GetSetCurrentPreset) {
     description("Verify that manipulating the current preset for Equalizer effect");
     size_t presetCount;
-    getPresetCount(&presetCount);
+    ASSERT_NO_FATAL_FAILURE(getPresetCount(&presetCount));
     ASSERT_GT(presetCount, 0u);
     for (uint16_t i = 0; i < presetCount; ++i) {
         Return<Result> ret = equalizer->setCurrentPreset(i);
         EXPECT_TRUE(ret.isOk());
-        EXPECT_EQ(Result::OK, ret);
+        EXPECT_NO_FATAL_FAILURE(checkResult(ret));
         Result retval = Result::NOT_INITIALIZED;
         uint16_t actualPreset = 0xffff;
         Return<void> ret2 = equalizer->getCurrentPreset([&](Result r, uint16_t p) {
@@ -892,8 +986,10 @@ TEST_P(EqualizerAudioEffectHidlTest, GetSetCurrentPreset) {
             }
         });
         EXPECT_TRUE(ret2.isOk());
-        EXPECT_EQ(Result::OK, retval);
-        EXPECT_EQ(i, actualPreset);
+        EXPECT_NO_FATAL_FAILURE(checkResult(retval));
+        if (!useAfterClose) {
+            EXPECT_EQ(i, actualPreset);
+        }
     }
 }
 
@@ -904,7 +1000,7 @@ TEST_P(EqualizerAudioEffectHidlTest, GetSetAllProperties) {
     using AllProperties =
         ::android::hardware::audio::effect::CPP_VERSION::IEqualizerEffect::AllProperties;
     uint16_t numBands = 0;
-    getNumBands(&numBands);
+    ASSERT_NO_FATAL_FAILURE(getNumBands(&numBands));
     ASSERT_GT(numBands, 0);
     AllProperties props;
     props.bandLevels.resize(numBands);
@@ -919,7 +1015,7 @@ TEST_P(EqualizerAudioEffectHidlTest, GetSetAllProperties) {
     props.curPreset = -1;
     Return<Result> ret = equalizer->setAllProperties(props);
     EXPECT_TRUE(ret.isOk());
-    EXPECT_EQ(Result::OK, ret);
+    EXPECT_NO_FATAL_FAILURE(checkResult(ret));
     Return<void> ret2 = equalizer->getAllProperties([&](Result r, AllProperties p) {
         retval = r;
         if (retval == Result::OK) {
@@ -927,14 +1023,16 @@ TEST_P(EqualizerAudioEffectHidlTest, GetSetAllProperties) {
         }
     });
     EXPECT_TRUE(ret2.isOk());
-    EXPECT_EQ(Result::OK, retval);
-    EXPECT_EQ(props.bandLevels, actualProps.bandLevels);
+    EXPECT_NO_FATAL_FAILURE(checkResult(retval));
+    if (!useAfterClose) {
+        EXPECT_EQ(props.bandLevels, actualProps.bandLevels);
+    }
 
     // Verify setting of the current preset via properties.
     props.curPreset = 0;  // Assuming there is at least one preset.
     ret = equalizer->setAllProperties(props);
     EXPECT_TRUE(ret.isOk());
-    EXPECT_EQ(Result::OK, ret);
+    EXPECT_NO_FATAL_FAILURE(checkResult(ret));
     ret2 = equalizer->getAllProperties([&](Result r, AllProperties p) {
         retval = r;
         if (retval == Result::OK) {
@@ -942,8 +1040,10 @@ TEST_P(EqualizerAudioEffectHidlTest, GetSetAllProperties) {
         }
     });
     EXPECT_TRUE(ret2.isOk());
-    EXPECT_EQ(Result::OK, retval);
-    EXPECT_EQ(props.curPreset, actualProps.curPreset);
+    EXPECT_NO_FATAL_FAILURE(checkResult(retval));
+    if (!useAfterClose) {
+        EXPECT_EQ(props.curPreset, actualProps.curPreset);
+    }
 }
 
 // The main test class for Equalizer Audio Effect HIDL HAL.
@@ -971,7 +1071,7 @@ TEST_P(LoudnessEnhancerAudioEffectHidlTest, GetSetTargetGain) {
     const int32_t gain = 100;
     Return<Result> ret = enhancer->setTargetGain(gain);
     EXPECT_TRUE(ret.isOk());
-    EXPECT_EQ(Result::OK, ret);
+    EXPECT_NO_FATAL_FAILURE(checkResult(ret));
     int32_t actualGain = 0;
     Result retval;
     Return<void> ret2 = enhancer->getTargetGain([&](Result r, int32_t g) {
@@ -981,8 +1081,10 @@ TEST_P(LoudnessEnhancerAudioEffectHidlTest, GetSetTargetGain) {
         }
     });
     EXPECT_TRUE(ret2.isOk());
-    EXPECT_EQ(Result::OK, retval);
-    EXPECT_EQ(gain, actualGain);
+    EXPECT_NO_FATAL_FAILURE(checkResult(retval));
+    if (!useAfterClose) {
+        EXPECT_EQ(gain, actualGain);
+    }
 }
 
 INSTANTIATE_TEST_SUITE_P(EffectsFactory, AudioEffectsFactoryHidlTest,
@@ -993,25 +1095,29 @@ INSTANTIATE_TEST_SUITE_P(
         Equalizer_IEffect, AudioEffectHidlTest,
         ::testing::Combine(::testing::ValuesIn(::android::hardware::getAllHalInstanceNames(
                                    IEffectsFactory::descriptor)),
-                           ::testing::Values(EQUALIZER_EFFECT_TYPE)),
+                           ::testing::Values(EQUALIZER_EFFECT_TYPE),
+                           ::testing::Values(false, true) /*useAfterClose*/),
         EffectParameterToString);
 INSTANTIATE_TEST_SUITE_P(
         LoudnessEnhancer_IEffect, AudioEffectHidlTest,
         ::testing::Combine(::testing::ValuesIn(::android::hardware::getAllHalInstanceNames(
                                    IEffectsFactory::descriptor)),
-                           ::testing::Values(LOUDNESS_ENHANCER_EFFECT_TYPE)),
+                           ::testing::Values(LOUDNESS_ENHANCER_EFFECT_TYPE),
+                           ::testing::Values(false, true) /*useAfterClose*/),
         EffectParameterToString);
 INSTANTIATE_TEST_SUITE_P(
         Equalizer, EqualizerAudioEffectHidlTest,
         ::testing::Combine(::testing::ValuesIn(::android::hardware::getAllHalInstanceNames(
                                    IEffectsFactory::descriptor)),
-                           ::testing::Values(EQUALIZER_EFFECT_TYPE)),
+                           ::testing::Values(EQUALIZER_EFFECT_TYPE),
+                           ::testing::Values(false, true) /*useAfterClose*/),
         EffectParameterToString);
 INSTANTIATE_TEST_SUITE_P(
         LoudnessEnhancer, LoudnessEnhancerAudioEffectHidlTest,
         ::testing::Combine(::testing::ValuesIn(::android::hardware::getAllHalInstanceNames(
                                    IEffectsFactory::descriptor)),
-                           ::testing::Values(LOUDNESS_ENHANCER_EFFECT_TYPE)),
+                           ::testing::Values(LOUDNESS_ENHANCER_EFFECT_TYPE),
+                           ::testing::Values(false, true) /*useAfterClose*/),
         EffectParameterToString);
 // When the VTS test runs on a device lacking the corresponding HAL version the parameter
 // list is empty, this isn't a problem.

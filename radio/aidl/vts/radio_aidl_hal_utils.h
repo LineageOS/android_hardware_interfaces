@@ -24,12 +24,15 @@
 #include <aidl/android/hardware/radio/network/RegState.h>
 #include <aidl/android/hardware/radio/sim/CardStatus.h>
 #include <aidl/android/hardware/radio/sim/IRadioSim.h>
+#include <com_android_internal_telephony_flags.h>
 #include <utils/Log.h>
 
 using namespace aidl::android::hardware::radio;
 using aidl::android::hardware::radio::config::SimSlotStatus;
 using aidl::android::hardware::radio::network::RegState;
 using aidl::android::hardware::radio::sim::CardStatus;
+
+namespace telephony_flags = com::android::internal::telephony::flags;
 
 extern CardStatus cardStatus;
 extern SimSlotStatus slotStatus;
@@ -67,6 +70,18 @@ static constexpr const char* FEATURE_TELEPHONY_GSM = "android.hardware.telephony
 static constexpr const char* FEATURE_TELEPHONY_CDMA = "android.hardware.telephony.cdma";
 
 static constexpr const char* FEATURE_TELEPHONY_IMS = "android.hardware.telephony.ims";
+
+static constexpr const char* FEATURE_TELEPHONY_CALLING = "android.hardware.telephony.calling";
+
+static constexpr const char* FEATURE_TELEPHONY_DATA = "android.hardware.telephony.data";
+
+static constexpr const char* FEATURE_TELEPHONY_MESSAGING = "android.hardware.telephony.messaging";
+
+static constexpr const char* FEATURE_TELEPHONY_SUBSCRIPTION =
+        "android.hardware.telephony.subscription";
+
+static constexpr const char* FEATURE_TELEPHONY_RADIO_ACCESS =
+        "android.hardware.telephony.radio.access";
 
 #define MODEM_EMERGENCY_CALL_ESTABLISH_TIME 3
 #define MODEM_EMERGENCY_CALL_DISCONNECT_TIME 3

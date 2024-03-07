@@ -18,6 +18,7 @@ package android.hardware.radio.ims.media;
 
 import android.hardware.radio.ims.media.CodecMode;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable AnbrMode {

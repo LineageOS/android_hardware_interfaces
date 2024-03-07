@@ -34,10 +34,10 @@
 package android.hardware.wifi.supplicant;
 @Backing(type="int") @VintfStability
 enum PairwiseCipherMask {
-  NONE = 1,
-  TKIP = 8,
-  CCMP = 16,
-  GCMP_128 = 64,
-  SMS4 = 128,
-  GCMP_256 = 256,
+  NONE = (1 << 0) /* 1 */,
+  TKIP = (1 << 3) /* 8 */,
+  CCMP = (1 << 4) /* 16 */,
+  GCMP_128 = (1 << 6) /* 64 */,
+  SMS4 = (1 << 7) /* 128 */,
+  GCMP_256 = (1 << 8) /* 256 */,
 }

@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2023 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#define LOG_TAG "FaceVirtualHalEngine"
+
 #include "FakeFaceEngine.h"
 
 #include <android-base/logging.h>
@@ -53,15 +71,6 @@ void FakeFaceEngine::enrollImpl(ISessionCallback* cb, const keymaster::HardwareA
                                 const std::vector<Feature>& /*features*/,
                                 const std::future<void>& cancel) {
     BEGIN_OP(FaceHalProperties::operation_start_enroll_latency().value_or(0));
-    // format is "<id>,<bucket_id>:<delay>:<succeeds>,<bucket_id>:<delay>:<succeeds>...
-    auto nextEnroll = FaceHalProperties::next_enrollment().value_or("");
-    // Erase the next enrollment
-    FaceHalProperties::next_enrollment({});
-
-    AuthenticationFrame frame;
-    frame.data.acquiredInfo = AcquiredInfo::START;
-    frame.data.vendorCode = 0;
-    cb->onAuthenticationFrame(frame);
 
     // Do proper HAT verification in the real implementation.
     if (hat.mac.empty()) {
@@ -70,32 +79,159 @@ void FakeFaceEngine::enrollImpl(ISessionCallback* cb, const keymaster::HardwareA
         return;
     }
 
-    if (FaceHalProperties::operation_enroll_fails().value_or(false)) {
-        LOG(ERROR) << "Fail: operation_enroll_fails";
+    // Format: <id>:<progress_ms-[acquiredInfo,...],...:<success>
+    // ------:-----------------------------------------:--------------
+    //          |           |                              |--->enrollment success (true/false)
+    //          |           |--> progress_steps
+    //          |
+    //          |-->enrollment id
+    //
+    //
+    //   progress_steps
+    //        <progress_duration>-[acquiredInfo,...]+
+    //        ----------------------------  ---------------------
+    //                 |                            |-> sequence of acquiredInfo code
+    //                 | --> time duration of the step in ms
+    //
+    //        E.g.   1:2000-[21,1108,5,6,1],1000-[1113,4,1]:true
+    //              A success enrollement of id 1 by 2 steps
+    //                    1st step lasts 2000ms with acquiredInfo codes (21,1108,5,6,1)
+    //                    2nd step lasts 1000ms with acquiredInfo codes (1113,4,1)
+    //
+    std::string defaultNextEnrollment =
+            "1:1000-[21,7,1,1103],1500-[1108,1],2000-[1113,1],2500-[1118,1]:true";
+    auto nextEnroll = FaceHalProperties::next_enrollment().value_or(defaultNextEnrollment);
+    auto parts = Util::split(nextEnroll, ":");
+    if (parts.size() != 3) {
+        LOG(ERROR) << "Fail: invalid next_enrollment:" << nextEnroll;
         cb->onError(Error::VENDOR, 0 /* vendorError */);
         return;
     }
-
-    auto parts = Util::split(nextEnroll, ",");
-    if (parts.size() < 2) {
-        LOG(ERROR) << "Fail: invalid next_enrollment for : " << nextEnroll;
-        cb->onError(Error::VENDOR, 0 /* vendorError */);
-        return;
-    }
-
     auto enrollmentId = std::stoi(parts[0]);
-    const int numBuckets = parts.size() - 1;
-    for (size_t i = 1; i < parts.size(); i++) {
-        auto enrollHit = Util::split(parts[i], ":");
-        if (enrollHit.size() != 3) {
-            LOG(ERROR) << "Error when unpacking enrollment hit: " << parts[i];
-            cb->onError(Error::VENDOR, 0 /* vendorError */);
-        }
-        std::string bucket = enrollHit[0];
-        std::string delay = enrollHit[1];
-        std::string succeeds = enrollHit[2];
+    auto progress = Util::parseEnrollmentCapture(parts[1]);
+    for (size_t i = 0; i < progress.size(); i += 2) {
+        auto left = (progress.size() - i) / 2 - 1;
+        auto duration = progress[i][0];
+        auto acquired = progress[i + 1];
+        auto N = acquired.size();
 
-        SLEEP_MS(std::stoi(delay));
+        for (int j = 0; j < N; j++) {
+            SLEEP_MS(duration / N);
+
+            if (shouldCancel(cancel)) {
+                LOG(ERROR) << "Fail: cancel";
+                cb->onError(Error::CANCELED, 0 /* vendorCode */);
+                return;
+            }
+            EnrollmentFrame frame = {};
+            auto ac = convertAcquiredInfo(acquired[j]);
+            frame.data.acquiredInfo = ac.first;
+            frame.data.vendorCode = ac.second;
+            frame.stage = (i == 0 && j == 0) ? EnrollmentStage::FIRST_FRAME_RECEIVED
+                          : (i == progress.size() - 2 && j == N - 1)
+                                  ? EnrollmentStage::ENROLLMENT_FINISHED
+                                  : EnrollmentStage::WAITING_FOR_CENTERING;
+            cb->onEnrollmentFrame(frame);
+        }
+
+        if (left == 0 && !IS_TRUE(parts[2])) {  // end and failed
+            LOG(ERROR) << "Fail: requested by caller: " << nextEnroll;
+            FaceHalProperties::next_enrollment({});
+            cb->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorCode */);
+        } else {  // progress and update props if last time
+            LOG(INFO) << "onEnroll: " << enrollmentId << " left: " << left;
+            if (left == 0) {
+                auto enrollments = FaceHalProperties::enrollments();
+                enrollments.emplace_back(enrollmentId);
+                FaceHalProperties::enrollments(enrollments);
+                FaceHalProperties::next_enrollment({});
+                // change authenticatorId after new enrollment
+                auto id = FaceHalProperties::authenticator_id().value_or(0);
+                auto newId = id + 1;
+                FaceHalProperties::authenticator_id(newId);
+                LOG(INFO) << "Enrolled: " << enrollmentId;
+            }
+            cb->onEnrollmentProgress(enrollmentId, left);
+        }
+    }
+}
+
+void FakeFaceEngine::authenticateImpl(ISessionCallback* cb, int64_t /*operationId*/,
+                                      const std::future<void>& cancel) {
+    BEGIN_OP(FaceHalProperties::operation_authenticate_latency().value_or(0));
+
+    auto id = FaceHalProperties::enrollment_hit().value_or(0);
+    auto enrolls = FaceHalProperties::enrollments();
+    auto isEnrolled = std::find(enrolls.begin(), enrolls.end(), id) != enrolls.end();
+
+    auto vec2str = [](std::vector<AcquiredInfo> va) {
+        std::stringstream ss;
+        bool isFirst = true;
+        for (auto ac : va) {
+            if (!isFirst) ss << ",";
+            ss << std::to_string((int8_t)ac);
+            isFirst = false;
+        }
+        return ss.str();
+    };
+
+    // default behavior mimic face sensor in U
+    int64_t defaultAuthDuration = 500;
+    std::string defaultAcquiredInfo =
+            vec2str({AcquiredInfo::START, AcquiredInfo::FIRST_FRAME_RECEIVED});
+    if (!isEnrolled) {
+        std::vector<AcquiredInfo> v;
+        for (int i = 0; i < 56; i++) v.push_back(AcquiredInfo::NOT_DETECTED);
+        defaultAcquiredInfo += "," + vec2str(v);
+        defaultAuthDuration = 2100;
+    } else {
+        defaultAcquiredInfo += "," + vec2str({AcquiredInfo::TOO_BRIGHT, AcquiredInfo::TOO_BRIGHT,
+                                              AcquiredInfo::TOO_BRIGHT, AcquiredInfo::TOO_BRIGHT,
+                                              AcquiredInfo::GOOD, AcquiredInfo::GOOD});
+    }
+
+    int64_t now = Util::getSystemNanoTime();
+    int64_t duration =
+            FaceHalProperties::operation_authenticate_duration().value_or(defaultAuthDuration);
+    auto acquired =
+            FaceHalProperties::operation_authenticate_acquired().value_or(defaultAcquiredInfo);
+    auto acquiredInfos = Util::parseIntSequence(acquired);
+    int N = acquiredInfos.size();
+
+    if (N == 0) {
+        LOG(ERROR) << "Fail to parse authentiate acquired info: " + acquired;
+        cb->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorError */);
+        return;
+    }
+
+    if (mLockoutTracker.checkIfLockout(cb)) {
+        return;
+    }
+
+    int i = 0;
+    do {
+        if (FaceHalProperties::lockout().value_or(false)) {
+            LOG(ERROR) << "Fail: lockout";
+            cb->onLockoutPermanent();
+            cb->onError(Error::HW_UNAVAILABLE, 0 /* vendorError */);
+            return;
+        }
+
+        if (FaceHalProperties::operation_authenticate_fails().value_or(false)) {
+            LOG(ERROR) << "Fail: operation_authenticate_fails";
+            mLockoutTracker.addFailedAttempt(cb);
+            cb->onAuthenticationFailed();
+            return;
+        }
+
+        auto err = FaceHalProperties::operation_authenticate_error().value_or(0);
+        if (err != 0) {
+            LOG(ERROR) << "Fail: operation_authenticate_error";
+            auto ec = convertError(err);
+            cb->onError(ec.first, ec.second);
+            return; /* simply terminating current operation for any user inserted error,
+                            revisit if tests need*/
+        }
 
         if (shouldCancel(cancel)) {
             LOG(ERROR) << "Fail: cancel";
@@ -103,89 +239,55 @@ void FakeFaceEngine::enrollImpl(ISessionCallback* cb, const keymaster::HardwareA
             return;
         }
 
-        if (!IS_TRUE(succeeds)) {  // end and failed
-            LOG(ERROR) << "Fail: requested by caller: " << parts[i];
-            cb->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorCode */);
-            return;
+        if (i < N) {
+            auto ac = convertAcquiredInfo(acquiredInfos[i]);
+            AuthenticationFrame frame;
+            frame.data.acquiredInfo = ac.first;
+            frame.data.vendorCode = ac.second;
+            cb->onAuthenticationFrame(frame);
+            LOG(INFO) << "AcquiredInfo:" << i << ": (" << (int)ac.first << "," << (int)ac.second
+                      << ")";
+            i++;
         }
 
-        EnrollmentFrame frame;
+        SLEEP_MS(duration / N);
+    } while (!Util::hasElapsed(now, duration));
 
-        frame.data.acquiredInfo = AcquiredInfo::GOOD;
-        frame.data.vendorCode = 0;
-        cb->onEnrollmentFrame(frame);
-
-        frame.data.acquiredInfo = AcquiredInfo::VENDOR;
-        frame.data.vendorCode = std::stoi(bucket);
-        cb->onEnrollmentFrame(frame);
-
-        int remainingBuckets = numBuckets - i;
-        if (remainingBuckets > 0) {
-            cb->onEnrollmentProgress(enrollmentId, remainingBuckets);
-        }
+    if (id > 0 && isEnrolled) {
+        mLockoutTracker.reset();
+        cb->onAuthenticationSucceeded(id, {} /* hat */);
+        return;
+    } else {
+        LOG(ERROR) << "Fail: face not enrolled";
+        mLockoutTracker.addFailedAttempt(cb);
+        cb->onAuthenticationFailed();
+        cb->onError(Error::TIMEOUT, 0 /* vendorError*/);
+        return;
     }
-
-    auto enrollments = FaceHalProperties::enrollments();
-    enrollments.push_back(enrollmentId);
-    FaceHalProperties::enrollments(enrollments);
-    LOG(INFO) << "enrolled : " << enrollmentId;
-    cb->onEnrollmentProgress(enrollmentId, 0);
 }
 
-void FakeFaceEngine::authenticateImpl(ISessionCallback* cb, int64_t /*operationId*/,
-                                      const std::future<void>& cancel) {
-    BEGIN_OP(FaceHalProperties::operation_authenticate_latency().value_or(0));
-
-    // Signal to the framework that we have begun authenticating.
-    AuthenticationFrame frame;
-    frame.data.acquiredInfo = AcquiredInfo::START;
-    frame.data.vendorCode = 0;
-    cb->onAuthenticationFrame(frame);
-
-    // Also signal that we have opened the camera.
-    frame = {};
-    frame.data.acquiredInfo = AcquiredInfo::FIRST_FRAME_RECEIVED;
-    frame.data.vendorCode = 0;
-    cb->onAuthenticationFrame(frame);
-
-    auto now = Util::getSystemNanoTime();
-    int64_t duration = FaceHalProperties::operation_authenticate_duration().value_or(0);
-    if (duration > 0) {
-        do {
-            SLEEP_MS(5);
-        } while (!Util::hasElapsed(now, duration));
+std::pair<AcquiredInfo, int32_t> FakeFaceEngine::convertAcquiredInfo(int32_t code) {
+    std::pair<AcquiredInfo, int32_t> res;
+    if (code > FACE_ACQUIRED_VENDOR_BASE) {
+        res.first = AcquiredInfo::VENDOR;
+        res.second = code - FACE_ACQUIRED_VENDOR_BASE;
+    } else {
+        res.first = (AcquiredInfo)code;
+        res.second = 0;
     }
+    return res;
+}
 
-    if (FaceHalProperties::operation_authenticate_fails().value_or(false)) {
-        LOG(ERROR) << "Fail: operation_authenticate_fails";
-        cb->onError(Error::VENDOR, 0 /* vendorError */);
-        return;
+std::pair<Error, int32_t> FakeFaceEngine::convertError(int32_t code) {
+    std::pair<Error, int32_t> res;
+    if (code > FACE_ERROR_VENDOR_BASE) {
+        res.first = Error::VENDOR;
+        res.second = code - FACE_ERROR_VENDOR_BASE;
+    } else {
+        res.first = (Error)code;
+        res.second = 0;
     }
-
-    if (FaceHalProperties::lockout().value_or(false)) {
-        LOG(ERROR) << "Fail: lockout";
-        cb->onLockoutPermanent();
-        cb->onError(Error::HW_UNAVAILABLE, 0 /* vendorError */);
-        return;
-    }
-
-    if (shouldCancel(cancel)) {
-        LOG(ERROR) << "Fail: cancel";
-        cb->onError(Error::CANCELED, 0 /* vendorCode */);
-        return;
-    }
-
-    auto id = FaceHalProperties::enrollment_hit().value_or(0);
-    auto enrolls = FaceHalProperties::enrollments();
-    auto isEnrolled = std::find(enrolls.begin(), enrolls.end(), id) != enrolls.end();
-    if (id < 0 || !isEnrolled) {
-        LOG(ERROR) << (isEnrolled ? "invalid enrollment hit" : "Fail: not enrolled");
-        cb->onAuthenticationFailed();
-        cb->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorError */);
-        return;
-    }
-
-    cb->onAuthenticationSucceeded(id, {} /* hat */);
+    return res;
 }
 
 void FakeFaceEngine::detectInteractionImpl(ISessionCallback* cb, const std::future<void>& cancel) {
@@ -312,6 +414,7 @@ void FakeFaceEngine::resetLockoutImpl(ISessionCallback* cb,
                                       const keymaster::HardwareAuthToken& /*hat*/) {
     BEGIN_OP(0);
     FaceHalProperties::lockout(false);
+    mLockoutTracker.reset();
     cb->onLockoutCleared();
 }
 

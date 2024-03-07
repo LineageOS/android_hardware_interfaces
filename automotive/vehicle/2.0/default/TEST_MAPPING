@@ -2,7 +2,9 @@
   "presubmit": [
     {
       "name": "android.hardware.automotive.vehicle@2.0-manager-unit-tests"
-    },
+    }
+  ],
+  "postsubmit": [
     {
       "name": "android.hardware.automotive.vehicle@2.0-default-impl-unit-tests"
     }

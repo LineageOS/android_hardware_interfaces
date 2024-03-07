@@ -21,9 +21,11 @@ import android.hardware.radio.ims.media.MediaQualityStatus;
 import android.hardware.radio.ims.media.RtpConfig;
 import android.hardware.radio.ims.media.RtpError;
 import android.hardware.radio.ims.media.RtpHeaderExtension;
+import android.hardware.radio.ims.media.RtpReceptionStats;
 
 /**
  * Interface declaring listener functions for unsolicited IMS media notifications per session.
+ * @hide
  */
 @VintfStability
 oneway interface IImsMediaSessionListener {
@@ -36,6 +38,8 @@ oneway interface IImsMediaSessionListener {
      *   RtpError :INTERNAL_ERR
      *   RtpError :NO_MEMORY
      *   RtpError :NO_RESOURCES
+     *
+     * This is available when android.hardware.telephony.ims is defined.
      */
     void onModifySessionResponse(in RtpConfig config, RtpError error);
 
@@ -48,6 +52,8 @@ oneway interface IImsMediaSessionListener {
      * packets from the most recently added config.
      *
      * @param config The remote config where the media is received
+     *
+     * This is available when android.hardware.telephony.ims is defined.
      */
     void onFirstMediaPacketReceived(in RtpConfig config);
 
@@ -55,6 +61,8 @@ oneway interface IImsMediaSessionListener {
      * RTP header extension received from the other party
      *
      * @param extensions content of the received RTP header extension
+     *
+     * This is available when android.hardware.telephony.ims is defined.
      */
     void onHeaderExtensionReceived(in List<RtpHeaderExtension> extensions);
 
@@ -63,6 +71,8 @@ oneway interface IImsMediaSessionListener {
      * {@link MediaQualityThreshold} set by {@link IImsMediaSession#setMediaQualityThreshold()}.
      *
      * @param quality The object of MediaQualityStatus with the rtp and the rtcp statistics.
+     *
+     * This is available when android.hardware.telephony.ims is defined.
      */
     void notifyMediaQualityStatus(in MediaQualityStatus quality);
 
@@ -72,6 +82,8 @@ oneway interface IImsMediaSessionListener {
      * See 3GPP TS 26.114.
      *
      * @param config containing desired bitrate and direction
+     *
+     * This is available when android.hardware.telephony.ims is defined.
      */
     void triggerAnbrQuery(in RtpConfig config);
 
@@ -80,6 +92,8 @@ oneway interface IImsMediaSessionListener {
      *
      * @param dtmfDigit single char having one of 12 values: 0-9, *, #
      * @param durationMs The duration to play the tone in milliseconds unit
+     *
+     * This is available when android.hardware.telephony.ims is defined.
      */
     void onDtmfReceived(char dtmfDigit, int durationMs);
 
@@ -87,6 +101,18 @@ oneway interface IImsMediaSessionListener {
      * Notifies when a change to call quality has occurred
      *
      * @param CallQuality The call quality statistics of ongoing call since last report
+     *
+     * This is available when android.hardware.telephony.ims is defined.
      */
     void onCallQualityChanged(in CallQuality callQuality);
+
+    /**
+     * Notifies the RTP reception statistics periodically after
+     * IImsMediaSession#requestRtpReceptionStats(intervalMs) is invoked.
+     *
+     * @param stats The RTP reception statistics
+     *
+     * This is available when android.hardware.telephony.ims is defined.
+     */
+    void notifyRtpReceptionStats(in RtpReceptionStats stats);
 }

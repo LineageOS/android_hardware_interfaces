@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,9 +60,11 @@ public final class ChangeModeForVehicleProperty {
         Map.entry(VehicleProperty.EV_CHARGE_PORT_CONNECTED, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.EV_BATTERY_INSTANTANEOUS_CHARGE_RATE, VehiclePropertyChangeMode.CONTINUOUS),
         Map.entry(VehicleProperty.RANGE_REMAINING, VehiclePropertyChangeMode.CONTINUOUS),
+        Map.entry(VehicleProperty.EV_BATTERY_AVERAGE_TEMPERATURE, VehiclePropertyChangeMode.CONTINUOUS),
         Map.entry(VehicleProperty.TIRE_PRESSURE, VehiclePropertyChangeMode.CONTINUOUS),
         Map.entry(VehicleProperty.CRITICALLY_LOW_TIRE_PRESSURE, VehiclePropertyChangeMode.STATIC),
         Map.entry(VehicleProperty.ENGINE_IDLE_AUTO_STOP_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.IMPACT_DETECTED, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.GEAR_SELECTION, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.CURRENT_GEAR, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.PARKING_BRAKE_ON, VehiclePropertyChangeMode.ON_CHANGE),
@@ -75,6 +77,8 @@ public final class ChangeModeForVehicleProperty {
         Map.entry(VehicleProperty.ABS_ACTIVE, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.TRACTION_CONTROL_ACTIVE, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.EV_STOPPING_MODE, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.ELECTRONIC_STABILITY_CONTROL_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.ELECTRONIC_STABILITY_CONTROL_STATE, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.HVAC_FAN_SPEED, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.HVAC_FAN_DIRECTION, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.HVAC_TEMPERATURE_CURRENT, VehiclePropertyChangeMode.ON_CHANGE),
@@ -112,6 +116,7 @@ public final class ChangeModeForVehicleProperty {
         Map.entry(VehicleProperty.AP_POWER_BOOTUP_REASON, VehiclePropertyChangeMode.STATIC),
         Map.entry(VehicleProperty.DISPLAY_BRIGHTNESS, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.PER_DISPLAY_BRIGHTNESS, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.VALET_MODE_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.HW_KEY_INPUT, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.HW_KEY_INPUT_V2, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.HW_MOTION_INPUT, VehiclePropertyChangeMode.ON_CHANGE),
@@ -161,11 +166,13 @@ public final class ChangeModeForVehicleProperty {
         Map.entry(VehicleProperty.SEAT_FOOTWELL_LIGHTS_SWITCH, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.SEAT_EASY_ACCESS_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.SEAT_AIRBAG_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.SEAT_AIRBAGS_DEPLOYED, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.SEAT_CUSHION_SIDE_SUPPORT_POS, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.SEAT_CUSHION_SIDE_SUPPORT_MOVE, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.SEAT_LUMBAR_VERTICAL_POS, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.SEAT_LUMBAR_VERTICAL_MOVE, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.SEAT_WALK_IN_POS, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.SEAT_BELT_PRETENSIONER_DEPLOYED, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.SEAT_OCCUPANCY, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.WINDOW_POS, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.WINDOW_MOVE, VehiclePropertyChangeMode.ON_CHANGE),
@@ -184,6 +191,11 @@ public final class ChangeModeForVehicleProperty {
         Map.entry(VehicleProperty.GLOVE_BOX_LOCKED, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.VEHICLE_MAP_SERVICE, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.LOCATION_CHARACTERIZATION, VehiclePropertyChangeMode.STATIC),
+        Map.entry(VehicleProperty.ULTRASONICS_SENSOR_POSITION, VehiclePropertyChangeMode.STATIC),
+        Map.entry(VehicleProperty.ULTRASONICS_SENSOR_ORIENTATION, VehiclePropertyChangeMode.STATIC),
+        Map.entry(VehicleProperty.ULTRASONICS_SENSOR_FIELD_OF_VIEW, VehiclePropertyChangeMode.STATIC),
+        Map.entry(VehicleProperty.ULTRASONICS_SENSOR_DETECTION_RANGE, VehiclePropertyChangeMode.STATIC),
+        Map.entry(VehicleProperty.ULTRASONICS_SENSOR_SUPPORTED_RANGES, VehiclePropertyChangeMode.STATIC),
         Map.entry(VehicleProperty.OBD2_LIVE_FRAME, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.OBD2_FREEZE_FRAME, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.OBD2_FREEZE_FRAME_INFO, VehiclePropertyChangeMode.ON_CHANGE),
@@ -239,6 +251,8 @@ public final class ChangeModeForVehicleProperty {
         Map.entry(VehicleProperty.SUPPORTED_PROPERTY_IDS, VehiclePropertyChangeMode.STATIC),
         Map.entry(VehicleProperty.SHUTDOWN_REQUEST, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.VEHICLE_IN_USE, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.CLUSTER_HEARTBEAT, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.VEHICLE_DRIVING_AUTOMATION_CURRENT_LEVEL, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.AUTOMATIC_EMERGENCY_BRAKING_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.AUTOMATIC_EMERGENCY_BRAKING_STATE, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.FORWARD_COLLISION_WARNING_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
@@ -263,7 +277,19 @@ public final class ChangeModeForVehicleProperty {
         Map.entry(VehicleProperty.ADAPTIVE_CRUISE_CONTROL_LEAD_VEHICLE_MEASURED_DISTANCE, VehiclePropertyChangeMode.CONTINUOUS),
         Map.entry(VehicleProperty.HANDS_ON_DETECTION_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.HANDS_ON_DETECTION_DRIVER_STATE, VehiclePropertyChangeMode.ON_CHANGE),
-        Map.entry(VehicleProperty.HANDS_ON_DETECTION_WARNING, VehiclePropertyChangeMode.ON_CHANGE)
+        Map.entry(VehicleProperty.HANDS_ON_DETECTION_WARNING, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.DRIVER_DROWSINESS_ATTENTION_SYSTEM_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.DRIVER_DROWSINESS_ATTENTION_STATE, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.DRIVER_DROWSINESS_ATTENTION_WARNING_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.DRIVER_DROWSINESS_ATTENTION_WARNING, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.DRIVER_DISTRACTION_SYSTEM_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.DRIVER_DISTRACTION_STATE, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.DRIVER_DISTRACTION_WARNING_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.DRIVER_DISTRACTION_WARNING, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.LOW_SPEED_COLLISION_WARNING_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.LOW_SPEED_COLLISION_WARNING_STATE, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.CROSS_TRAFFIC_MONITORING_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.CROSS_TRAFFIC_MONITORING_WARNING_STATE, VehiclePropertyChangeMode.ON_CHANGE)
     );
 
 }

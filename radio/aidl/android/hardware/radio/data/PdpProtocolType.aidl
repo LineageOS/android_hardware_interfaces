@@ -18,6 +18,7 @@ package android.hardware.radio.data;
 
 /**
  * Specifies the type of packet data protocol which is defined in TS 27.007 section 10.1.1.
+ * @hide
  */
 @VintfStability
 @Backing(type="int")

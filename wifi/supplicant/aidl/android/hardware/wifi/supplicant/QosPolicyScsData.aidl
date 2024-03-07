@@ -1,5 +1,6 @@
 package android.hardware.wifi.supplicant;
 
+import android.hardware.wifi.supplicant.QosCharacteristics;
 import android.hardware.wifi.supplicant.QosPolicyClassifierParams;
 
 /**
@@ -21,4 +22,24 @@ parcelable QosPolicyScsData {
      * QoS policy SCS classifier type information.
      */
     QosPolicyClassifierParams classifierParams;
+
+    /**
+     * Enum values for the |direction| field.
+     */
+    @VintfStability
+    @Backing(type="byte")
+    enum LinkDirection {
+        DOWNLINK,
+        UPLINK, // Only applies to trigger-based traffic (Wi-Fi 6+)
+    }
+
+    /**
+     * Direction of data described by this element.
+     */
+    LinkDirection direction;
+
+    /**
+     * Additional parameters available in QoS R3.
+     */
+    @nullable QosCharacteristics QosCharacteristics;
 }

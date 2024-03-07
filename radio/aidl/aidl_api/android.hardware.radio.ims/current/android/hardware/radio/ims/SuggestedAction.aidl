@@ -32,9 +32,12 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.ims;
+/* @hide */
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum SuggestedAction {
   NONE,
   TRIGGER_PLMN_BLOCK,
   TRIGGER_PLMN_BLOCK_WITH_TIMEOUT,
+  TRIGGER_RAT_BLOCK,
+  TRIGGER_CLEAR_RAT_BLOCK,
 }

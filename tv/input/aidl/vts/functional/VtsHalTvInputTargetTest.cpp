@@ -355,8 +355,12 @@ TEST_P(TvInputAidlTest, GetTvMessageQueueTest) {
     }
     int32_t stream_id = streamConfigs[0].streamId;
     ALOGD("GetTvMessageQueueTest: device_id=%d, stream_id=%d", device_id, stream_id);
-    MQDescriptor<int8_t, SynchronizedReadWrite> queue;
-    tv_input_->getTvMessageQueueDesc(&queue, device_id, stream_id);
+    MQDescriptor<int8_t, SynchronizedReadWrite> queueDescriptor;
+    AidlMessageQueue<int8_t, SynchronizedReadWrite>* queue;
+    tv_input_->getTvMessageQueueDesc(&queueDescriptor, device_id, stream_id);
+    queue = new (std::nothrow) AidlMessageQueue<int8_t, SynchronizedReadWrite>(queueDescriptor);
+    ASSERT_TRUE(queue->isValid());
+    delete queue;
 }
 
 INSTANTIATE_TEST_SUITE_P(PerInstance, TvInputAidlTest,

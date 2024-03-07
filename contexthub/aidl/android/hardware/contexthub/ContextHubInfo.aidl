@@ -33,7 +33,9 @@ parcelable ContextHubInfo {
     /** Peak MIPs this platform can deliver */
     float peakMips;
 
-    /** The maximum length in bytes of the message that can be sent to the Context Hub. */
+    /**
+     * The maximum length in bytes of a message sent to the Context Hub.
+     */
     int maxSupportedMessageLengthBytes;
 
     /**
@@ -61,4 +63,11 @@ parcelable ContextHubInfo {
      * are granted in order to communicate with them.
      */
     String[] supportedPermissions;
+
+    /**
+     * True if the Context Hub supports reliable messages. False otherwise, in which case
+     * ContextHubMessage.isReliable must always be set to false. See
+     * ContextHubMessage.isReliable for more information.
+     */
+    boolean supportsReliableMessages;
 }

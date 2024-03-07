@@ -40,7 +40,8 @@ cc_test {
     ],
     static_libs: [
         "VtsHalWifiTargetTestUtil",
-        "android.hardware.wifi-V1-ndk",
+        "android.hardware.wifi.common-V1-ndk",
+        "android.hardware.wifi-V2-ndk",
         "libwifi-system-iface",
     ],
     test_suites: [
@@ -65,7 +66,8 @@ cc_test {
     ],
     static_libs: [
         "VtsHalWifiTargetTestUtil",
-        "android.hardware.wifi-V1-ndk",
+        "android.hardware.wifi.common-V1-ndk",
+        "android.hardware.wifi-V2-ndk",
         "libwifi-system-iface",
     ],
     test_suites: [
@@ -90,7 +92,8 @@ cc_test {
     ],
     static_libs: [
         "VtsHalWifiTargetTestUtil",
-        "android.hardware.wifi-V1-ndk",
+        "android.hardware.wifi.common-V1-ndk",
+        "android.hardware.wifi-V2-ndk",
         "libwifi-system-iface",
     ],
     test_suites: [
@@ -115,7 +118,8 @@ cc_test {
     ],
     static_libs: [
         "VtsHalWifiTargetTestUtil",
-        "android.hardware.wifi-V1-ndk",
+        "android.hardware.wifi.common-V1-ndk",
+        "android.hardware.wifi-V2-ndk",
         "libwifi-system-iface",
     ],
     test_suites: [
@@ -140,7 +144,8 @@ cc_test {
     ],
     static_libs: [
         "VtsHalWifiTargetTestUtil",
-        "android.hardware.wifi-V1-ndk",
+        "android.hardware.wifi.common-V1-ndk",
+        "android.hardware.wifi-V2-ndk",
         "libwifi-system-iface",
     ],
     test_suites: [
@@ -164,7 +169,8 @@ cc_library_static {
         "libnativehelper",
     ],
     static_libs: [
-        "android.hardware.wifi-V1-ndk",
+        "android.hardware.wifi.common-V1-ndk",
+        "android.hardware.wifi-V2-ndk",
         "libwifi-system-iface",
     ],
 }

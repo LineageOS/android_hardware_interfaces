@@ -44,4 +44,10 @@ enum TemperatureType {
     DISPLAY = 11,
     MODEM = 12,
     SOC = 13,
+    WIFI = 14,
+    CAMERA = 15,
+    FLASHLIGHT = 16,
+    SPEAKER = 17,
+    AMBIENT = 18,
+    POGO = 19,
 }

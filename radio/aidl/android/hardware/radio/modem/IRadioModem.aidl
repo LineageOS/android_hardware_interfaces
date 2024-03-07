@@ -31,6 +31,7 @@ import android.hardware.radio.modem.ResetNvType;
  * duration of a method call. If clients provide colliding serials (including passing the same
  * serial to different methods), multiple responses (one for each method call) must still be served.
  * setResponseFunctions must work with IRadioModemResponse and IRadioModemIndication.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioModem {
@@ -47,6 +48,8 @@ oneway interface IRadioModem {
      * @param on True to turn on the logical modem, otherwise turn it off.
      *
      * Response function is IRadioModemResponse.enableModemResponse()
+     *
+     * This is available when android.hardware.telephony is defined.
      */
     void enableModem(in int serial, in boolean on);
 
@@ -56,6 +59,8 @@ oneway interface IRadioModem {
      * @param serial Serial number of request.
      *
      * Response function is IRadioModemResponse.getBasebandVersionResponse()
+     *
+     * This is available when android.hardware.telephony is defined.
      */
     void getBasebandVersion(in int serial);
 
@@ -67,6 +72,8 @@ oneway interface IRadioModem {
      * @param serial Serial number of request.
      *
      * Response function is IRadioModemResponse.getDeviceIdentityResponse()
+     *
+     * This is available when android.hardware.telephony is defined.
      * @deprecated use getImei(int serial)
      */
     void getDeviceIdentity(in int serial);
@@ -77,6 +84,8 @@ oneway interface IRadioModem {
      * @param serial Serial number of request.
      *
      * Response function is IRadioModemResponse.getHardwareConfigResponse()
+     *
+     * This is available when android.hardware.telephony is defined.
      */
     void getHardwareConfig(in int serial);
 
@@ -88,6 +97,8 @@ oneway interface IRadioModem {
      * @param serial Serial number of request.
      *
      * Response function is IRadioModemResponse.getModemActivityInfoResponse()
+     *
+     * This is available when android.hardware.telephony.radio.access is defined.
      */
     void getModemActivityInfo(in int serial);
 
@@ -98,6 +109,8 @@ oneway interface IRadioModem {
      * @param serial Serial number of request.
      *
      * Response function is IRadioModemResponse.getModemStackStatusResponse()
+     *
+     * This is available when android.hardware.telephony is defined.
      */
     void getModemStackStatus(in int serial);
 
@@ -107,6 +120,8 @@ oneway interface IRadioModem {
      * @param serial Serial number of request.
      *
      * Response function is IRadioModemResponse.getRadioCapabilityResponse()
+     *
+     * This is available when android.hardware.telephony.radio.access is defined.
      */
     void getRadioCapability(in int serial);
 
@@ -145,6 +160,8 @@ oneway interface IRadioModem {
      *
      * Response function is IRadioModemResponse.nvWriteCdmaPrlResponse()
      *
+     * This is available when android.hardware.telephony.cdma is defined.
+     *
      * @deprecated NV APIs are deprecated starting from Android U.
      */
     void nvWriteCdmaPrl(in int serial, in byte[] prl);
@@ -169,6 +186,8 @@ oneway interface IRadioModem {
      * @param serial Serial number of request.
      *
      * Response function is IRadioModemResponse.requestShutdownResponse()
+     *
+     * This is available when android.hardware.telephony.radio.access is defined.
      */
     void requestShutdown(in int serial);
 
@@ -176,6 +195,8 @@ oneway interface IRadioModem {
      * When response type received from a radio indication or radio response is
      * RadioIndicationType:UNSOLICITED_ACK_EXP or RadioResponseType:SOLICITED_ACK_EXP respectively,
      * acknowledge the receipt of those messages by sending responseAcknowledgement().
+     *
+     * This is available when android.hardware.telephony is defined.
      */
     void responseAcknowledgement();
 
@@ -188,6 +209,8 @@ oneway interface IRadioModem {
      * @param state The updated state. See the definition of state at DeviceStateType.
      *
      * Response function is IRadioModemResponse.sendDeviceStateResponse()
+     *
+     * This is available when android.hardware.telephony is defined.
      */
     void sendDeviceState(in int serial, in DeviceStateType deviceStateType, in boolean state);
 
@@ -200,6 +223,8 @@ oneway interface IRadioModem {
      * @param rc RadioCapability structure to be set
      *
      * Response function is IRadioModemResponse.setRadioCapabilityResponse()
+     *
+     * This is available when android.hardware.telephony.radio.access is defined.
      */
     void setRadioCapability(in int serial, in RadioCapability rc);
 
@@ -224,6 +249,8 @@ oneway interface IRadioModem {
      *        on this modem or not. No effect if forEmergencyCall is false, or powerOn is false.
      *
      * Response function is IRadioConfigResponse.setRadioPowerResponse()
+     *
+     * This is available when android.hardware.telephony.radio.access is defined.
      */
     void setRadioPower(in int serial, in boolean powerOn, in boolean forEmergencyCall,
             in boolean preferredForEmergencyCall);
@@ -233,6 +260,8 @@ oneway interface IRadioModem {
      *
      * @param radioModemResponse Object containing response functions
      * @param radioModemIndication Object containing radio indications
+     *
+     * This is available when android.hardware.telephony is defined.
      */
     void setResponseFunctions(in IRadioModemResponse radioModemResponse,
             in IRadioModemIndication radioModemIndication);
@@ -243,6 +272,8 @@ oneway interface IRadioModem {
      * @param serial : Serial number of request.
      *
      * Response function is IRadioModemResponse.getImeiResponse()
+     *
+     * This is available when android.hardware.telephony.gsm is defined.
      */
-     void getImei(in int serial);
+    void getImei(in int serial);
 }

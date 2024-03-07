@@ -33,6 +33,7 @@ cc_library_shared {
         "libgralloctypes",
         "libhardware",
         "libcamera_metadata",
+        "libui",
     ],
     static_libs: [
         "android.hardware.camera.common@1.0-helper",

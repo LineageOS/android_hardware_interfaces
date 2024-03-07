@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.data;
+/* @hide */
 @VintfStability
 interface IRadioDataIndication {
   oneway void dataCallListChanged(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.data.SetupDataCallResult[] dcList);

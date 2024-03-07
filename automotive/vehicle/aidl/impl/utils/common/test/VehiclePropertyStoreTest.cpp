@@ -20,6 +20,7 @@
 #include <VehicleUtils.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <utils/SystemClock.h>
 
 namespace android {
 namespace hardware {
@@ -101,16 +102,16 @@ TEST_F(VehiclePropertyStoreTest, testGetAllConfigs) {
     ASSERT_EQ(configs.size(), static_cast<size_t>(2));
 }
 
-TEST_F(VehiclePropertyStoreTest, testGetConfig) {
-    VhalResult<const VehiclePropConfig*> result =
-            mStore->getConfig(toInt(VehicleProperty::INFO_FUEL_CAPACITY));
+TEST_F(VehiclePropertyStoreTest, testGetPropConfig) {
+    VhalResult<VehiclePropConfig> result =
+            mStore->getPropConfig(toInt(VehicleProperty::INFO_FUEL_CAPACITY));
 
     ASSERT_RESULT_OK(result);
-    ASSERT_EQ(*(result.value()), mConfigFuelCapacity);
+    ASSERT_EQ(result.value(), mConfigFuelCapacity);
 }
 
-TEST_F(VehiclePropertyStoreTest, testGetConfigWithInvalidPropId) {
-    VhalResult<const VehiclePropConfig*> result = mStore->getConfig(INVALID_PROP_ID);
+TEST_F(VehiclePropertyStoreTest, testGetPropConfigWithInvalidPropId) {
+    VhalResult<VehiclePropConfig> result = mStore->getPropConfig(INVALID_PROP_ID);
 
     EXPECT_FALSE(result.ok()) << "expect error when getting a config for an invalid property ID";
     EXPECT_EQ(result.error().code(), StatusCode::INVALID_ARG);
@@ -507,6 +508,151 @@ TEST_F(VehiclePropertyStoreTest, testPropertyChangeCallbackForceNoUpdate) {
                                         VehiclePropertyStore::EventMode::NEVER));
 
     ASSERT_EQ(updatedValue.prop, INVALID_PROP_ID);
+}
+
+TEST_F(VehiclePropertyStoreTest, testPropertyChangeCallbackUseVehiclePropertyStore_noDeadLock) {
+    VehiclePropValue fuelCapacity = {
+            .prop = toInt(VehicleProperty::INFO_FUEL_CAPACITY),
+            .value = {.floatValues = {1.0}},
+    };
+
+    std::vector<VehiclePropConfig> configs;
+
+    mStore->setOnValueChangeCallback(
+            [this, &configs]([[maybe_unused]] const VehiclePropValue& value) {
+                configs = mStore->getAllConfigs();
+            });
+
+    ASSERT_RESULT_OK(mStore->writeValue(mValuePool->obtain(fuelCapacity), /*updateStatus=*/true,
+                                        VehiclePropertyStore::EventMode::ALWAYS));
+    ASSERT_EQ(configs.size(), static_cast<size_t>(2));
+}
+
+TEST_F(VehiclePropertyStoreTest, testOnValuesChangeCallback) {
+    std::vector<VehiclePropValue> updatedValues;
+    VehiclePropValue fuelCapacity = {
+            .prop = toInt(VehicleProperty::INFO_FUEL_CAPACITY),
+            .value = {.floatValues = {1.0}},
+    };
+    ASSERT_RESULT_OK(mStore->writeValue(mValuePool->obtain(fuelCapacity)));
+
+    mStore->setOnValuesChangeCallback(
+            [&updatedValues](std::vector<VehiclePropValue> values) { updatedValues = values; });
+
+    fuelCapacity.value.floatValues[0] = 2.0;
+    fuelCapacity.timestamp = 1;
+
+    ASSERT_RESULT_OK(mStore->writeValue(mValuePool->obtain(fuelCapacity)));
+
+    ASSERT_THAT(updatedValues, ElementsAre(fuelCapacity));
+}
+
+TEST_F(VehiclePropertyStoreTest, testRefreshTimestamp) {
+    std::vector<VehiclePropValue> updatedValues;
+    mStore->setOnValuesChangeCallback(
+            [&updatedValues](std::vector<VehiclePropValue> values) { updatedValues = values; });
+
+    int64_t now = elapsedRealtimeNano();
+    int propId = toInt(VehicleProperty::TIRE_PRESSURE);
+    int areaId = WHEEL_FRONT_LEFT;
+    VehiclePropValue tirePressure = {
+            .prop = propId,
+            .areaId = areaId,
+            .value = {.floatValues = {1.0}},
+    };
+    ASSERT_RESULT_OK(mStore->writeValue(mValuePool->obtain(tirePressure)));
+    updatedValues.clear();
+
+    mStore->refreshTimestamp(propId, areaId, VehiclePropertyStore::EventMode::ALWAYS);
+
+    ASSERT_EQ(updatedValues.size(), 1u);
+    ASSERT_EQ(updatedValues[0].prop, propId);
+    ASSERT_EQ(updatedValues[0].areaId, areaId);
+    ASSERT_EQ(updatedValues[0].value.floatValues[0], 1.0);
+    int64_t timestamp = updatedValues[0].timestamp;
+    ASSERT_GE(timestamp, now);
+
+    auto result = mStore->readValue(tirePressure);
+
+    ASSERT_RESULT_OK(result);
+    ASSERT_EQ((result.value())->timestamp, timestamp);
+}
+
+TEST_F(VehiclePropertyStoreTest, testRefreshTimestamp_eventModeOnValueChange) {
+    std::vector<VehiclePropValue> updatedValues;
+    mStore->setOnValuesChangeCallback(
+            [&updatedValues](std::vector<VehiclePropValue> values) { updatedValues = values; });
+
+    int64_t now = elapsedRealtimeNano();
+    int propId = toInt(VehicleProperty::TIRE_PRESSURE);
+    int areaId = WHEEL_FRONT_LEFT;
+    VehiclePropValue tirePressure = {
+            .prop = propId,
+            .areaId = areaId,
+            .value = {.floatValues = {1.0}},
+    };
+    ASSERT_RESULT_OK(mStore->writeValue(mValuePool->obtain(tirePressure)));
+    updatedValues.clear();
+
+    mStore->refreshTimestamp(propId, areaId, VehiclePropertyStore::EventMode::ON_VALUE_CHANGE);
+
+    ASSERT_EQ(updatedValues.size(), 0u)
+            << "Must generate no property update events if only the timestamp is refreshed";
+
+    auto result = mStore->readValue(tirePressure);
+
+    ASSERT_RESULT_OK(result);
+    ASSERT_GE((result.value())->timestamp, now)
+            << "Even though event mode is on value change, the store timestamp must be updated";
+}
+
+TEST_F(VehiclePropertyStoreTest, testRefreshTimestamps) {
+    std::vector<VehiclePropValue> updatedValues;
+    mStore->setOnValuesChangeCallback(
+            [&updatedValues](std::vector<VehiclePropValue> values) { updatedValues = values; });
+
+    int64_t now = elapsedRealtimeNano();
+    int propId1 = toInt(VehicleProperty::INFO_FUEL_CAPACITY);
+    int areaId1 = 0;
+    VehiclePropValue fuelCapacity = {
+            .prop = propId1,
+            .areaId = areaId1,
+            .value = {.floatValues = {1.0}},
+    };
+    ASSERT_RESULT_OK(mStore->writeValue(mValuePool->obtain(fuelCapacity)));
+
+    int propId2 = toInt(VehicleProperty::TIRE_PRESSURE);
+    int areaId2 = WHEEL_FRONT_LEFT;
+    VehiclePropValue tirePressure = {
+            .prop = propId2,
+            .areaId = areaId2,
+            .value = {.floatValues = {2.0}},
+    };
+    ASSERT_RESULT_OK(mStore->writeValue(mValuePool->obtain(tirePressure)));
+    updatedValues.clear();
+
+    std::unordered_map<PropIdAreaId, VehiclePropertyStore::EventMode, PropIdAreaIdHash>
+            eventModeByPropIdAreaId;
+    eventModeByPropIdAreaId[PropIdAreaId{
+            .propId = propId1,
+            .areaId = areaId1,
+    }] = VehiclePropertyStore::EventMode::ALWAYS;
+    eventModeByPropIdAreaId[PropIdAreaId{
+            .propId = propId2,
+            .areaId = areaId2,
+    }] = VehiclePropertyStore::EventMode::ALWAYS;
+
+    mStore->refreshTimestamps(eventModeByPropIdAreaId);
+
+    ASSERT_EQ(updatedValues.size(), 2u);
+    ASSERT_EQ(updatedValues[0].prop, propId1);
+    ASSERT_EQ(updatedValues[0].areaId, areaId1);
+    ASSERT_EQ(updatedValues[0].value.floatValues[0], 1.0);
+    ASSERT_GE(updatedValues[0].timestamp, now);
+    ASSERT_EQ(updatedValues[1].prop, propId2);
+    ASSERT_EQ(updatedValues[1].areaId, areaId2);
+    ASSERT_EQ(updatedValues[1].value.floatValues[0], 2.0);
+    ASSERT_GE(updatedValues[1].timestamp, now);
 }
 
 }  // namespace vehicle

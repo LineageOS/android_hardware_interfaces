@@ -35,8 +35,8 @@ cc_test {
         "libxml2",
     ],
     static_libs: [
-        "android.hardware.broadcastradio-V1-ndk",
-        "android.hardware.broadcastradio@common-utils-aidl-lib",
+        "android.hardware.broadcastradio-V2-ndk",
+        "android.hardware.broadcastradio@common-utils-aidl-lib-V2",
         "android.hardware.broadcastradio@vts-utils-lib",
         "libgmock",
     ],

@@ -63,6 +63,10 @@ class WifiChipAidlTest : public testing::TestWithParam<std::string> {
         return mode_id;
     }
 
+    bool isConcurrencyTypeSupported(IfaceConcurrencyType type) {
+        return doesChipSupportConcurrencyType(wifi_chip_, type);
+    }
+
     std::shared_ptr<IWifiStaIface> configureChipForStaAndGetIface() {
         std::shared_ptr<IWifiStaIface> iface;
         configureChipForConcurrencyType(IfaceConcurrencyType::STA);
@@ -532,6 +536,9 @@ TEST_P(WifiChipAidlTest, CreateStaIface) {
  * CreateApIface
  */
 TEST_P(WifiChipAidlTest, CreateApIface) {
+    if (!isConcurrencyTypeSupported(IfaceConcurrencyType::AP)) {
+        GTEST_SKIP() << "AP is not supported";
+    }
     configureChipForApAndGetIface();
 }
 
@@ -549,6 +556,9 @@ TEST_P(WifiChipAidlTest, CreateNanIface) {
  * CreateP2pIface
  */
 TEST_P(WifiChipAidlTest, CreateP2pIface) {
+    if (!isConcurrencyTypeSupported(IfaceConcurrencyType::P2P)) {
+        GTEST_SKIP() << "P2P is not supported";
+    }
     configureChipForP2pAndGetIface();
 }
 
@@ -583,6 +593,9 @@ TEST_P(WifiChipAidlTest, GetStaIfaceNames) {
  * GetP2pIfaceNames
  */
 TEST_P(WifiChipAidlTest, GetP2pIfaceNames) {
+    if (!isConcurrencyTypeSupported(IfaceConcurrencyType::P2P)) {
+        GTEST_SKIP() << "P2P is not supported";
+    }
     configureChipForConcurrencyType(IfaceConcurrencyType::P2P);
 
     std::vector<std::string> iface_names;
@@ -607,6 +620,9 @@ TEST_P(WifiChipAidlTest, GetP2pIfaceNames) {
  * GetApIfaceNames
  */
 TEST_P(WifiChipAidlTest, GetApIfaceNames) {
+    if (!isConcurrencyTypeSupported(IfaceConcurrencyType::AP)) {
+        GTEST_SKIP() << "AP is not supported";
+    }
     configureChipForConcurrencyType(IfaceConcurrencyType::AP);
 
     std::vector<std::string> iface_names;
@@ -679,6 +695,9 @@ TEST_P(WifiChipAidlTest, GetStaIface) {
  * GetP2pIface
  */
 TEST_P(WifiChipAidlTest, GetP2pIface) {
+    if (!isConcurrencyTypeSupported(IfaceConcurrencyType::P2P)) {
+        GTEST_SKIP() << "P2P is not supported";
+    }
     std::shared_ptr<IWifiP2pIface> iface = configureChipForP2pAndGetIface();
     std::string iface_name = getP2pIfaceName(iface);
 
@@ -697,6 +716,9 @@ TEST_P(WifiChipAidlTest, GetP2pIface) {
  * GetApIface
  */
 TEST_P(WifiChipAidlTest, GetApIface) {
+    if (!isConcurrencyTypeSupported(IfaceConcurrencyType::AP)) {
+        GTEST_SKIP() << "AP is not supported";
+    }
     std::shared_ptr<IWifiApIface> iface = configureChipForApAndGetIface();
     std::string iface_name = getApIfaceName(iface);
 
@@ -755,6 +777,9 @@ TEST_P(WifiChipAidlTest, RemoveStaIface) {
  * RemoveP2pIface
  */
 TEST_P(WifiChipAidlTest, RemoveP2pIface) {
+    if (!isConcurrencyTypeSupported(IfaceConcurrencyType::P2P)) {
+        GTEST_SKIP() << "P2P is not supported";
+    }
     std::shared_ptr<IWifiP2pIface> iface = configureChipForP2pAndGetIface();
     std::string iface_name = getP2pIfaceName(iface);
 
@@ -771,6 +796,9 @@ TEST_P(WifiChipAidlTest, RemoveP2pIface) {
  * RemoveApIface
  */
 TEST_P(WifiChipAidlTest, RemoveApIface) {
+    if (!isConcurrencyTypeSupported(IfaceConcurrencyType::AP)) {
+        GTEST_SKIP() << "AP is not supported";
+    }
     std::shared_ptr<IWifiApIface> iface = configureChipForApAndGetIface();
     std::string iface_name = getApIfaceName(iface);
 
@@ -842,6 +870,36 @@ TEST_P(WifiChipAidlTest, CreateBridgedApIfaceAndremoveIfaceInstanceFromBridgedAp
     EXPECT_TRUE(wifi_chip->removeIfaceInstanceFromBridgedApIface(br_name, instances[0]).isOk());
     EXPECT_TRUE(wifi_ap_iface->getBridgedInstances(&instances_after_remove).isOk());
     EXPECT_EQ(instances_after_remove.size(), 1);
+}
+
+/*
+ * SetVoipMode_off
+ * Tests the setVoipMode() API with VoIP mode OFF.
+ */
+TEST_P(WifiChipAidlTest, SetVoipMode_off) {
+    configureChipForConcurrencyType(IfaceConcurrencyType::STA);
+    int32_t features = getChipFeatureSet(wifi_chip_);
+    if (features & static_cast<int32_t>(IWifiChip::FeatureSetMask::SET_VOIP_MODE)) {
+        auto status = wifi_chip_->setVoipMode(IWifiChip::VoipMode::OFF);
+        EXPECT_TRUE(status.isOk());
+    } else {
+        GTEST_SKIP() << "setVoipMode() is not supported by vendor.";
+    }
+}
+
+/*
+ * SetVoipMode_voice
+ * Tests the setVoipMode() API with VoIP mode VOICE.
+ */
+TEST_P(WifiChipAidlTest, SetVoipMode_voice) {
+    configureChipForConcurrencyType(IfaceConcurrencyType::STA);
+    int32_t features = getChipFeatureSet(wifi_chip_);
+    if (features & static_cast<int32_t>(IWifiChip::FeatureSetMask::SET_VOIP_MODE)) {
+        auto status = wifi_chip_->setVoipMode(IWifiChip::VoipMode::VOICE);
+        EXPECT_TRUE(status.isOk());
+    } else {
+        GTEST_SKIP() << "setVoipMode() is not supported by vendor.";
+    }
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiChipAidlTest);

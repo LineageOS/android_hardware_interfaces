@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.ims.media;
+/* @hide */
 @VintfStability
 interface IImsMediaSession {
   oneway void setListener(in android.hardware.radio.ims.media.IImsMediaSessionListener sessionListener);
@@ -41,4 +42,6 @@ interface IImsMediaSession {
   oneway void stopDtmf();
   oneway void sendHeaderExtension(in List<android.hardware.radio.ims.media.RtpHeaderExtension> extensions);
   oneway void setMediaQualityThreshold(in android.hardware.radio.ims.media.MediaQualityThreshold threshold);
+  oneway void requestRtpReceptionStats(in int intervalMs);
+  oneway void adjustDelay(in int delayMs);
 }

@@ -36,4 +36,5 @@ package android.hardware.wifi;
 parcelable NanBootstrappingResponse {
   int bootstrappingInstanceId;
   boolean acceptRequest;
+  byte discoverySessionId;
 }

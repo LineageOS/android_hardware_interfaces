@@ -22,6 +22,7 @@ import android.hardware.radio.data.OsAppId;
  * This struct represents a traffic descriptor. A valid struct must have at least one of the
  * optional values present. This is based on the definition of traffic descriptor in
  * TS 24.526 Section 5.2.
+ * @hide
  */
 @VintfStability
 @JavaDerive(toString=true)

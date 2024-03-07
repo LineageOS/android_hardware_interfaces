@@ -85,6 +85,13 @@ std::cv_status SapTest::wait() {
  * Test ISap.connectReq() for the response returned.
  */
 TEST_P(SapTest, connectReq) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_SUBSCRIPTION)) {
+            GTEST_SKIP() << "Skipping connectReq "
+                            "due to undefined FEATURE_TELEPHONY_SUBSCRIPTION";
+        }
+    }
+
     serial = GetRandomSerialNumber();
     int32_t maxMsgSize = 100;
 
@@ -103,6 +110,13 @@ TEST_P(SapTest, connectReq) {
  * Test ISap.disconnectReq() for the response returned
  */
 TEST_P(SapTest, disconnectReq) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_SUBSCRIPTION)) {
+            GTEST_SKIP() << "Skipping disconnectReq "
+                            "due to undefined FEATURE_TELEPHONY_SUBSCRIPTION";
+        }
+    }
+
     serial = GetRandomSerialNumber();
 
     ndk::ScopedAStatus res = sap->disconnectReq(serial);
@@ -116,6 +130,13 @@ TEST_P(SapTest, disconnectReq) {
  * Test ISap.apduReq() for the response returned.
  */
 TEST_P(SapTest, apduReq) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_SUBSCRIPTION)) {
+            GTEST_SKIP() << "Skipping apduReq "
+                            "due to undefined FEATURE_TELEPHONY_SUBSCRIPTION";
+        }
+    }
+
     serial = GetRandomSerialNumber();
     SapApduType sapApduType = SapApduType::APDU;
     std::vector<uint8_t> command = {};
@@ -137,6 +158,13 @@ TEST_P(SapTest, apduReq) {
  * Test ISap.transferAtrReq() for the response returned.
  */
 TEST_P(SapTest, transferAtrReq) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_SUBSCRIPTION)) {
+            GTEST_SKIP() << "Skipping transferAtrReq "
+                            "due to undefined FEATURE_TELEPHONY_SUBSCRIPTION";
+        }
+    }
+
     serial = GetRandomSerialNumber();
 
     ndk::ScopedAStatus res = sap->transferAtrReq(serial);
@@ -155,6 +183,13 @@ TEST_P(SapTest, transferAtrReq) {
  * Test ISap.powerReq() for the response returned.
  */
 TEST_P(SapTest, powerReq) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_SUBSCRIPTION)) {
+            GTEST_SKIP() << "Skipping powerReq "
+                            "due to undefined FEATURE_TELEPHONY_SUBSCRIPTION";
+        }
+    }
+
     serial = GetRandomSerialNumber();
     bool state = true;
 
@@ -175,6 +210,13 @@ TEST_P(SapTest, powerReq) {
  * Test ISap.resetSimReq() for the response returned.
  */
 TEST_P(SapTest, resetSimReq) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_SUBSCRIPTION)) {
+            GTEST_SKIP() << "Skipping resetSimReq "
+                            "due to undefined FEATURE_TELEPHONY_SUBSCRIPTION";
+        }
+    }
+
     serial = GetRandomSerialNumber();
 
     ndk::ScopedAStatus res = sap->resetSimReq(serial);
@@ -194,6 +236,13 @@ TEST_P(SapTest, resetSimReq) {
  * Test ISap.transferCardReaderStatusReq() for the response returned.
  */
 TEST_P(SapTest, transferCardReaderStatusReq) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_SUBSCRIPTION)) {
+            GTEST_SKIP() << "Skipping transferCardReaderStatusReq "
+                            "due to undefined FEATURE_TELEPHONY_SUBSCRIPTION";
+        }
+    }
+
     serial = GetRandomSerialNumber();
 
     ndk::ScopedAStatus res = sap->transferCardReaderStatusReq(serial);
@@ -211,6 +260,13 @@ TEST_P(SapTest, transferCardReaderStatusReq) {
  * Test ISap.setTransferProtocolReq() for the response returned.
  */
 TEST_P(SapTest, setTransferProtocolReq) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_SUBSCRIPTION)) {
+            GTEST_SKIP() << "Skipping setTransferProtocolReq "
+                            "due to undefined FEATURE_TELEPHONY_SUBSCRIPTION";
+        }
+    }
+
     serial = GetRandomSerialNumber();
     SapTransferProtocol sapTransferProtocol = SapTransferProtocol::T0;
 

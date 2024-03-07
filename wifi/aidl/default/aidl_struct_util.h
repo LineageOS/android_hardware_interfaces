@@ -148,6 +148,10 @@ bool convertLegacyNanDataPathScheduleUpdateIndToAidl(
 // RTT controller conversion methods.
 bool convertAidlVectorOfRttConfigToLegacy(const std::vector<RttConfig>& aidl_configs,
                                           std::vector<legacy_hal::wifi_rtt_config>* legacy_configs);
+bool convertAidlVectorOfRttConfigToLegacyV3(
+        const std::vector<RttConfig>& aidl_configs,
+        std::vector<legacy_hal::wifi_rtt_config_v3>* legacy_configs);
+
 bool convertAidlRttLciInformationToLegacy(const RttLciInformation& aidl_info,
                                           legacy_hal::wifi_lci_information* legacy_info);
 bool convertAidlRttLcrInformationToLegacy(const RttLcrInformation& aidl_info,
@@ -161,11 +165,18 @@ bool convertLegacyRttResponderToAidl(const legacy_hal::wifi_rtt_responder& legac
 bool convertLegacyRttCapabilitiesToAidl(
         const legacy_hal::wifi_rtt_capabilities& legacy_capabilities,
         RttCapabilities* aidl_capabilities);
+bool convertLegacyRttCapabilitiesV3ToAidl(
+        const legacy_hal::wifi_rtt_capabilities_v3& legacy_capabilities_v3,
+        RttCapabilities* aidl_capabilities);
+
 bool convertLegacyVectorOfRttResultToAidl(
         const std::vector<const legacy_hal::wifi_rtt_result*>& legacy_results,
         std::vector<RttResult>* aidl_results);
 bool convertLegacyVectorOfRttResultV2ToAidl(
         const std::vector<const legacy_hal::wifi_rtt_result_v2*>& legacy_results,
+        std::vector<RttResult>* aidl_results);
+bool convertLegacyVectorOfRttResultV3ToAidl(
+        const std::vector<const legacy_hal::wifi_rtt_result_v3*>& legacy_results,
         std::vector<RttResult>* aidl_results);
 uint32_t convertAidlWifiBandToLegacyMacBand(WifiBand band);
 uint32_t convertAidlWifiIfaceModeToLegacy(uint32_t aidl_iface_mask);
@@ -202,6 +213,23 @@ bool convertLegacyNanBootstrappingConfirmIndToAidl(
         const legacy_hal::NanBootstrappingConfirmInd& legacy_ind,
         NanBootstrappingConfirmInd* aidl_ind);
 uint32_t convertAidlChannelCategoryToLegacy(uint32_t aidl_channel_category_mask);
+bool convertCachedScanReportToAidl(const legacy_hal::WifiCachedScanReport& report,
+                                   CachedScanData* aidl_scan_data);
+bool convertCachedScanResultToAidl(const legacy_hal::wifi_cached_scan_result& legacy_scan_result,
+                                   uint64_t ts_us, CachedScanResult* aidl_scan_result);
+WifiRatePreamble convertScanResultFlagsToPreambleType(int flags);
+bool convertTwtCapabilitiesToAidl(const legacy_hal::wifi_twt_capabilities legacy_twt_capabs,
+                                  TwtCapabilities* aidl_twt_capabs);
+bool convertAidlTwtRequestToLegacy(const TwtRequest aidl_twt_request,
+                                   legacy_hal::wifi_twt_request* legacy_twt_request);
+IWifiStaIfaceEventCallback::TwtErrorCode convertLegacyHalTwtErrorCodeToAidl(
+        legacy_hal::wifi_twt_error_code legacy_error_code);
+IWifiStaIfaceEventCallback::TwtTeardownReasonCode convertLegacyHalTwtReasonCodeToAidl(
+        legacy_hal::wifi_twt_teardown_reason_code legacy_reason_code);
+bool convertLegacyHalTwtSessionToAidl(legacy_hal::wifi_twt_session twt_session,
+                                      TwtSession* aidl_twt_session);
+bool convertLegacyHalTwtSessionStatsToAidl(legacy_hal::wifi_twt_session_stats twt_stats,
+                                           TwtSessionStats* aidl_twt_stats);
 }  // namespace aidl_struct_util
 }  // namespace wifi
 }  // namespace hardware

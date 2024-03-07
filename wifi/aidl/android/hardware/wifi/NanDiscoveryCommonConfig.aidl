@@ -73,8 +73,9 @@ parcelable NanDiscoveryCommonConfig {
     /**
      * Arbitrary information communicated in discovery packets - there is no semantic meaning to
      * these bytes. They are passed-through from publisher to subscriber as-is with no parsing. Max
-     * length: |NanCapabilities.maxExtendedServiceSpecificInfoLen|. Spec: Service Descriptor
-     * Extension Attribute (SDEA) / Service Info
+     * length: |NanCapabilities.maxExtendedServiceSpecificInfoLen|. This info is using Generic
+     * Service Protocol with setting Service Info type to 2 (Generic). NAN Spec: Service
+     * Descriptor Extension Attribute (SDEA) / Service Info
      */
     byte[] extendedServiceSpecificInfo;
     /**

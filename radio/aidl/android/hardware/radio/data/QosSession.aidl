@@ -21,6 +21,7 @@ import android.hardware.radio.data.QosFilter;
 
 /**
  * QOS session associated with a dedicated bearer
+ * @hide
  */
 @VintfStability
 @JavaDerive(toString=true)

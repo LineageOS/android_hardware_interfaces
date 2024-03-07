@@ -34,7 +34,7 @@
 package android.hardware.broadcastradio;
 @Backing(type="int") @JavaDerive(equals=true, toString=true) @VintfStability
 enum Result {
-  OK,
+  OK = 0,
   INTERNAL_ERROR,
   INVALID_ARGUMENTS,
   INVALID_STATE,

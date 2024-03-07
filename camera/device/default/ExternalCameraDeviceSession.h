@@ -24,6 +24,9 @@
 #include <aidl/android/hardware/camera/device/BufferRequest.h>
 #include <aidl/android/hardware/camera/device/Stream.h>
 #include <android-base/unique_fd.h>
+#include <android/hardware/graphics/mapper/2.0/IMapper.h>
+#include <android/hardware/graphics/mapper/3.0/IMapper.h>
+#include <android/hardware/graphics/mapper/4.0/IMapper.h>
 #include <fmq/AidlMessageQueue.h>
 #include <utils/Thread.h>
 #include <deque>
@@ -55,6 +58,7 @@ using ::android::base::unique_fd;
 using ::android::hardware::camera::common::helper::SimpleThread;
 using ::android::hardware::camera::external::common::ExternalCameraConfig;
 using ::android::hardware::camera::external::common::SizeHasher;
+using ::android::hardware::graphics::mapper::V2_0::YCbCrLayout;
 using ::ndk::ScopedAStatus;
 
 class ExternalCameraDeviceSession : public BnCameraDeviceSession, public OutputThreadInterface {
@@ -240,9 +244,9 @@ class ExternalCameraDeviceSession : public BnCameraDeviceSession, public OutputT
     // To init/close different version of output thread
     void initOutputThread();
     void closeOutputThread();
-    void closeOutputThreadImpl();
+    void closeBufferRequestThread();
 
-    void close(bool callerIsDtor);
+    void closeImpl();
     Status initStatus() const;
     status_t initDefaultRequests();
 

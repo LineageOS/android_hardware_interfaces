@@ -18,6 +18,9 @@
 
 #include "Session.h"
 
+#undef LOG_TAG
+#define LOG_TAG "FaceVirtualHalSession"
+
 namespace aidl::android::hardware::biometrics::face {
 
 constexpr size_t MAX_WORKER_QUEUE_SIZE = 5;
@@ -170,6 +173,12 @@ ndk::ScopedAStatus Session::detectInteractionWithContext(
 
 ndk::ScopedAStatus Session::onContextChanged(const common::OperationContext& /*context*/) {
     return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Session::enrollWithOptions(const FaceEnrollOptions& options,
+                                              std::shared_ptr<common::ICancellationSignal>* out) {
+    return enroll(options.hardwareAuthToken, options.enrollmentType, options.features,
+                  options.nativeHandlePreview, out);
 }
 
 }  // namespace aidl::android::hardware::biometrics::face

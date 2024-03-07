@@ -18,6 +18,7 @@ package android.hardware.wifi;
 
 import android.hardware.wifi.NanPairingRequestType;
 import android.hardware.wifi.NanPairingSecurityConfig;
+import android.hardware.wifi.common.OuiKeyedData;
 
 /**
  * NAN pairing initiate request.
@@ -54,4 +55,9 @@ parcelable NanPairingRequest {
      * Security config used for the pairing
      */
     NanPairingSecurityConfig securityConfig;
+    /**
+     * Optional vendor-specific parameters. Null value indicates
+     * that no vendor data is provided.
+     */
+    @nullable OuiKeyedData[] vendorData;
 }

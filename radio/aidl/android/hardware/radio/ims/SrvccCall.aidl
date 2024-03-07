@@ -16,10 +16,10 @@
 
 package android.hardware.radio.ims;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable SrvccCall {
-
     @VintfStability
     @Backing(type="int")
     enum CallType {

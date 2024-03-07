@@ -654,11 +654,18 @@ TEST_P(UsbAidlTest, nonCompliantChargerValues) {
   EXPECT_EQ(2, usb_last_cookie);
   EXPECT_EQ(transactionId, last_transactionId);
 
-  // Current compliance values range from [1, 4]
   if (usb_last_port_status.supportsComplianceWarnings) {
     for (auto warning : usb_last_port_status.complianceWarnings) {
       EXPECT_TRUE((int)warning >= (int)ComplianceWarning::OTHER);
-      EXPECT_TRUE((int)warning <= (int)ComplianceWarning::MISSING_RP);
+      /*
+       * Version 2 compliance values range from [1, 4]
+       * Version 3 compliance values range from [1, 9]
+       */
+      if (usb_version < 3) {
+        EXPECT_TRUE((int)warning <= (int)ComplianceWarning::MISSING_RP);
+      } else {
+        EXPECT_TRUE((int)warning <= (int)ComplianceWarning::UNRELIABLE_IO);
+      }
     }
   }
 

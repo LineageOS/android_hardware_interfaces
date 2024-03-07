@@ -59,4 +59,8 @@ ScopedAStatus PowerHintSession::setThreads(const std::vector<int32_t>& threadIds
     return ScopedAStatus::ok();
 }
 
+ScopedAStatus PowerHintSession::setMode(SessionMode /* mode */, bool /* enabled */) {
+    return ScopedAStatus::ok();
+}
+
 }  // namespace aidl::android::hardware::power::impl::example

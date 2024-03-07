@@ -15,6 +15,7 @@
  */
 #define LOG_TAG "VehiclePropertyStore"
 #include <log/log.h>
+#include <utils/SystemClock.h>
 
 #include <common/include/vhal_v2_0/VehicleUtils.h>
 #include "VehiclePropertyStore.h"
@@ -41,9 +42,7 @@ void VehiclePropertyStore::registerProperty(const VehiclePropConfig& config,
     mConfigs.insert({ config.prop, RecordConfig { config, tokenFunc } });
 }
 
-bool VehiclePropertyStore::writeValue(const VehiclePropValue& propValue,
-                                        bool updateStatus) {
-    MuxGuard g(mLock);
+bool VehiclePropertyStore::writeValueLocked(const VehiclePropValue& propValue, bool updateStatus) {
     if (!mConfigs.count(propValue.prop)) return false;
 
     RecordId recId = getRecordIdLocked(propValue);
@@ -66,6 +65,36 @@ bool VehiclePropertyStore::writeValue(const VehiclePropValue& propValue,
         valueToUpdate->status = propValue.status;
     }
     return true;
+}
+
+bool VehiclePropertyStore::writeValue(const VehiclePropValue& propValue, bool updateStatus) {
+    MuxGuard g(mLock);
+
+    return writeValueLocked(propValue, updateStatus);
+}
+
+bool VehiclePropertyStore::writeValueWithCurrentTimestamp(VehiclePropValue* propValuePtr,
+                                                          bool updateStatus) {
+    MuxGuard g(mLock);
+
+    propValuePtr->timestamp = elapsedRealtimeNano();
+    return writeValueLocked(*propValuePtr, updateStatus);
+}
+
+std::unique_ptr<VehiclePropValue> VehiclePropertyStore::refreshTimestamp(int32_t propId,
+                                                                         int32_t areaId) {
+    MuxGuard g(mLock);
+    RecordId recId = getRecordIdLocked(VehiclePropValue{
+            .prop = propId,
+            .areaId = areaId,
+    });
+    auto it = mPropertyValues.find(recId);
+    if (it == mPropertyValues.end()) {
+        return nullptr;
+    }
+
+    it->second.timestamp = elapsedRealtimeNano();
+    return std::make_unique<VehiclePropValue>(it->second);
 }
 
 void VehiclePropertyStore::removeValue(const VehiclePropValue& propValue) {

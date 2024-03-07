@@ -16,6 +16,7 @@
 
 package android.hardware.radio.messaging;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable SmsWriteArgs {

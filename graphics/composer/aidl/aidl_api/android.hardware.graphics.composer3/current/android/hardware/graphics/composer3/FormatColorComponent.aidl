@@ -34,8 +34,8 @@
 package android.hardware.graphics.composer3;
 @Backing(type="byte") @VintfStability
 enum FormatColorComponent {
-  FORMAT_COMPONENT_0 = (1 << 0),
-  FORMAT_COMPONENT_1 = (1 << 1),
-  FORMAT_COMPONENT_2 = (1 << 2),
-  FORMAT_COMPONENT_3 = (1 << 3),
+  FORMAT_COMPONENT_0 = (1 << 0) /* 1 */,
+  FORMAT_COMPONENT_1 = (1 << 1) /* 2 */,
+  FORMAT_COMPONENT_2 = (1 << 2) /* 4 */,
+  FORMAT_COMPONENT_3 = (1 << 3) /* 8 */,
 }

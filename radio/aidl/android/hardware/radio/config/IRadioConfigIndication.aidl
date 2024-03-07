@@ -20,6 +20,7 @@ import android.hardware.radio.config.SimSlotStatus;
 
 /**
  * Interface declaring unsolicited radio config indications.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioConfigIndication {

@@ -34,7 +34,7 @@ cc_test {
         "libbinder_ndk",
     ],
     static_libs: [
-        "android.hardware.usb-V2-ndk",
+        "android.hardware.usb-V3-ndk",
     ],
     test_suites: [
         "general-tests",

@@ -16,6 +16,7 @@
 
 package android.hardware.radio.data;
 
+/** @hide */
 @VintfStability
 @Backing(type="int")
 @JavaDerive(toString=true)
@@ -85,5 +86,9 @@ enum ApnTypes {
     /**
      * APN type for ENTERPRISE
      */
-    ENTERPRISE = 1 << 14
+    ENTERPRISE = 1 << 14,
+    /**
+     * APN type for RCS (Rich Communication Services)
+     */
+    RCS = 1 << 15
 }

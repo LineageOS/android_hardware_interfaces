@@ -40,5 +40,6 @@ enum VehicleArea {
   SEAT = 0x05000000,
   DOOR = 0x06000000,
   WHEEL = 0x07000000,
+  VENDOR = 0x08000000,
   MASK = 0x0f000000,
 }

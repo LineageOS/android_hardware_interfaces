@@ -25,8 +25,10 @@
 
 #include <tinyxml2.h>
 
+#include <limits>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -54,6 +56,15 @@ class ConfigManager final {
     /* Camera device's capabilities and metadata */
     class CameraInfo {
       public:
+        enum class DeviceType : std::int32_t {
+            NONE = 0,
+            MOCK = 1,
+            V4L2 = 2,
+            VIDEO = 3,
+
+            UNKNOWN = std::numeric_limits<std::underlying_type_t<DeviceType>>::max(),
+        };
+
         CameraInfo() : characteristics(nullptr) {}
 
         virtual ~CameraInfo();
@@ -68,6 +79,10 @@ class ConfigManager final {
             characteristics = allocate_camera_metadata(entry_cap, data_cap);
             return characteristics != nullptr;
         }
+
+        static DeviceType deviceTypeFromSV(const std::string_view sv);
+
+        DeviceType deviceType{DeviceType::NONE};
 
         /*
          * List of supported controls that the primary client can program.

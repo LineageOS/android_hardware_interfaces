@@ -48,5 +48,6 @@ interface IContextHub {
   long[] getPreloadedNanoappIds(in int contextHubId);
   void onNanSessionStateChanged(in android.hardware.contexthub.NanSessionStateUpdate update);
   void setTestMode(in boolean enable);
+  void sendMessageDeliveryStatusToHub(in int contextHubId, in android.hardware.contexthub.MessageDeliveryStatus messageDeliveryStatus);
   const int EX_CONTEXT_HUB_UNSPECIFIED = (-1) /* -1 */;
 }

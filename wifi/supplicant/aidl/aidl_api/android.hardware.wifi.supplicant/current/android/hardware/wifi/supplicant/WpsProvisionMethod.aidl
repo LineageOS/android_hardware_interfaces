@@ -34,7 +34,7 @@
 package android.hardware.wifi.supplicant;
 @Backing(type="int") @VintfStability
 enum WpsProvisionMethod {
-  PBC = 0,
-  DISPLAY = 1,
-  KEYPAD = 2,
+  PBC,
+  DISPLAY,
+  KEYPAD,
 }

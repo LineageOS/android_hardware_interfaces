@@ -69,6 +69,7 @@ class MockVehicleCallback final
     size_t countOnPropertyEventResults();
     bool waitForSetValueResults(size_t size, size_t timeoutInNano);
     bool waitForGetValueResults(size_t size, size_t timeoutInNano);
+    bool waitForOnPropertyEventResults(size_t size, size_t timeoutInNano);
 
   private:
     std::mutex mLock;

@@ -28,6 +28,8 @@ oneway interface ISap {
      * @param serial Id to match req-resp. Resp must include same serial.
      * @param type APDU command type
      * @param command CommandAPDU/CommandAPDU7816 parameter depending on type
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void apduReq(in int serial, in SapApduType type, in byte[] command);
 
@@ -36,6 +38,8 @@ oneway interface ISap {
      *
      * @param serial Id to match req-resp. Resp must include same serial.
      * @param maxMsgSizeBytes MaxMsgSize to be used for SIM Access Profile connection
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void connectReq(in int serial, in int maxMsgSizeBytes);
 
@@ -43,6 +47,8 @@ oneway interface ISap {
      * DISCONNECT_REQ from SAP 1.1 spec 5.1.3
      *
      * @param serial Id to match req-resp. Resp must include same serial.
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void disconnectReq(in int serial);
 
@@ -51,6 +57,8 @@ oneway interface ISap {
      *
      * @param serial Id to match req-resp. Resp must include same serial.
      * @param powerOn true for on, false for off
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void powerReq(in int serial, in boolean powerOn);
 
@@ -58,6 +66,8 @@ oneway interface ISap {
      * RESET_SIM_REQ from SAP 1.1 spec 5.1.14
      *
      * @param serial Id to match req-resp. Resp must include same serial.
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void resetSimReq(in int serial);
 
@@ -65,6 +75,8 @@ oneway interface ISap {
      * Set callback that has response and unsolicited indication functions
      *
      * @param sapCallback Object containing response and unosolicited indication callbacks
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void setCallback(in ISapCallback sapCallback);
 
@@ -73,6 +85,8 @@ oneway interface ISap {
      *
      * @param serial Id to match req-resp. Resp must include same serial.
      * @param transferProtocol Transport Protocol
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void setTransferProtocolReq(in int serial, in SapTransferProtocol transferProtocol);
 
@@ -80,6 +94,8 @@ oneway interface ISap {
      * TRANSFER_ATR_REQ from SAP 1.1 spec 5.1.8
      *
      * @param serial Id to match req-resp. Resp must include same serial.
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void transferAtrReq(in int serial);
 
@@ -87,6 +103,8 @@ oneway interface ISap {
      * TRANSFER_CARD_READER_STATUS_REQ from SAP 1.1 spec 5.1.17
      *
      * @param serial Id to match req-resp. Resp must include same serial.
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void transferCardReaderStatusReq(in int serial);
 }

@@ -38,6 +38,37 @@ enum StatusCode {
 
     /* Something unexpected has happened in Vehicle HAL */
     INTERNAL_ERROR = 5;
+
+    /**
+     * For features that are not available because the underlying feature is
+     * disabled.
+     */
+    NOT_AVAILABLE_DISABLED = 6;
+
+    /**
+     * For features that are not available because the vehicle speed is too low.
+     */
+    NOT_AVAILABLE_SPEED_LOW = 7;
+
+    /**
+     * For features that are not available because the vehicle speed is too
+     * high.
+     */
+    NOT_AVAILABLE_SPEED_HIGH = 8;
+
+    /**
+     * For features that are not available because of bad camera or sensor
+     * visibility. Examples might be bird poop blocking the camera or a bumper
+     * cover blocking an ultrasonic sensor.
+     */
+    NOT_AVAILABLE_POOR_VISIBILITY = 9;
+
+    /**
+     * The feature cannot be accessed due to safety reasons. Eg. System could be
+     * in a faulty state, an object or person could be blocking the requested
+     * operation such as closing a trunk door, etc.
+     */
+    NOT_AVAILABLE_SAFETY = 10;
 };
 
 message VehicleHalCallStatus {

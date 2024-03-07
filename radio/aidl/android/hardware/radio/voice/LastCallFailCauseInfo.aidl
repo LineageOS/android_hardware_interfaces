@@ -18,6 +18,7 @@ package android.hardware.radio.voice;
 
 import android.hardware.radio.voice.LastCallFailCause;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable LastCallFailCauseInfo {

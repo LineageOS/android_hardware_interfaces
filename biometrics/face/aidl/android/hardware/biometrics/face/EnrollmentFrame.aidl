@@ -22,6 +22,7 @@ import android.hardware.biometrics.face.EnrollmentStage;
 
 /**
  * Describes an individual frame captured during enrollment.
+ * @hide
  */
 @VintfStability
 parcelable EnrollmentFrame {

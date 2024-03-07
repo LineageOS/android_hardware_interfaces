@@ -18,6 +18,7 @@ package android.hardware.radio.messaging;
 
 /**
  * Which types of Cell Broadcast Message (CBM) are to be received by the ME
+ * @hide
  */
 @VintfStability
 @JavaDerive(toString=true)

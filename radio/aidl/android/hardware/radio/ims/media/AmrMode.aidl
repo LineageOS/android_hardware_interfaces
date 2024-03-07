@@ -16,9 +16,13 @@
 
 package android.hardware.radio.ims.media;
 
-/** AMR codec mode to represent the bit rate. See 3ggp Specs 26.976 & 26.071 */
+/**
+ * AMR codec mode to represent the bit rate. See 3ggp Specs 26.976 & 26.071
+ * @hide
+ */
 @VintfStability
 @Backing(type="int")
+@JavaDerive(toString=true)
 enum AmrMode {
     /** 4.75 kbps for AMR / 6.6 kbps for AMR-WB */
     AMR_MODE_0 = 1 << 0,

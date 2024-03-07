@@ -20,9 +20,11 @@ import android.hardware.radio.RadioIndicationType;
 import android.hardware.radio.modem.HardwareConfig;
 import android.hardware.radio.modem.RadioCapability;
 import android.hardware.radio.modem.RadioState;
+import android.hardware.radio.modem.ImeiInfo;
 
 /**
  * Interface declaring unsolicited radio indications for modem APIs.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioModemIndication {
@@ -75,4 +77,12 @@ oneway interface IRadioModemIndication {
      * @param type Type of radio indication
      */
     void rilConnected(in RadioIndicationType type);
+
+    /**
+     * Indicates when there is a change in the IMEI mapping.
+     *
+     * @param type Type of radio indication
+     * @param imeiInfo IMEI information
+     */
+     void onImeiMappingChanged(in RadioIndicationType type, in ImeiInfo imeiInfo);
 }

@@ -40,4 +40,5 @@ parcelable NanRespondToPairingIndicationRequest {
   boolean enablePairingCache;
   byte[16] pairingIdentityKey;
   android.hardware.wifi.NanPairingSecurityConfig securityConfig;
+  @nullable android.hardware.wifi.common.OuiKeyedData[] vendorData;
 }

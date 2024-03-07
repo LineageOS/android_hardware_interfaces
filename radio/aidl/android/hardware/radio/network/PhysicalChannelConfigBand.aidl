@@ -21,6 +21,7 @@ import android.hardware.radio.network.GeranBands;
 import android.hardware.radio.network.NgranBands;
 import android.hardware.radio.network.UtranBands;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 union PhysicalChannelConfigBand {

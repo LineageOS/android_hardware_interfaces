@@ -46,7 +46,7 @@ implementations (including reference VHAL). Vendor VHAL implementation could
 use this library, along with their own implementation for `IVehicleHardware`
 interface.
 
-Also defines a binary `android.hardware.automotive.vehicle@V1-default-service`
+Also defines a binary `android.hardware.automotive.vehicle@V3-default-service`
 which is the reference VHAL implementation. It implements `IVehicle.aidl`
 interface. It uses `DefaultVehicleHal`, along with `FakeVehicleHardware`
 (in fake_impl). It simulates the vehicle bus interaction by using an

@@ -34,6 +34,6 @@
 package android.hardware.wifi.supplicant;
 @Backing(type="int") @VintfStability
 enum DppEventType {
-  CONFIGURATION_SENT = 0,
-  CONFIGURATION_APPLIED = 1,
+  CONFIGURATION_SENT,
+  CONFIGURATION_APPLIED,
 }

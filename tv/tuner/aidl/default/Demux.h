@@ -17,6 +17,7 @@
 #pragma once
 
 #include <aidl/android/hardware/tv/tuner/BnDemux.h>
+#include <aidl/android/hardware/tv/tuner/BnDvrCallback.h>
 
 #include <fmq/AidlMessageQueue.h>
 #include <math.h>
@@ -28,7 +29,9 @@
 #include "Filter.h"
 #include "Frontend.h"
 #include "TimeFilter.h"
+#include "Timer.h"
 #include "Tuner.h"
+#include "dtv_plugin.h"
 
 using namespace std;
 
@@ -44,12 +47,27 @@ using ::android::AidlMessageQueue;
 using ::android::hardware::EventFlag;
 
 using FilterMQ = AidlMessageQueue<int8_t, SynchronizedReadWrite>;
+using AidlMQ = AidlMessageQueue<int8_t, SynchronizedReadWrite>;
+using AidlMQDesc = MQDescriptor<int8_t, SynchronizedReadWrite>;
 
 class Dvr;
 class Filter;
 class Frontend;
 class TimeFilter;
 class Tuner;
+
+class DvrPlaybackCallback : public BnDvrCallback {
+  public:
+    virtual ::ndk::ScopedAStatus onPlaybackStatus(PlaybackStatus status) override {
+        ALOGD("demux.h: playback status %d", status);
+        return ndk::ScopedAStatus::ok();
+    }
+
+    virtual ::ndk::ScopedAStatus onRecordStatus(RecordStatus status) override {
+        ALOGD("Record Status %hhd", status);
+        return ndk::ScopedAStatus::ok();
+    }
+};
 
 class Demux : public BnDemux {
   public:
@@ -85,6 +103,8 @@ class Demux : public BnDemux {
     void setIsRecording(bool isRecording);
     bool isRecording();
     void startFrontendInputLoop();
+    void readIptvThreadLoop(dtv_plugin* interface, dtv_streamer* streamer, size_t size,
+                            int timeout_ms, int buffer_timeout);
 
     /**
      * A dispatcher to read and dispatch input data to all the started filters.
@@ -103,6 +123,11 @@ class Demux : public BnDemux {
     bool isInUse();
     void setInUse(bool inUse);
     void setTunerService(std::shared_ptr<Tuner> tuner);
+
+    /**
+     * Setter for IPTV Reading thread
+     */
+    void setIptvThreadRunning(bool isIptvThreadRunning);
 
   private:
     // Tuner service
@@ -167,12 +192,23 @@ class Demux : public BnDemux {
 
     // Thread handlers
     std::thread mFrontendInputThread;
+    std::thread mDemuxIptvReadThread;
+
+    // track whether the DVR FMQ for IPTV Playback is full
+    bool mIsIptvDvrFMQFull = false;
 
     /**
      * If a specific filter's writing loop is still running
      */
     std::atomic<bool> mFrontendInputThreadRunning;
     std::atomic<bool> mKeepFetchingDataFromFrontend;
+
+    /**
+     * Controls IPTV reading thread status
+     */
+    bool mIsIptvReadThreadRunning;
+    std::mutex mIsIptvThreadRunningMutex;
+    std::condition_variable mIsIptvThreadRunningCv;
 
     /**
      * If the dvr recording is running.

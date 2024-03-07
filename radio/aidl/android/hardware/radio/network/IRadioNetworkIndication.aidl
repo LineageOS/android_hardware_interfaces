@@ -21,16 +21,19 @@ import android.hardware.radio.RadioTechnology;
 import android.hardware.radio.network.BarringInfo;
 import android.hardware.radio.network.CellIdentity;
 import android.hardware.radio.network.CellInfo;
+import android.hardware.radio.network.CellularIdentifierDisclosure;
+import android.hardware.radio.network.EmergencyRegResult;
 import android.hardware.radio.network.LinkCapacityEstimate;
 import android.hardware.radio.network.NetworkScanResult;
 import android.hardware.radio.network.PhoneRestrictedState;
 import android.hardware.radio.network.PhysicalChannelConfig;
+import android.hardware.radio.network.SecurityAlgorithmUpdate;
 import android.hardware.radio.network.SignalStrength;
 import android.hardware.radio.network.SuppSvcNotification;
-import android.hardware.radio.network.EmergencyRegResult;
 
 /**
  * Interface declaring unsolicited radio indications for network APIs.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioNetworkIndication {
@@ -199,4 +202,50 @@ oneway interface IRadioNetworkIndication {
      * @param result the result of the Emergency Network Scan
      */
     void emergencyNetworkScanResult(in RadioIndicationType type, in EmergencyRegResult result);
+
+    /**
+     * Report a cellular identifier disclosure event. See
+     * IRadioNetwork.setCellularIdnetifierTransparencyEnabled for more details.
+     *
+     * A non-exhaustive list of when this method should be called follows:
+     *
+     * - If a device attempts an IMSI attach to the network.
+     * - If a device includes an IMSI in the IDENTITY_RESPONSE message on the NAS and a security
+     * context has not yet been established.
+     * - If a device includes an IMSI in a DETACH_REQUEST message sent on the NAS and the message is
+     * sent before a security context has been established.
+     * - If a device includes an IMSI in a TRACKING_AREA_UPDATE message sent on the NAS and the
+     * message is sent before a security context has been established.
+     * - If a device uses a 2G network to send a LOCATION_UPDATE_REQUEST message on the NAS that
+     * includes an IMSI or IMEI.
+     * - If a device uses a 2G network to send a AUTHENTICATION_AND_CIPHERING_RESPONSE message on
+     * the NAS and the message includes an IMEISV.
+     *
+     * @param type Type of radio indication
+     * @param disclosure A CellularIdentifierDisclosure as specified by
+     *         IRadioNetwork.setCellularIdentifierTransparencyEnabled.
+     *
+     */
+    void cellularIdentifierDisclosed(
+            in RadioIndicationType type, in CellularIdentifierDisclosure disclosure);
+
+    /*
+     * Indicates that a new ciphering or integrity algorithm was used for a particular voice,
+     * signaling, or data connection attempt for a given PLMN and/or access network. Due to
+     * power concerns, once a connection type has been reported on, follow-up reports about that
+     * connection type are only generated if there is any change to the previously reported
+     * encryption or integrity. Thus the AP is only to be notified when there is new information.
+     * List is reset upon rebooting thus info about initial connections is always passed to the
+     * AP after a reboot. List is also reset if the SIM is changed or if there has been a change
+     * in the access network.
+     *
+     * Note: a change only in cell ID should not trigger an update, as the design is intended to
+     * be agnostic to dual connectivity ("secondary serving cells").
+     *
+     * @param type Type of radio indication
+     * @param securityAlgorithmUpdate SecurityAlgorithmUpdate encapsulates details of security
+     *         algorithm updates
+     */
+    void securityAlgorithmsUpdated(
+            in RadioIndicationType type, in SecurityAlgorithmUpdate securityAlgorithmUpdate);
 }

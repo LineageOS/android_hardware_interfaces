@@ -21,6 +21,7 @@
 #include <aidl/android/hardware/automotive/remoteaccess/ApState.h>
 #include <aidl/android/hardware/automotive/remoteaccess/BnRemoteTaskCallback.h>
 #include <aidl/android/hardware/automotive/vehicle/VehiclePropValue.h>
+#include <android/binder_status.h>
 #include <gmock/gmock.h>
 #include <grpcpp/test/mock_stream.h>
 #include <gtest/gtest.h>
@@ -46,6 +47,7 @@ using ::android::frameworks::automotive::vhal::VhalClientResult;
 
 using ::aidl::android::hardware::automotive::remoteaccess::ApState;
 using ::aidl::android::hardware::automotive::remoteaccess::BnRemoteTaskCallback;
+using ::aidl::android::hardware::automotive::remoteaccess::ScheduleInfo;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
 
 using ::grpc::ClientAsyncReaderInterface;
@@ -63,6 +65,12 @@ using ::testing::Return;
 using ::testing::SetArgPointee;
 
 constexpr char kTestVin[] = "test_VIN";
+const std::string kTestClientId = "test client id";
+const std::string kTestScheduleId = "test schedule id";
+const std::vector<uint8_t> kTestData = {0xde, 0xad, 0xbe, 0xef};
+constexpr int32_t kTestCount = 1234;
+constexpr int64_t kTestStartTimeInEpochSeconds = 2345;
+constexpr int64_t kTestPeriodicInSeconds = 123;
 
 }  // namespace
 
@@ -73,6 +81,21 @@ class MockGrpcClientStub : public WakeupClient::StubInterface {
     MOCK_METHOD(Status, NotifyWakeupRequired,
                 (ClientContext * context, const NotifyWakeupRequiredRequest& request,
                  NotifyWakeupRequiredResponse* response));
+    MOCK_METHOD(Status, ScheduleTask,
+                (ClientContext * context, const ScheduleTaskRequest& request,
+                 ScheduleTaskResponse* response));
+    MOCK_METHOD(Status, UnscheduleTask,
+                (ClientContext * context, const UnscheduleTaskRequest& request,
+                 UnscheduleTaskResponse* response));
+    MOCK_METHOD(Status, UnscheduleAllTasks,
+                (ClientContext * context, const UnscheduleAllTasksRequest& request,
+                 UnscheduleAllTasksResponse* response));
+    MOCK_METHOD(Status, IsTaskScheduled,
+                (ClientContext * context, const IsTaskScheduledRequest& request,
+                 IsTaskScheduledResponse* response));
+    MOCK_METHOD(Status, GetAllScheduledTasks,
+                (ClientContext * context, const GetAllScheduledTasksRequest& request,
+                 GetAllScheduledTasksResponse* response));
     // Async methods which we do not care.
     MOCK_METHOD(ClientAsyncReaderInterface<GetRemoteTasksResponse>*, AsyncGetRemoteTasksRaw,
                 (ClientContext * context, const GetRemoteTasksRequest& request, CompletionQueue* cq,
@@ -87,6 +110,42 @@ class MockGrpcClientStub : public WakeupClient::StubInterface {
     MOCK_METHOD(ClientAsyncResponseReaderInterface<NotifyWakeupRequiredResponse>*,
                 PrepareAsyncNotifyWakeupRequiredRaw,
                 (ClientContext * context, const NotifyWakeupRequiredRequest& request,
+                 CompletionQueue* cq));
+    MOCK_METHOD(ClientAsyncResponseReaderInterface<ScheduleTaskResponse>*, AsyncScheduleTaskRaw,
+                (ClientContext * context, const ScheduleTaskRequest& request, CompletionQueue* cq));
+    MOCK_METHOD(ClientAsyncResponseReaderInterface<ScheduleTaskResponse>*,
+                PrepareAsyncScheduleTaskRaw,
+                (ClientContext * context, const ScheduleTaskRequest& request, CompletionQueue* cq));
+    MOCK_METHOD(ClientAsyncResponseReaderInterface<UnscheduleTaskResponse>*, AsyncUnscheduleTaskRaw,
+                (ClientContext * context, const UnscheduleTaskRequest& request,
+                 CompletionQueue* cq));
+    MOCK_METHOD(ClientAsyncResponseReaderInterface<UnscheduleTaskResponse>*,
+                PrepareAsyncUnscheduleTaskRaw,
+                (ClientContext * context, const UnscheduleTaskRequest& request,
+                 CompletionQueue* cq));
+    MOCK_METHOD(ClientAsyncResponseReaderInterface<UnscheduleAllTasksResponse>*,
+                AsyncUnscheduleAllTasksRaw,
+                (ClientContext * context, const UnscheduleAllTasksRequest& request,
+                 CompletionQueue* cq));
+    MOCK_METHOD(ClientAsyncResponseReaderInterface<UnscheduleAllTasksResponse>*,
+                PrepareAsyncUnscheduleAllTasksRaw,
+                (ClientContext * context, const UnscheduleAllTasksRequest& request,
+                 CompletionQueue* cq));
+    MOCK_METHOD(ClientAsyncResponseReaderInterface<IsTaskScheduledResponse>*,
+                AsyncIsTaskScheduledRaw,
+                (ClientContext * context, const IsTaskScheduledRequest& request,
+                 CompletionQueue* cq));
+    MOCK_METHOD(ClientAsyncResponseReaderInterface<IsTaskScheduledResponse>*,
+                PrepareAsyncIsTaskScheduledRaw,
+                (ClientContext * context, const IsTaskScheduledRequest& request,
+                 CompletionQueue* cq));
+    MOCK_METHOD(ClientAsyncResponseReaderInterface<GetAllScheduledTasksResponse>*,
+                AsyncGetAllScheduledTasksRaw,
+                (ClientContext * context, const GetAllScheduledTasksRequest& request,
+                 CompletionQueue* cq));
+    MOCK_METHOD(ClientAsyncResponseReaderInterface<GetAllScheduledTasksResponse>*,
+                PrepareAsyncGetAllScheduledTasksRaw,
+                (ClientContext * context, const GetAllScheduledTasksRequest& request,
                  CompletionQueue* cq));
 };
 
@@ -365,6 +424,174 @@ TEST_F(RemoteAccessServiceUnitTest, testGetVehicleId) {
 
     ASSERT_TRUE(getVehicleIdWithClient(vhalClient, &vehicleId).isOk());
     ASSERT_EQ(vehicleId, kTestVin);
+}
+
+TEST_F(RemoteAccessServiceUnitTest, TestIsTaskScheduleSupported) {
+    bool out = false;
+    ScopedAStatus status = getService()->isTaskScheduleSupported(&out);
+
+    EXPECT_TRUE(status.isOk());
+    EXPECT_TRUE(out);
+}
+
+TEST_F(RemoteAccessServiceUnitTest, TestScheduleTask) {
+    ScheduleTaskRequest grpcRequest = {};
+    EXPECT_CALL(*getGrpcWakeupClientStub(), ScheduleTask)
+            .WillOnce([&grpcRequest]([[maybe_unused]] ClientContext* context,
+                                     const ScheduleTaskRequest& request,
+                                     [[maybe_unused]] ScheduleTaskResponse* response) {
+                grpcRequest = request;
+                return Status();
+            });
+    ScheduleInfo scheduleInfo = {
+            .clientId = kTestClientId,
+            .scheduleId = kTestScheduleId,
+            .taskData = kTestData,
+            .count = kTestCount,
+            .startTimeInEpochSeconds = kTestStartTimeInEpochSeconds,
+            .periodicInSeconds = kTestPeriodicInSeconds,
+    };
+
+    ScopedAStatus status = getService()->scheduleTask(scheduleInfo);
+
+    ASSERT_TRUE(status.isOk());
+    EXPECT_EQ(grpcRequest.scheduleinfo().clientid(), kTestClientId);
+    EXPECT_EQ(grpcRequest.scheduleinfo().scheduleid(), kTestScheduleId);
+    EXPECT_EQ(grpcRequest.scheduleinfo().data(), std::string(kTestData.begin(), kTestData.end()));
+    EXPECT_EQ(grpcRequest.scheduleinfo().count(), kTestCount);
+    EXPECT_EQ(grpcRequest.scheduleinfo().starttimeinepochseconds(), kTestStartTimeInEpochSeconds);
+    EXPECT_EQ(grpcRequest.scheduleinfo().periodicinseconds(), kTestPeriodicInSeconds);
+}
+
+TEST_F(RemoteAccessServiceUnitTest, TestScheduleTask_InvalidArg) {
+    EXPECT_CALL(*getGrpcWakeupClientStub(), ScheduleTask)
+            .WillOnce([]([[maybe_unused]] ClientContext* context,
+                         [[maybe_unused]] const ScheduleTaskRequest& request,
+                         ScheduleTaskResponse* response) {
+                response->set_errorcode(ErrorCode::INVALID_ARG);
+                return Status();
+            });
+    ScheduleInfo scheduleInfo = {
+            .clientId = kTestClientId,
+            .scheduleId = kTestScheduleId,
+            .taskData = kTestData,
+            .count = kTestCount,
+            .startTimeInEpochSeconds = kTestStartTimeInEpochSeconds,
+            .periodicInSeconds = kTestPeriodicInSeconds,
+    };
+
+    ScopedAStatus status = getService()->scheduleTask(scheduleInfo);
+
+    ASSERT_FALSE(status.isOk());
+    ASSERT_EQ(status.getExceptionCode(), EX_ILLEGAL_ARGUMENT);
+}
+
+TEST_F(RemoteAccessServiceUnitTest, TestScheduleTask_UnspecifiedError) {
+    EXPECT_CALL(*getGrpcWakeupClientStub(), ScheduleTask)
+            .WillOnce([]([[maybe_unused]] ClientContext* context,
+                         [[maybe_unused]] const ScheduleTaskRequest& request,
+                         ScheduleTaskResponse* response) {
+                response->set_errorcode(ErrorCode::UNSPECIFIED);
+                return Status();
+            });
+    ScheduleInfo scheduleInfo = {
+            .clientId = kTestClientId,
+            .scheduleId = kTestScheduleId,
+            .taskData = kTestData,
+            .count = kTestCount,
+            .startTimeInEpochSeconds = kTestStartTimeInEpochSeconds,
+            .periodicInSeconds = kTestPeriodicInSeconds,
+    };
+
+    ScopedAStatus status = getService()->scheduleTask(scheduleInfo);
+
+    ASSERT_FALSE(status.isOk());
+    ASSERT_EQ(status.getExceptionCode(), EX_SERVICE_SPECIFIC);
+}
+
+TEST_F(RemoteAccessServiceUnitTest, TestUnscheduleTask) {
+    UnscheduleTaskRequest grpcRequest = {};
+    EXPECT_CALL(*getGrpcWakeupClientStub(), UnscheduleTask)
+            .WillOnce([&grpcRequest]([[maybe_unused]] ClientContext* context,
+                                     const UnscheduleTaskRequest& request,
+                                     [[maybe_unused]] UnscheduleTaskResponse* response) {
+                grpcRequest = request;
+                return Status();
+            });
+
+    ScopedAStatus status = getService()->unscheduleTask(kTestClientId, kTestScheduleId);
+
+    ASSERT_TRUE(status.isOk());
+    EXPECT_EQ(grpcRequest.clientid(), kTestClientId);
+    EXPECT_EQ(grpcRequest.scheduleid(), kTestScheduleId);
+}
+
+TEST_F(RemoteAccessServiceUnitTest, TestUnscheduleAllTasks) {
+    UnscheduleAllTasksRequest grpcRequest = {};
+    EXPECT_CALL(*getGrpcWakeupClientStub(), UnscheduleAllTasks)
+            .WillOnce([&grpcRequest]([[maybe_unused]] ClientContext* context,
+                                     const UnscheduleAllTasksRequest& request,
+                                     [[maybe_unused]] UnscheduleAllTasksResponse* response) {
+                grpcRequest = request;
+                return Status();
+            });
+
+    ScopedAStatus status = getService()->unscheduleAllTasks(kTestClientId);
+
+    ASSERT_TRUE(status.isOk());
+    EXPECT_EQ(grpcRequest.clientid(), kTestClientId);
+}
+
+TEST_F(RemoteAccessServiceUnitTest, TestIsTaskScheduled) {
+    bool isTaskScheduled = false;
+    IsTaskScheduledRequest grpcRequest = {};
+    EXPECT_CALL(*getGrpcWakeupClientStub(), IsTaskScheduled)
+            .WillOnce([&grpcRequest]([[maybe_unused]] ClientContext* context,
+                                     const IsTaskScheduledRequest& request,
+                                     IsTaskScheduledResponse* response) {
+                grpcRequest = request;
+                response->set_istaskscheduled(true);
+                return Status();
+            });
+
+    ScopedAStatus status =
+            getService()->isTaskScheduled(kTestClientId, kTestScheduleId, &isTaskScheduled);
+
+    ASSERT_TRUE(status.isOk());
+    EXPECT_TRUE(isTaskScheduled);
+    EXPECT_EQ(grpcRequest.clientid(), kTestClientId);
+    EXPECT_EQ(grpcRequest.scheduleid(), kTestScheduleId);
+}
+
+TEST_F(RemoteAccessServiceUnitTest, testGetAllScheduledTasks) {
+    std::vector<ScheduleInfo> result;
+    GetAllScheduledTasksRequest grpcRequest = {};
+    EXPECT_CALL(*getGrpcWakeupClientStub(), GetAllScheduledTasks)
+            .WillOnce([&grpcRequest]([[maybe_unused]] ClientContext* context,
+                                     const GetAllScheduledTasksRequest& request,
+                                     GetAllScheduledTasksResponse* response) {
+                grpcRequest = request;
+                GrpcScheduleInfo* newInfo = response->add_allscheduledtasks();
+                newInfo->set_clientid(kTestClientId);
+                newInfo->set_scheduleid(kTestScheduleId);
+                newInfo->set_data(kTestData.data(), kTestData.size());
+                newInfo->set_count(kTestCount);
+                newInfo->set_starttimeinepochseconds(kTestStartTimeInEpochSeconds);
+                newInfo->set_periodicinseconds(kTestPeriodicInSeconds);
+                return Status();
+            });
+
+    ScopedAStatus status = getService()->getAllScheduledTasks(kTestClientId, &result);
+
+    ASSERT_TRUE(status.isOk());
+    EXPECT_EQ(grpcRequest.clientid(), kTestClientId);
+    ASSERT_EQ(result.size(), 1u);
+    ASSERT_EQ(result[0].clientId, kTestClientId);
+    ASSERT_EQ(result[0].scheduleId, kTestScheduleId);
+    ASSERT_EQ(result[0].taskData, kTestData);
+    ASSERT_EQ(result[0].count, kTestCount);
+    ASSERT_EQ(result[0].startTimeInEpochSeconds, kTestStartTimeInEpochSeconds);
+    ASSERT_EQ(result[0].periodicInSeconds, kTestPeriodicInSeconds);
 }
 
 }  // namespace remoteaccess
