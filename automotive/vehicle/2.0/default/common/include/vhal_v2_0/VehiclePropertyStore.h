@@ -70,6 +70,16 @@ public:
      * example wasn't registered. */
     bool writeValue(const VehiclePropValue& propValue, bool updateStatus);
 
+    /*
+     * Stores provided value. Returns true if value was written returns false if config for
+     * example wasn't registered.
+     *
+     * The property value's timestamp will be set to the current ElapsedRealTimeNano.
+     */
+    bool writeValueWithCurrentTimestamp(VehiclePropValue* propValuePtr, bool updateStatus);
+
+    std::unique_ptr<VehiclePropValue> refreshTimestamp(int32_t propId, int32_t areaId);
+
     void removeValue(const VehiclePropValue& propValue);
     void removeValuesForProperty(int32_t propId);
 
@@ -94,6 +104,8 @@ private:
     std::unordered_map<int32_t /* VehicleProperty */, RecordConfig> mConfigs;
 
     PropertyMap mPropertyValues;  // Sorted map of RecordId : VehiclePropValue.
+
+    bool writeValueLocked(const VehiclePropValue& propValue, bool updateStatus);
 };
 
 }  // namespace V2_0

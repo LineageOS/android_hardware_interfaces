@@ -1,4 +1,4 @@
-service vendor.gnss-default /vendor/bin/hw/android.hardware.gnss-service.example
+service vendor.gnss-default /apex/com.android.hardware.gnss/bin/hw/android.hardware.gnss-service.example
     class hal
     user nobody
     group nobody

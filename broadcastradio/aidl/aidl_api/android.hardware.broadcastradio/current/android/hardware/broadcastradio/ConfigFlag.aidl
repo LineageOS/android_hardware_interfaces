@@ -35,6 +35,9 @@ package android.hardware.broadcastradio;
 @Backing(type="int") @JavaDerive(equals=true, toString=true) @VintfStability
 enum ConfigFlag {
   FORCE_MONO = 1,
+  /**
+   * @deprecated Use {link #FORCE_ANALOG_FM} instead
+   */
   FORCE_ANALOG,
   FORCE_DIGITAL,
   RDS_AF,
@@ -43,4 +46,6 @@ enum ConfigFlag {
   DAB_FM_LINKING,
   DAB_DAB_SOFT_LINKING,
   DAB_FM_SOFT_LINKING,
+  FORCE_ANALOG_FM,
+  FORCE_ANALOG_AM,
 }

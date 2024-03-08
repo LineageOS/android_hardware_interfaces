@@ -439,7 +439,7 @@ bool LegacyCameraProviderImpl_2_4::setUpVendorTags() {
     }
     mVendorTagSections.resize(numSections);
     for (size_t s = 0; s < numSections; s++) {
-        mVendorTagSections[s].sectionName = (*sectionNames)[s].string();
+        mVendorTagSections[s].sectionName = (*sectionNames)[s].c_str();
         mVendorTagSections[s].tags = tagsBySection[s];
     }
     return true;
@@ -448,11 +448,11 @@ bool LegacyCameraProviderImpl_2_4::setUpVendorTags() {
 // Methods from ::android::hardware::camera::provider::V2_4::ICameraProvider follow.
 Return<Status> LegacyCameraProviderImpl_2_4::setCallback(
         const sp<ICameraProviderCallback>& callback) {
+    if (callback == nullptr) {
+        return Status::ILLEGAL_ARGUMENT;
+    }
     Mutex::Autolock _l(mCbLock);
     mCallbacks = callback;
-    if (mCallbacks == nullptr) {
-        return Status::OK;
-    }
     // Add and report all presenting external cameras.
     for (auto const& statusPair : mCameraStatusMap) {
         int id = std::stoi(statusPair.first);

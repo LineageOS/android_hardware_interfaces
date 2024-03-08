@@ -39,6 +39,11 @@ class Mixer {
 
     bool isValid() const { return mMixer != nullptr; }
 
+    ndk::ScopedAStatus getMasterMute(bool* muted);
+    ndk::ScopedAStatus getMasterVolume(float* volume);
+    ndk::ScopedAStatus getMicGain(float* gain);
+    ndk::ScopedAStatus getMicMute(bool* muted);
+    ndk::ScopedAStatus getVolumes(std::vector<float>* volumes);
     ndk::ScopedAStatus setMasterMute(bool muted);
     ndk::ScopedAStatus setMasterVolume(float volume);
     ndk::ScopedAStatus setMicGain(float gain);
@@ -60,9 +65,16 @@ class Mixer {
     static const std::map<Control, std::vector<ControlNamesAndExpectedCtlType>> kPossibleControls;
     static Controls initializeMixerControls(struct mixer* mixer);
 
+    ndk::ScopedAStatus findControl(Control ctl, struct mixer_ctl** result);
+    ndk::ScopedAStatus getMixerControlMute(Control ctl, bool* muted);
+    ndk::ScopedAStatus getMixerControlVolume(Control ctl, float* volume);
     ndk::ScopedAStatus setMixerControlMute(Control ctl, bool muted);
     ndk::ScopedAStatus setMixerControlVolume(Control ctl, float volume);
 
+    int getMixerControlPercent(struct mixer_ctl* ctl, std::vector<int>* percents)
+            REQUIRES(mMixerAccess);
+    int getMixerControlValues(struct mixer_ctl* ctl, std::vector<int>* values)
+            REQUIRES(mMixerAccess);
     int setMixerControlPercent(struct mixer_ctl* ctl, int percent) REQUIRES(mMixerAccess);
     int setMixerControlPercent(struct mixer_ctl* ctl, const std::vector<int>& percents)
             REQUIRES(mMixerAccess);

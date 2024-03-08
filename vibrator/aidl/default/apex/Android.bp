@@ -2,17 +2,6 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
-apex_key {
-    name: "com.android.hardware.vibrator.key",
-    public_key: "com.android.hardware.vibrator.avbpubkey",
-    private_key: "com.android.hardware.vibrator.pem",
-}
-
-android_app_certificate {
-    name: "com.android.hardware.vibrator.certificate",
-    certificate: "com.android.hardware.vibrator",
-}
-
 prebuilt_etc {
     name: "com.android.hardware.vibrator.rc",
     src: "com.android.hardware.vibrator.rc",
@@ -22,20 +11,19 @@ prebuilt_etc {
 apex {
     name: "com.android.hardware.vibrator",
     manifest: "apex_manifest.json",
-    key: "com.android.hardware.vibrator.key",
-    certificate: ":com.android.hardware.vibrator.certificate",
+    key: "com.android.hardware.key",
+    certificate: ":com.android.hardware.certificate",
     file_contexts: "file_contexts",
-    use_vndk_as_stable: true,
     updatable: false,
-    // Install the apex in /vendor/apex
-    soc_specific: true,
+    vendor: true,
+
     binaries: [
         "android.hardware.vibrator-service.example",
     ],
     prebuilts: [
         "com.android.hardware.vibrator.rc",
+        "android.hardware.vibrator.xml",
     ],
-    vintf_fragments: [":android.hardware.vibrator.xml"],
     // vibrator.default.so is not needed by the AIDL service binary.
     overrides: ["vibrator.default"],
 }

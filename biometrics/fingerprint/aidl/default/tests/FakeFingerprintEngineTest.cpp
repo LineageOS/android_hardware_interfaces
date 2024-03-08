@@ -357,7 +357,7 @@ TEST_F(FakeFingerprintEngineTest, InteractionDetectNotSet) {
     FingerprintHalProperties::enrollment_hit({});
     mEngine.detectInteractionImpl(mCallback.get(), mCancel.get_future());
     mEngine.fingerDownAction();
-    ASSERT_EQ(0, mCallback->mInteractionDetectedCount);
+    ASSERT_EQ(1, mCallback->mInteractionDetectedCount);
 }
 
 TEST_F(FakeFingerprintEngineTest, InteractionDetectNotEnrolled) {
@@ -365,7 +365,7 @@ TEST_F(FakeFingerprintEngineTest, InteractionDetectNotEnrolled) {
     FingerprintHalProperties::enrollment_hit(25);
     mEngine.detectInteractionImpl(mCallback.get(), mCancel.get_future());
     mEngine.fingerDownAction();
-    ASSERT_EQ(0, mCallback->mInteractionDetectedCount);
+    ASSERT_EQ(1, mCallback->mInteractionDetectedCount);
 }
 
 TEST_F(FakeFingerprintEngineTest, InteractionDetectError) {
@@ -421,29 +421,29 @@ TEST_F(FakeFingerprintEngineTest, RemoveEnrolled) {
 
 TEST_F(FakeFingerprintEngineTest, parseIntSequence) {
     std::vector<int32_t> seqV;
-    seqV = mEngine.parseIntSequence("");
+    seqV = Util::parseIntSequence("");
     ASSERT_EQ(0, seqV.size());
-    seqV = mEngine.parseIntSequence("2");
+    seqV = Util::parseIntSequence("2");
     ASSERT_EQ(1, seqV.size());
     ASSERT_EQ(2, seqV[0]);
-    seqV = mEngine.parseIntSequence("2,3,4");
+    seqV = Util::parseIntSequence("2,3,4");
     std::vector<int32_t> expV{2, 3, 4};
     ASSERT_EQ(expV, seqV);
-    seqV = mEngine.parseIntSequence("2,3,a");
+    seqV = Util::parseIntSequence("2,3,a");
     ASSERT_EQ(0, seqV.size());
-    seqV = mEngine.parseIntSequence("2, 3, 4");
+    seqV = Util::parseIntSequence("2, 3, 4");
     ASSERT_EQ(expV, seqV);
-    seqV = mEngine.parseIntSequence("123,456");
+    seqV = Util::parseIntSequence("123,456");
     ASSERT_EQ(2, seqV.size());
     std::vector<int32_t> expV1{123, 456};
     ASSERT_EQ(expV1, seqV);
-    seqV = mEngine.parseIntSequence("12f3,456");
+    seqV = Util::parseIntSequence("12f3,456");
     ASSERT_EQ(0, seqV.size());
 }
 
 TEST_F(FakeFingerprintEngineTest, parseEnrollmentCaptureOk) {
     std::vector<std::vector<int32_t>> ecV;
-    ecV = mEngine.parseEnrollmentCapture("100,200,300");
+    ecV = Util::parseEnrollmentCapture("100,200,300");
     ASSERT_EQ(6, ecV.size());
     std::vector<std::vector<int32_t>> expE{{100}, {200}, {300}};
     std::vector<int32_t> defC{1};
@@ -451,26 +451,26 @@ TEST_F(FakeFingerprintEngineTest, parseEnrollmentCaptureOk) {
         ASSERT_EQ(expE[i / 2], ecV[i]);
         ASSERT_EQ(defC, ecV[i + 1]);
     }
-    ecV = mEngine.parseEnrollmentCapture("100");
+    ecV = Util::parseEnrollmentCapture("100");
     ASSERT_EQ(2, ecV.size());
     ASSERT_EQ(expE[0], ecV[0]);
     ASSERT_EQ(defC, ecV[1]);
 
-    ecV = mEngine.parseEnrollmentCapture("100-[5,6,7]");
+    ecV = Util::parseEnrollmentCapture("100-[5,6,7]");
     std::vector<int32_t> expC{5, 6, 7};
     ASSERT_EQ(2, ecV.size());
     for (int i = 0; i < ecV.size(); i += 2) {
         ASSERT_EQ(expE[i / 2], ecV[i]);
         ASSERT_EQ(expC, ecV[i + 1]);
     }
-    ecV = mEngine.parseEnrollmentCapture("100-[5,6,7], 200, 300-[9,10]");
+    ecV = Util::parseEnrollmentCapture("100-[5,6,7], 200, 300-[9,10]");
     std::vector<std::vector<int32_t>> expC1{{5, 6, 7}, {1}, {9, 10}};
     ASSERT_EQ(6, ecV.size());
     for (int i = 0; i < ecV.size(); i += 2) {
         ASSERT_EQ(expE[i / 2], ecV[i]);
         ASSERT_EQ(expC1[i / 2], ecV[i + 1]);
     }
-    ecV = mEngine.parseEnrollmentCapture("100-[5,6,7], 200-[2,1], 300-[9]");
+    ecV = Util::parseEnrollmentCapture("100-[5,6,7], 200-[2,1], 300-[9]");
     std::vector<std::vector<int32_t>> expC2{{5, 6, 7}, {2, 1}, {9}};
     ASSERT_EQ(ecV.size(), 6);
     for (int i = 0; i < ecV.size(); i += 2) {
@@ -484,7 +484,7 @@ TEST_F(FakeFingerprintEngineTest, parseEnrollmentCaptureFail) {
                                     "100,2x0,300", "200-[f]", "a,b"};
     std::vector<std::vector<int32_t>> ecV;
     for (const auto& s : badStr) {
-        ecV = mEngine.parseEnrollmentCapture(s);
+        ecV = Util::parseEnrollmentCapture(s);
         ASSERT_EQ(ecV.size(), 0);
     }
 }
@@ -508,7 +508,7 @@ TEST_F(FakeFingerprintEngineTest, randomLatency) {
 TEST_F(FakeFingerprintEngineTest, lockoutTimer) {
     mEngine.startLockoutTimer(200, mCallback.get());
     ASSERT_TRUE(mEngine.getLockoutTimerStarted());
-    std::this_thread::sleep_for(std::chrono::milliseconds(210));
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
     ASSERT_FALSE(mEngine.getLockoutTimerStarted());
     ASSERT_TRUE(mCallback->mLockoutCleared);
 }

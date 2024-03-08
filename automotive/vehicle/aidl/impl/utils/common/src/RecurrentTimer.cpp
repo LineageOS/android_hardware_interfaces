@@ -17,6 +17,7 @@
 #include "RecurrentTimer.h"
 
 #include <utils/Log.h>
+#include <utils/Looper.h>
 #include <utils/SystemClock.h>
 
 #include <inttypes.h>
@@ -27,153 +28,119 @@ namespace hardware {
 namespace automotive {
 namespace vehicle {
 
+namespace {
+
 using ::android::base::ScopedLockAssertion;
 
+constexpr int INVALID_ID = -1;
+
+}  // namespace
+
 RecurrentTimer::RecurrentTimer() {
-    mThread = std::thread(&RecurrentTimer::loop, this);
+    mHandler = sp<RecurrentMessageHandler>::make(this);
+    mLooper = sp<Looper>::make(/*allowNonCallbacks=*/false);
+    mThread = std::thread([this] {
+        Looper::setForThread(mLooper);
+
+        while (!mStopRequested) {
+            mLooper->pollOnce(/*timeoutMillis=*/-1);
+        }
+    });
 }
 
 RecurrentTimer::~RecurrentTimer() {
-    {
-        std::scoped_lock<std::mutex> lockGuard(mLock);
-        mStopRequested = true;
-    }
-    mCond.notify_one();
+    mStopRequested = true;
+    mLooper->removeMessages(mHandler);
+    mLooper->wake();
     if (mThread.joinable()) {
         mThread.join();
     }
 }
 
-void RecurrentTimer::registerTimerCallback(int64_t intervalInNano,
+int RecurrentTimer::getCallbackIdLocked(std::shared_ptr<RecurrentTimer::Callback> callback) {
+    const auto& it = mIdByCallback.find(callback);
+    if (it != mIdByCallback.end()) {
+        return it->second;
+    }
+    return INVALID_ID;
+}
+
+void RecurrentTimer::registerTimerCallback(int64_t intervalInNanos,
                                            std::shared_ptr<RecurrentTimer::Callback> callback) {
     {
         std::scoped_lock<std::mutex> lockGuard(mLock);
 
+        int callbackId = getCallbackIdLocked(callback);
+
+        if (callbackId == INVALID_ID) {
+            callbackId = mCallbackId++;
+            mIdByCallback.insert({callback, callbackId});
+        } else {
+            ALOGI("Replacing an existing timer callback with a new interval, current: %" PRId64
+                  " ns, new: %" PRId64 " ns",
+                  mCallbackInfoById[callbackId]->intervalInNanos, intervalInNanos);
+            mLooper->removeMessages(mHandler, callbackId);
+        }
+
         // Aligns the nextTime to multiply of interval.
-        int64_t nextTime = ceil(uptimeNanos() / intervalInNano) * intervalInNano;
+        int64_t nextTimeInNanos = ceil(uptimeNanos() / intervalInNanos) * intervalInNanos;
 
         std::unique_ptr<CallbackInfo> info = std::make_unique<CallbackInfo>();
         info->callback = callback;
-        info->interval = intervalInNano;
-        info->nextTime = nextTime;
+        info->intervalInNanos = intervalInNanos;
+        info->nextTimeInNanos = nextTimeInNanos;
+        mCallbackInfoById.insert({callbackId, std::move(info)});
 
-        auto it = mCallbacks.find(callback);
-        if (it != mCallbacks.end()) {
-            ALOGI("Replacing an existing timer callback with a new interval, current: %" PRId64
-                  " ns, new: %" PRId64 " ns",
-                  it->second->interval, intervalInNano);
-            markOutdatedLocked(it->second);
-        }
-        mCallbacks[callback] = info.get();
-        mCallbackQueue.push_back(std::move(info));
-        // Insert the last element into the heap.
-        std::push_heap(mCallbackQueue.begin(), mCallbackQueue.end(), CallbackInfo::cmp);
+        mLooper->sendMessageAtTime(nextTimeInNanos, mHandler, Message(callbackId));
     }
-    mCond.notify_one();
 }
 
 void RecurrentTimer::unregisterTimerCallback(std::shared_ptr<RecurrentTimer::Callback> callback) {
     {
         std::scoped_lock<std::mutex> lockGuard(mLock);
 
-        auto it = mCallbacks.find(callback);
-        if (it == mCallbacks.end()) {
+        int callbackId = getCallbackIdLocked(callback);
+
+        if (callbackId == INVALID_ID) {
             ALOGE("No event found to unregister");
             return;
         }
 
-        markOutdatedLocked(it->second);
-        mCallbacks.erase(it);
-    }
-
-    mCond.notify_one();
-}
-
-void RecurrentTimer::markOutdatedLocked(RecurrentTimer::CallbackInfo* info) {
-    info->outdated = true;
-    info->callback = nullptr;
-    // Make sure the first element is always valid.
-    removeInvalidCallbackLocked();
-}
-
-void RecurrentTimer::removeInvalidCallbackLocked() {
-    while (mCallbackQueue.size() != 0 && mCallbackQueue[0]->outdated) {
-        std::pop_heap(mCallbackQueue.begin(), mCallbackQueue.end(), CallbackInfo::cmp);
-        mCallbackQueue.pop_back();
+        mLooper->removeMessages(mHandler, callbackId);
+        mCallbackInfoById.erase(callbackId);
+        mIdByCallback.erase(callback);
     }
 }
 
-std::shared_ptr<RecurrentTimer::Callback> RecurrentTimer::getNextCallbackLocked(int64_t now) {
-    std::pop_heap(mCallbackQueue.begin(), mCallbackQueue.end(), CallbackInfo::cmp);
-    auto& callbackInfo = mCallbackQueue[mCallbackQueue.size() - 1];
-    auto nextCallback = callbackInfo->callback;
-    // intervalCount is the number of interval we have to advance until we pass now.
-    size_t intervalCount = (now - callbackInfo->nextTime) / callbackInfo->interval + 1;
-    callbackInfo->nextTime += intervalCount * callbackInfo->interval;
-    std::push_heap(mCallbackQueue.begin(), mCallbackQueue.end(), CallbackInfo::cmp);
+void RecurrentTimer::handleMessage(const Message& message) {
+    std::shared_ptr<RecurrentTimer::Callback> callback;
+    {
+        std::scoped_lock<std::mutex> lockGuard(mLock);
 
-    // Make sure the first element is always valid.
-    removeInvalidCallbackLocked();
+        int callbackId = message.what;
 
-    return nextCallback;
-}
-
-void RecurrentTimer::loop() {
-    std::vector<std::shared_ptr<Callback>> callbacksToRun;
-    while (true) {
-        {
-            std::unique_lock<std::mutex> uniqueLock(mLock);
-            ScopedLockAssertion lockAssertion(mLock);
-            // Wait until the timer exits or we have at least one recurrent callback.
-            mCond.wait(uniqueLock, [this] {
-                ScopedLockAssertion lockAssertion(mLock);
-                return mStopRequested || mCallbackQueue.size() != 0;
-            });
-
-            int64_t interval;
-            if (mStopRequested) {
-                return;
-            }
-            // The first element is the nearest next event.
-            int64_t nextTime = mCallbackQueue[0]->nextTime;
-            int64_t now = uptimeNanos();
-
-            if (nextTime > now) {
-                interval = nextTime - now;
-            } else {
-                interval = 0;
-            }
-
-            // Wait for the next event or the timer exits.
-            if (mCond.wait_for(uniqueLock, std::chrono::nanoseconds(interval), [this] {
-                    ScopedLockAssertion lockAssertion(mLock);
-                    return mStopRequested;
-                })) {
-                return;
-            }
-
-            now = uptimeNanos();
-            callbacksToRun.clear();
-            while (mCallbackQueue.size() > 0) {
-                int64_t nextTime = mCallbackQueue[0]->nextTime;
-                if (nextTime > now) {
-                    break;
-                }
-
-                callbacksToRun.push_back(getNextCallbackLocked(now));
-            }
+        auto it = mCallbackInfoById.find(callbackId);
+        if (it == mCallbackInfoById.end()) {
+            ALOGW("The event for callback ID: %d is outdated, ignore", callbackId);
+            return;
         }
 
-        // Do not execute the callback while holding the lock.
-        for (size_t i = 0; i < callbacksToRun.size(); i++) {
-            (*callbacksToRun[i])();
-        }
+        CallbackInfo* callbackInfo = it->second.get();
+        callback = callbackInfo->callback;
+        int64_t nowNanos = uptimeNanos();
+        // intervalCount is the number of interval we have to advance until we pass now.
+        size_t intervalCount =
+                (nowNanos - callbackInfo->nextTimeInNanos) / callbackInfo->intervalInNanos + 1;
+        callbackInfo->nextTimeInNanos += intervalCount * callbackInfo->intervalInNanos;
+
+        mLooper->sendMessageAtTime(callbackInfo->nextTimeInNanos, mHandler, Message(callbackId));
     }
+
+    (*callback)();
 }
 
-bool RecurrentTimer::CallbackInfo::cmp(const std::unique_ptr<RecurrentTimer::CallbackInfo>& lhs,
-                                       const std::unique_ptr<RecurrentTimer::CallbackInfo>& rhs) {
-    return lhs->nextTime > rhs->nextTime;
+void RecurrentMessageHandler::handleMessage(const Message& message) {
+    mTimer->handleMessage(message);
 }
 
 }  // namespace vehicle

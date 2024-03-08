@@ -34,6 +34,9 @@
 package android.hardware.graphics.composer3;
 @VintfStability
 interface IComposerCallback {
+  /**
+   * @deprecated : Use instead onHotplugEvent
+   */
   void onHotplug(long display, boolean connected);
   oneway void onRefresh(long display);
   oneway void onSeamlessPossible(long display);
@@ -41,4 +44,5 @@ interface IComposerCallback {
   oneway void onVsyncPeriodTimingChanged(long display, in android.hardware.graphics.composer3.VsyncPeriodChangeTimeline updatedTimeline);
   oneway void onVsyncIdle(long display);
   oneway void onRefreshRateChangedDebug(in android.hardware.graphics.composer3.RefreshRateChangedDebugData data);
+  void onHotplugEvent(long display, android.hardware.graphics.common.DisplayHotplugEvent event);
 }

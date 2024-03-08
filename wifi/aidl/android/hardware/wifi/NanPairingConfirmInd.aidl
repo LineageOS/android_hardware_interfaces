@@ -19,6 +19,7 @@ package android.hardware.wifi;
 import android.hardware.wifi.NanPairingRequestType;
 import android.hardware.wifi.NanStatus;
 import android.hardware.wifi.NpkSecurityAssociation;
+import android.hardware.wifi.common.OuiKeyedData;
 
 /**
  * NAN pairing confirmation indication structure. Event indication is
@@ -51,4 +52,9 @@ parcelable NanPairingConfirmInd {
      * The security association negotiated for the pairing, can be cached for future verification
      */
     NpkSecurityAssociation npksa;
+    /**
+     * Optional vendor-specific parameters. Null value indicates
+     * that no vendor data is provided.
+     */
+    @nullable OuiKeyedData[] vendorData;
 }

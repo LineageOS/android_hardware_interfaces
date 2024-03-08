@@ -7,19 +7,17 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
-cc_binary {
+rust_binary {
     name: "android.hardware.lights-service.example",
     relative_install_path: "hw",
     init_rc: ["lights-default.rc"],
     vintf_fragments: ["lights-default.xml"],
     vendor: true,
-    shared_libs: [
-        "libbase",
-        "libbinder_ndk",
-        "android.hardware.light-V2-ndk",
+    rustlibs: [
+        "liblogger",
+        "liblog_rust",
+        "libbinder_rs",
+        "android.hardware.light-V2-rust",
     ],
-    srcs: [
-        "Lights.cpp",
-        "main.cpp",
-    ],
+    srcs: [ "main.rs" ],
 }

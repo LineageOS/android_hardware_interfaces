@@ -1,0 +1,22 @@
+aidl_interface {
+    name: "android.hardware.threadnetwork",
+    vendor_available: true,
+    srcs: [
+        "android/hardware/threadnetwork/*.aidl",
+    ],
+
+    stability: "vintf",
+
+    backend: {
+        java: {
+            platform_apis: true,
+        },
+        ndk: {
+            apex_available: [
+                "//apex_available:platform",
+                "com.android.tethering",
+            ],
+            min_sdk_version: "30",
+        },
+    },
+}

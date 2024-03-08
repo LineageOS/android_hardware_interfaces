@@ -70,4 +70,17 @@ enum SessionType {
      * The decoding of AVDTP media is done by HW and there is control only
      */
     A2DP_HARDWARE_OFFLOAD_DECODING_DATAPATH,
+    /**
+     * Used when audio is encoded by Bluetooth Stack and is streaming to HFP device.
+     */
+    HFP_SOFTWARE_ENCODING_DATAPATH,
+    /**
+     * Used when audio is decoded by Bluetooth Stack and is streaming to HFP device.
+     */
+    HFP_SOFTWARE_DECODING_DATAPATH,
+    /**
+     * Used when encoded and decoded by hardware offload and is streamed to HFP device.
+     * This is a control path only.
+     */
+    HFP_HARDWARE_OFFLOAD_DATAPATH,
 }

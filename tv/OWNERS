@@ -1,0 +1,13 @@
+# TV tuner
+# Bug component: 136752
+# TV input
+# Bug component: 826094
+
+include platform/frameworks/base:/core/java/android/hardware/hdmi/OWNERS
+
+hgchen@google.com
+quxiangfang@google.com
+shubang@google.com
+yixiaoluo@google.com
+qingxun@google.com
+

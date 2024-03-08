@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.messaging;
+/* @hide */
 @VintfStability
 interface IRadioMessaging {
   oneway void acknowledgeIncomingGsmSmsWithPdu(in int serial, in boolean success, in String ackPdu);

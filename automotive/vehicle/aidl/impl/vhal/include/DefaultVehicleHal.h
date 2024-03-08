@@ -90,39 +90,6 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
             GetSetValuesClient<aidl::android::hardware::automotive::vehicle::SetValueResult,
                                aidl::android::hardware::automotive::vehicle::SetValueResults>;
 
-    // A thread safe class to maintain an increasing request ID for each subscribe client. This
-    // class is safe to pass to async callbacks.
-    class SubscribeIdByClient {
-      public:
-        int64_t getId(const CallbackType& callback);
-
-      private:
-        std::mutex mLock;
-        std::unordered_map<const AIBinder*, int64_t> mIds GUARDED_BY(mLock);
-    };
-
-    // A thread safe class to store all subscribe clients. This class is safe to pass to async
-    // callbacks.
-    class SubscriptionClients {
-      public:
-        SubscriptionClients(std::shared_ptr<PendingRequestPool> pool) : mPendingRequestPool(pool) {}
-
-        std::shared_ptr<SubscriptionClient> maybeAddClient(const CallbackType& callback);
-
-        std::shared_ptr<SubscriptionClient> getClient(const CallbackType& callback);
-
-        void removeClient(const AIBinder* clientId);
-
-        size_t countClients();
-
-      private:
-        std::mutex mLock;
-        std::unordered_map<const AIBinder*, std::shared_ptr<SubscriptionClient>> mClients
-                GUARDED_BY(mLock);
-        // PendingRequestPool is thread-safe.
-        std::shared_ptr<PendingRequestPool> mPendingRequestPool;
-    };
-
     // A wrapper for binder lifecycle operations to enable stubbing for test.
     class BinderLifecycleInterface {
       public:
@@ -177,6 +144,15 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
     std::shared_ptr<PendingRequestPool> mPendingRequestPool;
     // SubscriptionManager is thread-safe.
     std::shared_ptr<SubscriptionManager> mSubscriptionManager;
+    // ConcurrentQueue is thread-safe.
+    std::shared_ptr<ConcurrentQueue<aidl::android::hardware::automotive::vehicle::VehiclePropValue>>
+            mBatchedEventQueue;
+    // BatchingConsumer is thread-safe.
+    std::shared_ptr<
+            BatchingConsumer<aidl::android::hardware::automotive::vehicle::VehiclePropValue>>
+            mPropertyChangeEventsBatchingConsumer;
+    // Only set once during initialization.
+    std::chrono::nanoseconds mEventBatchingWindow;
 
     std::mutex mLock;
     std::unordered_map<const AIBinder*, std::unique_ptr<OnBinderDiedContext>> mOnBinderDiedContexts
@@ -185,8 +161,6 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
             GUARDED_BY(mLock);
     std::unordered_map<const AIBinder*, std::shared_ptr<SetValuesClient>> mSetValuesClients
             GUARDED_BY(mLock);
-    // SubscriptionClients is thread-safe.
-    std::shared_ptr<SubscriptionClients> mSubscriptionClients;
     // mBinderLifecycleHandler is only going to be changed in test.
     std::unique_ptr<BinderLifecycleInterface> mBinderLifecycleHandler;
 
@@ -217,6 +191,10 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
             const std::vector<aidl::android::hardware::automotive::vehicle::SubscribeOptions>&
                     options);
 
+    VhalResult<void> checkPermissionHelper(
+            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value,
+            aidl::android::hardware::automotive::vehicle::VehiclePropertyAccess accessToTest) const;
+
     VhalResult<void> checkReadPermission(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
 
@@ -242,6 +220,21 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
     // mBinderEvents.
     void onBinderDiedUnlinkedHandler();
 
+    size_t countSubscribeClients();
+
+    // Handles the property change events in batch.
+    void handleBatchedPropertyEvents(
+            std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue>&&
+                    batchedEvents);
+
+    // Puts the property change events into a queue so that they can handled in batch.
+    static void batchPropertyChangeEvent(
+            const std::weak_ptr<ConcurrentQueue<
+                    aidl::android::hardware::automotive::vehicle::VehiclePropValue>>&
+                    batchedEventQueue,
+            std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue>&&
+                    updatedValues);
+
     // Gets or creates a {@code T} object for the client to or from {@code clients}.
     template <class T>
     static std::shared_ptr<T> getOrCreateClient(
@@ -250,7 +243,7 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
 
     static void onPropertyChangeEvent(
             const std::weak_ptr<SubscriptionManager>& subscriptionManager,
-            const std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue>&
+            std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue>&&
                     updatedValues);
 
     static void onPropertySetErrorEvent(

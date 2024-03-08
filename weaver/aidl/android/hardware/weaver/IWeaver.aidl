@@ -20,8 +20,8 @@ import android.hardware.weaver.WeaverConfig;
 import android.hardware.weaver.WeaverReadResponse;
 
 /**
- * Weaver provides secure storage of secret values that may only be read if the
- * corresponding key has been presented.
+ * Weaver provides secure persistent storage of secret values that may only be
+ * read if the corresponding key has been presented.
  *
  * The storage must be secure as the device's user authentication and encryption
  * relies on the security of these values. The cardinality of the domains of the
@@ -58,7 +58,9 @@ interface IWeaver {
      * Throttling must be used to limit the frequency of failed read attempts.
      * The value is only returned when throttling is not active, even if the
      * correct key is provided. If called when throttling is active, the time
-     * until the next attempt can be made is returned.
+     * until the next attempt can be made is returned. Throttling must be
+     * applied on a per-slot basis so that a successful read from one slot does
+     * not reset the throttling state of any other slot.
      *
      * Service status return:
      *
@@ -76,7 +78,8 @@ interface IWeaver {
     WeaverReadResponse read(in int slotId, in byte[] key);
 
     /**
-     * Overwrites the identified slot with the provided key and value.
+     * Overwrites the identified slot with the provided key and value, rendering
+     * the previous contents of the slot permanently unrecoverable.
      *
      * The new values are written regardless of the current state of the slot in
      * order to remain idempotent.

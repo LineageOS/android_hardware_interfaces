@@ -106,6 +106,7 @@ cc_library_shared {
         "libjpeg",
         "libexif",
         "libtinyxml2",
+        "libui",
     ],
     static_libs: [
         "android.hardware.camera.common@1.0-helper",

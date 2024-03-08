@@ -40,14 +40,19 @@ struct ChildInterface : private std::pair<std::shared_ptr<C>, ndk::SpAIBinder> {
     explicit operator bool() const { return !!this->first; }
     C& operator*() const { return *(this->first); }
     C* operator->() const { return this->first; }
+    std::shared_ptr<C> getPtr() { return this->first; }
     // Use 'getInstance' when returning the interface instance.
     std::shared_ptr<C> getInstance() {
+        (void)getBinder();
+        return this->first;
+    }
+    AIBinder* getBinder() {
         if (this->second.get() == nullptr) {
             this->second = this->first->asBinder();
             AIBinder_setMinSchedulerPolicy(this->second.get(), SCHED_NORMAL,
                                            ANDROID_PRIORITY_AUDIO);
         }
-        return this->first;
+        return this->second.get();
     }
 };
 

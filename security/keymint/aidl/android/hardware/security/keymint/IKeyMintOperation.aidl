@@ -126,8 +126,8 @@ interface IKeyMintOperation {
      *
      *   o The HMAC field must validate correctly.
      *
-     *   o The challenge field in the auth token must contain the challenge value contained in the
-     *     BeginResult returned from IKeyMintDevice::begin().
+     *   o The challenge field in the timestamp token must contain the challenge value contained in
+     *     the BeginResult returned from IKeyMintDevice::begin().
      *
      * The resulting secure time value is then used to authenticate the HardwareAuthToken. For the
      * auth token to be valid, all of the following has to be true:
@@ -138,9 +138,6 @@ interface IKeyMintOperation {
      *     the secure ID values in the token.
      *
      *   o The key must have a Tag::USER_AUTH_TYPE that matches the auth type in the token.
-     *
-     *   o The challenge field in the auth token must contain the challenge value contained in the
-     *     BeginResult returned from IKeyMintDevice::begin().
      *
      *   o The timestamp in the auth token plus the value of the Tag::AUTH_TIMEOUT must be greater
      *     than the provided secure timestamp.

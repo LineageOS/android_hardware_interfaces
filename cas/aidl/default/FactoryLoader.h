@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <android-base/strings.h>
 #include <dirent.h>
 #include <dlfcn.h>
 #include <media/cas/CasAPI.h>
@@ -86,17 +87,17 @@ bool FactoryLoader<T>::findFactoryForScheme(int32_t CA_system_id,
 #else
     String8 dirPath("/vendor/lib/mediacas");
 #endif
-    DIR* pDir = opendir(dirPath.string());
+    DIR* pDir = opendir(dirPath.c_str());
 
     if (pDir == NULL) {
-        ALOGE("Failed to open plugin directory %s", dirPath.string());
+        ALOGE("Failed to open plugin directory %s", dirPath.c_str());
         return false;
     }
 
     struct dirent* pEntry;
     while ((pEntry = readdir(pDir))) {
         String8 pluginPath = dirPath + "/" + pEntry->d_name;
-        if (pluginPath.getPathExtension() == ".so") {
+        if (base::EndsWith(pluginPath.c_str(), ".so")) {
             if (loadFactoryForSchemeFromPath(pluginPath, CA_system_id, library, factory)) {
                 mCASystemIdToLibraryPathMap.add(CA_system_id, pluginPath);
                 closedir(pDir);
@@ -123,10 +124,10 @@ bool FactoryLoader<T>::enumeratePlugins(vector<AidlCasPluginDescriptor>* results
 #else
     String8 dirPath("/vendor/lib/mediacas");
 #endif
-    DIR* pDir = opendir(dirPath.string());
+    DIR* pDir = opendir(dirPath.c_str());
 
     if (pDir == NULL) {
-        ALOGE("Failed to open plugin directory %s", dirPath.string());
+        ALOGE("Failed to open plugin directory %s", dirPath.c_str());
         return false;
     }
 
@@ -135,7 +136,7 @@ bool FactoryLoader<T>::enumeratePlugins(vector<AidlCasPluginDescriptor>* results
     struct dirent* pEntry;
     while ((pEntry = readdir(pDir))) {
         String8 pluginPath = dirPath + "/" + pEntry->d_name;
-        if (pluginPath.getPathExtension() == ".so") {
+        if (base::EndsWith(pluginPath.c_str(), ".so")) {
             queryPluginsFromPath(pluginPath, results);
         }
     }

@@ -18,6 +18,7 @@ package android.hardware.radio.network;
 
 import android.hardware.radio.network.RadioAccessSpecifier;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable NetworkScanRequest {

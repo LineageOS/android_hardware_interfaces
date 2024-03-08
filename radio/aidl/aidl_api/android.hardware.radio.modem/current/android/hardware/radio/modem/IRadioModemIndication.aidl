@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.modem;
+/* @hide */
 @VintfStability
 interface IRadioModemIndication {
   oneway void hardwareConfigChanged(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.modem.HardwareConfig[] configs);
@@ -39,4 +40,5 @@ interface IRadioModemIndication {
   oneway void radioCapabilityIndication(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.modem.RadioCapability rc);
   oneway void radioStateChanged(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.modem.RadioState radioState);
   oneway void rilConnected(in android.hardware.radio.RadioIndicationType type);
+  oneway void onImeiMappingChanged(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.modem.ImeiInfo imeiInfo);
 }

@@ -16,17 +16,6 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-apex_key {
-    name: "com.android.hardware.power.key",
-    public_key: "com.android.hardware.power.avbpubkey",
-    private_key: "com.android.hardware.power.pem",
-}
-
-android_app_certificate {
-    name: "com.android.hardware.power.certificate",
-    certificate: "com.android.hardware.power",
-}
-
 genrule {
     name: "com.android.hardware.power.rc-srcs",
     srcs: [
@@ -34,7 +23,7 @@ genrule {
         ":android.hardware.power.stats.rc",
     ],
     out: ["com.android.hardware.power.rc"],
-    cmd: "sed -E 's/\\/vendor/\\/apex\\/com.android.hardware.power/' $(in) > $(out)",
+    cmd: "sed -E 's@/vendor/bin/@/apex/com.android.hardware.power/bin/@' $(in) > $(out)",
 }
 
 prebuilt_etc {
@@ -46,13 +35,12 @@ prebuilt_etc {
 apex {
     name: "com.android.hardware.power",
     manifest: "apex_manifest.json",
-    key: "com.android.hardware.power.key",
-    certificate: ":com.android.hardware.power.certificate",
+    key: "com.android.hardware.key",
+    certificate: ":com.android.hardware.certificate",
     file_contexts: "file_contexts",
-    use_vndk_as_stable: true,
     updatable: false,
-    // Install the apex in /vendor/apex
-    soc_specific: true,
+    vendor: true,
+
     // Bundle the Power and PowerStats HALs into this one APEX.
     binaries: [
         "android.hardware.power-service.example",
@@ -60,10 +48,8 @@ apex {
     ],
     prebuilts: [
         "com.android.hardware.power.rc",
-    ],
-    vintf_fragments: [
-        ":android.hardware.power.xml",
-        ":android.hardware.power.stats.xml",
+        "android.hardware.power.xml",
+        "android.hardware.power.stats.xml",
     ],
     overrides: [
         // Shared lib installed by default but unused by the AIDL implementation.

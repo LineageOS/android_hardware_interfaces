@@ -26,16 +26,49 @@ package {
 cc_binary {
     name: "android.hardware.authsecret-service.example",
     relative_install_path: "hw",
-    init_rc: ["android.hardware.authsecret-service.example.rc"],
-    vintf_fragments: ["android.hardware.authsecret-service.example.xml"],
     vendor: true,
     srcs: [
         "service.cpp",
         "AuthSecret.cpp",
     ],
     shared_libs: [
+        "libbinder_ndk",
+        "liblog",
+    ],
+    static_libs: [
         "android.hardware.authsecret-V1-ndk",
         "libbase",
-        "libbinder_ndk",
+    ],
+    stl: "c++_static",
+}
+
+prebuilt_etc {
+    name: "android.hardware.authsecret-service.example.rc",
+    src: "android.hardware.authsecret-service.example.rc",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "android.hardware.authsecret-service.example.xml",
+    src: "android.hardware.authsecret-service.example.xml",
+    sub_dir: "vintf",
+    installable: false,
+}
+
+apex {
+    name: "com.android.hardware.authsecret",
+    manifest: "manifest.json",
+    file_contexts: "file_contexts",
+    key: "com.android.hardware.key",
+    certificate: ":com.android.hardware.certificate",
+    updatable: false,
+    vendor: true,
+
+    binaries: [
+        "android.hardware.authsecret-service.example",
+    ],
+    prebuilts: [
+        "android.hardware.authsecret-service.example.rc", // init_rc
+        "android.hardware.authsecret-service.example.xml", // vintf_fragments
     ],
 }

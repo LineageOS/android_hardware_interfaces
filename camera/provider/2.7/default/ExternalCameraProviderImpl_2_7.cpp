@@ -23,6 +23,7 @@
 #include <linux/videodev2.h>
 #include <sys/inotify.h>
 #include <regex>
+#include <string>
 #include "ExternalCameraDevice_3_4.h"
 #include "ExternalCameraDevice_3_5.h"
 #include "ExternalCameraDevice_3_6.h"
@@ -39,10 +40,10 @@ namespace {
 // "device@<version>/external/<id>"
 const std::regex kDeviceNameRE("device@([0-9]+\\.[0-9]+)/external/(.+)");
 const int kMaxDevicePathLen = 256;
-const char* kDevicePath = "/dev/";
-constexpr char kPrefix[] = "video";
-constexpr int kPrefixLen = sizeof(kPrefix) - 1;
-constexpr int kDevicePrefixLen = sizeof(kDevicePath) + kPrefixLen + 1;
+constexpr const char* kDevicePath = "/dev/";
+constexpr const char* kPrefix = "video";
+constexpr int kPrefixLen = std::char_traits<char>::length(kPrefix);
+constexpr int kDevicePrefixLen = std::char_traits<char>::length(kDevicePath) + kPrefixLen;
 
 bool matchDeviceName(int cameraIdOffset, const hidl_string& deviceName, std::string* deviceVersion,
                      std::string* cameraDevicePath) {
@@ -90,11 +91,11 @@ ExternalCameraProviderImpl_2_7::~ExternalCameraProviderImpl_2_7() {
 
 Return<Status> ExternalCameraProviderImpl_2_7::setCallback(
         const sp<ICameraProviderCallback>& callback) {
+    if (callback == nullptr) {
+        return Status::ILLEGAL_ARGUMENT;
+    }
     Mutex::Autolock _l(mLock);
     mCallbacks = callback;
-    if (mCallbacks == nullptr) {
-        return Status::OK;
-    }
     // Send a callback for all devices to initialize
     {
         for (const auto& pair : mCameraStatusMap) {

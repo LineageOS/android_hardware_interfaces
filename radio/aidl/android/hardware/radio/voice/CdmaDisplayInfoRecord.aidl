@@ -22,6 +22,7 @@ package android.hardware.radio.voice;
  * the form: display_tag, display_len, and display_len occurrences of the char field if the
  * display_tag is not 10000000 or 10000001. To save space, the records are stored consecutively in
  * a byte buffer. The display_tag, display_len and chari fields are all 1 byte.
+ * @hide
  */
 @VintfStability
 @JavaDerive(toString=true)

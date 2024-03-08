@@ -26,13 +26,11 @@ cc_test {
     defaults: [
         "VtsHalTargetTestDefaults",
         "use_libaidlvintf_gtest_helper_static",
+        "android.hardware.power-ndk_static",
     ],
     srcs: ["VtsHalPowerTargetTest.cpp"],
     shared_libs: [
         "libbinder_ndk",
-    ],
-    static_libs: [
-        "android.hardware.power-V4-ndk",
     ],
     test_suites: [
         "general-tests",

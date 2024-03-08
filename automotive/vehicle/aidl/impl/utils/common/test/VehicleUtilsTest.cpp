@@ -16,7 +16,6 @@
 
 #include <ConcurrentQueue.h>
 #include <PropertyUtils.h>
-#include <TestPropertyUtils.h>
 #include <VehicleUtils.h>
 
 #include <gtest/gtest.h>
@@ -56,6 +55,9 @@ constexpr int32_t int64Prop = toInt(VehicleProperty::ANDROID_EPOCH_TIME);
 constexpr int32_t int64VecProp = toInt(VehicleProperty::WHEEL_TICK);
 constexpr int32_t floatProp = toInt(VehicleProperty::ENV_OUTSIDE_TEMPERATURE);
 constexpr int32_t floatVecProp = toInt(VehicleProperty::HVAC_TEMPERATURE_VALUE_SUGGESTION);
+constexpr int32_t kMixedTypePropertyForTest = 0x1111 | toInt(VehiclePropertyGroup::VENDOR) |
+                                              toInt(VehicleArea::GLOBAL) |
+                                              toInt(VehiclePropertyType::MIXED);
 
 std::vector<InvalidPropValueTestCase> getInvalidPropValuesTestCases() {
     return std::vector<InvalidPropValueTestCase>(

@@ -34,10 +34,10 @@
 package android.hardware.wifi.supplicant;
 @Backing(type="int") @VintfStability
 enum DppCurve {
-  PRIME256V1 = 0,
-  SECP384R1 = 1,
-  SECP521R1 = 2,
-  BRAINPOOLP256R1 = 3,
-  BRAINPOOLP384R1 = 4,
-  BRAINPOOLP512R1 = 5,
+  PRIME256V1,
+  SECP384R1,
+  SECP521R1,
+  BRAINPOOLP256R1,
+  BRAINPOOLP384R1,
+  BRAINPOOLP512R1,
 }

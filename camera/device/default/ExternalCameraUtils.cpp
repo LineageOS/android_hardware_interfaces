@@ -402,7 +402,10 @@ aidl::android::hardware::camera::common::Status importBufferImpl(
         buffer_handle_t buf,
         /*out*/ buffer_handle_t** outBufPtr) {
     using ::aidl::android::hardware::camera::common::Status;
-    if (buf == nullptr && bufId == BUFFER_ID_NO_BUFFER) {
+    // AIDL does not have null NativeHandles. It sends empty handles instead.
+    // We check for when the buf is empty instead of when buf is null.
+    bool isBufEmpty = buf == nullptr || (buf->numFds == 0 && buf->numInts == 0);
+    if (isBufEmpty && bufId == BUFFER_ID_NO_BUFFER) {
         ALOGE("%s: bufferId %" PRIu64 " has null buffer handle!", __FUNCTION__, bufId);
         return Status::ILLEGAL_ARGUMENT;
     }

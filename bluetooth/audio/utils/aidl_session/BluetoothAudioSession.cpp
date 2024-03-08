@@ -95,6 +95,8 @@ const AudioConfiguration BluetoothAudioSession::GetAudioConfig() {
       case SessionType::A2DP_HARDWARE_OFFLOAD_ENCODING_DATAPATH:
       case SessionType::A2DP_HARDWARE_OFFLOAD_DECODING_DATAPATH:
         return AudioConfiguration(CodecConfiguration{});
+      case SessionType::HFP_HARDWARE_OFFLOAD_DATAPATH:
+        return AudioConfiguration(HfpConfiguration{});
       case SessionType::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH:
       case SessionType::LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH:
         return AudioConfiguration(LeAudioConfiguration{});
@@ -154,6 +156,7 @@ bool BluetoothAudioSession::IsSessionReady() {
        session_type_ ==
            SessionType::LE_AUDIO_BROADCAST_HARDWARE_OFFLOAD_ENCODING_DATAPATH ||
        session_type_ == SessionType::A2DP_HARDWARE_OFFLOAD_DECODING_DATAPATH ||
+       session_type_ == SessionType::HFP_HARDWARE_OFFLOAD_DATAPATH ||
        (data_mq_ != nullptr && data_mq_->isValid()));
   return stack_iface_ != nullptr && is_mq_valid && audio_config_ != nullptr;
 }
@@ -275,6 +278,8 @@ bool BluetoothAudioSession::UpdateAudioConfig(
   bool is_software_session =
       (session_type_ == SessionType::A2DP_SOFTWARE_ENCODING_DATAPATH ||
        session_type_ == SessionType::HEARING_AID_SOFTWARE_ENCODING_DATAPATH ||
+       session_type_ == SessionType::HFP_SOFTWARE_ENCODING_DATAPATH ||
+       session_type_ == SessionType::HFP_SOFTWARE_DECODING_DATAPATH ||
        session_type_ == SessionType::LE_AUDIO_SOFTWARE_DECODING_DATAPATH ||
        session_type_ == SessionType::LE_AUDIO_SOFTWARE_ENCODING_DATAPATH ||
        session_type_ ==
@@ -283,6 +288,8 @@ bool BluetoothAudioSession::UpdateAudioConfig(
   bool is_offload_a2dp_session =
       (session_type_ == SessionType::A2DP_HARDWARE_OFFLOAD_ENCODING_DATAPATH ||
        session_type_ == SessionType::A2DP_HARDWARE_OFFLOAD_DECODING_DATAPATH);
+  bool is_offload_hfp_session =
+      session_type_ == SessionType::HFP_HARDWARE_OFFLOAD_DATAPATH;
   bool is_offload_le_audio_unicast_session =
       (session_type_ ==
            SessionType::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH ||
@@ -297,7 +304,11 @@ bool BluetoothAudioSession::UpdateAudioConfig(
        audio_config_tag == AudioConfiguration::pcmConfig);
   bool is_a2dp_offload_audio_config =
       (is_offload_a2dp_session &&
-       audio_config_tag == AudioConfiguration::a2dpConfig);
+       (audio_config_tag == AudioConfiguration::a2dp ||
+        audio_config_tag == AudioConfiguration::a2dpConfig));
+  bool is_hfp_offload_audio_config =
+      (is_offload_hfp_session &&
+       audio_config_tag == AudioConfiguration::hfpConfig);
   bool is_le_audio_offload_unicast_audio_config =
       (is_offload_le_audio_unicast_session &&
        audio_config_tag == AudioConfiguration::leAudioConfig);
@@ -305,6 +316,7 @@ bool BluetoothAudioSession::UpdateAudioConfig(
       (is_offload_le_audio_broadcast_session &&
        audio_config_tag == AudioConfiguration::leAudioBroadcastConfig);
   if (!is_software_audio_config && !is_a2dp_offload_audio_config &&
+      !is_hfp_offload_audio_config &&
       !is_le_audio_offload_unicast_audio_config &&
       !is_le_audio_offload_broadcast_audio_config) {
     return false;
@@ -439,6 +451,9 @@ void BluetoothAudioSession::ReportControlStatus(bool start_resp,
 }
 
 void BluetoothAudioSession::ReportLowLatencyModeAllowedChanged(bool allowed) {
+  if (session_type_ != SessionType::A2DP_HARDWARE_OFFLOAD_ENCODING_DATAPATH) {
+    return;
+  }
   std::lock_guard<std::recursive_mutex> guard(mutex_);
   low_latency_allowed_ = allowed;
   // TODO(b/294498919): Remove this after there is API to update latency mode
@@ -588,15 +603,32 @@ std::vector<LatencyMode> BluetoothAudioSession::GetSupportedLatencyModes() {
                << " has NO session";
     return std::vector<LatencyMode>();
   }
-  if (low_latency_allowed_) return latency_modes_;
-  std::vector<LatencyMode> modes;
-  for (LatencyMode mode : latency_modes_) {
-    if (mode == LatencyMode::LOW_LATENCY)
-      // ignore those low latency mode if Bluetooth stack doesn't allow
-      continue;
-    modes.push_back(mode);
+
+  std::vector<LatencyMode> supported_latency_modes;
+  if (session_type_ ==
+      SessionType::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH) {
+    for (LatencyMode mode : latency_modes_) {
+      if (mode == LatencyMode::LOW_LATENCY) {
+        // LOW_LATENCY is not supported for LE_HARDWARE_OFFLOAD_ENC sessions
+        continue;
+      }
+      supported_latency_modes.push_back(mode);
+    }
+  } else {
+    for (LatencyMode mode : latency_modes_) {
+      if (!low_latency_allowed_ && mode == LatencyMode::LOW_LATENCY) {
+        // ignore LOW_LATENCY mode if Bluetooth stack doesn't allow
+        continue;
+      }
+      if (mode == LatencyMode::DYNAMIC_SPATIAL_AUDIO_SOFTWARE ||
+          mode == LatencyMode::DYNAMIC_SPATIAL_AUDIO_HARDWARE) {
+        // DSA_SW and DSA_HW only supported for LE_HARDWARE_OFFLOAD_ENC sessions
+        continue;
+      }
+      supported_latency_modes.push_back(mode);
+    }
   }
-  return modes;
+  return supported_latency_modes;
 }
 
 void BluetoothAudioSession::SetLatencyMode(const LatencyMode& latency_mode) {

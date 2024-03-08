@@ -6,5 +6,6 @@ service vendor.cas-hal-1-1 /vendor/bin/hw/android.hardware.cas@1.1-service-lazy
     class hal
     user media
     group mediadrm drmrpc
+    capabilities SYS_NICE
     ioprio rt 4
     task_profiles ProcessCapacityHigh

@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.ims;
+/* @hide */
 @JavaDerive(toString=true) @VintfStability
 parcelable ImsRegistration {
   android.hardware.radio.ims.ImsRegistrationState regState;
@@ -39,8 +40,8 @@ parcelable ImsRegistration {
   android.hardware.radio.ims.SuggestedAction suggestedAction;
   int capabilities;
   const int IMS_MMTEL_CAPABILITY_NONE = 0;
-  const int IMS_MMTEL_CAPABILITY_VOICE = (1 << 0);
-  const int IMS_MMTEL_CAPABILITY_VIDEO = (1 << 1);
-  const int IMS_MMTEL_CAPABILITY_SMS = (1 << 2);
-  const int IMS_RCS_CAPABILITIES = (1 << 3);
+  const int IMS_MMTEL_CAPABILITY_VOICE = (1 << 0) /* 1 */;
+  const int IMS_MMTEL_CAPABILITY_VIDEO = (1 << 1) /* 2 */;
+  const int IMS_MMTEL_CAPABILITY_SMS = (1 << 2) /* 4 */;
+  const int IMS_RCS_CAPABILITIES = (1 << 3) /* 8 */;
 }

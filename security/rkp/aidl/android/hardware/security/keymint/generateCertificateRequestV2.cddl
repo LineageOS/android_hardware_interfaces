@@ -1,0 +1,171 @@
+; CDDL for the generateCertificateRequestV2 method in
+; IRemotelyProvisionedComponent.aidl
+
+Csr = AuthenticatedRequest<CsrPayload>
+
+CsrPayload = [                      ; CBOR Array defining the payload for Csr
+    version: 3,                     ; The CsrPayload CDDL Schema version.
+    CertificateType,                ; The type of certificate being requested.
+    DeviceInfo,                     ; Defined in the relevant DeviceInfoV*.cddl file.
+    KeysToSign,                     ; Provided by the method parameters
+]
+
+; A tstr identifying the type of certificate. The set of supported certificate types may
+; be extended without requiring a version bump of the HAL. Custom certificate types may
+; be used, but the provisioning server may reject the request for an unknown certificate
+; type. The currently defined certificate types are:
+;  * "widevine" -- Widevine content protection system
+;  * "keymint"  -- KeyMint HAL
+;  * "rkp-vm"   -- See "Support for Android Virtualization Framework" in the README.md file.
+CertificateType = tstr
+
+KeysToSign = [ * PublicKey ]   ; Please see PublicKey.cddl for the PublicKey definition.
+
+AuthenticatedRequest<T> = [
+    version: 1,              ; The AuthenticatedRequest CDDL Schema version.
+    UdsCerts,
+    DiceCertChain,
+    SignedData<[
+        challenge: bstr .size (0..64), ; Provided by the method parameters
+        bstr .cbor T,
+    ]>,
+]
+
+; COSE_Sign1 (untagged) [RFC9052 s4.2]
+SignedData<Data> = [
+    protected: bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 / AlgorithmES384 },
+    unprotected: {},
+    payload: bstr .cbor Data / nil,
+    signature: bstr     ; PureEd25519(CDI_Leaf_Priv, SignedDataSigStruct<Data>) /
+                        ; ECDSA(CDI_Leaf_Priv, SignedDataSigStruct<Data>)
+]
+
+; Sig_structure for SignedData [ RFC9052 s4.4]
+SignedDataSigStruct<Data> = [
+    context: "Signature1",
+    protected: bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 / AlgorithmES384 },
+    external_aad: bstr .size 0,
+    payload: bstr .cbor Data / nil,
+]
+
+; UdsCerts allows the platform to provide additional certifications for the UDS_Pub. For
+; example, this could be provided by the hardware vendor, who certifies all of their chips.
+; The SignerName is a free-form string describing who generated the signature. The root
+; certificate will need to be communicated to the verifier out of band, along with the
+; SignerName that is expected for the given root certificate.
+UdsCerts = {
+    * SignerName => UdsCertChain
+}
+
+; SignerName is a string identifier that indicates both the signing authority as
+; well as the format of the UdsCertChain
+SignerName = tstr
+
+UdsCertChain = [
+    2* X509Certificate      ; Root -> ... -> Leaf. "Root" is the vendor self-signed
+                            ; cert, "Leaf" contains UDS_Public. There may also be
+                            ; intermediate certificates between Root and Leaf.
+]
+
+; A bstr containing a DER-encoded X.509 certificate (RSA, NIST P-curve, or EdDSA)
+X509Certificate = bstr
+
+; The DICE Chain contains measurements about the device firmware.
+; The first entry in the DICE Chain is the UDS_Pub, encoded as a COSE_key. All entries
+; after the first describe a link in the boot chain (e.g. bootloaders: BL1, BL2, ... BLN)
+; Note that there is no DiceChainEntry for UDS_pub, only a "bare" COSE_key.
+DiceCertChain = [
+    PubKeyEd25519 / PubKeyECDSA256 / PubKeyECDSA384,  ; UDS_Pub
+    + DiceChainEntry,               ; First CDI_Certificate -> Last CDI_Certificate
+                                    ; Last certificate corresponds to KeyMint's DICE key.
+]
+
+; This is the signed payload for each entry in the DICE chain. Note that the "Configuration
+; Input Values" described by the Open Profile are not used here. Instead, the DICE chain
+; defines its own configuration values for the Configuration Descriptor field. See
+; the Open Profile for DICE for more details on the fields. SHA256, SHA384 and SHA512 are
+; acceptable hash algorithms. The digest bstr values in the payload are the digest values
+; without any padding. Note that this implies that the digest is a 32-byte bstr for SHA256
+; and a 48-byte bstr for SHA384. This is an intentional, minor deviation from Open Profile
+; for DICE, which specifies all digests are 64 bytes.
+DiceChainEntryPayload = {                    ; CWT [RFC8392]
+    1 : tstr,                                ; Issuer
+    2 : tstr,                                ; Subject
+    -4670554 : "android.15",                 ; Profile Name
+    -4670552 : bstr .cbor PubKeyEd25519 /
+            bstr .cbor PubKeyECDSA256 /
+            bstr .cbor PubKeyECDSA384,       ; Subject Public Key
+    -4670553 : bstr                          ; Key Usage
+
+    ; NOTE: All of the following fields may be omitted for a "Degenerate DICE Chain", as
+    ;       described above.
+    -4670545 : bstr,                         ; Code Hash
+    ? -4670546 : bstr,                       ; Code Descriptor
+    -4670547 : bstr,                         ; Configuration Hash
+    -4670548 : bstr .cbor ConfigurationDescriptor,
+    -4670549 : bstr,                         ; Authority Hash
+    ? -4670550 : bstr,                       ; Authority Descriptor
+    -4670551 : bstr,                         ; Mode
+}
+
+ConfigurationDescriptor = {                  ; Configuration Descriptor
+    ? -70002 : tstr,                         ; Component name
+    ? -70003 : int / tstr,                   ; Component version
+    ? -70004 : null,                         ; Resettable
+    ? -70005 : uint,                         ; Security version
+    ? -70006 : null,                         ; RKP VM marker
+}
+
+; Each entry in the DICE chain is a DiceChainEntryPayload signed by the key from the previous
+; entry in the DICE chain array.
+DiceChainEntry = [                            ; COSE_Sign1 (untagged), [RFC9052 s4.2]
+    protected : bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 / AlgorithmES384 },
+    unprotected: {},
+    payload: bstr .cbor DiceChainEntryPayload,
+    signature: bstr ; PureEd25519(SigningKey, DiceChainEntryInput) /
+                    ; ECDSA(SigningKey, DiceChainEntryInput)
+                    ; See RFC 8032 for details of how to encode the signature value
+                    ; for Ed25519.
+]
+
+DiceChainEntryInput = [
+    context: "Signature1",
+    protected: bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 / AlgorithmES384 },
+    external_aad: bstr .size 0,
+    payload: bstr .cbor DiceChainEntryPayload
+]
+
+; The following section defines some types that are reused throughout the above
+; data structures.
+; NOTE: Integer encoding is different for Ed25519 and P256 keys:
+;       - Ed25519 is LE: https://www.rfc-editor.org/rfc/rfc8032#section-3.1
+;       - P256 is BE: https://www.secg.org/sec1-v2.pdf#page=19 (section 2.3.7)
+PubKeyEd25519 = {                ; COSE_Key [RFC9052 s7]
+    1 : 1,                       ; Key type : octet key pair
+    3 : AlgorithmEdDSA,          ; Algorithm : EdDSA
+    -1 : 6,                      ; Curve : Ed25519
+    -2 : bstr                    ; X coordinate, little-endian
+}
+
+PubKeyECDSA256 = {               ; COSE_Key [RFC9052 s7]
+    1 : 2,                       ; Key type : EC2
+    3 : AlgorithmES256,          ; Algorithm : ECDSA w/ SHA-256
+    -1 : 1,                      ; Curve: P256
+    -2 : bstr,                   ; X coordinate, big-endian
+    -3 : bstr                    ; Y coordinate, big-endian
+}
+
+PubKeyECDSA384 = {               ; COSE_Key [RFC9052 s7]
+    1 : 2,                       ; Key type : EC2
+    3 : AlgorithmES384,          ; Algorithm : ECDSA w/ SHA-384
+    -1 : 2,                      ; Curve: P384
+    -2 : bstr,                   ; X coordinate, big-endian
+    -3 : bstr                    ; Y coordinate, big-endian
+}
+
+AlgorithmES256 = -7              ; [RFC9053 s2.1]
+AlgorithmES384 = -35             ; [RFC9053 s2.1]
+AlgorithmEdDSA = -8              ; [RFC9053 s2.2]
+
+; INCLUDE PublicKey.cddl for: PublicKey
+; INCLUDE DeviceInfoV3.cddl for: DeviceInfo

@@ -19,6 +19,7 @@ package android.hardware.radio.network;
 /**
  * Call fail causes for Circuit-switched service enumerated in 3GPP TS 24.008, 10.5.3.6 and
  * 10.5.147. Additional detail is available in 3GPP TS 24.008 Annex G.
+ * @hide
  */
 @VintfStability
 @Backing(type="int")

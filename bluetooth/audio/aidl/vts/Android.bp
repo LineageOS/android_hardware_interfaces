@@ -10,17 +10,17 @@ package {
 cc_test {
     name: "VtsHalBluetoothAudioTargetTest",
     defaults: [
+        "latest_android_hardware_audio_common_ndk_static",
+        "latest_android_hardware_bluetooth_audio_ndk_static",
+        "latest_android_media_audio_common_types_ndk_static",
         "VtsHalTargetTestDefaults",
         "use_libaidlvintf_gtest_helper_static",
     ],
     tidy_timeout_srcs: ["VtsHalBluetoothAudioTargetTest.cpp"],
     srcs: ["VtsHalBluetoothAudioTargetTest.cpp"],
     static_libs: [
-        "android.hardware.audio.common-V2-ndk",
-        "android.hardware.bluetooth.audio-V3-ndk",
         "android.hardware.common-V2-ndk",
         "android.hardware.common.fmq-V1-ndk",
-        "android.media.audio.common.types-V2-ndk",
     ],
     shared_libs: [
         "libbase",
@@ -28,6 +28,7 @@ cc_test {
         "libcutils",
         "libfmq",
     ],
+    test_config: "VtsHalBluetoothAudioTargetTest.xml",
     test_suites: [
         "general-tests",
         "vts",

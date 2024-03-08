@@ -1,0 +1,3 @@
+service vendor.threadnetwork_hal /apex/com.android.hardware.threadnetwork/bin/hw/android.hardware.threadnetwork-service spinel+hdlc+forkpty:///apex/com.android.hardware.threadnetwork/bin/ot-rcp?forkpty-arg=1
+    class hal
+    user thread_network

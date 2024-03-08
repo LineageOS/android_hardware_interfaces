@@ -149,6 +149,21 @@ enum UwbVendorCapabilityTlvTypes {
      */
     CCC_SUPPORTED_MIN_UWB_INITIATION_TIME_MS = 0xA9,
 
+    /**
+     * Byte array of channels supported by the device, ordered by priority from highest to lowest.
+     */
+    CCC_PRIORITIZED_CHANNEL_LIST = 0xAA,
+
+    /*********************************************
+     * RADAR specific
+     ********************************************/
+    /**
+     * 1 byte bitmask to indicate the supported Radar data types.
+     * Each "1" in this bitmap corresponds to a specific radar data type where:
+     * 0x01 = "Radar Sweep Samples",
+     */
+    RADAR_SUPPORT = 0xB0,
+
     /*********************************************
      * FIRA specific
      ********************************************/

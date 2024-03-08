@@ -114,6 +114,12 @@ class SecureElementProvisioningTest : public testing::Test {
         const auto& vbKey = rot->asArray()->get(pos++);
         ASSERT_TRUE(vbKey);
         ASSERT_TRUE(vbKey->asBstr());
+        if (get_vsr_api_level() >= __ANDROID_API_V__) {
+            // The attestation should contain the SHA-256 hash of the verified boot
+            // key.  However, this not was checked for earlier versions of the KeyMint
+            // HAL so only be strict for VSR-V and above.
+            ASSERT_LE(vbKey->asBstr()->value().size(), 32);
+        }
 
         const auto& deviceLocked = rot->asArray()->get(pos++);
         ASSERT_TRUE(deviceLocked);

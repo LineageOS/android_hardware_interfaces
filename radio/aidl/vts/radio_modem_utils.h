@@ -109,6 +109,9 @@ class RadioModemIndication : public BnRadioModemIndication {
                                                  RadioState radioState) override;
 
     virtual ndk::ScopedAStatus rilConnected(RadioIndicationType type) override;
+
+    virtual ndk::ScopedAStatus onImeiMappingChanged(RadioIndicationType type,
+            const ::aidl::android::hardware::radio::modem::ImeiInfo& imeiInfo) override;
 };
 
 // The main test class for Radio AIDL Modem.

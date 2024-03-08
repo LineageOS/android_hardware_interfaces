@@ -1,0 +1,113 @@
+//
+// Copyright (C) 2023 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+rust_library {
+    name: "libauthgraph_nonsecure",
+    crate_name: "authgraph_nonsecure",
+    defaults: [
+        "authgraph_use_latest_hal_aidl_rust",
+    ],
+    vendor_available: true,
+    rustlibs: [
+        "libandroid_logger",
+        "libauthgraph_boringssl",
+        "libauthgraph_core",
+        "libauthgraph_hal",
+        "libbinder_rs",
+        "liblibc",
+        "liblog_rust",
+    ],
+    srcs: ["src/lib.rs"],
+
+}
+
+rust_binary {
+    name: "android.hardware.security.authgraph-service.nonsecure",
+    relative_install_path: "hw",
+    vendor: true,
+    installable: false, // install com.android.hardware.security.authgraph
+    defaults: [
+        "authgraph_use_latest_hal_aidl_rust",
+    ],
+    prefer_rlib: true,
+    rustlibs: [
+        "libandroid_logger",
+        "libauthgraph_hal",
+        "libauthgraph_nonsecure",
+        "libbinder_rs",
+        "liblibc",
+        "liblog_rust",
+    ],
+    srcs: [
+        "src/main.rs",
+    ],
+}
+
+rust_fuzz {
+    name: "android.hardware.authgraph-service.nonsecure_fuzzer",
+    rustlibs: [
+        "libauthgraph_hal",
+        "libauthgraph_nonsecure",
+        "libbinder_random_parcel_rs",
+        "libbinder_rs",
+    ],
+    srcs: ["src/fuzzer.rs"],
+    fuzz_config: {
+        cc: [
+            "drysdale@google.com",
+            "hasinitg@google.com",
+        ],
+    },
+}
+
+prebuilt_etc {
+    name: "authgraph.xml",
+    src: "authgraph.xml",
+    sub_dir: "vintf",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "authgraph.rc",
+    src: "authgraph.rc",
+    installable: false,
+}
+
+apex {
+    name: "com.android.hardware.security.authgraph",
+    manifest: "apex_manifest.json",
+    file_contexts: "apex_file_contexts",
+    key: "com.android.hardware.key",
+    certificate: ":com.android.hardware.certificate",
+    vendor: true,
+    updatable: false,
+
+    binaries: [
+        "android.hardware.security.authgraph-service.nonsecure",
+    ],
+    prebuilts: [
+        "authgraph.rc",
+        "authgraph.xml",
+    ],
+}

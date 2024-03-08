@@ -27,6 +27,9 @@ aidl_interface {
     srcs: [
         "android/hardware/wifi/*.aidl",
     ],
+    imports: [
+        "android.hardware.wifi.common-V1",
+    ],
     stability: "vintf",
     backend: {
         java: {
@@ -42,6 +45,12 @@ aidl_interface {
                 enabled: false,
             },
         },
+        cpp: {
+            enabled: false,
+        },
+        ndk: {
+            min_sdk_version: "34",
+        },
     },
     versions_with_info: [
         {
@@ -49,6 +58,5 @@ aidl_interface {
             imports: [],
         },
     ],
-    frozen: true,
-
+    frozen: false,
 }

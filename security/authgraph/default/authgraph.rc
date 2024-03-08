@@ -1,0 +1,5 @@
+service vendor.authgraph /apex/com.android.hardware.security.authgraph/bin/hw/android.hardware.security.authgraph-service.nonsecure
+    interface aidl android.hardware.security.authgraph.IAuthGraph/nonsecure
+    class hal
+    user nobody
+    group nobody

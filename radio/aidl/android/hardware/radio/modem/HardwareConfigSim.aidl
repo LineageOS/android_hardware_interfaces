@@ -16,6 +16,7 @@
 
 package android.hardware.radio.modem;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable HardwareConfigSim {

@@ -68,6 +68,12 @@ ndk::ScopedAStatus RadioDataTest::getDataCallList() {
  * Test IRadioData.setupDataCall() for the response returned.
  */
 TEST_P(RadioDataTest, setupDataCall) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_DATA)) {
+            GTEST_SKIP() << "setupDataCall : required FEATURE_TELEPHONY_DATA";
+        }
+    }
+
     serial = GetRandomSerialNumber();
 
     AccessNetwork accessNetwork = AccessNetwork::EUTRAN;
@@ -135,6 +141,13 @@ TEST_P(RadioDataTest, setupDataCall) {
  * Test IRadioData.setupDataCall() with osAppId for the response returned.
  */
 TEST_P(RadioDataTest, setupDataCall_osAppId) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_DATA)) {
+            GTEST_SKIP() << "Skipping setupDataCall_osAppId "
+                            "due to undefined FEATURE_TELEPHONY_DATA";
+        }
+    }
+
     serial = GetRandomSerialNumber();
 
     AccessNetwork accessNetwork = AccessNetwork::EUTRAN;
@@ -227,6 +240,13 @@ TEST_P(RadioDataTest, setupDataCall_osAppId) {
  * Test IRadioData.getSlicingConfig() for the response returned.
  */
 TEST_P(RadioDataTest, getSlicingConfig) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_DATA)) {
+            GTEST_SKIP() << "Skipping getSlicingConfig "
+                            "due to undefined FEATURE_TELEPHONY_DATA";
+        }
+    }
+
     serial = GetRandomSerialNumber();
     radio_data->getSlicingConfig(serial);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
@@ -242,6 +262,13 @@ TEST_P(RadioDataTest, getSlicingConfig) {
  * Test IRadioData.setDataThrottling() for the response returned.
  */
 TEST_P(RadioDataTest, setDataThrottling) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_DATA)) {
+            GTEST_SKIP() << "Skipping setDataThrottling "
+                            "due to undefined FEATURE_TELEPHONY_DATA";
+        }
+    }
+
     serial = GetRandomSerialNumber();
 
     ndk::ScopedAStatus res = radio_data->setDataThrottling(
@@ -320,6 +347,13 @@ TEST_P(RadioDataTest, setDataThrottling) {
  * Test IRadioData.setInitialAttachApn() for the response returned.
  */
 TEST_P(RadioDataTest, setInitialAttachApn) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_DATA)) {
+            GTEST_SKIP() << "Skipping setInitialAttachApn "
+                            "due to undefined FEATURE_TELEPHONY_DATA";
+        }
+    }
+
     serial = GetRandomSerialNumber();
 
     // Create a dataProfileInfo
@@ -363,6 +397,13 @@ TEST_P(RadioDataTest, setInitialAttachApn) {
  * Test IRadioData.setDataProfile() for the response returned.
  */
 TEST_P(RadioDataTest, setDataProfile) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_DATA)) {
+            GTEST_SKIP() << "Skipping setDataProfile "
+                            "due to undefined FEATURE_TELEPHONY_DATA";
+        }
+    }
+
     serial = GetRandomSerialNumber();
 
     // Create a dataProfileInfo
@@ -409,6 +450,13 @@ TEST_P(RadioDataTest, setDataProfile) {
  * Test IRadioData.deactivateDataCall() for the response returned.
  */
 TEST_P(RadioDataTest, deactivateDataCall) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_DATA)) {
+            GTEST_SKIP() << "Skipping deactivateDataCall "
+                            "due to undefined FEATURE_TELEPHONY_DATA";
+        }
+    }
+
     serial = GetRandomSerialNumber();
     int cid = 1;
     DataRequestReason reason = DataRequestReason::NORMAL;
@@ -440,6 +488,13 @@ TEST_P(RadioDataTest, deactivateDataCall) {
  * Test IRadioData.startKeepalive() for the response returned.
  */
 TEST_P(RadioDataTest, startKeepalive) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_DATA)) {
+            GTEST_SKIP() << "Skipping startKeepalive "
+                            "due to undefined FEATURE_TELEPHONY_DATA";
+        }
+    }
+
     std::vector<KeepaliveRequest> requests = {
             {
                     // Invalid IPv4 source address
@@ -538,6 +593,13 @@ TEST_P(RadioDataTest, startKeepalive) {
  * Test IRadioData.stopKeepalive() for the response returned.
  */
 TEST_P(RadioDataTest, stopKeepalive) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_DATA)) {
+            GTEST_SKIP() << "Skipping stopKeepalive "
+                            "due to undefined FEATURE_TELEPHONY_DATA";
+        }
+    }
+
     serial = GetRandomSerialNumber();
 
     radio_data->stopKeepalive(serial, 0xBAD);
@@ -554,6 +616,13 @@ TEST_P(RadioDataTest, stopKeepalive) {
  * Test IRadioData.getDataCallList() for the response returned.
  */
 TEST_P(RadioDataTest, getDataCallList) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_DATA)) {
+            GTEST_SKIP() << "Skipping getDataCallList "
+                            "due to undefined FEATURE_TELEPHONY_DATA";
+        }
+    }
+
     serial = GetRandomSerialNumber();
 
     radio_data->getDataCallList(serial);
@@ -573,6 +642,13 @@ TEST_P(RadioDataTest, getDataCallList) {
  * Test IRadioData.setDataAllowed() for the response returned.
  */
 TEST_P(RadioDataTest, setDataAllowed) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_DATA)) {
+            GTEST_SKIP() << "Skipping setDataAllowed "
+                            "due to undefined FEATURE_TELEPHONY_DATA";
+        }
+    }
+
     serial = GetRandomSerialNumber();
     bool allow = true;
 

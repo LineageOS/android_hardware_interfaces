@@ -44,6 +44,7 @@
 #include <utils/Errors.h>
 
 #include "core-impl/ChildInterface.h"
+#include "core-impl/SoundDose.h"
 #include "core-impl/utils.h"
 
 namespace aidl::android::hardware::audio::core {
@@ -80,59 +81,28 @@ class StreamContext {
 
     StreamContext() = default;
     StreamContext(std::unique_ptr<CommandMQ> commandMQ, std::unique_ptr<ReplyMQ> replyMQ,
-                  int portId,
                   const ::aidl::android::media::audio::common::AudioFormatDescription& format,
                   const ::aidl::android::media::audio::common::AudioChannelLayout& channelLayout,
                   int sampleRate, const ::aidl::android::media::audio::common::AudioIoFlags& flags,
-                  int32_t mixPortHandle, std::unique_ptr<DataMQ> dataMQ,
+                  int32_t nominalLatencyMs, int32_t mixPortHandle, std::unique_ptr<DataMQ> dataMQ,
                   std::shared_ptr<IStreamCallback> asyncCallback,
                   std::shared_ptr<IStreamOutEventCallback> outEventCallback,
+                  std::weak_ptr<sounddose::StreamDataProcessorInterface> streamDataProcessor,
                   DebugParameters debugParameters)
         : mCommandMQ(std::move(commandMQ)),
           mInternalCommandCookie(std::rand()),
           mReplyMQ(std::move(replyMQ)),
-          mPortId(portId),
           mFormat(format),
           mChannelLayout(channelLayout),
           mSampleRate(sampleRate),
           mFlags(flags),
+          mNominalLatencyMs(nominalLatencyMs),
           mMixPortHandle(mixPortHandle),
           mDataMQ(std::move(dataMQ)),
           mAsyncCallback(asyncCallback),
           mOutEventCallback(outEventCallback),
+          mStreamDataProcessor(streamDataProcessor),
           mDebugParameters(debugParameters) {}
-    StreamContext(StreamContext&& other)
-        : mCommandMQ(std::move(other.mCommandMQ)),
-          mInternalCommandCookie(other.mInternalCommandCookie),
-          mReplyMQ(std::move(other.mReplyMQ)),
-          mPortId(other.mPortId),
-          mFormat(other.mFormat),
-          mChannelLayout(other.mChannelLayout),
-          mSampleRate(other.mSampleRate),
-          mFlags(std::move(other.mFlags)),
-          mMixPortHandle(other.mMixPortHandle),
-          mDataMQ(std::move(other.mDataMQ)),
-          mAsyncCallback(std::move(other.mAsyncCallback)),
-          mOutEventCallback(std::move(other.mOutEventCallback)),
-          mDebugParameters(std::move(other.mDebugParameters)),
-          mFrameCount(other.mFrameCount) {}
-    StreamContext& operator=(StreamContext&& other) {
-        mCommandMQ = std::move(other.mCommandMQ);
-        mInternalCommandCookie = other.mInternalCommandCookie;
-        mReplyMQ = std::move(other.mReplyMQ);
-        mPortId = std::move(other.mPortId);
-        mFormat = std::move(other.mFormat);
-        mChannelLayout = std::move(other.mChannelLayout);
-        mSampleRate = other.mSampleRate;
-        mFlags = std::move(other.mFlags);
-        mMixPortHandle = other.mMixPortHandle;
-        mDataMQ = std::move(other.mDataMQ);
-        mAsyncCallback = std::move(other.mAsyncCallback);
-        mOutEventCallback = std::move(other.mOutEventCallback);
-        mDebugParameters = std::move(other.mDebugParameters);
-        mFrameCount = other.mFrameCount;
-        return *this;
-    }
 
     void fillDescriptor(StreamDescriptor* desc);
     std::shared_ptr<IStreamCallback> getAsyncCallback() const { return mAsyncCallback; }
@@ -151,10 +121,14 @@ class StreamContext {
     size_t getFrameSize() const;
     int getInternalCommandCookie() const { return mInternalCommandCookie; }
     int32_t getMixPortHandle() const { return mMixPortHandle; }
+    int32_t getNominalLatencyMs() const { return mNominalLatencyMs; }
     std::shared_ptr<IStreamOutEventCallback> getOutEventCallback() const {
         return mOutEventCallback;
     }
-    int getPortId() const { return mPortId; }
+    std::weak_ptr<sounddose::StreamDataProcessorInterface> getStreamDataProcessor() const {
+        return mStreamDataProcessor;
+    }
+    void startStreamDataProcessor();
     ReplyMQ* getReplyMQ() const { return mReplyMQ.get(); }
     int getTransientStateDelayMs() const { return mDebugParameters.transientStateDelayMs; }
     int getSampleRate() const { return mSampleRate; }
@@ -167,18 +141,20 @@ class StreamContext {
     long getFrameCount() const { return mFrameCount; }
 
   private:
+    // Fields are non const to allow move assignment.
     std::unique_ptr<CommandMQ> mCommandMQ;
     int mInternalCommandCookie;  // The value used to confirm that the command was posted internally
     std::unique_ptr<ReplyMQ> mReplyMQ;
-    int mPortId;
     ::aidl::android::media::audio::common::AudioFormatDescription mFormat;
     ::aidl::android::media::audio::common::AudioChannelLayout mChannelLayout;
     int mSampleRate;
     ::aidl::android::media::audio::common::AudioIoFlags mFlags;
+    int32_t mNominalLatencyMs;
     int32_t mMixPortHandle;
     std::unique_ptr<DataMQ> mDataMQ;
     std::shared_ptr<IStreamCallback> mAsyncCallback;
     std::shared_ptr<IStreamOutEventCallback> mOutEventCallback;  // Only used by output streams
+    std::weak_ptr<sounddose::StreamDataProcessorInterface> mStreamDataProcessor;
     DebugParameters mDebugParameters;
     long mFrameCount = 0;
 };

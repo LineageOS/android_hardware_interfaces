@@ -20,8 +20,6 @@
 
 #include <aidl/android/hardware/bluetooth/audio/AacCapabilities.h>
 #include <aidl/android/hardware/bluetooth/audio/AacObjectType.h>
-#include <aidl/android/hardware/bluetooth/audio/AptxAdaptiveLeCapabilities.h>
-#include <aidl/android/hardware/bluetooth/audio/AptxAdaptiveLeConfiguration.h>
 #include <aidl/android/hardware/bluetooth/audio/AptxCapabilities.h>
 #include <aidl/android/hardware/bluetooth/audio/ChannelMode.h>
 #include <aidl/android/hardware/bluetooth/audio/LdacCapabilities.h>
@@ -34,6 +32,7 @@
 #include <aidl/android/hardware/bluetooth/audio/SbcChannelMode.h>
 #include <android-base/logging.h>
 
+#include "BluetoothLeAudioAseConfigurationSettingProvider.h"
 #include "BluetoothLeAudioCodecsProvider.h"
 
 namespace aidl {
@@ -43,7 +42,7 @@ namespace bluetooth {
 namespace audio {
 
 static const PcmCapabilities kDefaultSoftwarePcmCapabilities = {
-    .sampleRateHz = {16000, 24000, 32000, 44100, 48000, 88200, 96000},
+    .sampleRateHz = {8000, 16000, 24000, 32000, 44100, 48000, 88200, 96000},
     .channelMode = {ChannelMode::MONO, ChannelMode::STEREO},
     .bitsPerSample = {16, 24, 32},
     .dataIntervalUs = {},
@@ -100,55 +99,8 @@ const std::vector<CodecCapabilities> kDefaultOffloadA2dpCodecCapabilities = {
     {.codecType = CodecType::OPUS, .capabilities = {}}};
 
 std::vector<LeAudioCodecCapabilitiesSetting> kDefaultOffloadLeAudioCapabilities;
-
-static const UnicastCapability kInvalidUnicastCapability = {
-    .codecType = CodecType::UNKNOWN};
-
-static const AptxAdaptiveLeCapabilities
-    kDefaultOffloadAptxAdaptiveLeCapability_48k = {
-        .samplingFrequencyHz = {48000},
-        .frameDurationUs = {10000},
-        .octetsPerFrame = {816}};
-
-static const AptxAdaptiveLeCapabilities
-    kDefaultOffloadAptxAdaptiveLeCapability_96k = {
-        .samplingFrequencyHz = {96000},
-        .frameDurationUs = {10000},
-        .octetsPerFrame = {816}};
-
-static const AptxAdaptiveLeCapabilities
-    kDefaultOffloadAptxAdaptiveLeXCapability_48k = {
-        .samplingFrequencyHz = {48000},
-        .frameDurationUs = {10000},
-        .octetsPerFrame = {816}};
-
-static const AptxAdaptiveLeCapabilities
-    kDefaultOffloadAptxAdaptiveLeXCapability_96k = {
-        .samplingFrequencyHz = {96000},
-        .frameDurationUs = {10000},
-        .octetsPerFrame = {816}};
-
-static const BroadcastCapability kInvalidBroadcastCapability = {
-    .codecType = CodecType::UNKNOWN};
-
-static AudioLocation stereoAudio = static_cast<AudioLocation>(
-    static_cast<uint8_t>(AudioLocation::FRONT_LEFT) |
-    static_cast<uint8_t>(AudioLocation::FRONT_RIGHT));
-
-static const std::vector<AptxAdaptiveLeCapabilities>
-    supportedAptxAdaptiveLeCapabilityList = {
-        kDefaultOffloadAptxAdaptiveLeCapability_48k,
-        kDefaultOffloadAptxAdaptiveLeCapability_96k,
-        kDefaultOffloadAptxAdaptiveLeXCapability_48k,
-        kDefaultOffloadAptxAdaptiveLeXCapability_96k};
-
-// Stores the supported setting of audio location, connected device, and the
-// channel count for each device
-std::vector<std::tuple<AudioLocation, uint8_t, uint8_t>>
-    supportedDeviceSetting = {
-        // Stereo, one connected device for both L and R
-        std::make_tuple(stereoAudio, 1, 2),
-};
+std::unordered_map<SessionType, std::vector<CodecInfo>>
+    kDefaultOffloadLeAudioCodecInfoMap;
 
 template <class T>
 bool BluetoothAudioCodecs::ContainedInVector(
@@ -459,34 +411,39 @@ BluetoothAudioCodecs::GetLeAudioOffloadCodecCapabilities(
     kDefaultOffloadLeAudioCapabilities =
         BluetoothLeAudioCodecsProvider::GetLeAudioCodecCapabilities(
             le_audio_offload_setting);
-
-    for (auto [audioLocation, deviceCnt, channelCount] :
-         supportedDeviceSetting) {
-      for (auto capability : supportedAptxAdaptiveLeCapabilityList) {
-        for (auto codec_type :
-             {CodecType::APTX_ADAPTIVE_LE, CodecType::APTX_ADAPTIVE_LEX}) {
-          if (session_type ==
-              SessionType::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH) {
-            UnicastCapability aptx_adaptive_le_cap = {
-                .codecType = codec_type,
-                .supportedChannel = audioLocation,
-                .deviceCount = deviceCnt,
-                .channelCountPerDevice = channelCount,
-                .leAudioCodecCapabilities =
-                    UnicastCapability::LeAudioCodecCapabilities(capability),
-            };
-
-            // Adds the capability for encode only
-            kDefaultOffloadLeAudioCapabilities.push_back(
-                {.unicastEncodeCapability = aptx_adaptive_le_cap,
-                 .unicastDecodeCapability = kInvalidUnicastCapability,
-                 .broadcastCapability = kInvalidBroadcastCapability});
-          }
-        }
-      }
-    }
   }
   return kDefaultOffloadLeAudioCapabilities;
+}
+
+std::vector<CodecInfo> BluetoothAudioCodecs::GetLeAudioOffloadCodecInfo(
+    const SessionType& session_type) {
+  if (session_type !=
+          SessionType::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH &&
+      session_type !=
+          SessionType::LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH &&
+      session_type !=
+          SessionType::LE_AUDIO_BROADCAST_HARDWARE_OFFLOAD_ENCODING_DATAPATH) {
+    return std::vector<CodecInfo>();
+  }
+
+  if (kDefaultOffloadLeAudioCodecInfoMap.empty()) {
+    auto le_audio_offload_setting =
+        BluetoothLeAudioCodecsProvider::ParseFromLeAudioOffloadSettingFile();
+    auto kDefaultOffloadLeAudioCodecInfoMap =
+        BluetoothLeAudioCodecsProvider::GetLeAudioCodecInfo(
+            le_audio_offload_setting);
+  }
+  auto codec_info_map_iter =
+      kDefaultOffloadLeAudioCodecInfoMap.find(session_type);
+  if (codec_info_map_iter == kDefaultOffloadLeAudioCodecInfoMap.end())
+    return std::vector<CodecInfo>();
+  return codec_info_map_iter->second;
+}
+
+std::vector<LeAudioAseConfigurationSetting>
+BluetoothAudioCodecs::GetLeAudioAseConfigurationSettings() {
+  return AudioSetConfigurationProviderJson::
+      GetLeAudioAseConfigurationSettings();
 }
 
 }  // namespace audio

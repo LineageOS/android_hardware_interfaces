@@ -36,6 +36,7 @@ void HdmiCecMock::serviceDied(void* cookie) {
     ALOGE("HdmiCecMock died");
     auto hdmiCecMock = static_cast<HdmiCecMock*>(cookie);
     hdmiCecMock->mCecThreadRun = false;
+    pthread_join(hdmiCecMock->mThreadId, NULL);
 }
 
 ScopedAStatus HdmiCecMock::addLogicalAddress(CecLogicalAddress addr, Result* _aidl_return) {
@@ -89,7 +90,9 @@ ScopedAStatus HdmiCecMock::setCallback(const std::shared_ptr<IHdmiCecCallback>& 
     mCallback = callback;
 
     if (callback != nullptr) {
-        AIBinder_linkToDeath(this->asBinder().get(), mDeathRecipient.get(), 0 /* cookie */);
+        mDeathRecipient =
+                ndk::ScopedAIBinder_DeathRecipient(AIBinder_DeathRecipient_new(serviceDied));
+        AIBinder_linkToDeath(callback->asBinder().get(), mDeathRecipient.get(), this /* cookie */);
 
         mInputFile = open(CEC_MSG_IN_FIFO, O_RDWR | O_CLOEXEC);
         mOutputFile = open(CEC_MSG_OUT_FIFO, O_RDWR | O_CLOEXEC);
@@ -220,7 +223,7 @@ void HdmiCecMock::threadLoop() {
     int r = -1;
 
     // Open the input pipe
-    while (mInputFile < 0) {
+    while (mCecThreadRun && mInputFile < 0) {
         usleep(1000 * 1000);
         mInputFile = open(CEC_MSG_IN_FIFO, O_RDONLY | O_CLOEXEC);
     }
@@ -257,7 +260,15 @@ void HdmiCecMock::threadLoop() {
 HdmiCecMock::HdmiCecMock() {
     ALOGE("[halimp_aidl] Opening a virtual CEC HAL for testing and virtual machine.");
     mCallback = nullptr;
-    mDeathRecipient = ndk::ScopedAIBinder_DeathRecipient(AIBinder_DeathRecipient_new(serviceDied));
+    mDeathRecipient = ndk::ScopedAIBinder_DeathRecipient(nullptr);
+}
+
+HdmiCecMock::~HdmiCecMock() {
+    ALOGE("[halimp_aidl] HdmiCecMock shutting down.");
+    mCallback = nullptr;
+    mDeathRecipient = ndk::ScopedAIBinder_DeathRecipient(nullptr);
+    mCecThreadRun = false;
+    pthread_join(mThreadId, NULL);
 }
 
 }  // namespace implementation

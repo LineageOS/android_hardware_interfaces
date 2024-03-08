@@ -74,6 +74,7 @@ interface IModule {
   boolean supportsVariableLatency();
   int getAAudioMixerBurstCount();
   int getAAudioHardwareBurstMinUsec();
+  void prepareToDisconnectExternalDevice(int portId);
   const int DEFAULT_AAUDIO_MIXER_BURST_COUNT = 2;
   const int DEFAULT_AAUDIO_HARDWARE_BURST_MIN_DURATION_US = 1000;
   @VintfStability

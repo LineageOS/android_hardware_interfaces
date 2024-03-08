@@ -43,6 +43,17 @@
   "auto-presubmit": [
     {
       "name": "VtsHalAutomotiveVehicle_TargetTest"
+    },
+    {
+      "name": "CarServiceUnitTest",
+      "options" : [
+        {
+          "include-filter": "com.android.car.hal.fakevhal.FakeVehicleStubUnitTest"
+        }
+      ]
+    },
+    {
+      "name": "VehicleHalProtoMessageConverterTest"
     }
   ]
 }

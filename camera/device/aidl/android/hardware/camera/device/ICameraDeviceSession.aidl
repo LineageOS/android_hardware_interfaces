@@ -20,6 +20,7 @@ import android.hardware.camera.device.BufferCache;
 import android.hardware.camera.device.CameraMetadata;
 import android.hardware.camera.device.CameraOfflineSessionInfo;
 import android.hardware.camera.device.CaptureRequest;
+import android.hardware.camera.device.ConfigureStreamsRet;
 import android.hardware.camera.device.HalStream;
 import android.hardware.camera.device.ICameraOfflineSession;
 import android.hardware.camera.device.RequestTemplate;
@@ -87,6 +88,13 @@ interface ICameraDeviceSession {
      * by the framework. Once a gralloc buffer is returned to the framework
      * with processCaptureResult (and its respective releaseFence has been
      * signaled) the framework may free or reuse it at any time.
+     *
+     * This method wil only be called by the framework if
+     * ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION is either not advertised or is
+     * ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION_AIDL. If the value of
+     * ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION is
+     * ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION_SESSION_CONFIGURABLE, configureStreamsV2
+     * will be called instead.
      *
      * ------------------------------------------------------------------------
      *
@@ -386,8 +394,8 @@ interface ICameraDeviceSession {
      *          error.
      * @return true in case the stream reconfiguration is required, false otherwise.
      */
-    boolean isReconfigurationRequired(in CameraMetadata oldSessionParams,
-                                      in CameraMetadata newSessionParams);
+    boolean isReconfigurationRequired(
+            in CameraMetadata oldSessionParams, in CameraMetadata newSessionParams);
 
     /**
      * processCaptureRequest:
@@ -576,4 +584,29 @@ interface ICameraDeviceSession {
      */
     void repeatingRequestEnd(in int frameNumber, in int[] streamIds);
 
+    /**
+     *
+     * configureStreamsV2:
+     *
+     * Performs the same function as 'configureStreams'. This function returns a
+     * 'ConfigureStreamsRet' Parcelable. This tells the framework about the desired stream
+     * parameters such as usage flags, maximum buffers, overridden format etc. It also informs
+     * camera framework whether the HAL will use the HAL buffer manager APIs 'requestStreamBuffers'
+     * and 'returnStreamBuffers' to request and return buffers to the framework.
+     *
+     * This method is only supported if
+     * ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION is
+     * ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION_SESSION_CONFIGURABLE. It must not be
+     * called by the camera framework if it isn't supported. That is, the framework will only
+     * ever call one of 'configureStreams' or 'configureStreamsV2' depending on the value of
+     * ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION.
+     *
+     * @param requestedConfiguration The stream configuration requested by the camera framework to
+     *        be configured by the camera HAL.
+     * @return A ConfigureStreamsRet Parcelable containing a vector of HalStreams and a boolean
+     *         specifying whether the HAL buffer manager must be used for this session
+     *         configuration.
+     *
+     */
+    ConfigureStreamsRet configureStreamsV2(in StreamConfiguration requestedConfiguration);
 }

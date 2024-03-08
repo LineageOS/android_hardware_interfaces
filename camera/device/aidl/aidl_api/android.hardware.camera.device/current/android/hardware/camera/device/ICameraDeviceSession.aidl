@@ -45,4 +45,5 @@ interface ICameraDeviceSession {
   oneway void signalStreamFlush(in int[] streamIds, in int streamConfigCounter);
   android.hardware.camera.device.ICameraOfflineSession switchToOffline(in int[] streamsToKeep, out android.hardware.camera.device.CameraOfflineSessionInfo offlineSessionInfo);
   void repeatingRequestEnd(in int frameNumber, in int[] streamIds);
+  android.hardware.camera.device.ConfigureStreamsRet configureStreamsV2(in android.hardware.camera.device.StreamConfiguration requestedConfiguration);
 }

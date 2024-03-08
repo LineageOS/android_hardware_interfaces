@@ -31,6 +31,7 @@ using aidl::android::hardware::cas::MediaCasService;
 
 int main() {
     ABinderProcess_setThreadPoolMaxThreadCount(8);
+    ABinderProcess_startThreadPool();
 
     // Setup hwbinder service
     std::shared_ptr<MediaCasService> service = ::ndk::SharedRefBase::make<MediaCasService>();

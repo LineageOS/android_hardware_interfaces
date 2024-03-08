@@ -35,6 +35,6 @@ package android.hardware.bluetooth.audio;
 @Backing(type="int") @VintfStability
 enum AudioLocation {
   UNKNOWN = 1,
-  FRONT_LEFT = 2,
-  FRONT_RIGHT = 4,
+  FRONT_LEFT = (1 << 1) /* 2 */,
+  FRONT_RIGHT = (1 << 2) /* 4 */,
 }

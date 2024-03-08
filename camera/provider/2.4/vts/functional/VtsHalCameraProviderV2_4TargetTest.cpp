@@ -244,7 +244,7 @@ namespace {
                          std::string* deviceVersion, std::string* cameraId) {
         ::android::String8 pattern;
         pattern.appendFormat(kDeviceNameRE, providerType.c_str());
-        std::regex e(pattern.string());
+        std::regex e(pattern.c_str());
         std::string deviceNameStd(deviceName.c_str());
         std::smatch sm;
         if (std::regex_match(deviceNameStd, sm, e)) {
@@ -8801,8 +8801,7 @@ void CameraHidlTest::getParameters(
 void CameraHidlTest::setParameters(
         const sp<::android::hardware::camera::device::V1_0::ICameraDevice> &device,
         const CameraParameters &cameraParams) {
-    Return<Status> returnStatus = device->setParameters(
-            cameraParams.flatten().string());
+    Return<Status> returnStatus = device->setParameters(cameraParams.flatten().c_str());
     ASSERT_TRUE(returnStatus.isOk());
     ASSERT_EQ(Status::OK, returnStatus);
 }

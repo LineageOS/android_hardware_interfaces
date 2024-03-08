@@ -28,7 +28,7 @@ class HciPacketizer {
  public:
   HciPacketizer() = default;
   bool OnDataReady(PacketType packet_type, const std::vector<uint8_t>& data,
-                   size_t offset);
+                   size_t* offset);
   const std::vector<uint8_t>& GetPacket() const;
 
  protected:

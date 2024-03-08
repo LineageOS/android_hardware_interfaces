@@ -32,4 +32,9 @@ enum StaRoamingState {
      * the |StaRoamingConfig| parameters set using |configureRoaming|.
      */
     ENABLED = 1,
+    /**
+     * Driver/Firmware is allowed to roam more aggressively. For instance,
+     * roaming can be triggered at higher RSSI thresholds than normal.
+     */
+    AGGRESSIVE = 2,
 }

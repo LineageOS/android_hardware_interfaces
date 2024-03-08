@@ -22,8 +22,8 @@ aidl_interface {
         "android/hardware/soundtrigger3/ISoundTriggerHwGlobalCallback.aidl",
     ],
     stability: "vintf",
-    imports: [
-        "android.media.soundtrigger.types-V1",
+    defaults: [
+        "latest_android_media_soundtrigger_types_import_interface",
     ],
     backend: {
         cpp: {
@@ -34,6 +34,7 @@ aidl_interface {
             sdk_version: "module_current",
         },
     },
+    frozen: false,
     versions_with_info: [
         {
             version: "1",
@@ -45,7 +46,7 @@ aidl_interface {
 }
 
 // Note: This should always be one version ahead of the last frozen version
-latest_android_hardware_soundtrigger3 = "android.hardware.soundtrigger3-V1"
+latest_android_hardware_soundtrigger3 = "android.hardware.soundtrigger3-V2"
 
 // Modules that depend on android.hardware.soundtrigger3 directly can include
 // the following java_defaults to avoid explicitly managing dependency versions
@@ -54,5 +55,12 @@ java_defaults {
     name: "latest_android_hardware_soundtrigger3_java_static",
     static_libs: [
         latest_android_hardware_soundtrigger3 + "-java",
+    ],
+}
+
+cc_defaults {
+    name: "latest_android_hardware_soundtrigger3_ndk_shared",
+    shared_libs: [
+        latest_android_hardware_soundtrigger3 + "-ndk",
     ],
 }

@@ -16,6 +16,7 @@
 
 package android.hardware.wifi.hostapd;
 
+import android.hardware.wifi.common.OuiKeyedData;
 import android.hardware.wifi.hostapd.ChannelParams;
 import android.hardware.wifi.hostapd.HwModeParams;
 
@@ -36,4 +37,8 @@ parcelable IfaceParams {
      * The list of the channel params for the dual interfaces.
      */
     ChannelParams[] channelParams;
+    /**
+     * Optional vendor-specific configuration parameters.
+     */
+    @nullable OuiKeyedData[] vendorData;
 }

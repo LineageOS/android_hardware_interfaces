@@ -1,4 +1,4 @@
-service vendor.sensors-default /vendor/bin/hw/android.hardware.sensors-service.example
+service vendor.sensors-default /apex/com.android.hardware.sensors/bin/hw/android.hardware.sensors-service.example
     class hal
     user system
     group system

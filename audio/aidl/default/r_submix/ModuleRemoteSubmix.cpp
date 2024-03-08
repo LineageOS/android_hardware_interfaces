@@ -21,6 +21,7 @@
 #include <android-base/logging.h>
 #include <error/expected_utils.h>
 
+#include "SubmixRoute.h"
 #include "core-impl/ModuleRemoteSubmix.h"
 #include "core-impl/StreamRemoteSubmix.h"
 
@@ -59,23 +60,22 @@ ndk::ScopedAStatus ModuleRemoteSubmix::createOutputStream(
 
 ndk::ScopedAStatus ModuleRemoteSubmix::populateConnectedDevicePort(AudioPort* audioPort) {
     // Find the corresponding mix port and copy its profiles.
-    std::vector<AudioRoute> routes;
     // At this moment, the port has the same ID as the template port, see connectExternalDevice.
-    RETURN_STATUS_IF_ERROR(getAudioRoutesForAudioPort(audioPort->id, &routes));
+    std::vector<AudioRoute*> routes = getAudioRoutesForAudioPortImpl(audioPort->id);
     if (routes.empty()) {
         LOG(ERROR) << __func__ << ": no routes found for the port " << audioPort->toString();
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
     const auto& route = *routes.begin();
     AudioPort mixPort;
-    if (route.sinkPortId == audioPort->id) {
-        if (route.sourcePortIds.empty()) {
-            LOG(ERROR) << __func__ << ": invalid route " << route.toString();
+    if (route->sinkPortId == audioPort->id) {
+        if (route->sourcePortIds.empty()) {
+            LOG(ERROR) << __func__ << ": invalid route " << route->toString();
             return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
         }
-        RETURN_STATUS_IF_ERROR(getAudioPort(*route.sourcePortIds.begin(), &mixPort));
+        RETURN_STATUS_IF_ERROR(getAudioPort(*route->sourcePortIds.begin(), &mixPort));
     } else {
-        RETURN_STATUS_IF_ERROR(getAudioPort(route.sinkPortId, &mixPort));
+        RETURN_STATUS_IF_ERROR(getAudioPort(route->sinkPortId, &mixPort));
     }
     audioPort->profiles = mixPort.profiles;
     return ndk::ScopedAStatus::ok();
@@ -105,6 +105,14 @@ ndk::ScopedAStatus ModuleRemoteSubmix::onMasterMuteChanged(bool __unused) {
 ndk::ScopedAStatus ModuleRemoteSubmix::onMasterVolumeChanged(float __unused) {
     LOG(DEBUG) << __func__ << ": is not supported";
     return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
+int32_t ModuleRemoteSubmix::getNominalLatencyMs(const AudioPortConfig&) {
+    // See the note on kDefaultPipePeriodCount.
+    static constexpr int32_t kMaxLatencyMs =
+            (r_submix::kDefaultPipeSizeInFrames * 1000) / r_submix::kDefaultSampleRateHz;
+    static constexpr int32_t kMinLatencyMs = kMaxLatencyMs / r_submix::kDefaultPipePeriodCount;
+    return kMinLatencyMs;
 }
 
 }  // namespace aidl::android::hardware::audio::core

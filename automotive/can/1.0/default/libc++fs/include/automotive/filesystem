@@ -9,6 +9,18 @@
 //===----------------------------------------------------------------------===//
 #ifndef _LIBAUTO_FILESYSTEM
 #define _LIBAUTO_FILESYSTEM
+
+// TODO(152067309): Remove this once the libc++ upgrade is complete.
+#include <__config>
+#if defined(_LIBCPP_VERSION) && _LIBCPP_VERSION > 8000
+
+#include <filesystem>
+namespace android::hardware::automotive {
+namespace filesystem = std::filesystem;
+}
+
+#else
+
 /*
     filesystem synopsis
 
@@ -2695,5 +2707,7 @@ end(const recursive_directory_iterator&) noexcept {
 #endif // !_LIBCPP_CXX03_LANG
 
 _LIBCPP_POP_MACROS
+
+#endif  // defined(_LIBCPP_VERSION) && _LIBCPP_VERSION > 8000
 
 #endif // _LIBAUTO_FILESYSTEM

@@ -1,0 +1,6 @@
+service vendor.bluetooth.ranging-default /vendor/bin/hw/android.hardware.bluetooth.ranging-service.default
+    class hal
+    capabilities BLOCK_SUSPEND NET_ADMIN SYS_NICE
+    user bluetooth
+    group bluetooth
+    task_profiles HighPerformance

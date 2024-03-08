@@ -19,6 +19,8 @@
 
 #include <android-base/thread_annotations.h>
 
+#include <utils/Looper.h>
+#include <atomic>
 #include <memory>
 #include <mutex>
 #include <queue>
@@ -30,6 +32,9 @@ namespace android {
 namespace hardware {
 namespace automotive {
 namespace vehicle {
+
+// Forward declaration
+class RecurrentMessageHandler;
 
 // A thread-safe recurrent timer.
 class RecurrentTimer final {
@@ -43,49 +48,44 @@ class RecurrentTimer final {
 
     // Registers a recurrent callback for a given interval.
     // Registering the same callback twice will override the interval provided before.
-    void registerTimerCallback(int64_t intervalInNano, std::shared_ptr<Callback> callback);
+    void registerTimerCallback(int64_t intervalInNanos, std::shared_ptr<Callback> callback);
 
     // Unregisters a previously registered recurrent callback.
     void unregisterTimerCallback(std::shared_ptr<Callback> callback);
 
   private:
-    // friend class for unit testing.
+    friend class RecurrentMessageHandler;
+
+    // For unit test
     friend class RecurrentTimerTest;
 
     struct CallbackInfo {
         std::shared_ptr<Callback> callback;
-        int64_t interval;
-        int64_t nextTime;
-        // A flag to indicate whether this CallbackInfo is already outdated and should be ignored.
-        // The reason we need this flag is because we cannot easily remove an element from a heap.
-        bool outdated = false;
-
-        static bool cmp(const std::unique_ptr<CallbackInfo>& lhs,
-                        const std::unique_ptr<CallbackInfo>& rhs);
+        int64_t intervalInNanos;
+        int64_t nextTimeInNanos;
     };
 
+    android::sp<Looper> mLooper;
+    android::sp<RecurrentMessageHandler> mHandler;
+
+    std::atomic<bool> mStopRequested = false;
+    std::atomic<int> mCallbackId = 0;
     std::mutex mLock;
     std::thread mThread;
-    std::condition_variable mCond;
-    bool mStopRequested GUARDED_BY(mLock) = false;
-    // A map to map each callback to its current active CallbackInfo in the mCallbackQueue.
-    std::unordered_map<std::shared_ptr<Callback>, CallbackInfo*> mCallbacks GUARDED_BY(mLock);
-    // A min-heap sorted by nextTime. Note that because we cannot remove arbitrary element from the
-    // heap, a single Callback can have multiple entries in this queue, all but one should be valid.
-    // The rest should be mark as outdated. The valid one is one stored in mCallbacks.
-    std::vector<std::unique_ptr<CallbackInfo>> mCallbackQueue GUARDED_BY(mLock);
+    std::unordered_map<std::shared_ptr<Callback>, int> mIdByCallback GUARDED_BY(mLock);
+    std::unordered_map<int, std::unique_ptr<CallbackInfo>> mCallbackInfoById GUARDED_BY(mLock);
 
-    void loop();
+    void handleMessage(const android::Message& message) EXCLUDES(mLock);
+    int getCallbackIdLocked(std::shared_ptr<Callback> callback) REQUIRES(mLock);
+};
 
-    // Mark the callbackInfo as outdated and should be ignored when popped from the heap.
-    void markOutdatedLocked(CallbackInfo* callback) REQUIRES(mLock);
-    // Remove all outdated callbackInfos from the top of the heap. This function must be called
-    // each time we might introduce outdated elements to the top. We must make sure the heap is
-    // always valid from the top.
-    void removeInvalidCallbackLocked() REQUIRES(mLock);
-    // Gets the next calblack to run (must be valid) from the heap, update its nextTime and put
-    // it back to the heap.
-    std::shared_ptr<Callback> getNextCallbackLocked(int64_t now) REQUIRES(mLock);
+class RecurrentMessageHandler final : public android::MessageHandler {
+  public:
+    RecurrentMessageHandler(RecurrentTimer* timer) { mTimer = timer; }
+    void handleMessage(const android::Message& message) override;
+
+  private:
+    RecurrentTimer* mTimer;
 };
 
 }  // namespace vehicle

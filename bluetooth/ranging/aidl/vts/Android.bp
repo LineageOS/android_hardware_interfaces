@@ -1,0 +1,27 @@
+package {
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+cc_test {
+    name: "VtsHalBluetoothRangingTargetTest",
+    defaults: [
+        "use_libaidlvintf_gtest_helper_static",
+    ],
+    srcs: ["VtsHalBluetoothRangingTargetTest.cpp"],
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "libcutils",
+        "liblog",
+        "libutils",
+    ],
+    static_libs: [
+        "android.hardware.bluetooth.ranging-V1-ndk",
+        "libbluetooth-types",
+    ],
+    test_config: "VtsHalBluetoothRangingTargetTest.xml",
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
+}

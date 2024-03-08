@@ -23,16 +23,6 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
-filegroup {
-    name: "sensors-default.rc",
-    srcs: ["sensors-default.rc"],
-}
-
-filegroup {
-    name: "sensors-default.xml",
-    srcs: ["sensors-default.xml"],
-}
-
 cc_library_static {
     name: "libsensorsexampleimpl",
     vendor: true,
@@ -57,21 +47,62 @@ cc_library_static {
 cc_binary {
     name: "android.hardware.sensors-service.example",
     relative_install_path: "hw",
-    init_rc: [":sensors-default.rc"],
-    vintf_fragments: [":sensors-default.xml"],
+    installable: false, // install APEX below
+
     vendor: true,
     shared_libs: [
-        "libbase",
         "libbinder_ndk",
-        "libfmq",
-        "libpower",
-        "libcutils",
         "liblog",
-        "libutils",
-        "android.hardware.sensors-V2-ndk",
     ],
     static_libs: [
+        "android.hardware.common-V2-ndk",
+        "android.hardware.common.fmq-V1-ndk",
+        "android.hardware.sensors-V2-ndk",
+        "android.system.suspend-V1-ndk",
+        "libbase",
+        "libcutils",
+        "libfmq",
+        "libpower",
         "libsensorsexampleimpl",
+        "libutils",
     ],
     srcs: ["main.cpp"],
+}
+
+prebuilt_etc {
+    name: "sensors-default.rc",
+    src: "sensors-default.rc",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "sensors-default.xml",
+    src: "sensors-default.xml",
+    sub_dir: "vintf",
+    installable: false,
+}
+
+// Default vendor APEX for android.hardware.sensors.
+// Custom implementations may use override_apex based on this APEX.
+apex {
+    name: "com.android.hardware.sensors",
+    manifest: "apex_manifest.json",
+    key: "com.android.hardware.key",
+    certificate: ":com.android.hardware.certificate",
+    file_contexts: "file_contexts",
+    updatable: false,
+    vendor: true,
+
+    binaries: ["android.hardware.sensors-service.example"],
+    prebuilts: [
+        "sensors-default.rc", // init rc
+        "sensors-default.xml", // vintf fragment
+        "android.hardware.sensor.ambient_temperature.prebuilt.xml",
+        "android.hardware.sensor.barometer.prebuilt.xml",
+        "android.hardware.sensor.gyroscope.prebuilt.xml",
+        "android.hardware.sensor.hinge_angle.prebuilt.xml",
+        "android.hardware.sensor.light.prebuilt.xml",
+        "android.hardware.sensor.proximity.prebuilt.xml",
+        "android.hardware.sensor.relative_humidity.prebuilt.xml",
+    ],
 }

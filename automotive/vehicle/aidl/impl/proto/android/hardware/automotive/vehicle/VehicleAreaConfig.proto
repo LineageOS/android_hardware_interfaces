@@ -18,6 +18,8 @@ syntax = "proto3";
 
 package android.hardware.automotive.vehicle.proto;
 
+import "android/hardware/automotive/vehicle/VehiclePropertyAccess.proto";
+
 /* Must be in sync with VehicleAreaConfig.aidl. */
 message VehicleAreaConfig {
     /* Area id is ignored for VehiclePropertyGroup:GLOBAL properties. */
@@ -36,4 +38,13 @@ message VehicleAreaConfig {
 
     float min_float_value = 6;
     float max_float_value = 7;
+
+    /**
+     * If the property has a @data_enum, then it is possible to specify a supported subset of the
+     * @data_enum. If the property has a @data_enum and supported_enum_values is null, then it is
+     * assumed all @data_enum values are supported unless specified through another mechanism.
+     */
+    repeated int64 supported_enum_values = 8;
+    VehiclePropertyAccess access = 9;
+    bool support_variable_update_rate = 10;
 };

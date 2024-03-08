@@ -1,3 +1,9 @@
 ericjeong@google.com
-keunyoung@google.com
 shanyu@google.com
+
+# GRPC VHAL
+per-file aidl/impl/grpc/** = chenhaosjtuacm@google.com, egranata@google.com
+
+# Property definition
+per-file aidl_property/** = tylertrephan@google.com
+per-file aidl/generated_lib/** = tylertrephan@google.com

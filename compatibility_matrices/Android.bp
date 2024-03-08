@@ -84,3 +84,15 @@ vintf_compatibility_matrix {
         "kernel_config_u_6.1",
     ],
 }
+
+vintf_compatibility_matrix {
+    name: "framework_compatibility_matrix.9.xml",
+    stem: "compatibility_matrix.9.xml",
+    srcs: [
+        "compatibility_matrix.9.xml",
+    ],
+    kernel_configs: [
+        "kernel_config_v_6.1",
+        "kernel_config_v_6.6",
+    ],
+}

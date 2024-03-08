@@ -22,6 +22,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "aidl/android/hardware/bluetooth/audio/CodecInfo.h"
+#include "aidl/android/hardware/bluetooth/audio/SessionType.h"
 #include "aidl_android_hardware_bluetooth_audio_setting.h"
 
 namespace aidl {
@@ -39,14 +41,20 @@ class BluetoothLeAudioCodecsProvider {
       const std::optional<setting::LeAudioOffloadSetting>&
           le_audio_offload_setting);
   static void ClearLeAudioCodecCapabilities();
+  static std::unordered_map<SessionType, std::vector<CodecInfo>>
+  GetLeAudioCodecInfo(const std::optional<setting::LeAudioOffloadSetting>&
+                          le_audio_offload_setting);
 
  private:
+  static inline std::vector<setting::Scenario> supported_scenarios_;
   static inline std::unordered_map<std::string, setting::Configuration>
       configuration_map_;
   static inline std::unordered_map<std::string, setting::CodecConfiguration>
       codec_configuration_map_;
   static inline std::unordered_map<std::string, setting::StrategyConfiguration>
       strategy_configuration_map_;
+  static inline std::unordered_map<SessionType, std::vector<CodecInfo>>
+      session_codecs_map_;
 
   static std::vector<setting::Scenario> GetScenarios(
       const std::optional<setting::LeAudioOffloadSetting>&
@@ -58,6 +66,9 @@ class BluetoothLeAudioCodecsProvider {
       const std::optional<setting::LeAudioOffloadSetting>&
           le_audio_offload_setting);
   static void UpdateStrategyConfigurationsToMap(
+      const std::optional<setting::LeAudioOffloadSetting>&
+          le_audio_offload_setting);
+  static void LoadConfigurationToMap(
       const std::optional<setting::LeAudioOffloadSetting>&
           le_audio_offload_setting);
 
@@ -82,6 +93,9 @@ class BluetoothLeAudioCodecsProvider {
       const uint8_t& channel_count, const std::vector<T>& capability);
 
   static inline Lc3Capabilities ComposeLc3Capability(
+      const setting::CodecConfiguration& codec_configuration);
+
+  static inline AptxAdaptiveLeCapabilities ComposeAptxAdaptiveLeCapability(
       const setting::CodecConfiguration& codec_configuration);
 
   static inline AudioLocation GetAudioLocation(

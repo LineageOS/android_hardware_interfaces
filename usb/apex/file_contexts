@@ -1,5 +1,0 @@
-(/.*)?                                         u:object_r:vendor_file:s0
-# Permission XMLs
-/etc/permissions(/.*)?                         u:object_r:vendor_configs_file:s0
-# binary
-/bin/hw/android\.hardware\.usb-service\.example        u:object_r:hal_usb_default_exec:s0

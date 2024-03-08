@@ -6,9 +6,15 @@
 // Source Licenses. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+
+// TODO(152067309): Remove this once the libc++ upgrade is complete.
+#include <__config>
+#if defined(_LIBCPP_VERSION) && _LIBCPP_VERSION <= 8000
+
 /* clang-format off */
 #include "automotive/filesystem"
 #include <__config>
+
 #if defined(_LIBCPP_WIN32API)
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -395,3 +401,5 @@ bool recursive_directory_iterator::__try_recursion(error_code* ec) {
 
 }  // namespace android::hardware::automotive::filesystem
 /* clang-format on */
+
+#endif // defined(_LIBCPP_VERSION) && _LIBCPP_VERSION <= 8000

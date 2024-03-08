@@ -41,6 +41,7 @@ using aidl::android::hardware::sensors::ISensors;
 using aidl::android::hardware::sensors::SensorInfo;
 using aidl::android::hardware::sensors::SensorStatus;
 using aidl::android::hardware::sensors::SensorType;
+using aidl::android::hardware::sensors::AdditionalInfo;
 using android::ProcessState;
 using std::chrono::duration_cast;
 
@@ -629,6 +630,15 @@ TEST_P(SensorsAidlTest, InjectSensorEventData) {
     Event additionalInfoEvent;
     additionalInfoEvent.sensorType = SensorType::ADDITIONAL_INFO;
     additionalInfoEvent.timestamp = android::elapsedRealtimeNano();
+    AdditionalInfo info;
+    info.type = AdditionalInfo::AdditionalInfoType::AINFO_BEGIN;
+    info.serial = 1;
+    AdditionalInfo::AdditionalInfoPayload::Int32Values infoData;
+    for (int32_t i = 0; i < 14; i++) {
+        infoData.values[i] = i;
+    }
+    info.payload.set<AdditionalInfo::AdditionalInfoPayload::Tag::dataInt32>(infoData);
+    additionalInfoEvent.payload.set<Event::EventPayload::Tag::additional>(info);
 
     Event injectedEvent;
     injectedEvent.timestamp = android::elapsedRealtimeNano();
@@ -921,9 +931,15 @@ TEST_P(SensorsAidlTest, NoStaleEvents) {
             continue;
         }
 
+        // Skip sensors with no events
+        const std::vector<Event> events = callback.getEvents(sensor.sensorHandle);
+        if (events.empty()) {
+            continue;
+        }
+
         // Ensure that the first event received is not stale by ensuring that its timestamp is
         // sufficiently different from the previous event
-        const Event newEvent = callback.getEvents(sensor.sensorHandle).front();
+        const Event newEvent = events.front();
         std::chrono::milliseconds delta =
                 duration_cast<std::chrono::milliseconds>(std::chrono::nanoseconds(
                         newEvent.timestamp - lastEventTimestampMap[sensor.sensorHandle]));

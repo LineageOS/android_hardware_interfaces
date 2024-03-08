@@ -34,6 +34,16 @@ aidl_interface {
             sdk_version: "module_current",
             enabled: false,
         },
+	ndk: {
+            enabled: true,
+            apex_available: [
+                "//apex_available:platform",
+                "com.android.nfcservices",
+            ],
+        },
+        rust: {
+            enabled: true,
+        },
     },
     versions_with_info: [
         {

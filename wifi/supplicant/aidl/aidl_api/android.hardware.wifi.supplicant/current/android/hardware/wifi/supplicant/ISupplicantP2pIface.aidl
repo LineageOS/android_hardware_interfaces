@@ -43,10 +43,16 @@ interface ISupplicantP2pIface {
   void cancelServiceDiscovery(in long identifier);
   void cancelWps(in String groupIfName);
   void configureExtListen(in int periodInMillis, in int intervalInMillis);
+  /**
+   * @deprecated This method is deprecated from AIDL v3, newer HALs should use connectWithParams.
+   */
   String connect(in byte[] peerAddress, in android.hardware.wifi.supplicant.WpsProvisionMethod provisionMethod, in String preSelectedPin, in boolean joinExistingGroup, in boolean persistent, in int goIntent);
   byte[] createNfcHandoverRequestMessage();
   byte[] createNfcHandoverSelectMessage();
   void enableWfd(in boolean enable);
+  /**
+   * @deprecated This method is deprecated from AIDL v3, newer HALs should use findWithParams.
+   */
   void find(in int timeoutInSec);
   void flush();
   void flushServices();
@@ -93,8 +99,16 @@ interface ISupplicantP2pIface {
   String startWpsPinDisplay(in String groupIfName, in byte[] bssid);
   void startWpsPinKeypad(in String groupIfName, in String pin);
   void stopFind();
+  /**
+   * @deprecated This method is deprecated from AIDL v3, newer HALs should use findWithParams.
+   */
   void findOnSocialChannels(in int timeoutInSec);
+  /**
+   * @deprecated This method is deprecated from AIDL v3, newer HALs should use findWithParams.
+   */
   void findOnSpecificFrequency(in int freqInHz, in int timeoutInSec);
   void setVendorElements(in android.hardware.wifi.supplicant.P2pFrameTypeMask frameTypeMask, in byte[] vendorElemBytes);
   void configureEapolIpAddressAllocationParams(in int ipAddressGo, in int ipAddressMask, in int ipAddressStart, in int ipAddressEnd);
+  String connectWithParams(in android.hardware.wifi.supplicant.P2pConnectInfo connectInfo);
+  void findWithParams(in android.hardware.wifi.supplicant.P2pDiscoveryInfo discoveryInfo);
 }

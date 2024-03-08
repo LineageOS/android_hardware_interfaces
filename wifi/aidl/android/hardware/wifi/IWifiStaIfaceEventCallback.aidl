@@ -18,6 +18,8 @@ package android.hardware.wifi;
 
 import android.hardware.wifi.StaScanData;
 import android.hardware.wifi.StaScanResult;
+import android.hardware.wifi.TwtSession;
+import android.hardware.wifi.TwtSessionStats;
 
 @VintfStability
 oneway interface IWifiStaIfaceEventCallback {
@@ -61,4 +63,104 @@ oneway interface IWifiStaIfaceEventCallback {
      * @param currRssi RSSI of the currently connected access point.
      */
     void onRssiThresholdBreached(in int cmdId, in byte[6] currBssid, in int currRssi);
+
+    @VintfStability
+    @Backing(type="byte")
+    enum TwtErrorCode {
+        /** Unknown failure */
+        FAILURE_UNKNOWN,
+        /** TWT session is already resumed */
+        ALREADY_RESUMED,
+        /** TWT session is already suspended */
+        ALREADY_SUSPENDED,
+        /** Invalid parameters */
+        INVALID_PARAMS,
+        /** Maximum number of sessions reached */
+        MAX_SESSION_REACHED,
+        /** Requested operation is not available */
+        NOT_AVAILABLE,
+        /** Requested operation is not supported */
+        NOT_SUPPORTED,
+        /** Requested operation is not supported by the peer */
+        PEER_NOT_SUPPORTED,
+        /** Requested operation is rejected by the peer */
+        PEER_REJECTED,
+        /** Requested operation is timed out */
+        TIMEOUT,
+    }
+
+    @VintfStability
+    @Backing(type="byte")
+    enum TwtTeardownReasonCode {
+        /** Unknown reason */
+        UNKNOWN,
+        /** Teardown requested by the framework */
+        LOCALLY_REQUESTED,
+        /** Teardown initiated internally by the firmware or driver */
+        INTERNALLY_INITIATED,
+        /** Teardown initiated by the peer */
+        PEER_INITIATED,
+    }
+
+    /**
+     * Called to indicate a TWT failure. If there is no command associated with this failure cmdId
+     * will be 0.
+     *
+     * @param cmdId Id used to identify the command. The value 0 indicates no associated command.
+     * @param error error code.
+     */
+    void onTwtFailure(in int cmdId, in TwtErrorCode error);
+
+    /**
+     * Called when a Target Wake Time session is created. See |IWifiStaIface.twtSessionSetup|.
+     *
+     * @param cmdId Id used to identify the command.
+     * @param twtSession TWT session.
+     */
+    void onTwtSessionCreate(in int cmdId, in TwtSession twtSession);
+
+    /**
+     * Called when a Target Wake Time session is updated. See |IWifiStaIface.twtSessionUpdate|.
+     *
+     * @param cmdId Id used to identify the command.
+     * @param twtSession TWT session.
+     */
+    void onTwtSessionUpdate(in int cmdId, in TwtSession twtSession);
+
+    /**
+     * Called when the Target Wake Time session is torndown.
+     * See |IWifiStaIface.twtSessionTeardown|.
+     *
+     * @param cmdId Id used to identify the command. The value 0 indicates no associated command.
+     * @param twtSessionId TWT session id.
+     * @param reasonCode reason code for the TWT teardown.
+     */
+    void onTwtSessionTeardown(
+            in int cmdId, in int twtSessionId, in TwtTeardownReasonCode reasonCode);
+
+    /**
+     * Called when TWT session stats available. See |IWifiStaIface.twtSessionGetStats|.
+     *
+     * @param cmdId Id used to identify the command.
+     * @param twtSessionId TWT session id.
+     * @param twtSessionStats TWT session stats.
+     */
+    void onTwtSessionStats(in int cmdId, in int twtSessionId, in TwtSessionStats twtSessionStats);
+
+    /**
+     * Called when the Target Wake Time session is suspended.
+     * See |IWifiStaIface.twtSessionSuspend|.
+     *
+     * @param cmdId Id used to identify the command. The value 0 indicates no associated command.
+     * @param twtSessionId TWT session id.
+     */
+    void onTwtSessionSuspend(in int cmdId, in int twtSessionId);
+
+    /**
+     * Called when the Target Wake Time session is resumed. See |IWifiStaIface.twtSessionResume|.
+     *
+     * @param cmdId Id used to identify the command. The value 0 indicates no associated command.
+     * @param twtSessionId TWT session id.
+     */
+    void onTwtSessionResume(in int cmdId, in int twtSessionId);
 }

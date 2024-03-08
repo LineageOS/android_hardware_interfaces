@@ -23,10 +23,17 @@ namespace aidl::android::hardware::audio::core {
 
 class ModuleBluetooth final : public Module {
   public:
-    ModuleBluetooth() : Module(Type::BLUETOOTH) {}
+    enum BtInterface : int { BTSCO, BTA2DP, BTLE };
+    typedef std::tuple<std::weak_ptr<IBluetooth>, std::weak_ptr<IBluetoothA2dp>,
+                       std::weak_ptr<IBluetoothLe>>
+            BtProfileHandles;
+
+    ModuleBluetooth(std::unique_ptr<Configuration>&& config);
 
   private:
-    BtProfileHandles getBtProfileManagerHandles() override;
+    ChildInterface<BluetoothA2dp>& getBtA2dp();
+    ChildInterface<BluetoothLe>& getBtLe();
+    BtProfileHandles getBtProfileManagerHandles();
 
     ndk::ScopedAStatus getBluetoothA2dp(std::shared_ptr<IBluetoothA2dp>* _aidl_return) override;
     ndk::ScopedAStatus getBluetoothLe(std::shared_ptr<IBluetoothLe>* _aidl_return) override;
@@ -44,11 +51,13 @@ class ModuleBluetooth final : public Module {
             const std::optional<::aidl::android::media::audio::common::AudioOffloadInfo>&
                     offloadInfo,
             std::shared_ptr<StreamOut>* result) override;
+    ndk::ScopedAStatus populateConnectedDevicePort(
+            ::aidl::android::media::audio::common::AudioPort* audioPort) override;
     ndk::ScopedAStatus onMasterMuteChanged(bool mute) override;
     ndk::ScopedAStatus onMasterVolumeChanged(float volume) override;
 
-    ChildInterface<IBluetoothA2dp> mBluetoothA2dp;
-    ChildInterface<IBluetoothLe> mBluetoothLe;
+    ChildInterface<BluetoothA2dp> mBluetoothA2dp;
+    ChildInterface<BluetoothLe> mBluetoothLe;
 };
 
 }  // namespace aidl::android::hardware::audio::core

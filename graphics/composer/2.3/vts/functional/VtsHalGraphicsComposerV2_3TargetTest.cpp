@@ -21,7 +21,6 @@
 
 #include <android-base/logging.h>
 #include <android-base/properties.h>
-#include <android/hardware/graphics/mapper/2.0/IMapper.h>
 #include <composer-command-buffer/2.3/ComposerCommandBuffer.h>
 #include <composer-vts/2.1/GraphicsComposerCallback.h>
 #include <composer-vts/2.1/TestCommandReader.h>
@@ -29,7 +28,6 @@
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/ServiceManagement.h>
-#include <mapper-vts/2.0/MapperVts.h>
 
 namespace android {
 namespace hardware {
@@ -43,7 +41,6 @@ using common::V1_1::RenderIntent;
 using common::V1_2::ColorMode;
 using common::V1_2::Dataspace;
 using common::V1_2::PixelFormat;
-using V2_2::vts::Gralloc;
 
 class GraphicsComposerHidlTest : public ::testing::TestWithParam<std::string> {
   protected:
@@ -128,8 +125,6 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
     void SetUp() override {
         ASSERT_NO_FATAL_FAILURE(GraphicsComposerHidlTest::SetUp());
 
-        ASSERT_NO_FATAL_FAILURE(mGralloc = std::make_unique<Gralloc>());
-
         mWriter = std::make_unique<CommandWriterBase>(1024);
         mReader = std::make_unique<V2_1::vts::TestCommandReader>();
     }
@@ -143,9 +138,6 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
 
     std::unique_ptr<CommandWriterBase> mWriter;
     std::unique_ptr<V2_1::vts::TestCommandReader> mReader;
-
-   private:
-    std::unique_ptr<Gralloc> mGralloc;
 };
 
 /**

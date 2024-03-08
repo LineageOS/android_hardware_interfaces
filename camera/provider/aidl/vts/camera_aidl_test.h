@@ -64,6 +64,7 @@ using ::aidl::android::hardware::camera::device::BufferRequest;
 using ::aidl::android::hardware::camera::device::BufferRequestStatus;
 using ::aidl::android::hardware::camera::device::CameraMetadata;
 using ::aidl::android::hardware::camera::device::CaptureResult;
+using ::aidl::android::hardware::camera::device::ConfigureStreamsRet;
 using ::aidl::android::hardware::camera::device::ErrorCode;
 using ::aidl::android::hardware::camera::device::HalStream;
 using ::aidl::android::hardware::camera::device::ICameraDevice;
@@ -201,6 +202,11 @@ class CameraAidlTest : public ::testing::TestWithParam<std::string> {
             int32_t* partialResultCount /*out*/, std::shared_ptr<DeviceCb>* outCb /*out*/,
             int32_t* jpegBufferSize /*out*/, bool* useHalBufManager /*out*/);
 
+    ndk::ScopedAStatus configureStreams(std::shared_ptr<ICameraDeviceSession>& session,
+                                        const StreamConfiguration& config,
+                                        bool sessionHalBufferManager, bool* useHalBufManager,
+                                        std::vector<HalStream>* halStreams);
+
     void configureStreams(
             const std::string& name, const std::shared_ptr<ICameraProvider>& provider,
             PixelFormat format, std::shared_ptr<ICameraDeviceSession>* session /*out*/,
@@ -253,11 +259,17 @@ class CameraAidlTest : public ::testing::TestWithParam<std::string> {
 
     static void verifyExtendedSceneModeCharacteristics(const camera_metadata_t* metadata);
 
+    void verifyHighSpeedRecordingCharacteristics(const std::string& cameraName,
+                                                 const CameraMetadata& chars);
+
     static void verifyZoomCharacteristics(const camera_metadata_t* metadata);
 
     static void verifyRecommendedConfigs(const CameraMetadata& chars);
 
     static void verifyMonochromeCharacteristics(const CameraMetadata& chars);
+
+    static void verifyManualFlashStrengthControlCharacteristics(
+            const camera_metadata_t* staticMeta);
 
     static void verifyMonochromeCameraResult(
             const ::android::hardware::camera::common::V1_0::helper::CameraMetadata& metadata);
@@ -267,11 +279,12 @@ class CameraAidlTest : public ::testing::TestWithParam<std::string> {
     static void verifySettingsOverrideCharacteristics(const camera_metadata_t* metadata);
 
     static void verifyStreamCombination(const std::shared_ptr<ICameraDevice>& device,
-                                        const StreamConfiguration& config, bool expectedStatus,
-                                        bool expectStreamCombQuery);
+                                        const StreamConfiguration& config, bool expectedStatus);
 
     static void verifyLogicalCameraResult(const camera_metadata_t* staticMetadata,
                                           const std::vector<uint8_t>& resultMetadata);
+
+    static void verifyLensIntrinsicsResult(const std::vector<uint8_t>& resultMetadata);
 
     static void verifyBuffersReturned(const std::shared_ptr<ICameraDeviceSession>& session,
                                       int32_t streamId, const std::shared_ptr<DeviceCb>& cb,
@@ -610,6 +623,9 @@ class CameraAidlTest : public ::testing::TestWithParam<std::string> {
 namespace {
 // device@<major>.<minor>/<type>/id
 const char* kDeviceNameRE = "device@([0-9]+\\.[0-9]+)/\\s+/(.+)";
+const std::string CAMERA_DEVICE_API_VERSION_1 = "1.1";
+const int32_t CAMERA_DEVICE_API_MINOR_VERSION_3 = 3;
+
 const int32_t kMaxVideoWidth = 4096;
 const int32_t kMaxVideoHeight = 2160;
 

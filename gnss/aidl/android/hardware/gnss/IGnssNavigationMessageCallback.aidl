@@ -100,8 +100,17 @@ interface IGnssNavigationMessageCallback {
             /** Galileo F/NAV message contained in the structure. */
             GAL_F = 0x0602,
 
-            /** IRNSS L5 C/A message contained in the structure. */
+            /**
+             * NavIC L5 C/A message contained in the structure.
+             * @deprecated Use IRN_L5 instead.
+             */
             IRN_L5CA = 0x0701,
+
+            /** NavIC L5 message contained in the structure. */
+            IRN_L5 = 0x0702,
+
+            /** NavIC L1 message contained in the structure. */
+            IRN_L1 = 0x0703,
         }
 
         /**
@@ -156,9 +165,12 @@ interface IGnssNavigationMessageCallback {
          *
          * - For Beidou CNAV1 this refers to the page type number in the range of 1-63.
          *
-         * - For IRNSS L5 C/A subframe 3 and 4, this value corresponds to the Message Id of the
+         * - For NavIC L5 subframe 3 and 4, this value corresponds to the Message Id of the
          *   navigation message, in the range of 1-63. (Subframe 1 and 2 does not contain a message
          *   type id and this value can be set to -1.)
+         * - For NavIC L1 subframe 3, this value corresponds to the Message Id of the navigation
+         *   message, in the range of 1-63. (Subframe 1 and 2 does not contain a message type id and
+         *   this value can be set to -1.)
          */
         int messageId;
 
@@ -187,8 +199,10 @@ interface IGnssNavigationMessageCallback {
          *
          * - For Beidou CNAV2, the submessage id corresponds to the message type, in the range 1-63.
          *
-         * - For IRNSS L5 C/A, the submessage id corresponds to the subframe number of the
-         *   navigation message, in the range of 1-4.
+         * - For NavIC L5, the submessage id corresponds to the subframe number of the navigation
+         *   message, in the range of 1-4.
+         * - For NavIC L1, the submessage id corresponds to the subframe number of the navigation
+         *   message, in the range of 1-3.
          */
         int submessageId;
 
@@ -196,7 +210,7 @@ interface IGnssNavigationMessageCallback {
          * The data of the reported GNSS message. The bytes (or words) are specified
          * using big endian format (MSB first).
          *
-         * - For GNSS L1 C/A, Beidou D1 & Beidou D2, each subframe contains 10 30-bit
+         * - For GNSS L1 C/A, NavIC L5, Beidou D1 & Beidou D2, each subframe contains 10 30-bit
          *   words. Each word (30 bits) must fit into the last 30 bits in a
          *   4-byte word (skip B31 and B32), with MSB first, for a total of 40
          *   bytes, covering a time period of 6, 6, and 0.6 seconds, respectively.
@@ -227,6 +241,10 @@ interface IGnssNavigationMessageCallback {
          *
          * - For Beidou CNAV2, each subframe consists of 288 data bits, that should be fit into 36
          *   bytes.
+         *
+         * - For NavIC L1, subframe #1 consists of 9 data bits that should be fit into 2 bytes (skip
+         *   B10-B16). subframe #2 consists of 600 bits that should be fit into 75 bytes. subframe
+         *   #3 consists of 274 data bits that should be fit into 35 bytes (skip B275-B280).
          *
          * The data reported here must be the raw data as demodulated by the GNSS receiver, not data
          * received from an external source (i.e. not from a server download.)

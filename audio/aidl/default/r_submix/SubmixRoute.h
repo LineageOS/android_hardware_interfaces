@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
+#pragma once
+
 #include <mutex>
 
+#include <android-base/thread_annotations.h>
 #include <audio_utils/clock.h>
 
 #include <media/nbaio/MonoPipe.h>
 #include <media/nbaio/MonoPipeReader.h>
 
 #include <aidl/android/media/audio/common/AudioChannelLayout.h>
-
-#include "core-impl/Stream.h"
+#include <aidl/android/media/audio/common/AudioFormatDescription.h>
 
 using aidl::android::media::audio::common::AudioChannelLayout;
 using aidl::android::media::audio::common::AudioFormatDescription;
@@ -36,9 +38,13 @@ using ::android::sp;
 namespace aidl::android::hardware::audio::core::r_submix {
 
 static constexpr int kDefaultSampleRateHz = 48000;
-// Size at default sample rate
-// NOTE: This value will be rounded up to the nearest power of 2 by MonoPipe().
-static constexpr int kDefaultPipeSizeInFrames = (1024 * 4);
+// Value used to divide the MonoPipe buffer into segments that are written to the source and
+// read from the sink. The maximum latency of the device is the size of the MonoPipe's buffer
+// the minimum latency is the MonoPipe buffer size divided by this value.
+static constexpr int kDefaultPipePeriodCount = 4;
+// Size at the default sample rate
+// NOTE: This value will be rounded up to the nearest power of 2 by MonoPipe.
+static constexpr int kDefaultPipeSizeInFrames = 1024 * kDefaultPipePeriodCount;
 
 // Configuration of the audio stream.
 struct AudioConfig {
@@ -76,14 +82,6 @@ class SubmixRoute {
         std::lock_guard guard(mLock);
         return mReadCounterFrames;
     }
-    int getReadErrorCount() {
-        std::lock_guard guard(mLock);
-        return mReadErrorCount;
-    }
-    std::chrono::time_point<std::chrono::steady_clock> getRecordStartTime() {
-        std::lock_guard guard(mLock);
-        return mRecordStartTime;
-    }
     sp<MonoPipe> getSink() {
         std::lock_guard guard(mLock);
         return mSink;
@@ -119,9 +117,6 @@ class SubmixRoute {
     bool mStreamOutStandby GUARDED_BY(mLock) = true;
     // how many frames have been requested to be read since standby
     long mReadCounterFrames GUARDED_BY(mLock) = 0;
-    int mReadErrorCount GUARDED_BY(mLock) = 0;
-    // wall clock when recording starts
-    std::chrono::time_point<std::chrono::steady_clock> mRecordStartTime GUARDED_BY(mLock);
 
     // Pipe variables: they handle the ring buffer that "pipes" audio:
     //  - from the submix virtual audio output == what needs to be played

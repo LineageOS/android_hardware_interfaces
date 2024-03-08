@@ -16,9 +16,9 @@
 
 #define LOG_TAG "AHAL_Telephony"
 #include <android-base/logging.h>
+#include <android/binder_to_string.h>
 
 #include <Utils.h>
-#include <android/binder_to_string.h>
 
 #include "core-impl/Telephony.h"
 

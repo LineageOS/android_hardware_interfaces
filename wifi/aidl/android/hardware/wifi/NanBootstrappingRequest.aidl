@@ -45,4 +45,16 @@ parcelable NanBootstrappingRequest {
      * Cookie received from previous |NanBootstrappingConfirmInd| for comeback request.
      */
     byte[] cookie;
+
+    /**
+     * Identify if it is a request for come back response
+     */
+    boolean isComeback;
+
+    /**
+     * ID of an active publish or subscribe discovery session. Follow-up message is transmitted in
+     * the context of the discovery session. NAN Spec: Service Descriptor Attribute (SDA) / Instance
+     * ID
+     */
+    byte discoverySessionId;
 }

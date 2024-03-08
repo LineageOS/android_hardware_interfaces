@@ -18,6 +18,7 @@
 
 #include <android-base/thread_annotations.h>
 #include <gtest/gtest.h>
+#include <condition_variable>
 
 #include <chrono>
 #include <memory>
@@ -28,6 +29,8 @@ namespace hardware {
 namespace automotive {
 namespace vehicle {
 
+using ::android::base::ScopedLockAssertion;
+
 class RecurrentTimerTest : public testing::Test {
   public:
     std::shared_ptr<RecurrentTimer::Callback> getCallback(size_t token) {
@@ -35,6 +38,15 @@ class RecurrentTimerTest : public testing::Test {
             std::scoped_lock<std::mutex> lockGuard(mLock);
 
             mCallbacks.push_back(token);
+            mCond.notify_all();
+        });
+    }
+
+    bool waitForCalledCallbacks(size_t count, size_t timeoutInMs) {
+        std::unique_lock<std::mutex> uniqueLock(mLock);
+        return mCond.wait_for(uniqueLock, std::chrono::milliseconds(timeoutInMs), [this, count] {
+            ScopedLockAssertion lockAssertion(mLock);
+            return mCallbacks.size() >= count;
         });
     }
 
@@ -48,12 +60,18 @@ class RecurrentTimerTest : public testing::Test {
         mCallbacks.clear();
     }
 
-    size_t countTimerCallbackQueue(RecurrentTimer* timer) {
+    size_t countCallbackInfoById(RecurrentTimer* timer) {
         std::scoped_lock<std::mutex> lockGuard(timer->mLock);
-        return timer->mCallbackQueue.size();
+        return timer->mCallbackInfoById.size();
+    }
+
+    size_t countIdByCallback(RecurrentTimer* timer) {
+        std::scoped_lock<std::mutex> lockGuard(timer->mLock);
+        return timer->mIdByCallback.size();
     }
 
   private:
+    std::condition_variable mCond;
     std::mutex mLock;
     std::vector<size_t> mCallbacks GUARDED_BY(mLock);
 };
@@ -66,12 +84,11 @@ TEST_F(RecurrentTimerTest, testRegisterCallback) {
     auto action = getCallback(0);
     timer.registerTimerCallback(interval, action);
 
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    // Should only takes 1s, use 5s as timeout to be safe.
+    ASSERT_TRUE(waitForCalledCallbacks(/* count= */ 10u, /* timeoutInMs= */ 5000))
+            << "Not enough callbacks called before timeout";
 
     timer.unregisterTimerCallback(action);
-
-    // Theoretically trigger 10 times, but check for at least 9 times to be stable.
-    ASSERT_GE(getCalledCallbacks().size(), static_cast<size_t>(9));
 }
 
 TEST_F(RecurrentTimerTest, testRegisterUnregisterRegister) {
@@ -92,10 +109,14 @@ TEST_F(RecurrentTimerTest, testRegisterUnregisterRegister) {
 
     timer.registerTimerCallback(interval, action);
 
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    // Should only takes 1s, use 5s as timeout to be safe.
+    ASSERT_TRUE(waitForCalledCallbacks(/* count= */ 10u, /* timeoutInMs= */ 5000))
+            << "Not enough callbacks called before timeout";
 
-    // Theoretically trigger 10 times, but check for at least 9 times to be stable.
-    ASSERT_GE(getCalledCallbacks().size(), static_cast<size_t>(9));
+    timer.unregisterTimerCallback(action);
+
+    ASSERT_EQ(countCallbackInfoById(&timer), 0u);
+    ASSERT_EQ(countIdByCallback(&timer), 0u);
 }
 
 TEST_F(RecurrentTimerTest, testDestroyTimerWithCallback) {
@@ -114,7 +135,9 @@ TEST_F(RecurrentTimerTest, testDestroyTimerWithCallback) {
 
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
-    ASSERT_TRUE(getCalledCallbacks().empty());
+    // Should be 0, but in rare cases there might be 1 events in the queue while the timer is
+    // being destroyed.
+    ASSERT_LE(getCalledCallbacks().size(), 1u);
 }
 
 TEST_F(RecurrentTimerTest, testRegisterMultipleCallbacks) {
@@ -132,7 +155,11 @@ TEST_F(RecurrentTimerTest, testRegisterMultipleCallbacks) {
     auto action3 = getCallback(3);
     timer.registerTimerCallback(interval3, action3);
 
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    // In 1s, we should generate 10 + 20 + 33 = 63 events.
+    // Here we are waiting for more events to make sure we receive enough events for each actions.
+    // Use 5s as timeout to be safe.
+    ASSERT_TRUE(waitForCalledCallbacks(/* count= */ 70u, /* timeoutInMs= */ 5000))
+            << "Not enough callbacks called before timeout";
 
     timer.unregisterTimerCallback(action1);
     timer.unregisterTimerCallback(action2);
@@ -152,20 +179,18 @@ TEST_F(RecurrentTimerTest, testRegisterMultipleCallbacks) {
             action3Count++;
         }
     }
-    // Theoretically trigger 10 times, but check for at least 9 times to be stable.
-    ASSERT_GE(action1Count, static_cast<size_t>(9));
-    // Theoretically trigger 20 times, but check for at least 15 times to be stable.
-    ASSERT_GE(action2Count, static_cast<size_t>(15));
-    // Theoretically trigger 33 times, but check for at least 25 times to be stable.
-    ASSERT_GE(action3Count, static_cast<size_t>(25));
+
+    ASSERT_GE(action1Count, static_cast<size_t>(10));
+    ASSERT_GE(action2Count, static_cast<size_t>(20));
+    ASSERT_GE(action3Count, static_cast<size_t>(33));
 }
 
 TEST_F(RecurrentTimerTest, testRegisterSameCallbackMultipleTimes) {
     RecurrentTimer timer;
-    // 0.02s
-    int64_t interval1 = 20000000;
-    // 0.01s
-    int64_t interval2 = 10000000;
+    // 0.2s
+    int64_t interval1 = 200'000'000;
+    // 0.1s
+    int64_t interval2 = 100'000'000;
 
     auto action = getCallback(0);
     for (int i = 0; i < 10; i++) {
@@ -175,15 +200,14 @@ TEST_F(RecurrentTimerTest, testRegisterSameCallbackMultipleTimes) {
 
     clearCalledCallbacks();
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-    // Theoretically trigger 10 times, but check for at least 9 times to be stable.
-    ASSERT_GE(getCalledCallbacks().size(), static_cast<size_t>(9));
+    // Should only takes 1s, use 5s as timeout to be safe.
+    ASSERT_TRUE(waitForCalledCallbacks(/* count= */ 10u, /* timeoutInMs= */ 5000))
+            << "Not enough callbacks called before timeout";
 
     timer.unregisterTimerCallback(action);
 
-    // Make sure there is no item in the callback queue.
-    ASSERT_EQ(countTimerCallbackQueue(&timer), static_cast<size_t>(0));
+    ASSERT_EQ(countCallbackInfoById(&timer), 0u);
+    ASSERT_EQ(countIdByCallback(&timer), 0u);
 }
 
 TEST_F(RecurrentTimerTest, testRegisterCallbackMultipleTimesNoDeadLock) {

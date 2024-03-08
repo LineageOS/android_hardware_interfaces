@@ -106,15 +106,15 @@ class IMapperProvider {
     static_assert(std::is_constructible_v<IMPL>, "Implementation must have a no-args constructor");
 
     std::once_flag mLoadOnceFlag;
-    std::optional<IMPL> mImpl;
-    AIMapper mMapper = {};
+    IMPL* _Nullable mImpl;
+    AIMapper* _Nullable mMapper;
 
     static IMPL& impl() {
         return *reinterpret_cast<IMapperProvider<IMPL>*>(provider::sIMapperInstance)->mImpl;
     }
 
     void bindV5() {
-        mMapper.v5 = {
+        mMapper->v5 = {
                 .importBuffer = [](const native_handle_t* _Nonnull handle,
                                    buffer_handle_t _Nullable* _Nonnull outBufferHandle)
                         -> AIMapper_Error { return impl().importBuffer(handle, outBufferHandle); },
@@ -208,13 +208,14 @@ class IMapperProvider {
             LOG_ALWAYS_FATAL_IF(provider::sIMapperInstance != nullptr,
                                 "AIMapper implementation already loaded!");
             provider::sIMapperInstance = this;
-            mImpl.emplace();
-            mMapper.version = IMPL::version;
+            mImpl = new IMPL();
+            mMapper = new AIMapper();
+            mMapper->version = IMPL::version;
             if (IMPL::version >= AIMAPPER_VERSION_5) {
                 bindV5();
             }
         });
-        *outImplementation = &mMapper;
+        *outImplementation = mMapper;
         return AIMAPPER_ERROR_NONE;
     }
 };

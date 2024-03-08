@@ -38,5 +38,5 @@ enum AptxAdaptiveChannelMode {
   MONO = 1,
   DUAL_MONO = 2,
   TWS_STEREO = 4,
-  UNKNOWN = 255,
+  UNKNOWN = 0xFF,
 }

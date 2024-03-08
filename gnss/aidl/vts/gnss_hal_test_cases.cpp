@@ -1430,13 +1430,13 @@ TEST_P(GnssHalTest, TestGnssMeasurementIntervals_WithoutLocation) {
         startMeasurementWithInterval(intervals[i], iGnssMeasurement, callback);
 
         std::vector<int> measurementDeltas;
-        std::vector<int> svInfoListTimestampsDeltas;
+        std::vector<int> svInfoListDeltas;
 
         collectMeasurementIntervals(callback, numEvents[i], /* timeoutSeconds= */ 10,
                                     measurementDeltas);
         if (aidl_gnss_hal_->getInterfaceVersion() >= 3) {
-            collectSvInfoListTimestamps(numEvents[i], /* timeoutSeconds= */ 10,
-                                        svInfoListTimestampsDeltas);
+            collectSvInfoListTimestamps(numEvents[i], /* timeoutSeconds= */ 10, svInfoListDeltas);
+            EXPECT_TRUE(aidl_gnss_cb_->sv_info_list_cbq_.size() > 0);
         }
         status = iGnssMeasurement->close();
         ASSERT_TRUE(status.isOk());
@@ -1444,8 +1444,7 @@ TEST_P(GnssHalTest, TestGnssMeasurementIntervals_WithoutLocation) {
         assertMeanAndStdev(intervals[i], measurementDeltas);
 
         if (aidl_gnss_hal_->getInterfaceVersion() >= 3) {
-            assertMeanAndStdev(intervals[i], svInfoListTimestampsDeltas);
-            EXPECT_TRUE(aidl_gnss_cb_->sv_info_list_cbq_.size() > 0);
+            assertMeanAndStdev(intervals[i], svInfoListDeltas);
         }
     }
 }
@@ -1477,13 +1476,25 @@ TEST_P(GnssHalTest, TestGnssMeasurementIntervals_LocationOnBeforeMeasurement) {
         auto callback = sp<GnssMeasurementCallbackAidl>::make();
         startMeasurementWithInterval(intervalMs, iGnssMeasurement, callback);
 
-        std::vector<int> deltas;
-        collectMeasurementIntervals(callback, /*numEvents=*/10, /*timeoutSeconds=*/10, deltas);
+        std::vector<int> measurementDeltas;
+        std::vector<int> svInfoListDeltas;
+
+        collectMeasurementIntervals(callback, /*numEvents=*/10, /*timeoutSeconds=*/10,
+                                    measurementDeltas);
+        if (aidl_gnss_hal_->getInterfaceVersion() >= 3) {
+            collectSvInfoListTimestamps(/*numEvents=*/10, /* timeoutSeconds= */ 10,
+                                        svInfoListDeltas);
+            EXPECT_TRUE(aidl_gnss_cb_->sv_info_list_cbq_.size() > 0);
+        }
 
         status = iGnssMeasurement->close();
         ASSERT_TRUE(status.isOk());
 
-        assertMeanAndStdev(locationIntervalMs, deltas);
+        assertMeanAndStdev(locationIntervalMs, measurementDeltas);
+        if (aidl_gnss_hal_->getInterfaceVersion() >= 3) {
+            // Verify the SvStatus interval is 1s (not 2s)
+            assertMeanAndStdev(locationIntervalMs, svInfoListDeltas);
+        }
     }
     StopAndClearLocations();
 }
@@ -1516,16 +1527,37 @@ TEST_P(GnssHalTest, TestGnssMeasurementIntervals_LocationOnAfterMeasurement) {
 
         // Start location and verify the measurements are received at 1Hz
         StartAndCheckFirstLocation(locationIntervalMs, /* lowPowerMode= */ false);
-        std::vector<int> deltas;
-        collectMeasurementIntervals(callback, /*numEvents=*/10, kFirstMeasTimeoutSec, deltas);
-        assertMeanAndStdev(locationIntervalMs, deltas);
+        std::vector<int> measurementDeltas;
+        std::vector<int> svInfoListDeltas;
+        collectMeasurementIntervals(callback, /*numEvents=*/10, kFirstMeasTimeoutSec,
+                                    measurementDeltas);
+        assertMeanAndStdev(locationIntervalMs, measurementDeltas);
+        if (aidl_gnss_hal_->getInterfaceVersion() >= 3) {
+            collectSvInfoListTimestamps(/*numEvents=*/10, /* timeoutSeconds= */ 10,
+                                        svInfoListDeltas);
+            EXPECT_TRUE(aidl_gnss_cb_->sv_info_list_cbq_.size() > 0);
+            // Verify the SvStatus intervals are at 1s interval
+            assertMeanAndStdev(locationIntervalMs, svInfoListDeltas);
+        }
 
         // Stop location request and verify the measurements are received at 2s intervals
         StopAndClearLocations();
-        callback->gnss_data_cbq_.reset();
-        deltas.clear();
-        collectMeasurementIntervals(callback, /*numEvents=*/5, kFirstMeasTimeoutSec, deltas);
-        assertMeanAndStdev(intervalMs, deltas);
+        measurementDeltas.clear();
+        collectMeasurementIntervals(callback, /*numEvents=*/5, kFirstMeasTimeoutSec,
+                                    measurementDeltas);
+        assertMeanAndStdev(intervalMs, measurementDeltas);
+
+        if (aidl_gnss_hal_->getInterfaceVersion() >= 3) {
+            svInfoListDeltas.clear();
+            collectSvInfoListTimestamps(/*numEvents=*/5, /* timeoutSeconds= */ 10,
+                                        svInfoListDeltas);
+            EXPECT_TRUE(aidl_gnss_cb_->sv_info_list_cbq_.size() > 0);
+            // Verify the SvStatus intervals are at 2s interval
+            for (const int& delta : svInfoListDeltas) {
+                ALOGD("svInfoListDelta: %d", delta);
+            }
+            assertMeanAndStdev(intervalMs, svInfoListDeltas);
+        }
 
         status = iGnssMeasurement->close();
         ASSERT_TRUE(status.isOk());
@@ -1587,8 +1619,7 @@ TEST_P(GnssHalTest, TestGnssMeasurementIntervals_changeIntervals) {
  * TestGnssMeasurementIsFullTracking
  * 1. Start measurement with enableFullTracking=true. Verify the received measurements have
  *    isFullTracking=true.
- * 2. Start measurement with enableFullTracking = false. Verify the received measurements have
- *    isFullTracking=false.
+ * 2. Start measurement with enableFullTracking = false.
  * 3. Do step 1 again.
  */
 TEST_P(GnssHalTest, TestGnssMeasurementIsFullTracking) {
@@ -1675,4 +1706,59 @@ TEST_P(GnssHalTest, TestAccumulatedDeltaRange) {
     ASSERT_TRUE(accumulatedDeltaRangeFound);
     status = iGnssMeasurement->close();
     ASSERT_TRUE(status.isOk());
+}
+
+/*
+ * TestSvStatusIntervals:
+ * 1. start measurement and location with various intervals
+ * 2. verify the SvStatus are received at expected interval
+ */
+TEST_P(GnssHalTest, TestSvStatusIntervals) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 2) {
+        return;
+    }
+    ALOGD("TestSvStatusIntervals");
+    sp<IGnssMeasurementInterface> iGnssMeasurement;
+    auto status = aidl_gnss_hal_->getExtensionGnssMeasurement(&iGnssMeasurement);
+    ASSERT_TRUE(status.isOk());
+    ASSERT_TRUE(iGnssMeasurement != nullptr);
+
+    std::vector<int> locationIntervals{1000, 2000, INT_MAX};
+    std::vector<int> measurementIntervals{1000, 2000, INT_MAX};
+
+    for (auto& locationIntervalMs : locationIntervals) {
+        for (auto& measurementIntervalMs : measurementIntervals) {
+            if (locationIntervalMs == INT_MAX && measurementIntervalMs == INT_MAX) {
+                continue;
+            }
+            auto measurementCallback = sp<GnssMeasurementCallbackAidl>::make();
+            // Start measurement
+            if (measurementIntervalMs < INT_MAX) {
+                startMeasurementWithInterval(measurementIntervalMs, iGnssMeasurement,
+                                             measurementCallback);
+            }
+            // Start location
+            if (locationIntervalMs < INT_MAX) {
+                StartAndCheckFirstLocation(locationIntervalMs, /* lowPowerMode= */ false);
+            }
+            ALOGD("location@%d(ms), measurement@%d(ms)", locationIntervalMs, measurementIntervalMs);
+            std::vector<int> svInfoListDeltas;
+            collectSvInfoListTimestamps(/*numEvents=*/5, /* timeoutSeconds= */ 10,
+                                        svInfoListDeltas);
+            EXPECT_TRUE(aidl_gnss_cb_->sv_info_list_cbq_.size() > 0);
+
+            int svStatusInterval = std::min(locationIntervalMs, measurementIntervalMs);
+            assertMeanAndStdev(svStatusInterval, svInfoListDeltas);
+
+            if (locationIntervalMs < INT_MAX) {
+                // Stop location request
+                StopAndClearLocations();
+            }
+            if (measurementIntervalMs < INT_MAX) {
+                // Stop measurement request
+                status = iGnssMeasurement->close();
+                ASSERT_TRUE(status.isOk());
+            }
+        }
+    }
 }

@@ -37,4 +37,13 @@ enum UwbVendorGidAndroidOids {
     // Supported only if the UwbVendorCapabilityTlvTypes.SUPPORTED_DIAGNOSTICS set
     // to 1.
     ANDROID_RANGE_DIAGNOSTICS = 0x2,
+
+    /*********************************************
+     * Range 0x10 - 0x1F reserved for RADAR specific
+     * Supported only if the UwbVendorCapabilityTlvTypes.RADAR_SUPPORT is not 0x00.
+     ********************************************/
+    // Used to set application configurations for radar session.
+    RADAR_SET_APP_CONFIG = 0x11,
+    // Used to get application configurations for radar session.
+    RADAR_GET_APP_CONFIG = 0x12,
 }

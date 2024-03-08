@@ -23,6 +23,7 @@ package {
 
 cc_binary {
     name: "android.hardware.power-service.example",
+    defaults: ["android.hardware.power-ndk_shared"],
     relative_install_path: "hw",
     init_rc: [":android.hardware.power.rc"],
     vintf_fragments: [":android.hardware.power.xml"],
@@ -30,7 +31,6 @@ cc_binary {
     shared_libs: [
         "libbase",
         "libbinder_ndk",
-        "android.hardware.power-V4-ndk",
     ],
     srcs: [
         "main.cpp",
@@ -39,9 +39,11 @@ cc_binary {
     ],
 }
 
-filegroup {
+prebuilt_etc {
     name: "android.hardware.power.xml",
-    srcs: ["power-default.xml"],
+    src: "power-default.xml",
+    sub_dir: "vintf",
+    installable: false,
 }
 
 filegroup {

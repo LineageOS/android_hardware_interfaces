@@ -35,6 +35,12 @@ byte LCI[] = {0x27, 0x1A, 0x1,  0x00, 0x8,  0x01, 0x00, 0x08, 0x00, 0x10, 0x52,
               0x2c, 0x00, 0x00, 0x41, 0x06, 0x03, 0x06, 0x00, 0x80};
 byte LCR[] = {0x27, 0xE,  0x1,  0x00, 0xB,  0x01, 0x00, 0x0b, 0x00, 0x09,
               0x55, 0x53, 0x18, 0x05, 0x39, 0x34, 0x30, 0x34, 0x33};
+
+constexpr int kNumScanResult = 2;
+constexpr int kRssi[] = {-60, -70};
+constexpr uint8_t kBssid[] = {0x12, 0x34, 0x56, 0x78, 0x9a, 0};
+constexpr uint8_t kSsidLen = 6;
+constexpr char kSsid[] = {'a', 'b', 'c', 'd', 'e', '\0'};
 }  // namespace
 
 namespace aidl {
@@ -880,6 +886,51 @@ TEST_F(AidlStructUtilTest, convertLegacyVectorOfRttResultV2ToAidl) {
         verifyRttResult(&rttResults_v2[i].rtt_result, &aidl_results[i]);
         EXPECT_EQ(aidl_results[i].channelFreqMHz, rttResults_v2[i].frequency);
         EXPECT_EQ(aidl_results[i].packetBw, RttBw::BW_80MHZ);
+    }
+}
+
+TEST_F(AidlStructUtilTest, convertCachedScanReportToAidl) {
+    legacy_hal::WifiCachedScanReport hw_report;
+
+    hw_report.ts = 10000000;
+    std::vector<int> scanned_freqs{5260, 2437, 5200};
+    std::vector<wifi_cached_scan_result> results;
+    hw_report.scanned_freqs = scanned_freqs;
+
+    for (int i = 0; i < kNumScanResult; i++) {
+        wifi_cached_scan_result result;
+        result.age_ms = i * 1000;
+        result.capability = i;
+        memcpy(result.ssid, kSsid, kSsidLen);
+        result.ssid_len = kSsidLen;
+        memcpy(result.bssid, kBssid, 6);
+        result.flags = WIFI_CACHED_SCAN_RESULT_FLAGS_HE_OPS_PRESENT;
+        result.rssi = kRssi[i];
+        result.chanspec = {legacy_hal::WIFI_CHAN_WIDTH_40, 0, 0, i};
+        results.push_back(result);
+    }
+    hw_report.results = results;
+
+    CachedScanData aidl_data;
+    aidl_struct_util::convertCachedScanReportToAidl(hw_report, &aidl_data);
+
+    EXPECT_EQ(scanned_freqs.size(), aidl_data.scannedFrequenciesMhz.size());
+    EXPECT_EQ(scanned_freqs[2], aidl_data.scannedFrequenciesMhz[2]);
+    EXPECT_EQ(5260, aidl_data.scannedFrequenciesMhz[0]);
+    EXPECT_EQ(kNumScanResult, (int)aidl_data.cachedScanResults.size());
+    for (int i = 0; i < kNumScanResult; i++) {
+        EXPECT_EQ(hw_report.results[i].rssi, aidl_data.cachedScanResults[i].rssiDbm);
+        EXPECT_EQ(i, aidl_data.cachedScanResults[i].frequencyMhz);
+        int64_t expected_ts = 10000000 - i * 1000 * 1000;
+        EXPECT_EQ(expected_ts, aidl_data.cachedScanResults[i].timeStampInUs);
+        EXPECT_EQ(WifiRatePreamble::HE, aidl_data.cachedScanResults[i].preambleType);
+        EXPECT_EQ(WifiChannelWidthInMhz::WIDTH_40, aidl_data.cachedScanResults[i].channelWidthMhz);
+        for (int k = 0; k < 6; k++) {
+            EXPECT_EQ(kBssid[k], aidl_data.cachedScanResults[i].bssid[k]);
+        }
+        for (int k = 0; k < kSsidLen; k++) {
+            EXPECT_EQ(kSsid[k], aidl_data.cachedScanResults[i].ssid[k]);
+        }
     }
 }
 

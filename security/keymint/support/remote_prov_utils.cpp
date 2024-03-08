@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <iomanip>
 #include <iterator>
 #include <memory>
 #include <set>
@@ -336,9 +337,9 @@ ErrMsgOr<std::vector<BccEntryData>> validateBcc(const cppbor::Array* bcc,
     return result;
 }
 
-JsonOutput jsonEncodeCsrWithBuild(const std::string instance_name, const cppbor::Array& csr) {
+JsonOutput jsonEncodeCsrWithBuild(const std::string& instance_name, const cppbor::Array& csr,
+                                  const std::string& serialno_prop) {
     const std::string kFingerprintProp = "ro.build.fingerprint";
-    const std::string kSerialNoProp = "ro.serialno";
 
     if (!::android::base::WaitForPropertyCreation(kFingerprintProp)) {
         return JsonOutput::Error("Unable to read build fingerprint");
@@ -363,7 +364,7 @@ JsonOutput jsonEncodeCsrWithBuild(const std::string instance_name, const cppbor:
     Json::Value json(Json::objectValue);
     json["name"] = instance_name;
     json["build_fingerprint"] = ::android::base::GetProperty(kFingerprintProp, /*default=*/"");
-    json["serialno"] = ::android::base::GetProperty(kSerialNoProp, /*default=*/"");
+    json["serialno"] = ::android::base::GetProperty(serialno_prop, /*default=*/"");
     json["csr"] = base64.data();  // Boring writes a NUL-terminated c-string
 
     Json::StreamWriterBuilder factory;
@@ -418,6 +419,36 @@ std::string checkMapEntry(bool isFactory, const cppbor::Map& devInfo, cppbor::Ma
         }
     }
     return entryName + " has an invalid value.\n";
+}
+
+std::string checkMapPatchLevelEntry(bool isFactory, const cppbor::Map& devInfo,
+                                    const std::string& entryName) {
+    std::string error = checkMapEntry(isFactory, devInfo, cppbor::UINT, entryName);
+    if (!error.empty()) {
+        return error;
+    }
+
+    if (isFactory) {
+        return "";
+    }
+
+    const std::unique_ptr<cppbor::Item>& val = devInfo.get(entryName);
+    std::string dateString = std::to_string(val->asUint()->unsignedValue());
+    if (dateString.size() == 6) {
+        dateString += "01";
+    }
+    if (dateString.size() != 8) {
+        return entryName + " should in the format YYYYMMDD or YYYYMM\n";
+    }
+
+    std::tm t;
+    std::istringstream ss(dateString);
+    ss >> std::get_time(&t, "%Y%m%d");
+    if (!ss) {
+        return entryName + " should in the format YYYYMMDD or YYYYMM\n";
+    }
+
+    return "";
 }
 
 bool isTeeDeviceInfo(const cppbor::Map& devInfo) {
@@ -489,6 +520,15 @@ ErrMsgOr<std::unique_ptr<cppbor::Map>> parseAndValidateDeviceInfo(
                    std::to_string(info.versionNumber) + ").";
         }
     }
+    // Bypasses the device info validation since the device info in AVF is currently
+    // empty. Check b/299256925 for more information.
+    //
+    // TODO(b/300911665): This check is temporary and will be replaced once the markers
+    // on the DICE chain become available. We need to determine if the CSR is from the
+    // RKP VM using the markers on the DICE chain.
+    if (info.uniqueId == "AVF Remote Provisioning 1") {
+        return std::move(parsed);
+    }
 
     std::string error;
     std::string tmp;
@@ -520,6 +560,10 @@ ErrMsgOr<std::unique_ptr<cppbor::Map>> parseAndValidateDeviceInfo(
                     error += "Err: Unrecognized key entry: <" + key->asTstr()->value() + ">,\n";
                 }
             }
+            // Checks that only apply to v3.
+            error += checkMapPatchLevelEntry(isFactory, *parsed, "system_patch_level");
+            error += checkMapPatchLevelEntry(isFactory, *parsed, "boot_patch_level");
+            error += checkMapPatchLevelEntry(isFactory, *parsed, "vendor_patch_level");
             FALLTHROUGH_INTENDED;
         case 2:
             for (const auto& entry : kAttestationIdEntrySet) {
@@ -927,6 +971,20 @@ ErrMsgOr<bytevec> parseAndValidateAuthenticatedRequestSignedPayload(
     return signedRequest->value();
 }
 
+ErrMsgOr<hwtrust::DiceChain::Kind> getDiceChainKind() {
+    int vendor_api_level = ::android::base::GetIntProperty("ro.vendor.api_level", -1);
+    switch (vendor_api_level) {
+        case __ANDROID_API_T__:
+            return hwtrust::DiceChain::Kind::kVsr13;
+        case __ANDROID_API_U__:
+            return hwtrust::DiceChain::Kind::kVsr14;
+        case 202404: /* TODO(b/315056516) Use a version macro for vendor API 24Q2 */
+            return hwtrust::DiceChain::Kind::kVsr15;
+        default:
+            return "Unsupported vendor API level: " + std::to_string(vendor_api_level);
+    }
+}
+
 ErrMsgOr<bytevec> parseAndValidateAuthenticatedRequest(const std::vector<uint8_t>& request,
                                                        const std::vector<uint8_t>& challenge) {
     auto [parsedRequest, _, csrErrMsg] = cppbor::parse(request);
@@ -961,7 +1019,12 @@ ErrMsgOr<bytevec> parseAndValidateAuthenticatedRequest(const std::vector<uint8_t
     }
 
     // DICE chain is [ pubkey, + DiceChainEntry ].
-    auto diceContents = validateBcc(diceCertChain, hwtrust::DiceChain::Kind::kVsr14);
+    auto diceChainKind = getDiceChainKind();
+    if (!diceChainKind) {
+        return diceChainKind.message();
+    }
+
+    auto diceContents = validateBcc(diceCertChain, *diceChainKind);
     if (!diceContents) {
         return diceContents.message() + "\n" + prettyPrint(diceCertChain);
     }

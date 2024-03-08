@@ -15,11 +15,10 @@
  */
 
 #define LOG_TAG "android.hardware.tv.hdmi.connection"
+#include "HdmiConnectionMock.h"
 #include <android-base/logging.h>
 #include <fcntl.h>
 #include <utils/Log.h>
-
-#include "HdmiConnectionMock.h"
 
 using ndk::ScopedAStatus;
 
@@ -34,6 +33,7 @@ void HdmiConnectionMock::serviceDied(void* cookie) {
     ALOGE("HdmiConnectionMock died");
     auto hdmi = static_cast<HdmiConnectionMock*>(cookie);
     hdmi->mHdmiThreadRun = false;
+    pthread_join(hdmi->mThreadId, NULL);
 }
 
 ScopedAStatus HdmiConnectionMock::getPortInfo(std::vector<HdmiPortInfo>* _aidl_return) {
@@ -55,12 +55,15 @@ ScopedAStatus HdmiConnectionMock::isConnected(int32_t portId, bool* _aidl_return
 ScopedAStatus HdmiConnectionMock::setCallback(
         const std::shared_ptr<IHdmiConnectionCallback>& callback) {
     if (mCallback != nullptr) {
+        stopThread();
         mCallback = nullptr;
     }
-
     if (callback != nullptr) {
         mCallback = callback;
-        AIBinder_linkToDeath(this->asBinder().get(), mDeathRecipient.get(), 0 /* cookie */);
+        mDeathRecipient =
+                ndk::ScopedAIBinder_DeathRecipient(AIBinder_DeathRecipient_new(serviceDied));
+
+        AIBinder_linkToDeath(callback->asBinder().get(), mDeathRecipient.get(), this /* cookie */);
 
         mInputFile = open(HDMI_MSG_IN_FIFO, O_RDWR | O_CLOEXEC);
         pthread_create(&mThreadId, NULL, __threadLoop, this);
@@ -153,7 +156,7 @@ void HdmiConnectionMock::threadLoop() {
     int r = -1;
 
     // Open the input pipe
-    while (mInputFile < 0) {
+    while (mHdmiThreadRun && mInputFile < 0) {
         usleep(1000 * 1000);
         mInputFile = open(HDMI_MSG_IN_FIFO, O_RDONLY | O_CLOEXEC);
     }
@@ -193,7 +196,21 @@ HdmiConnectionMock::HdmiConnectionMock() {
                      .physicalAddress = mPhysicalAddress};
     mPortConnectionStatus[0] = false;
     mHpdSignal[0] = HpdSignal::HDMI_HPD_PHYSICAL;
-    mDeathRecipient = ndk::ScopedAIBinder_DeathRecipient(AIBinder_DeathRecipient_new(serviceDied));
+    mDeathRecipient = ndk::ScopedAIBinder_DeathRecipient(nullptr);
+}
+
+void HdmiConnectionMock::stopThread() {
+    if (mCallback != nullptr) {
+        ALOGE("[halimp_aidl] HdmiConnectionMock shutting down.");
+        mCallback = nullptr;
+        mDeathRecipient = ndk::ScopedAIBinder_DeathRecipient(nullptr);
+        mHdmiThreadRun = false;
+        pthread_join(mThreadId, NULL);
+    }
+}
+
+HdmiConnectionMock::~HdmiConnectionMock() {
+    stopThread();
 }
 
 }  // namespace implementation

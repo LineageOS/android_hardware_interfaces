@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.data;
+/* @hide */
 @JavaDerive(toString=true) @VintfStability
 parcelable DataProfileInfo {
   int profileId;
@@ -54,6 +55,7 @@ parcelable DataProfileInfo {
   boolean persistent;
   boolean alwaysOn;
   android.hardware.radio.data.TrafficDescriptor trafficDescriptor;
+  int infrastructureBitmap = INFRASTRUCTURE_UNKNOWN /* 0 */;
   const int ID_DEFAULT = 0;
   const int ID_TETHERED = 1;
   const int ID_IMS = 2;
@@ -64,4 +66,7 @@ parcelable DataProfileInfo {
   const int TYPE_COMMON = 0;
   const int TYPE_3GPP = 1;
   const int TYPE_3GPP2 = 2;
+  const int INFRASTRUCTURE_UNKNOWN = 0;
+  const int INFRASTRUCTURE_CELLULAR = (1 << 0) /* 1 */;
+  const int INFRASTRUCTURE_SATELLITE = (1 << 1) /* 2 */;
 }

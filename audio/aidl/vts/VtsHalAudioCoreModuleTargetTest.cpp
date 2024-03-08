@@ -46,6 +46,7 @@
 #include <aidl/android/media/audio/common/AudioOutputFlags.h>
 #include <android-base/chrono_utils.h>
 #include <android/binder_enums.h>
+#include <error/expected_utils.h>
 #include <fmq/AidlMessageQueue.h>
 
 #include "AudioHalBinderServiceUtil.h"
@@ -86,6 +87,7 @@ using aidl::android::media::audio::common::AudioDualMonoMode;
 using aidl::android::media::audio::common::AudioFormatType;
 using aidl::android::media::audio::common::AudioIoFlags;
 using aidl::android::media::audio::common::AudioLatencyMode;
+using aidl::android::media::audio::common::AudioMMapPolicy;
 using aidl::android::media::audio::common::AudioMMapPolicyInfo;
 using aidl::android::media::audio::common::AudioMMapPolicyType;
 using aidl::android::media::audio::common::AudioMode;
@@ -106,12 +108,26 @@ using aidl::android::media::audio::common::MicrophoneInfo;
 using aidl::android::media::audio::common::Void;
 using android::hardware::audio::common::StreamLogic;
 using android::hardware::audio::common::StreamWorker;
+using android::hardware::audio::common::testing::detail::TestExecutionTracer;
 using ndk::enum_range;
 using ndk::ScopedAStatus;
 
 template <typename T>
-auto findById(std::vector<T>& v, int32_t id) {
+std::set<int32_t> extractIds(const std::vector<T>& v) {
+    std::set<int32_t> ids;
+    std::transform(v.begin(), v.end(), std::inserter(ids, ids.begin()),
+                   [](const auto& entity) { return entity.id; });
+    return ids;
+}
+
+template <typename T>
+auto findById(const std::vector<T>& v, int32_t id) {
     return std::find_if(v.begin(), v.end(), [&](const auto& e) { return e.id == id; });
+}
+
+template <typename T>
+auto findAny(const std::vector<T>& v, const std::set<int32_t>& ids) {
+    return std::find_if(v.begin(), v.end(), [&](const auto& e) { return ids.count(e.id) > 0; });
 }
 
 template <typename C>
@@ -152,8 +168,10 @@ AudioPort GenerateUniqueDeviceAddress(const AudioPort& port) {
     static int nextId = 0;
     using Tag = AudioDeviceAddress::Tag;
     const auto& deviceDescription = port.ext.get<AudioPortExt::Tag::device>().device.type;
-    AudioDeviceAddress address;
-    if (kPointToPointConnections.count(deviceDescription.connection) == 0) {
+    AudioDeviceAddress address = port.ext.get<AudioPortExt::Tag::device>().device.address;
+    // If the address is already set, do not re-generate.
+    if (address == AudioDeviceAddress() &&
+        kPointToPointConnections.count(deviceDescription.connection) == 0) {
         switch (suggestDeviceAddressTag(deviceDescription)) {
             case Tag::id:
                 address = AudioDeviceAddress::make<Tag::id>(std::to_string(++nextId));
@@ -414,31 +432,51 @@ void TestSetVendorParameters(Instance* inst, bool* isSupported) {
 // Can be used as a base for any test here, does not depend on the fixture GTest parameters.
 class AudioCoreModuleBase {
   public:
-    // Default buffer sizes are used mostly for negative tests.
-    static constexpr int kDefaultBufferSizeFrames = 256;
+    // Fixed buffer size are used for negative tests only. For any tests involving stream
+    // opening that must success, the minimum buffer size must be obtained from a patch.
+    // This is implemented by the 'StreamFixture' utility class.
+    static constexpr int kNegativeTestBufferSizeFrames = 256;
     static constexpr int kDefaultLargeBufferSizeFrames = 48000;
 
-    void SetUpImpl(const std::string& moduleName) {
-        ASSERT_NO_FATAL_FAILURE(ConnectToService(moduleName));
+    void SetUpImpl(const std::string& moduleName, bool setUpDebug = true) {
+        ASSERT_NO_FATAL_FAILURE(ConnectToService(moduleName, setUpDebug));
+        ASSERT_IS_OK(module->getAudioPorts(&initialPorts));
+        ASSERT_IS_OK(module->getAudioRoutes(&initialRoutes));
     }
 
-    void TearDownImpl() { debug.reset(); }
+    void TearDownImpl() {
+        debug.reset();
+        ASSERT_NE(module, nullptr);
+        std::vector<AudioPort> finalPorts;
+        ASSERT_IS_OK(module->getAudioPorts(&finalPorts));
+        EXPECT_NO_FATAL_FAILURE(VerifyVectorsAreEqual<AudioPort>(initialPorts, finalPorts))
+                << "The list of audio ports was not restored to the initial state";
+        std::vector<AudioRoute> finalRoutes;
+        ASSERT_IS_OK(module->getAudioRoutes(&finalRoutes));
+        EXPECT_NO_FATAL_FAILURE(VerifyVectorsAreEqual<AudioRoute>(initialRoutes, finalRoutes))
+                << "The list of audio routes was not restored to the initial state";
+    }
 
-    void ConnectToService(const std::string& moduleName) {
+    void ConnectToService(const std::string& moduleName, bool setUpDebug) {
         ASSERT_EQ(module, nullptr);
         ASSERT_EQ(debug, nullptr);
         module = IModule::fromBinder(binderUtil.connectToService(moduleName));
         ASSERT_NE(module, nullptr);
-        ASSERT_NO_FATAL_FAILURE(SetUpDebug());
+        if (setUpDebug) {
+            ASSERT_NO_FATAL_FAILURE(SetUpDebug());
+        }
     }
 
     void RestartService() {
         ASSERT_NE(module, nullptr);
         moduleConfig.reset();
+        const bool setUpDebug = !!debug;
         debug.reset();
         module = IModule::fromBinder(binderUtil.restartService());
         ASSERT_NE(module, nullptr);
-        ASSERT_NO_FATAL_FAILURE(SetUpDebug());
+        if (setUpDebug) {
+            ASSERT_NO_FATAL_FAILURE(SetUpDebug());
+        }
     }
 
     void SetUpDebug() {
@@ -478,9 +516,7 @@ class AudioCoreModuleBase {
                          const std::string& errorMessage) {
         std::vector<Entity> entities;
         { ASSERT_IS_OK((module.get()->*getter)(&entities)); }
-        std::transform(entities.begin(), entities.end(),
-                       std::inserter(*entityIds, entityIds->begin()),
-                       [](const auto& entity) { return entity.id; });
+        *entityIds = extractIds<Entity>(entities);
         EXPECT_EQ(entities.size(), entityIds->size()) << errorMessage;
     }
 
@@ -510,17 +546,24 @@ class AudioCoreModuleBase {
         }
     }
 
+    // Warning: modifies the vectors!
+    template <typename T>
+    void VerifyVectorsAreEqual(std::vector<T>& v1, std::vector<T>& v2) {
+        ASSERT_EQ(v1.size(), v2.size());
+        std::sort(v1.begin(), v1.end());
+        std::sort(v2.begin(), v2.end());
+        if (v1 != v2) {
+            FAIL() << "Vectors are not equal: v1 = " << ::android::internal::ToString(v1)
+                   << ", v2 = " << ::android::internal::ToString(v2);
+        }
+    }
+
     std::shared_ptr<IModule> module;
     std::unique_ptr<ModuleConfig> moduleConfig;
     AudioHalBinderServiceUtil binderUtil;
     std::unique_ptr<WithDebugFlags> debug;
-};
-
-class AudioCoreModule : public AudioCoreModuleBase, public testing::TestWithParam<std::string> {
-  public:
-    void SetUp() override { ASSERT_NO_FATAL_FAILURE(SetUpImpl(GetParam())); }
-
-    void TearDown() override { ASSERT_NO_FATAL_FAILURE(TearDownImpl()); }
+    std::vector<AudioPort> initialPorts;
+    std::vector<AudioRoute> initialRoutes;
 };
 
 class WithDevicePortConnectedState {
@@ -530,6 +573,8 @@ class WithDevicePortConnectedState {
     WithDevicePortConnectedState& operator=(const WithDevicePortConnectedState&) = delete;
     ~WithDevicePortConnectedState() {
         if (mModule != nullptr) {
+            EXPECT_IS_OK_OR_UNKNOWN_TRANSACTION(mModule->prepareToDisconnectExternalDevice(getId()))
+                    << "when preparing to disconnect device port ID " << getId();
             EXPECT_IS_OK(mModule->disconnectExternalDevice(getId()))
                     << "when disconnecting device port ID " << getId();
         }
@@ -538,16 +583,19 @@ class WithDevicePortConnectedState {
                     << "when external device disconnected";
         }
     }
+    ScopedAStatus SetUpNoChecks(IModule* module, ModuleConfig* moduleConfig) {
+        RETURN_STATUS_IF_ERROR(module->connectExternalDevice(mIdAndData, &mConnectedPort));
+        RETURN_STATUS_IF_ERROR(moduleConfig->onExternalDeviceConnected(module, mConnectedPort));
+        mModule = module;
+        mModuleConfig = moduleConfig;
+        return ScopedAStatus::ok();
+    }
     void SetUp(IModule* module, ModuleConfig* moduleConfig) {
-        ASSERT_IS_OK(module->connectExternalDevice(mIdAndData, &mConnectedPort))
+        ASSERT_NE(moduleConfig, nullptr);
+        ASSERT_IS_OK(SetUpNoChecks(module, moduleConfig))
                 << "when connecting device port ID & data " << mIdAndData.toString();
         ASSERT_NE(mIdAndData.id, getId())
                 << "ID of the connected port must not be the same as the ID of the template port";
-        ASSERT_NE(moduleConfig, nullptr);
-        ASSERT_IS_OK(moduleConfig->onExternalDeviceConnected(module, mConnectedPort))
-                << "when external device connected";
-        mModule = module;
-        mModuleConfig = moduleConfig;
     }
     int32_t getId() const { return mConnectedPort.id; }
     const AudioPort& get() { return mConnectedPort; }
@@ -557,6 +605,13 @@ class WithDevicePortConnectedState {
     IModule* mModule = nullptr;
     ModuleConfig* mModuleConfig = nullptr;
     AudioPort mConnectedPort;
+};
+
+class AudioCoreModule : public AudioCoreModuleBase, public testing::TestWithParam<std::string> {
+  public:
+    void SetUp() override { ASSERT_NO_FATAL_FAILURE(SetUpImpl(GetParam())); }
+
+    void TearDown() override { ASSERT_NO_FATAL_FAILURE(TearDownImpl()); }
 };
 
 class StreamContext {
@@ -1080,6 +1135,7 @@ class DefaultStreamCallback : public ::aidl::android::hardware::audio::core::BnS
 template <typename T>
 struct IOTraits {
     static constexpr bool is_input = std::is_same_v<T, IStreamIn>;
+    static constexpr const char* directionStr = is_input ? "input" : "output";
     using Worker = std::conditional_t<is_input, StreamReader, StreamWriter>;
 };
 
@@ -1111,14 +1167,17 @@ class WithStream {
     }
     ScopedAStatus SetUpNoChecks(IModule* module, const AudioPortConfig& portConfig,
                                 long bufferSizeFrames);
-    void SetUp(IModule* module, long bufferSizeFrames) {
-        ASSERT_NO_FATAL_FAILURE(SetUpPortConfig(module));
+    void SetUpStream(IModule* module, long bufferSizeFrames) {
         ASSERT_IS_OK(SetUpNoChecks(module, bufferSizeFrames)) << "port config id " << getPortId();
         ASSERT_NE(nullptr, mStream) << "port config id " << getPortId();
         EXPECT_GE(mDescriptor.bufferSizeFrames, bufferSizeFrames)
                 << "actual buffer size must be no less than requested";
         mContext.emplace(mDescriptor);
         ASSERT_NO_FATAL_FAILURE(mContext.value().checkIsValid());
+    }
+    void SetUp(IModule* module, long bufferSizeFrames) {
+        ASSERT_NO_FATAL_FAILURE(SetUpPortConfig(module));
+        ASSERT_NO_FATAL_FAILURE(SetUpStream(module, bufferSizeFrames));
     }
     Stream* get() const { return mStream.get(); }
     const StreamContext* getContext() const { return mContext ? &(mContext.value()) : nullptr; }
@@ -1207,11 +1266,25 @@ class WithAudioPatch {
                    const AudioPortConfig& portConfig2)
         : mSrcPortConfig(sinkIsCfg1 ? portConfig2 : portConfig1),
           mSinkPortConfig(sinkIsCfg1 ? portConfig1 : portConfig2) {}
+    WithAudioPatch(const WithAudioPatch& patch, const AudioPortConfig& srcPortConfig,
+                   const AudioPortConfig& sinkPortConfig)
+        : mInitialPatch(patch.mPatch),
+          mSrcPortConfig(srcPortConfig),
+          mSinkPortConfig(sinkPortConfig),
+          mModule(patch.mModule),
+          mPatch(patch.mPatch) {}
     WithAudioPatch(const WithAudioPatch&) = delete;
     WithAudioPatch& operator=(const WithAudioPatch&) = delete;
     ~WithAudioPatch() {
         if (mModule != nullptr && mPatch.id != 0) {
-            EXPECT_IS_OK(mModule->resetAudioPatch(mPatch.id)) << "patch id " << getId();
+            if (mInitialPatch.has_value()) {
+                AudioPatch ignored;
+                // This releases our port configs so that they can be reset.
+                EXPECT_IS_OK(mModule->setAudioPatch(*mInitialPatch, &ignored))
+                        << "patch id " << mInitialPatch->id;
+            } else {
+                EXPECT_IS_OK(mModule->resetAudioPatch(mPatch.id)) << "patch id " << getId();
+            }
         }
     }
     void SetUpPortConfigs(IModule* module) {
@@ -1233,8 +1306,21 @@ class WithAudioPatch {
             EXPECT_GT(latencyMs, 0) << "patch id " << getId();
         }
     }
+    void VerifyAgainstAllPatches(IModule* module) {
+        std::vector<AudioPatch> allPatches;
+        ASSERT_IS_OK(module->getAudioPatches(&allPatches));
+        const auto& patchIt = findById(allPatches, getId());
+        ASSERT_NE(patchIt, allPatches.end()) << "patch id " << getId();
+        if (get() != *patchIt) {
+            FAIL() << "Stored patch: " << get().toString() << " is not the same as returned "
+                   << "by the HAL module: " << patchIt->toString();
+        }
+    }
     int32_t getId() const { return mPatch.id; }
     const AudioPatch& get() const { return mPatch; }
+    int32_t getMinimumStreamBufferSizeFrames() const {
+        return mPatch.minimumStreamBufferSizeFrames;
+    }
     const AudioPortConfig& getSinkPortConfig() const { return mSinkPortConfig.get(); }
     const AudioPortConfig& getSrcPortConfig() const { return mSrcPortConfig.get(); }
     const AudioPortConfig& getPortConfig(bool getSink) const {
@@ -1242,6 +1328,7 @@ class WithAudioPatch {
     }
 
   private:
+    std::optional<AudioPatch> mInitialPatch;
     WithAudioPortConfig mSrcPortConfig;
     WithAudioPortConfig mSinkPortConfig;
     IModule* mModule = nullptr;
@@ -1266,11 +1353,8 @@ TEST_P(AudioCoreModule, GetAudioPortsIsStable) {
     ASSERT_IS_OK(module->getAudioPorts(&ports1));
     std::vector<AudioPort> ports2;
     ASSERT_IS_OK(module->getAudioPorts(&ports2));
-    ASSERT_EQ(ports1.size(), ports2.size())
-            << "Sizes of audio port arrays do not match across consequent calls to getAudioPorts";
-    std::sort(ports1.begin(), ports1.end());
-    std::sort(ports2.begin(), ports2.end());
-    EXPECT_EQ(ports1, ports2);
+    EXPECT_NO_FATAL_FAILURE(VerifyVectorsAreEqual<AudioPort>(ports1, ports2))
+            << "Audio port arrays do not match across consequent calls to getAudioPorts";
 }
 
 TEST_P(AudioCoreModule, GetAudioRoutesIsStable) {
@@ -1278,11 +1362,8 @@ TEST_P(AudioCoreModule, GetAudioRoutesIsStable) {
     ASSERT_IS_OK(module->getAudioRoutes(&routes1));
     std::vector<AudioRoute> routes2;
     ASSERT_IS_OK(module->getAudioRoutes(&routes2));
-    ASSERT_EQ(routes1.size(), routes2.size())
-            << "Sizes of audio route arrays do not match across consequent calls to getAudioRoutes";
-    std::sort(routes1.begin(), routes1.end());
-    std::sort(routes2.begin(), routes2.end());
-    EXPECT_EQ(routes1, routes2);
+    EXPECT_NO_FATAL_FAILURE(VerifyVectorsAreEqual<AudioRoute>(routes1, routes2))
+            << " Audio route arrays do not match across consequent calls to getAudioRoutes";
 }
 
 TEST_P(AudioCoreModule, GetAudioRoutesAreValid) {
@@ -1451,8 +1532,25 @@ TEST_P(AudioCoreModule, GetAudioPortWithExternalDevices) {
                 << "port ID " << connectedPortId;
         EXPECT_EQ(portConnected.get(), connectedPort);
         const auto& portProfiles = connectedPort.profiles;
-        EXPECT_NE(0UL, portProfiles.size())
-                << "Connected port has no profiles: " << connectedPort.toString();
+        if (portProfiles.empty()) {
+            const auto routableMixPorts = moduleConfig->getRoutableMixPortsForDevicePort(
+                    connectedPort, true /*connectedOnly*/);
+            bool hasMixPortWithStaticProfile = false;
+            for (const auto& mixPort : routableMixPorts) {
+                const auto& mixPortProfiles = mixPort.profiles;
+                if (!mixPortProfiles.empty() &&
+                    !std::all_of(mixPortProfiles.begin(), mixPortProfiles.end(),
+                                 [](const auto& profile) {
+                                     return profile.format.type == AudioFormatType::DEFAULT;
+                                 })) {
+                    hasMixPortWithStaticProfile = true;
+                    break;
+                }
+            }
+            EXPECT_TRUE(hasMixPortWithStaticProfile)
+                    << "Connected port has no profiles and no routable mix ports with profiles: "
+                    << connectedPort.toString();
+        }
         const auto dynamicProfileIt =
                 std::find_if(portProfiles.begin(), portProfiles.end(), [](const auto& profile) {
                     return profile.format.type == AudioFormatType::DEFAULT;
@@ -1477,7 +1575,7 @@ TEST_P(AudioCoreModule, OpenStreamInvalidPortConfigId) {
         {
             aidl::android::hardware::audio::core::IModule::OpenInputStreamArguments args;
             args.portConfigId = portConfigId;
-            args.bufferSizeFrames = kDefaultBufferSizeFrames;
+            args.bufferSizeFrames = kNegativeTestBufferSizeFrames;
             aidl::android::hardware::audio::core::IModule::OpenInputStreamReturn ret;
             EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, module->openInputStream(args, &ret))
                     << "port config ID " << portConfigId;
@@ -1486,7 +1584,7 @@ TEST_P(AudioCoreModule, OpenStreamInvalidPortConfigId) {
         {
             aidl::android::hardware::audio::core::IModule::OpenOutputStreamArguments args;
             args.portConfigId = portConfigId;
-            args.bufferSizeFrames = kDefaultBufferSizeFrames;
+            args.bufferSizeFrames = kNegativeTestBufferSizeFrames;
             aidl::android::hardware::audio::core::IModule::OpenOutputStreamReturn ret;
             EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, module->openOutputStream(args, &ret))
                     << "port config ID " << portConfigId;
@@ -1536,7 +1634,8 @@ TEST_P(AudioCoreModule, ResetAudioPortConfigToInitialValue) {
         EXPECT_NE(portConfigsAfter.end(), afterIt)
                 << " port config ID " << c.id << " was removed by reset";
         if (afterIt != portConfigsAfter.end()) {
-            EXPECT_EQ(c, *afterIt);
+            EXPECT_TRUE(c == *afterIt)
+                    << "Expected: " << c.toString() << "; Actual: " << afterIt->toString();
         }
     }
 }
@@ -1648,10 +1747,17 @@ TEST_P(AudioCoreModule, TryConnectMissingDevice) {
     doNotSimulateConnections.flags().simulateDeviceConnections = false;
     ASSERT_NO_FATAL_FAILURE(doNotSimulateConnections.SetUp(module.get()));
     for (const auto& port : ports) {
+        // Virtual devices may not require external hardware and thus can always be connected.
+        if (port.ext.get<AudioPortExt::device>().device.type.connection ==
+            AudioDeviceDescription::CONNECTION_VIRTUAL)
+            continue;
         AudioPort portWithData = GenerateUniqueDeviceAddress(port), connectedPort;
         ScopedAStatus status = module->connectExternalDevice(portWithData, &connectedPort);
         EXPECT_STATUS(EX_ILLEGAL_STATE, status) << "static port " << portWithData.toString();
         if (status.isOk()) {
+            EXPECT_IS_OK_OR_UNKNOWN_TRANSACTION(
+                    module->prepareToDisconnectExternalDevice(connectedPort.id))
+                    << "when preparing to disconnect device port ID " << connectedPort.id;
             EXPECT_IS_OK(module->disconnectExternalDevice(connectedPort.id))
                     << "when disconnecting device port ID " << connectedPort.id;
         }
@@ -1681,6 +1787,9 @@ TEST_P(AudioCoreModule, ConnectDisconnectExternalDeviceInvalidPorts) {
         invalidPort.id = portId;
         EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, module->connectExternalDevice(invalidPort, &ignored))
                 << "port ID " << portId << ", when setting CONNECTED state";
+        EXPECT_STATUS_OR_UNKNOWN_TRANSACTION(EX_ILLEGAL_ARGUMENT,
+                                             module->prepareToDisconnectExternalDevice(portId))
+                << "port ID " << portId << ", when preparing to disconnect";
         EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, module->disconnectExternalDevice(portId))
                 << "port ID " << portId << ", when setting DISCONNECTED state";
     }
@@ -1691,6 +1800,9 @@ TEST_P(AudioCoreModule, ConnectDisconnectExternalDeviceInvalidPorts) {
         if (port.ext.getTag() != AudioPortExt::Tag::device) {
             EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, module->connectExternalDevice(port, &ignored))
                     << "non-device port ID " << port.id << " when setting CONNECTED state";
+            EXPECT_STATUS_OR_UNKNOWN_TRANSACTION(EX_ILLEGAL_ARGUMENT,
+                                                 module->prepareToDisconnectExternalDevice(port.id))
+                    << "non-device port ID " << port.id << " when preparing to disconnect";
             EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, module->disconnectExternalDevice(port.id))
                     << "non-device port ID " << port.id << " when setting DISCONNECTED state";
         } else {
@@ -1699,6 +1811,10 @@ TEST_P(AudioCoreModule, ConnectDisconnectExternalDeviceInvalidPorts) {
                 EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, module->connectExternalDevice(port, &ignored))
                         << "for a permanently attached device port ID " << port.id
                         << " when setting CONNECTED state";
+                EXPECT_STATUS_OR_UNKNOWN_TRANSACTION(
+                        EX_ILLEGAL_ARGUMENT, module->prepareToDisconnectExternalDevice(port.id))
+                        << "for a permanently attached device port ID " << port.id
+                        << " when preparing to disconnect";
                 EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, module->disconnectExternalDevice(port.id))
                         << "for a permanently attached device port ID " << port.id
                         << " when setting DISCONNECTED state";
@@ -1716,6 +1832,9 @@ TEST_P(AudioCoreModule, ConnectDisconnectExternalDeviceTwice) {
         GTEST_SKIP() << "No external devices in the module.";
     }
     for (const auto& port : ports) {
+        EXPECT_STATUS_OR_UNKNOWN_TRANSACTION(EX_ILLEGAL_ARGUMENT,
+                                             module->prepareToDisconnectExternalDevice(port.id))
+                << "when preparing to disconnect already disconnected device port ID " << port.id;
         EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, module->disconnectExternalDevice(port.id))
                 << "when disconnecting already disconnected device port ID " << port.id;
         AudioPort portWithData = GenerateUniqueDeviceAddress(port);
@@ -1750,6 +1869,10 @@ TEST_P(AudioCoreModule, DisconnectExternalDeviceNonResetPortConfig) {
             // Our test assumes that 'getAudioPort' returns at least one profile, and it
             // is not a dynamic profile.
             ASSERT_NO_FATAL_FAILURE(config.SetUp(module.get()));
+            EXPECT_IS_OK_OR_UNKNOWN_TRANSACTION(
+                    module->prepareToDisconnectExternalDevice(portConnected.getId()))
+                    << "when preparing to disconnect device port ID " << port.id
+                    << " with active configuration " << config.getId();
             EXPECT_STATUS(EX_ILLEGAL_STATE, module->disconnectExternalDevice(portConnected.getId()))
                     << "when trying to disconnect device port ID " << port.id
                     << " with active configuration " << config.getId();
@@ -1800,39 +1923,151 @@ TEST_P(AudioCoreModule, ExternalDevicePortRoutes) {
     }
 }
 
+class RoutedPortsProfilesSnapshot {
+  public:
+    explicit RoutedPortsProfilesSnapshot(int32_t portId) : mPortId(portId) {}
+    void Capture(IModule* module) {
+        std::vector<AudioRoute> routes;
+        ASSERT_IS_OK(module->getAudioRoutesForAudioPort(mPortId, &routes));
+        std::vector<AudioPort> allPorts;
+        ASSERT_IS_OK(module->getAudioPorts(&allPorts));
+        ASSERT_NO_FATAL_FAILURE(GetAllRoutedPorts(routes, allPorts));
+        ASSERT_NO_FATAL_FAILURE(GetProfileSizes());
+    }
+    void VerifyNoProfilesChanges(const RoutedPortsProfilesSnapshot& before) {
+        for (const auto& p : before.mRoutedPorts) {
+            auto beforeIt = before.mPortProfileSizes.find(p.id);
+            ASSERT_NE(beforeIt, before.mPortProfileSizes.end())
+                    << "port ID " << p.id << " not found in the initial profile sizes";
+            EXPECT_EQ(beforeIt->second, mPortProfileSizes[p.id])
+                    << " port " << p.toString() << " has an unexpected profile size change"
+                    << " following an external device connection and disconnection";
+        }
+    }
+    void VerifyProfilesNonEmpty() {
+        for (const auto& p : mRoutedPorts) {
+            EXPECT_NE(0UL, mPortProfileSizes[p.id])
+                    << " port " << p.toString() << " must have had its profiles"
+                    << " populated while having a connected external device";
+        }
+    }
+
+    const std::vector<AudioPort>& getRoutedPorts() const { return mRoutedPorts; }
+
+  private:
+    void GetAllRoutedPorts(const std::vector<AudioRoute>& routes,
+                           std::vector<AudioPort>& allPorts) {
+        for (const auto& r : routes) {
+            if (r.sinkPortId == mPortId) {
+                for (const auto& srcPortId : r.sourcePortIds) {
+                    const auto srcPortIt = findById(allPorts, srcPortId);
+                    ASSERT_NE(allPorts.end(), srcPortIt) << "port ID " << srcPortId;
+                    mRoutedPorts.push_back(*srcPortIt);
+                }
+            } else {
+                const auto sinkPortIt = findById(allPorts, r.sinkPortId);
+                ASSERT_NE(allPorts.end(), sinkPortIt) << "port ID " << r.sinkPortId;
+                mRoutedPorts.push_back(*sinkPortIt);
+            }
+        }
+    }
+    void GetProfileSizes() {
+        std::transform(
+                mRoutedPorts.begin(), mRoutedPorts.end(),
+                std::inserter(mPortProfileSizes, mPortProfileSizes.end()),
+                [](const auto& port) { return std::make_pair(port.id, port.profiles.size()); });
+    }
+
+    const int32_t mPortId;
+    std::vector<AudioPort> mRoutedPorts;
+    std::map<int32_t, size_t> mPortProfileSizes;
+};
+
 // Note: This test relies on simulation of external device connections by the HAL module.
 TEST_P(AudioCoreModule, ExternalDeviceMixPortConfigs) {
     // After an external device has been connected, all mix ports that can be routed
     // to the device port for the connected device must have non-empty profiles.
+    // Since the test connects and disconnects a single device each time, the size
+    // of profiles for all mix ports routed to the device port under test must get back
+    // to the original count once the external device is disconnected.
     ASSERT_NO_FATAL_FAILURE(SetUpModuleConfig());
     std::vector<AudioPort> externalDevicePorts = moduleConfig->getExternalDevicePorts();
     if (externalDevicePorts.empty()) {
         GTEST_SKIP() << "No external devices in the module.";
     }
     for (const auto& port : externalDevicePorts) {
-        WithDevicePortConnectedState portConnected(GenerateUniqueDeviceAddress(port));
-        ASSERT_NO_FATAL_FAILURE(portConnected.SetUp(module.get(), moduleConfig.get()));
-        std::vector<AudioRoute> routes;
-        ASSERT_IS_OK(module->getAudioRoutesForAudioPort(portConnected.getId(), &routes));
-        std::vector<AudioPort> allPorts;
-        ASSERT_IS_OK(module->getAudioPorts(&allPorts));
-        for (const auto& r : routes) {
-            if (r.sinkPortId == portConnected.getId()) {
-                for (const auto& srcPortId : r.sourcePortIds) {
-                    const auto srcPortIt = findById(allPorts, srcPortId);
-                    ASSERT_NE(allPorts.end(), srcPortIt) << "port ID " << srcPortId;
-                    EXPECT_NE(0UL, srcPortIt->profiles.size())
-                            << " source port " << srcPortIt->toString() << " must have its profiles"
-                            << " populated following external device connection";
-                }
-            } else {
-                const auto sinkPortIt = findById(allPorts, r.sinkPortId);
-                ASSERT_NE(allPorts.end(), sinkPortIt) << "port ID " << r.sinkPortId;
-                EXPECT_NE(0UL, sinkPortIt->profiles.size())
-                        << " source port " << sinkPortIt->toString() << " must have its"
-                        << " profiles populated following external device connection";
+        SCOPED_TRACE(port.toString());
+        RoutedPortsProfilesSnapshot before(port.id);
+        ASSERT_NO_FATAL_FAILURE(before.Capture(module.get()));
+        if (before.getRoutedPorts().empty()) continue;
+        {
+            WithDevicePortConnectedState portConnected(GenerateUniqueDeviceAddress(port));
+            ASSERT_NO_FATAL_FAILURE(portConnected.SetUp(module.get(), moduleConfig.get()));
+            RoutedPortsProfilesSnapshot connected(portConnected.getId());
+            ASSERT_NO_FATAL_FAILURE(connected.Capture(module.get()));
+            EXPECT_NO_FATAL_FAILURE(connected.VerifyProfilesNonEmpty());
+        }
+        RoutedPortsProfilesSnapshot after(port.id);
+        ASSERT_NO_FATAL_FAILURE(after.Capture(module.get()));
+        EXPECT_NO_FATAL_FAILURE(after.VerifyNoProfilesChanges(before));
+    }
+}
+
+// Note: This test relies on simulation of external device connections by the HAL module.
+TEST_P(AudioCoreModule, TwoExternalDevicesMixPortConfigsNested) {
+    // Ensure that in the case when two external devices are connected to the same
+    // device port, disconnecting one of them does not erase the profiles of routed mix ports.
+    // In this scenario, the connections are "nested."
+    ASSERT_NO_FATAL_FAILURE(SetUpModuleConfig());
+    std::vector<AudioPort> externalDevicePorts = moduleConfig->getExternalDevicePorts();
+    if (externalDevicePorts.empty()) {
+        GTEST_SKIP() << "No external devices in the module.";
+    }
+    for (const auto& port : externalDevicePorts) {
+        SCOPED_TRACE(port.toString());
+        WithDevicePortConnectedState portConnected1(GenerateUniqueDeviceAddress(port));
+        ASSERT_NO_FATAL_FAILURE(portConnected1.SetUp(module.get(), moduleConfig.get()));
+        {
+            // Connect and disconnect another device, if possible. It might not be possible
+            // for point-to-point connections, like analog or SPDIF.
+            WithDevicePortConnectedState portConnected2(GenerateUniqueDeviceAddress(port));
+            if (auto status = portConnected2.SetUpNoChecks(module.get(), moduleConfig.get());
+                !status.isOk()) {
+                continue;
             }
         }
+        RoutedPortsProfilesSnapshot connected(portConnected1.getId());
+        ASSERT_NO_FATAL_FAILURE(connected.Capture(module.get()));
+        EXPECT_NO_FATAL_FAILURE(connected.VerifyProfilesNonEmpty());
+    }
+}
+
+// Note: This test relies on simulation of external device connections by the HAL module.
+TEST_P(AudioCoreModule, TwoExternalDevicesMixPortConfigsInterleaved) {
+    // Ensure that in the case when two external devices are connected to the same
+    // device port, disconnecting one of them does not erase the profiles of routed mix ports.
+    // In this scenario, the connections are "interleaved."
+    ASSERT_NO_FATAL_FAILURE(SetUpModuleConfig());
+    std::vector<AudioPort> externalDevicePorts = moduleConfig->getExternalDevicePorts();
+    if (externalDevicePorts.empty()) {
+        GTEST_SKIP() << "No external devices in the module.";
+    }
+    for (const auto& port : externalDevicePorts) {
+        SCOPED_TRACE(port.toString());
+        auto portConnected1 =
+                std::make_unique<WithDevicePortConnectedState>(GenerateUniqueDeviceAddress(port));
+        ASSERT_NO_FATAL_FAILURE(portConnected1->SetUp(module.get(), moduleConfig.get()));
+        WithDevicePortConnectedState portConnected2(GenerateUniqueDeviceAddress(port));
+        // Connect another device, if possible. It might not be possible for point-to-point
+        // connections, like analog or SPDIF.
+        if (auto status = portConnected2.SetUpNoChecks(module.get(), moduleConfig.get());
+            !status.isOk()) {
+            continue;
+        }
+        portConnected1.reset();
+        RoutedPortsProfilesSnapshot connected(portConnected2.getId());
+        ASSERT_NO_FATAL_FAILURE(connected.Capture(module.get()));
+        EXPECT_NO_FATAL_FAILURE(connected.VerifyProfilesNonEmpty());
     }
 }
 
@@ -1997,7 +2232,13 @@ TEST_P(AudioCoreModule, GetMmapPolicyInfos) {
         std::vector<AudioMMapPolicyInfo> policyInfos;
         EXPECT_IS_OK(module->getMmapPolicyInfos(mmapPolicyType, &policyInfos))
                 << toString(mmapPolicyType);
-        EXPECT_EQ(isMmapSupported, !policyInfos.empty());
+        const bool isMMapSupportedByPolicyInfos =
+                std::find_if(policyInfos.begin(), policyInfos.end(), [](const auto& info) {
+                    return info.mmapPolicy == AudioMMapPolicy::AUTO ||
+                           info.mmapPolicy == AudioMMapPolicy::ALWAYS;
+                }) != policyInfos.end();
+        EXPECT_EQ(isMmapSupported, isMMapSupportedByPolicyInfos)
+                << ::android::internal::ToString(policyInfos);
     }
 }
 
@@ -2376,6 +2617,260 @@ class StreamLogicDriverInvalidCommand : public StreamLogicDriver {
     std::vector<std::string> mStatuses;
 };
 
+// A helper which sets up necessary HAL structures for a proper stream initialization.
+//
+// The full sequence of actions to set up a stream is as follows:
+//
+//  device port -> connect if necessary -> set up port config   | -> set up patch
+//  mix port -> set up port config, unless it has been provided |
+//
+//  then, from the patch, figure out the minimum HAL buffer size -> set up stream
+//
+// This sequence is reflected in the order of fields declaration.
+// Various tests need to be able to start and stop at various point in this sequence,
+// this is why there are methods that do just part of the work.
+//
+// Note: To maximize test coverage, this class relies on simulation of external device
+// connections by the HAL module.
+template <typename Stream>
+class StreamFixture {
+  public:
+    // Tests might need to override the direction.
+    StreamFixture(bool isInput = IOTraits<Stream>::is_input) : mIsInput(isInput) {}
+
+    void SetUpPortConfigAnyMixPort(IModule* module, ModuleConfig* moduleConfig,
+                                   bool connectedOnly) {
+        const auto mixPorts = moduleConfig->getMixPorts(mIsInput, connectedOnly);
+        mSkipTestReason = "No mix ports";
+        for (const auto& mixPort : mixPorts) {
+            mSkipTestReason = "";
+            ASSERT_NO_FATAL_FAILURE(SetUpPortConfigForMixPortOrConfig(module, moduleConfig, mixPort,
+                                                                      connectedOnly));
+            if (mSkipTestReason.empty()) break;
+        }
+    }
+
+    void SetUpPortConfigForMixPortOrConfig(
+            IModule* module, ModuleConfig* moduleConfig, const AudioPort& initialMixPort,
+            bool connectedOnly, const std::optional<AudioPortConfig>& mixPortConfig = {}) {
+        if (mixPortConfig.has_value() && !connectedOnly) {
+            // Connecting an external device may cause change in mix port profiles and the provided
+            // config may become invalid.
+            LOG(FATAL) << __func__ << ": when specifying a mix port config, it is not allowed "
+                       << "to change connected devices, thus `connectedOnly` must be `true`";
+        }
+        std::optional<AudioPort> connectedDevicePort;
+        ASSERT_NO_FATAL_FAILURE(SetUpDevicePortForMixPort(module, moduleConfig, initialMixPort,
+                                                          connectedOnly, &connectedDevicePort));
+        if (!mSkipTestReason.empty()) return;
+        if (mixPortConfig.has_value()) {
+            ASSERT_NO_FATAL_FAILURE(
+                    SetUpPortConfig(module, moduleConfig, *mixPortConfig, *connectedDevicePort));
+        } else {
+            // If an external device was connected, the profiles of the mix port might have changed.
+            AudioPort mixPort;
+            ASSERT_NO_FATAL_FAILURE(module->getAudioPort(initialMixPort.id, &mixPort));
+            ASSERT_NO_FATAL_FAILURE(
+                    SetUpPortConfig(module, moduleConfig, mixPort, *connectedDevicePort));
+        }
+    }
+
+    void SetUpPortConfig(IModule* module, ModuleConfig* moduleConfig, const AudioPort& mixPort,
+                         const AudioPort& devicePort) {
+        auto mixPortConfig = moduleConfig->getSingleConfigForMixPort(mIsInput, mixPort);
+        ASSERT_TRUE(mixPortConfig.has_value())
+                << "Unable to generate port config for mix port " << mixPort.toString();
+        ASSERT_NO_FATAL_FAILURE(SetUpPortConfig(module, moduleConfig, *mixPortConfig, devicePort));
+    }
+    void SetUpPortConfig(IModule* module, ModuleConfig* moduleConfig,
+                         const AudioPortConfig& mixPortConfig, const AudioPort& devicePort) {
+        ASSERT_NO_FATAL_FAILURE(SetUpPatch(module, moduleConfig, mixPortConfig, devicePort));
+        mStream = std::make_unique<WithStream<Stream>>(mMixPortConfig->get());
+        ASSERT_NO_FATAL_FAILURE(mStream->SetUpPortConfig(module));
+    }
+
+    ScopedAStatus SetUpStreamNoChecks(IModule* module) {
+        return mStream->SetUpNoChecks(module, getMinimumStreamBufferSizeFrames());
+    }
+    void SetUpStream(IModule* module) {
+        ASSERT_NO_FATAL_FAILURE(mStream->SetUpStream(module, getMinimumStreamBufferSizeFrames()));
+    }
+
+    void SetUpStreamForDevicePort(IModule* module, ModuleConfig* moduleConfig,
+                                  const AudioPort& devicePort, bool connectedOnly = false) {
+        ASSERT_NO_FATAL_FAILURE(
+                SetUpPortConfigForDevicePort(module, moduleConfig, devicePort, connectedOnly));
+        if (!mSkipTestReason.empty()) return;
+        ASSERT_NO_FATAL_FAILURE(SetUpStream(module));
+    }
+    void SetUpStreamForAnyMixPort(IModule* module, ModuleConfig* moduleConfig,
+                                  bool connectedOnly = false) {
+        ASSERT_NO_FATAL_FAILURE(SetUpPortConfigAnyMixPort(module, moduleConfig, connectedOnly));
+        if (!mSkipTestReason.empty()) return;
+        ASSERT_NO_FATAL_FAILURE(SetUpStream(module));
+    }
+    void SetUpStreamForMixPort(IModule* module, ModuleConfig* moduleConfig,
+                               const AudioPort& mixPort, bool connectedOnly = false) {
+        ASSERT_NO_FATAL_FAILURE(
+                SetUpPortConfigForMixPortOrConfig(module, moduleConfig, mixPort, connectedOnly));
+        if (!mSkipTestReason.empty()) return;
+        ASSERT_NO_FATAL_FAILURE(SetUpStream(module));
+    }
+    void SetUpStreamForPortsPair(IModule* module, ModuleConfig* moduleConfig,
+                                 const AudioPort& mixPort, const AudioPort& devicePort) {
+        ASSERT_NO_FATAL_FAILURE(SetUpPortConfig(module, moduleConfig, mixPort, devicePort));
+        if (!mSkipTestReason.empty()) return;
+        ASSERT_NO_FATAL_FAILURE(SetUpStream(module));
+    }
+    void SetUpStreamForMixPortConfig(IModule* module, ModuleConfig* moduleConfig,
+                                     const AudioPortConfig& mixPortConfig) {
+        // Since mix port configs may change after connecting an external device,
+        // only connected device ports are considered.
+        constexpr bool connectedOnly = true;
+        const auto& ports = moduleConfig->getMixPorts(mIsInput, connectedOnly);
+        const auto mixPortIt = findById<AudioPort>(ports, mixPortConfig.portId);
+        ASSERT_NE(mixPortIt, ports.end()) << "Port id " << mixPortConfig.portId << " not found";
+        ASSERT_NO_FATAL_FAILURE(SetUpPortConfigForMixPortOrConfig(module, moduleConfig, *mixPortIt,
+                                                                  connectedOnly, mixPortConfig));
+        if (!mSkipTestReason.empty()) return;
+        ASSERT_NO_FATAL_FAILURE(SetUpStream(module));
+    }
+    void SetUpPatchForMixPortConfig(IModule* module, ModuleConfig* moduleConfig,
+                                    const AudioPortConfig& mixPortConfig) {
+        constexpr bool connectedOnly = true;
+        const auto& ports = moduleConfig->getMixPorts(mIsInput, connectedOnly);
+        const auto mixPortIt = findById<AudioPort>(ports, mixPortConfig.portId);
+        ASSERT_NE(mixPortIt, ports.end()) << "Port id " << mixPortConfig.portId << " not found";
+        std::optional<AudioPort> connectedDevicePort;
+        ASSERT_NO_FATAL_FAILURE(SetUpDevicePortForMixPort(module, moduleConfig, *mixPortIt,
+                                                          connectedOnly, &connectedDevicePort));
+        if (!mSkipTestReason.empty()) return;
+        ASSERT_NO_FATAL_FAILURE(
+                SetUpPatch(module, moduleConfig, mixPortConfig, *connectedDevicePort));
+    }
+
+    void ReconnectPatch(IModule* module) {
+        mPatch = std::make_unique<WithAudioPatch>(mIsInput, mMixPortConfig->get(),
+                                                  mDevicePortConfig->get());
+        ASSERT_NO_FATAL_FAILURE(mPatch->SetUp(module));
+    }
+    void TeardownPatch() { mPatch.reset(); }
+    // Assuming that the patch is set up, while the stream isn't yet,
+    // tear the patch down and set up stream.
+    void TeardownPatchSetUpStream(IModule* module) {
+        const int32_t bufferSize = getMinimumStreamBufferSizeFrames();
+        ASSERT_NO_FATAL_FAILURE(TeardownPatch());
+        mStream = std::make_unique<WithStream<Stream>>(mMixPortConfig->get());
+        ASSERT_NO_FATAL_FAILURE(mStream->SetUpPortConfig(module));
+        ASSERT_NO_FATAL_FAILURE(mStream->SetUpStream(module, bufferSize));
+    }
+
+    const AudioDevice& getDevice() const { return mDevice; }
+    int32_t getMinimumStreamBufferSizeFrames() const {
+        return mPatch->getMinimumStreamBufferSizeFrames();
+    }
+    const AudioPatch& getPatch() const { return mPatch->get(); }
+    const AudioPortConfig& getPortConfig() const { return mMixPortConfig->get(); }
+    int32_t getPortId() const { return mMixPortConfig->getId(); }
+    Stream* getStream() const { return mStream->get(); }
+    const StreamContext* getStreamContext() const { return mStream->getContext(); }
+    StreamEventReceiver* getStreamEventReceiver() { return mStream->getEventReceiver(); }
+    std::shared_ptr<Stream> getStreamSharedPointer() const { return mStream->getSharedPointer(); }
+    const std::string& skipTestReason() const { return mSkipTestReason; }
+
+  private:
+    void SetUpDevicePort(IModule* module, ModuleConfig* moduleConfig,
+                         const std::set<int32_t>& devicePortIds, bool connectedOnly,
+                         std::optional<AudioPort>* connectedDevicePort) {
+        const auto attachedDevicePorts = moduleConfig->getAttachedDevicePorts();
+        if (auto it = findAny<AudioPort>(attachedDevicePorts, devicePortIds);
+            it != attachedDevicePorts.end()) {
+            *connectedDevicePort = *it;
+            LOG(DEBUG) << __func__ << ": found attached port " << it->toString();
+        }
+        const auto connectedDevicePorts = moduleConfig->getConnectedExternalDevicePorts();
+        if (auto it = findAny<AudioPort>(connectedDevicePorts, devicePortIds);
+            it != connectedDevicePorts.end()) {
+            *connectedDevicePort = *it;
+            LOG(DEBUG) << __func__ << ": found connected port " << it->toString();
+        }
+        if (!connectedOnly && !connectedDevicePort->has_value()) {
+            const auto externalDevicePorts = moduleConfig->getExternalDevicePorts();
+            if (auto it = findAny<AudioPort>(externalDevicePorts, devicePortIds);
+                it != externalDevicePorts.end()) {
+                AudioPort portWithData = GenerateUniqueDeviceAddress(*it);
+                mPortConnected = std::make_unique<WithDevicePortConnectedState>(portWithData);
+                ASSERT_NO_FATAL_FAILURE(mPortConnected->SetUp(module, moduleConfig));
+                *connectedDevicePort = mPortConnected->get();
+                LOG(DEBUG) << __func__ << ": connected port " << mPortConnected->get().toString();
+            }
+        }
+    }
+    void SetUpDevicePortForMixPort(IModule* module, ModuleConfig* moduleConfig,
+                                   const AudioPort& mixPort, bool connectedOnly,
+                                   std::optional<AudioPort>* connectedDevicePort) {
+        const auto devicePorts =
+                moduleConfig->getRoutableDevicePortsForMixPort(mixPort, connectedOnly);
+        if (devicePorts.empty()) {
+            mSkipTestReason = std::string("No routable device ports found for mix port id ")
+                                      .append(std::to_string(mixPort.id));
+            LOG(DEBUG) << __func__ << ": " << mSkipTestReason;
+            return;
+        };
+        ASSERT_NO_FATAL_FAILURE(SetUpDevicePort(module, moduleConfig,
+                                                extractIds<AudioPort>(devicePorts), connectedOnly,
+                                                connectedDevicePort));
+        if (!connectedDevicePort->has_value()) {
+            mSkipTestReason = std::string("Unable to find a device port pair for mix port id ")
+                                      .append(std::to_string(mixPort.id));
+            LOG(DEBUG) << __func__ << ": " << mSkipTestReason;
+            return;
+        }
+    }
+    void SetUpPortConfigForDevicePort(IModule* module, ModuleConfig* moduleConfig,
+                                      const AudioPort& devicePort, bool connectedOnly) {
+        std::optional<AudioPort> connectedDevicePort;
+        ASSERT_NO_FATAL_FAILURE(SetUpDevicePort(module, moduleConfig, {devicePort.id},
+                                                connectedOnly, &connectedDevicePort));
+        if (!connectedDevicePort.has_value()) {
+            mSkipTestReason = std::string("Device port id ")
+                                      .append(std::to_string(devicePort.id))
+                                      .append(" is not attached and can not be connected");
+            return;
+        }
+        const auto mixPorts = moduleConfig->getRoutableMixPortsForDevicePort(
+                *connectedDevicePort, true /*connectedOnly*/);
+        if (mixPorts.empty()) {
+            mSkipTestReason = std::string("No routable mix ports found for device port id ")
+                                      .append(std::to_string(devicePort.id));
+            return;
+        }
+        ASSERT_NO_FATAL_FAILURE(
+                SetUpPortConfig(module, moduleConfig, *mixPorts.begin(), *connectedDevicePort));
+    }
+    void SetUpPatch(IModule* module, ModuleConfig* moduleConfig,
+                    const AudioPortConfig& mixPortConfig, const AudioPort& devicePort) {
+        mMixPortConfig = std::make_unique<WithAudioPortConfig>(mixPortConfig);
+        ASSERT_NO_FATAL_FAILURE(mMixPortConfig->SetUp(module));
+        mDevicePortConfig = std::make_unique<WithAudioPortConfig>(
+                moduleConfig->getSingleConfigForDevicePort(devicePort));
+        ASSERT_NO_FATAL_FAILURE(mDevicePortConfig->SetUp(module));
+        mDevice = devicePort.ext.get<AudioPortExt::device>().device;
+        mPatch = std::make_unique<WithAudioPatch>(mIsInput, mMixPortConfig->get(),
+                                                  mDevicePortConfig->get());
+        ASSERT_NO_FATAL_FAILURE(mPatch->SetUp(module));
+    }
+
+    const bool mIsInput;
+    std::string mSkipTestReason;
+    std::unique_ptr<WithDevicePortConnectedState> mPortConnected;
+    AudioDevice mDevice;
+    std::unique_ptr<WithAudioPortConfig> mMixPortConfig;
+    std::unique_ptr<WithAudioPortConfig> mDevicePortConfig;
+    std::unique_ptr<WithAudioPatch> mPatch;
+    std::unique_ptr<WithStream<Stream>> mStream;
+};
+
 template <typename Stream>
 class AudioStream : public AudioCoreModule {
   public:
@@ -2385,16 +2880,15 @@ class AudioStream : public AudioCoreModule {
     }
 
     void GetStreamCommon() {
-        const auto portConfig = moduleConfig->getSingleConfigForMixPort(IOTraits<Stream>::is_input);
-        if (!portConfig.has_value()) {
-            GTEST_SKIP() << "No mix port for attached devices";
+        StreamFixture<Stream> stream;
+        ASSERT_NO_FATAL_FAILURE(stream.SetUpStreamForAnyMixPort(module.get(), moduleConfig.get()));
+        if (auto reason = stream.skipTestReason(); !reason.empty()) {
+            GTEST_SKIP() << reason;
         }
-        WithStream<Stream> stream(portConfig.value());
-        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
         std::shared_ptr<IStreamCommon> streamCommon1;
-        EXPECT_IS_OK(stream.get()->getStreamCommon(&streamCommon1));
+        EXPECT_IS_OK(stream.getStream()->getStreamCommon(&streamCommon1));
         std::shared_ptr<IStreamCommon> streamCommon2;
-        EXPECT_IS_OK(stream.get()->getStreamCommon(&streamCommon2));
+        EXPECT_IS_OK(stream.getStream()->getStreamCommon(&streamCommon2));
         ASSERT_NE(nullptr, streamCommon1);
         ASSERT_NE(nullptr, streamCommon2);
         EXPECT_EQ(streamCommon1->asBinder(), streamCommon2->asBinder())
@@ -2402,31 +2896,31 @@ class AudioStream : public AudioCoreModule {
     }
 
     void CloseTwice() {
-        const auto portConfig = moduleConfig->getSingleConfigForMixPort(IOTraits<Stream>::is_input);
-        if (!portConfig.has_value()) {
-            GTEST_SKIP() << "No mix port for attached devices";
-        }
         std::shared_ptr<Stream> heldStream;
         {
-            WithStream<Stream> stream(portConfig.value());
-            ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
-            heldStream = stream.getSharedPointer();
+            StreamFixture<Stream> stream;
+            ASSERT_NO_FATAL_FAILURE(
+                    stream.SetUpStreamForAnyMixPort(module.get(), moduleConfig.get()));
+            if (auto reason = stream.skipTestReason(); !reason.empty()) {
+                GTEST_SKIP() << reason;
+            }
+            heldStream = stream.getStreamSharedPointer();
         }
         EXPECT_STATUS(EX_ILLEGAL_STATE, WithStream<Stream>::callClose(heldStream))
                 << "when closing the stream twice";
     }
 
     void PrepareToCloseTwice() {
-        const auto portConfig = moduleConfig->getSingleConfigForMixPort(IOTraits<Stream>::is_input);
-        if (!portConfig.has_value()) {
-            GTEST_SKIP() << "No mix port for attached devices";
-        }
         std::shared_ptr<IStreamCommon> heldStreamCommon;
         {
-            WithStream<Stream> stream(portConfig.value());
-            ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
+            StreamFixture<Stream> stream;
+            ASSERT_NO_FATAL_FAILURE(
+                    stream.SetUpStreamForAnyMixPort(module.get(), moduleConfig.get()));
+            if (auto reason = stream.skipTestReason(); !reason.empty()) {
+                GTEST_SKIP() << reason;
+            }
             std::shared_ptr<IStreamCommon> streamCommon;
-            ASSERT_IS_OK(stream.get()->getStreamCommon(&streamCommon));
+            ASSERT_IS_OK(stream.getStream()->getStreamCommon(&streamCommon));
             heldStreamCommon = streamCommon;
             EXPECT_IS_OK(streamCommon->prepareToClose());
             EXPECT_IS_OK(streamCommon->prepareToClose())
@@ -2439,9 +2933,13 @@ class AudioStream : public AudioCoreModule {
     void OpenAllConfigs() {
         const auto allPortConfigs =
                 moduleConfig->getPortConfigsForMixPorts(IOTraits<Stream>::is_input);
+        if (allPortConfigs.empty()) {
+            GTEST_SKIP() << "No mix ports for attached devices";
+        }
         for (const auto& portConfig : allPortConfigs) {
-            WithStream<Stream> stream(portConfig);
-            ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
+            StreamFixture<Stream> stream;
+            ASSERT_NO_FATAL_FAILURE(stream.SetUpStreamForMixPortConfig(
+                    module.get(), moduleConfig.get(), portConfig));
         }
     }
 
@@ -2461,22 +2959,21 @@ class AudioStream : public AudioCoreModule {
 
     void OpenInvalidDirection() {
         // Important! The direction of the port config must be reversed.
-        const auto portConfig =
-                moduleConfig->getSingleConfigForMixPort(!IOTraits<Stream>::is_input);
-        if (!portConfig.has_value()) {
-            GTEST_SKIP() << "No mix port for attached devices";
+        StreamFixture<Stream> stream(!IOTraits<Stream>::is_input);
+        ASSERT_NO_FATAL_FAILURE(stream.SetUpPortConfigAnyMixPort(module.get(), moduleConfig.get(),
+                                                                 false /*connectedOnly*/));
+        if (auto reason = stream.skipTestReason(); !reason.empty()) {
+            GTEST_SKIP() << reason;
         }
-        WithStream<Stream> stream(portConfig.value());
-        ASSERT_NO_FATAL_FAILURE(stream.SetUpPortConfig(module.get()));
-        EXPECT_STATUS(EX_ILLEGAL_ARGUMENT,
-                      stream.SetUpNoChecks(module.get(), kDefaultBufferSizeFrames))
+        EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, stream.SetUpStreamNoChecks(module.get()))
                 << "port config ID " << stream.getPortId();
-        EXPECT_EQ(nullptr, stream.get());
+        EXPECT_EQ(nullptr, stream.getStream());
     }
 
     void OpenOverMaxCount() {
+        constexpr bool connectedOnly = true;
         constexpr bool isInput = IOTraits<Stream>::is_input;
-        auto ports = moduleConfig->getMixPorts(isInput, true /*connectedOnly*/);
+        auto ports = moduleConfig->getMixPorts(isInput, connectedOnly);
         bool hasSingleRun = false;
         for (const auto& port : ports) {
             const size_t maxStreamCount = port.ext.get<AudioPortExt::Tag::mix>().maxOpenStreamCount;
@@ -2489,16 +2986,16 @@ class AudioStream : public AudioCoreModule {
                 continue;
             }
             hasSingleRun = true;
-            std::optional<WithStream<Stream>> streamWraps[maxStreamCount + 1];
+            StreamFixture<Stream> streams[maxStreamCount + 1];
             for (size_t i = 0; i <= maxStreamCount; ++i) {
-                streamWraps[i].emplace(portConfigs[i]);
-                WithStream<Stream>& stream = streamWraps[i].value();
+                ASSERT_NO_FATAL_FAILURE(streams[i].SetUpPortConfigForMixPortOrConfig(
+                        module.get(), moduleConfig.get(), port, connectedOnly, portConfigs[i]));
+                ASSERT_EQ("", streams[i].skipTestReason());
+                auto& stream = streams[i];
                 if (i < maxStreamCount) {
-                    ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
+                    ASSERT_NO_FATAL_FAILURE(stream.SetUpStream(module.get()));
                 } else {
-                    ASSERT_NO_FATAL_FAILURE(stream.SetUpPortConfig(module.get()));
-                    EXPECT_STATUS(EX_ILLEGAL_STATE,
-                                  stream.SetUpNoChecks(module.get(), kDefaultBufferSizeFrames))
+                    EXPECT_STATUS(EX_ILLEGAL_STATE, stream.SetUpStreamNoChecks(module.get()))
                             << "port config ID " << stream.getPortId() << ", maxOpenStreamCount is "
                             << maxStreamCount;
                 }
@@ -2518,12 +3015,11 @@ class AudioStream : public AudioCoreModule {
     }
 
     void ResetPortConfigWithOpenStream() {
-        const auto portConfig = moduleConfig->getSingleConfigForMixPort(IOTraits<Stream>::is_input);
-        if (!portConfig.has_value()) {
-            GTEST_SKIP() << "No mix port for attached devices";
+        StreamFixture<Stream> stream;
+        ASSERT_NO_FATAL_FAILURE(stream.SetUpStreamForAnyMixPort(module.get(), moduleConfig.get()));
+        if (auto reason = stream.skipTestReason(); !reason.empty()) {
+            GTEST_SKIP() << reason;
         }
-        WithStream<Stream> stream(portConfig.value());
-        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
         EXPECT_STATUS(EX_ILLEGAL_STATE, module->resetAudioPortConfig(stream.getPortId()))
                 << "port config ID " << stream.getPortId();
     }
@@ -2537,14 +3033,13 @@ class AudioStream : public AudioCoreModule {
     }
 
     void UpdateHwAvSyncId() {
-        const auto portConfig = moduleConfig->getSingleConfigForMixPort(IOTraits<Stream>::is_input);
-        if (!portConfig.has_value()) {
-            GTEST_SKIP() << "No mix port for attached devices";
+        StreamFixture<Stream> stream;
+        ASSERT_NO_FATAL_FAILURE(stream.SetUpStreamForAnyMixPort(module.get(), moduleConfig.get()));
+        if (auto reason = stream.skipTestReason(); !reason.empty()) {
+            GTEST_SKIP() << reason;
         }
-        WithStream<Stream> stream(portConfig.value());
-        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
         std::shared_ptr<IStreamCommon> streamCommon;
-        ASSERT_IS_OK(stream.get()->getStreamCommon(&streamCommon));
+        ASSERT_IS_OK(stream.getStream()->getStreamCommon(&streamCommon));
         ASSERT_NE(nullptr, streamCommon);
         const auto kStatuses = {EX_NONE, EX_ILLEGAL_ARGUMENT, EX_ILLEGAL_STATE};
         for (const auto id : {-100, -1, 0, 1, 100}) {
@@ -2557,14 +3052,13 @@ class AudioStream : public AudioCoreModule {
     }
 
     void GetVendorParameters() {
-        const auto portConfig = moduleConfig->getSingleConfigForMixPort(IOTraits<Stream>::is_input);
-        if (!portConfig.has_value()) {
-            GTEST_SKIP() << "No mix port for attached devices";
+        StreamFixture<Stream> stream;
+        ASSERT_NO_FATAL_FAILURE(stream.SetUpStreamForAnyMixPort(module.get(), moduleConfig.get()));
+        if (auto reason = stream.skipTestReason(); !reason.empty()) {
+            GTEST_SKIP() << reason;
         }
-        WithStream<Stream> stream(portConfig.value());
-        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
         std::shared_ptr<IStreamCommon> streamCommon;
-        ASSERT_IS_OK(stream.get()->getStreamCommon(&streamCommon));
+        ASSERT_IS_OK(stream.getStream()->getStreamCommon(&streamCommon));
         ASSERT_NE(nullptr, streamCommon);
 
         bool isGetterSupported = false;
@@ -2578,14 +3072,13 @@ class AudioStream : public AudioCoreModule {
     }
 
     void SetVendorParameters() {
-        const auto portConfig = moduleConfig->getSingleConfigForMixPort(IOTraits<Stream>::is_input);
-        if (!portConfig.has_value()) {
-            GTEST_SKIP() << "No mix port for attached devices";
+        StreamFixture<Stream> stream;
+        ASSERT_NO_FATAL_FAILURE(stream.SetUpStreamForAnyMixPort(module.get(), moduleConfig.get()));
+        if (auto reason = stream.skipTestReason(); !reason.empty()) {
+            GTEST_SKIP() << reason;
         }
-        WithStream<Stream> stream(portConfig.value());
-        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
         std::shared_ptr<IStreamCommon> streamCommon;
-        ASSERT_IS_OK(stream.get()->getStreamCommon(&streamCommon));
+        ASSERT_IS_OK(stream.getStream()->getStreamCommon(&streamCommon));
         ASSERT_NE(nullptr, streamCommon);
 
         bool isSupported = false;
@@ -2596,32 +3089,37 @@ class AudioStream : public AudioCoreModule {
     }
 
     void HwGainHwVolume() {
-        const auto ports =
-                moduleConfig->getMixPorts(IOTraits<Stream>::is_input, true /*connectedOnly*/);
+        // Since device connection emulation does not cover complete functionality,
+        // only use this test with connected devices.
+        constexpr bool connectedOnly = true;
+        const auto ports = moduleConfig->getMixPorts(IOTraits<Stream>::is_input, connectedOnly);
         if (ports.empty()) {
             GTEST_SKIP() << "No mix ports";
         }
         bool atLeastOneSupports = false;
         for (const auto& port : ports) {
-            const auto portConfig = moduleConfig->getSingleConfigForMixPort(true, port);
-            if (!portConfig.has_value()) continue;
-            WithStream<Stream> stream(portConfig.value());
-            ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
+            SCOPED_TRACE(port.toString());
+            StreamFixture<Stream> stream;
+            ASSERT_NO_FATAL_FAILURE(stream.SetUpStreamForMixPort(module.get(), moduleConfig.get(),
+                                                                 port, connectedOnly));
+            if (!stream.skipTestReason().empty()) continue;
+            const auto portConfig = stream.getPortConfig();
+            SCOPED_TRACE(portConfig.toString());
             std::vector<std::vector<float>> validValues, invalidValues;
             bool isSupported = false;
             if constexpr (IOTraits<Stream>::is_input) {
-                GenerateTestArrays<float>(getChannelCount(portConfig.value().channelMask.value()),
+                GenerateTestArrays<float>(getChannelCount(portConfig.channelMask.value()),
                                           IStreamIn::HW_GAIN_MIN, IStreamIn::HW_GAIN_MAX,
                                           &validValues, &invalidValues);
                 EXPECT_NO_FATAL_FAILURE(TestAccessors<std::vector<float>>(
-                        stream.get(), &IStreamIn::getHwGain, &IStreamIn::setHwGain, validValues,
-                        invalidValues, &isSupported));
+                        stream.getStream(), &IStreamIn::getHwGain, &IStreamIn::setHwGain,
+                        validValues, invalidValues, &isSupported));
             } else {
-                GenerateTestArrays<float>(getChannelCount(portConfig.value().channelMask.value()),
+                GenerateTestArrays<float>(getChannelCount(portConfig.channelMask.value()),
                                           IStreamOut::HW_VOLUME_MIN, IStreamOut::HW_VOLUME_MAX,
                                           &validValues, &invalidValues);
                 EXPECT_NO_FATAL_FAILURE(TestAccessors<std::vector<float>>(
-                        stream.get(), &IStreamOut::getHwVolume, &IStreamOut::setHwVolume,
+                        stream.getStream(), &IStreamOut::getHwVolume, &IStreamOut::setHwVolume,
                         validValues, invalidValues, &isSupported));
             }
             if (isSupported) atLeastOneSupports = true;
@@ -2635,19 +3133,22 @@ class AudioStream : public AudioCoreModule {
     // currently we can only pass a nullptr, and the HAL module must either reject
     // it as an invalid argument, or say that offloaded effects are not supported.
     void AddRemoveEffectInvalidArguments() {
-        const auto ports =
-                moduleConfig->getMixPorts(IOTraits<Stream>::is_input, true /*connectedOnly*/);
+        constexpr bool connectedOnly = true;
+        const auto ports = moduleConfig->getMixPorts(IOTraits<Stream>::is_input, connectedOnly);
         if (ports.empty()) {
             GTEST_SKIP() << "No mix ports";
         }
         bool atLeastOneSupports = false;
         for (const auto& port : ports) {
-            const auto portConfig = moduleConfig->getSingleConfigForMixPort(true, port);
-            if (!portConfig.has_value()) continue;
-            WithStream<Stream> stream(portConfig.value());
-            ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
+            SCOPED_TRACE(port.toString());
+            StreamFixture<Stream> stream;
+            ASSERT_NO_FATAL_FAILURE(stream.SetUpStreamForMixPort(module.get(), moduleConfig.get(),
+                                                                 port, connectedOnly));
+            if (!stream.skipTestReason().empty()) continue;
+            const auto portConfig = stream.getPortConfig();
+            SCOPED_TRACE(portConfig.toString());
             std::shared_ptr<IStreamCommon> streamCommon;
-            ASSERT_IS_OK(stream.get()->getStreamCommon(&streamCommon));
+            ASSERT_IS_OK(stream.getStream()->getStreamCommon(&streamCommon));
             ASSERT_NE(nullptr, streamCommon);
             ndk::ScopedAStatus addEffectStatus = streamCommon->addEffect(nullptr);
             ndk::ScopedAStatus removeEffectStatus = streamCommon->removeEffect(nullptr);
@@ -2667,11 +3168,14 @@ class AudioStream : public AudioCoreModule {
     }
 
     void OpenTwiceSamePortConfigImpl(const AudioPortConfig& portConfig) {
-        WithStream<Stream> stream1(portConfig);
-        ASSERT_NO_FATAL_FAILURE(stream1.SetUp(module.get(), kDefaultBufferSizeFrames));
+        StreamFixture<Stream> stream1;
+        ASSERT_NO_FATAL_FAILURE(
+                stream1.SetUpStreamForMixPortConfig(module.get(), moduleConfig.get(), portConfig));
+        ASSERT_EQ("", stream1.skipTestReason());
         WithStream<Stream> stream2;
-        EXPECT_STATUS(EX_ILLEGAL_STATE, stream2.SetUpNoChecks(module.get(), stream1.getPortConfig(),
-                                                              kDefaultBufferSizeFrames))
+        EXPECT_STATUS(EX_ILLEGAL_STATE,
+                      stream2.SetUpNoChecks(module.get(), stream1.getPortConfig(),
+                                            stream1.getMinimumStreamBufferSizeFrames()))
                 << "when opening a stream twice for the same port config ID "
                 << stream1.getPortId();
     }
@@ -2706,11 +3210,13 @@ class AudioStream : public AudioCoreModule {
         for (const auto& seq : sequences) {
             SCOPED_TRACE(std::string("Sequence ").append(seq.first));
             LOG(DEBUG) << __func__ << ": Sequence " << seq.first;
-            WithStream<Stream> stream(portConfig);
-            ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
+            StreamFixture<Stream> stream;
+            ASSERT_NO_FATAL_FAILURE(stream.SetUpStreamForMixPortConfig(
+                    module.get(), moduleConfig.get(), portConfig));
+            ASSERT_EQ("", stream.skipTestReason());
             StreamLogicDriverInvalidCommand driver(seq.second);
-            typename IOTraits<Stream>::Worker worker(*stream.getContext(), &driver,
-                                                     stream.getEventReceiver());
+            typename IOTraits<Stream>::Worker worker(*stream.getStreamContext(), &driver,
+                                                     stream.getStreamEventReceiver());
             LOG(DEBUG) << __func__ << ": starting worker...";
             ASSERT_TRUE(worker.start());
             LOG(DEBUG) << __func__ << ": joining worker...";
@@ -2763,63 +3269,59 @@ TEST_P(AudioStreamIn, ActiveMicrophones) {
     if (ports.empty()) {
         GTEST_SKIP() << "No input mix ports for attached devices";
     }
+    bool atLeastOnePort = false;
     for (const auto& port : ports) {
-        const auto portConfig = moduleConfig->getSingleConfigForMixPort(true, port);
-        ASSERT_TRUE(portConfig.has_value()) << "No profiles specified for input mix port";
-        WithStream<IStreamIn> stream(portConfig.value());
-        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
-        {
-            // The port of the stream is not connected, thus the list of active mics must be empty.
-            std::vector<MicrophoneDynamicInfo> activeMics;
-            EXPECT_IS_OK(stream.get()->getActiveMicrophones(&activeMics));
-            EXPECT_TRUE(activeMics.empty()) << "a stream on an unconnected port returns a "
-                                               "non-empty list of active microphones";
+        auto micDevicePorts = ModuleConfig::getBuiltInMicPorts(
+                moduleConfig->getConnectedSourceDevicesPortsForMixPort(port));
+        if (micDevicePorts.empty()) continue;
+        atLeastOnePort = true;
+        SCOPED_TRACE(port.toString());
+        StreamFixture<IStreamIn> stream;
+        ASSERT_NO_FATAL_FAILURE(stream.SetUpStreamForPortsPair(module.get(), moduleConfig.get(),
+                                                               port, micDevicePorts[0]));
+        if (!stream.skipTestReason().empty()) continue;
+        std::vector<MicrophoneDynamicInfo> activeMics;
+        EXPECT_IS_OK(stream.getStream()->getActiveMicrophones(&activeMics));
+        EXPECT_FALSE(activeMics.empty());
+        for (const auto& mic : activeMics) {
+            EXPECT_NE(micInfos.end(),
+                      std::find_if(micInfos.begin(), micInfos.end(),
+                                   [&](const auto& micInfo) { return micInfo.id == mic.id; }))
+                    << "active microphone \"" << mic.id << "\" is not listed in "
+                    << "microphone infos returned by the module: "
+                    << ::android::internal::ToString(micInfos);
+            EXPECT_NE(0UL, mic.channelMapping.size())
+                    << "No channels specified for the microphone \"" << mic.id << "\"";
         }
-        if (auto micDevicePorts = ModuleConfig::getBuiltInMicPorts(
-                    moduleConfig->getConnectedSourceDevicesPortsForMixPort(port));
-            !micDevicePorts.empty()) {
-            auto devicePortConfig = moduleConfig->getSingleConfigForDevicePort(micDevicePorts[0]);
-            WithAudioPatch patch(true /*isInput*/, stream.getPortConfig(), devicePortConfig);
-            ASSERT_NO_FATAL_FAILURE(patch.SetUp(module.get()));
-            std::vector<MicrophoneDynamicInfo> activeMics;
-            EXPECT_IS_OK(stream.get()->getActiveMicrophones(&activeMics));
-            EXPECT_FALSE(activeMics.empty());
-            for (const auto& mic : activeMics) {
-                EXPECT_NE(micInfos.end(),
-                          std::find_if(micInfos.begin(), micInfos.end(),
-                                       [&](const auto& micInfo) { return micInfo.id == mic.id; }))
-                        << "active microphone \"" << mic.id << "\" is not listed in "
-                        << "microphone infos returned by the module: "
-                        << ::android::internal::ToString(micInfos);
-                EXPECT_NE(0UL, mic.channelMapping.size())
-                        << "No channels specified for the microphone \"" << mic.id << "\"";
-            }
-        }
-        {
-            // Now the port of the stream is not connected again, re-check that there are no
-            // active microphones.
-            std::vector<MicrophoneDynamicInfo> activeMics;
-            EXPECT_IS_OK(stream.get()->getActiveMicrophones(&activeMics));
-            EXPECT_TRUE(activeMics.empty()) << "a stream on an unconnected port returns a "
-                                               "non-empty list of active microphones";
-        }
+        stream.TeardownPatch();
+        // Now the port of the stream is not connected, check that there are no active microphones.
+        std::vector<MicrophoneDynamicInfo> emptyMics;
+        EXPECT_IS_OK(stream.getStream()->getActiveMicrophones(&emptyMics));
+        EXPECT_TRUE(emptyMics.empty()) << "a stream on an unconnected port returns a "
+                                          "non-empty list of active microphones";
+    }
+    if (!atLeastOnePort) {
+        GTEST_SKIP() << "No input mix ports could be routed to built-in microphone devices";
     }
 }
 
 TEST_P(AudioStreamIn, MicrophoneDirection) {
     using MD = IStreamIn::MicrophoneDirection;
-    const auto ports = moduleConfig->getInputMixPorts(true /*connectedOnly*/);
+    constexpr bool connectedOnly = true;
+    const auto ports = moduleConfig->getInputMixPorts(connectedOnly);
     if (ports.empty()) {
         GTEST_SKIP() << "No input mix ports for attached devices";
     }
-    bool isSupported = false;
+    bool isSupported = false, atLeastOnePort = false;
     for (const auto& port : ports) {
-        const auto portConfig = moduleConfig->getSingleConfigForMixPort(true, port);
-        ASSERT_TRUE(portConfig.has_value()) << "No profiles specified for input mix port";
-        WithStream<IStreamIn> stream(portConfig.value());
-        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
+        SCOPED_TRACE(port.toString());
+        StreamFixture<IStreamIn> stream;
+        ASSERT_NO_FATAL_FAILURE(stream.SetUpStreamForMixPort(module.get(), moduleConfig.get(), port,
+                                                             connectedOnly));
+        if (!stream.skipTestReason().empty()) continue;
+        atLeastOnePort = true;
         EXPECT_NO_FATAL_FAILURE(
-                TestAccessors<MD>(stream.get(), &IStreamIn::getMicrophoneDirection,
+                TestAccessors<MD>(stream.getStream(), &IStreamIn::getMicrophoneDirection,
                                   &IStreamIn::setMicrophoneDirection,
                                   std::vector<MD>(enum_range<MD>().begin(), enum_range<MD>().end()),
                                   {}, &isSupported));
@@ -2828,21 +3330,27 @@ TEST_P(AudioStreamIn, MicrophoneDirection) {
     if (!isSupported) {
         GTEST_SKIP() << "Microphone direction is not supported";
     }
+    if (!atLeastOnePort) {
+        GTEST_SKIP() << "No input mix ports could be routed to built-in microphone devices";
+    }
 }
 
 TEST_P(AudioStreamIn, MicrophoneFieldDimension) {
-    const auto ports = moduleConfig->getInputMixPorts(true /*connectedOnly*/);
+    constexpr bool connectedOnly = true;
+    const auto ports = moduleConfig->getInputMixPorts(connectedOnly);
     if (ports.empty()) {
         GTEST_SKIP() << "No input mix ports for attached devices";
     }
-    bool isSupported = false;
+    bool isSupported = false, atLeastOnePort = false;
     for (const auto& port : ports) {
-        const auto portConfig = moduleConfig->getSingleConfigForMixPort(true, port);
-        ASSERT_TRUE(portConfig.has_value()) << "No profiles specified for input mix port";
-        WithStream<IStreamIn> stream(portConfig.value());
-        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
+        SCOPED_TRACE(port.toString());
+        StreamFixture<IStreamIn> stream;
+        ASSERT_NO_FATAL_FAILURE(stream.SetUpStreamForMixPort(module.get(), moduleConfig.get(), port,
+                                                             connectedOnly));
+        if (!stream.skipTestReason().empty()) continue;
+        atLeastOnePort = true;
         EXPECT_NO_FATAL_FAILURE(TestAccessors<float>(
-                stream.get(), &IStreamIn::getMicrophoneFieldDimension,
+                stream.getStream(), &IStreamIn::getMicrophoneFieldDimension,
                 &IStreamIn::setMicrophoneFieldDimension,
                 {IStreamIn::MIC_FIELD_DIMENSION_WIDE_ANGLE,
                  IStreamIn::MIC_FIELD_DIMENSION_WIDE_ANGLE / 2.0f,
@@ -2859,6 +3367,9 @@ TEST_P(AudioStreamIn, MicrophoneFieldDimension) {
     if (!isSupported) {
         GTEST_SKIP() << "Microphone direction is not supported";
     }
+    if (!atLeastOnePort) {
+        GTEST_SKIP() << "No input mix ports could be routed to built-in microphone devices";
+    }
 }
 
 TEST_P(AudioStreamOut, OpenTwicePrimary) {
@@ -2873,65 +3384,79 @@ TEST_P(AudioStreamOut, OpenTwicePrimary) {
 }
 
 TEST_P(AudioStreamOut, RequireOffloadInfo) {
+    constexpr bool connectedOnly = true;
     const auto offloadMixPorts =
-            moduleConfig->getOffloadMixPorts(true /*connectedOnly*/, true /*singlePort*/);
+            moduleConfig->getOffloadMixPorts(connectedOnly, true /*singlePort*/);
     if (offloadMixPorts.empty()) {
         GTEST_SKIP()
                 << "No mix port for compressed offload that could be routed to attached devices";
     }
-    const auto config = moduleConfig->getSingleConfigForMixPort(false, *offloadMixPorts.begin());
-    ASSERT_TRUE(config.has_value()) << "No profiles specified for the compressed offload mix port";
-    WithAudioPortConfig portConfig(config.value());
-    ASSERT_NO_FATAL_FAILURE(portConfig.SetUp(module.get()));
+    StreamFixture<IStreamOut> stream;
+    ASSERT_NO_FATAL_FAILURE(stream.SetUpPortConfigForMixPortOrConfig(
+            module.get(), moduleConfig.get(), *offloadMixPorts.begin(), connectedOnly));
+    if (auto reason = stream.skipTestReason(); !reason.empty()) {
+        GTEST_SKIP() << reason;
+    }
+    const auto portConfig = stream.getPortConfig();
     StreamDescriptor descriptor;
-    std::shared_ptr<IStreamOut> ignored;
     aidl::android::hardware::audio::core::IModule::OpenOutputStreamArguments args;
-    args.portConfigId = portConfig.getId();
-    args.sourceMetadata = GenerateSourceMetadata(portConfig.get());
+    args.portConfigId = portConfig.id;
+    args.sourceMetadata = GenerateSourceMetadata(portConfig);
     args.bufferSizeFrames = kDefaultLargeBufferSizeFrames;
     aidl::android::hardware::audio::core::IModule::OpenOutputStreamReturn ret;
     EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, module->openOutputStream(args, &ret))
             << "when no offload info is provided for a compressed offload mix port";
+    if (ret.stream != nullptr) {
+        (void)WithStream<IStreamOut>::callClose(ret.stream);
+    }
 }
 
 TEST_P(AudioStreamOut, RequireAsyncCallback) {
+    constexpr bool connectedOnly = true;
     const auto nonBlockingMixPorts =
-            moduleConfig->getNonBlockingMixPorts(true /*connectedOnly*/, true /*singlePort*/);
+            moduleConfig->getNonBlockingMixPorts(connectedOnly, true /*singlePort*/);
     if (nonBlockingMixPorts.empty()) {
         GTEST_SKIP()
                 << "No mix port for non-blocking output that could be routed to attached devices";
     }
-    const auto config =
-            moduleConfig->getSingleConfigForMixPort(false, *nonBlockingMixPorts.begin());
-    ASSERT_TRUE(config.has_value()) << "No profiles specified for the non-blocking mix port";
-    WithAudioPortConfig portConfig(config.value());
-    ASSERT_NO_FATAL_FAILURE(portConfig.SetUp(module.get()));
+    StreamFixture<IStreamOut> stream;
+    ASSERT_NO_FATAL_FAILURE(stream.SetUpPortConfigForMixPortOrConfig(
+            module.get(), moduleConfig.get(), *nonBlockingMixPorts.begin(), connectedOnly));
+    if (auto reason = stream.skipTestReason(); !reason.empty()) {
+        GTEST_SKIP() << reason;
+    }
+    const auto portConfig = stream.getPortConfig();
     StreamDescriptor descriptor;
-    std::shared_ptr<IStreamOut> ignored;
     aidl::android::hardware::audio::core::IModule::OpenOutputStreamArguments args;
-    args.portConfigId = portConfig.getId();
-    args.sourceMetadata = GenerateSourceMetadata(portConfig.get());
-    args.offloadInfo = ModuleConfig::generateOffloadInfoIfNeeded(portConfig.get());
-    args.bufferSizeFrames = kDefaultBufferSizeFrames;
+    args.portConfigId = portConfig.id;
+    args.sourceMetadata = GenerateSourceMetadata(portConfig);
+    args.offloadInfo = ModuleConfig::generateOffloadInfoIfNeeded(portConfig);
+    args.bufferSizeFrames = stream.getPatch().minimumStreamBufferSizeFrames;
     aidl::android::hardware::audio::core::IModule::OpenOutputStreamReturn ret;
     EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, module->openOutputStream(args, &ret))
             << "when no async callback is provided for a non-blocking mix port";
+    if (ret.stream != nullptr) {
+        (void)WithStream<IStreamOut>::callClose(ret.stream);
+    }
 }
 
 TEST_P(AudioStreamOut, AudioDescriptionMixLevel) {
-    const auto ports = moduleConfig->getOutputMixPorts(true /*connectedOnly*/);
+    constexpr bool connectedOnly = true;
+    const auto ports = moduleConfig->getOutputMixPorts(connectedOnly);
     if (ports.empty()) {
-        GTEST_SKIP() << "No output mix ports";
+        GTEST_SKIP() << "No output mix ports for attached devices";
     }
-    bool atLeastOneSupports = false;
+    bool atLeastOneSupports = false, atLeastOnePort = false;
     for (const auto& port : ports) {
-        const auto portConfig = moduleConfig->getSingleConfigForMixPort(false, port);
-        ASSERT_TRUE(portConfig.has_value()) << "No profiles specified for output mix port";
-        WithStream<IStreamOut> stream(portConfig.value());
-        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
+        SCOPED_TRACE(port.toString());
+        StreamFixture<IStreamOut> stream;
+        ASSERT_NO_FATAL_FAILURE(stream.SetUpStreamForMixPort(module.get(), moduleConfig.get(), port,
+                                                             connectedOnly));
+        if (!stream.skipTestReason().empty()) continue;
+        atLeastOnePort = true;
         bool isSupported = false;
         EXPECT_NO_FATAL_FAILURE(
-                TestAccessors<float>(stream.get(), &IStreamOut::getAudioDescriptionMixLevel,
+                TestAccessors<float>(stream.getStream(), &IStreamOut::getAudioDescriptionMixLevel,
                                      &IStreamOut::setAudioDescriptionMixLevel,
                                      {IStreamOut::AUDIO_DESCRIPTION_MIX_LEVEL_MAX,
                                       IStreamOut::AUDIO_DESCRIPTION_MIX_LEVEL_MAX - 1, 0,
@@ -2941,29 +3466,38 @@ TEST_P(AudioStreamOut, AudioDescriptionMixLevel) {
                                      &isSupported));
         if (isSupported) atLeastOneSupports = true;
     }
+    if (!atLeastOnePort) {
+        GTEST_SKIP() << "No output mix ports could be routed to devices";
+    }
     if (!atLeastOneSupports) {
         GTEST_SKIP() << "Audio description mix level is not supported";
     }
 }
 
 TEST_P(AudioStreamOut, DualMonoMode) {
-    const auto ports = moduleConfig->getOutputMixPorts(true /*connectedOnly*/);
+    constexpr bool connectedOnly = true;
+    const auto ports = moduleConfig->getOutputMixPorts(connectedOnly);
     if (ports.empty()) {
-        GTEST_SKIP() << "No output mix ports";
+        GTEST_SKIP() << "No output mix ports for attached devices";
     }
-    bool atLeastOneSupports = false;
+    bool atLeastOneSupports = false, atLeastOnePort = false;
     for (const auto& port : ports) {
-        const auto portConfig = moduleConfig->getSingleConfigForMixPort(false, port);
-        ASSERT_TRUE(portConfig.has_value()) << "No profiles specified for output mix port";
-        WithStream<IStreamOut> stream(portConfig.value());
-        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
+        SCOPED_TRACE(port.toString());
+        StreamFixture<IStreamOut> stream;
+        ASSERT_NO_FATAL_FAILURE(stream.SetUpStreamForMixPort(module.get(), moduleConfig.get(), port,
+                                                             connectedOnly));
+        if (!stream.skipTestReason().empty()) continue;
+        atLeastOnePort = true;
         bool isSupported = false;
         EXPECT_NO_FATAL_FAILURE(TestAccessors<AudioDualMonoMode>(
-                stream.get(), &IStreamOut::getDualMonoMode, &IStreamOut::setDualMonoMode,
+                stream.getStream(), &IStreamOut::getDualMonoMode, &IStreamOut::setDualMonoMode,
                 std::vector<AudioDualMonoMode>(enum_range<AudioDualMonoMode>().begin(),
                                                enum_range<AudioDualMonoMode>().end()),
                 {}, &isSupported));
         if (isSupported) atLeastOneSupports = true;
+    }
+    if (!atLeastOnePort) {
+        GTEST_SKIP() << "No output mix ports could be routed to devices";
     }
     if (!atLeastOneSupports) {
         GTEST_SKIP() << "Audio dual mono mode is not supported";
@@ -2971,18 +3505,21 @@ TEST_P(AudioStreamOut, DualMonoMode) {
 }
 
 TEST_P(AudioStreamOut, LatencyMode) {
-    const auto ports = moduleConfig->getOutputMixPorts(true /*connectedOnly*/);
+    constexpr bool connectedOnly = true;
+    const auto ports = moduleConfig->getOutputMixPorts(connectedOnly);
     if (ports.empty()) {
-        GTEST_SKIP() << "No output mix ports";
+        GTEST_SKIP() << "No output mix ports for attached devices";
     }
-    bool atLeastOneSupports = false;
+    bool atLeastOneSupports = false, atLeastOnePort = false;
     for (const auto& port : ports) {
-        const auto portConfig = moduleConfig->getSingleConfigForMixPort(false, port);
-        ASSERT_TRUE(portConfig.has_value()) << "No profiles specified for output mix port";
-        WithStream<IStreamOut> stream(portConfig.value());
-        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
+        SCOPED_TRACE(port.toString());
+        StreamFixture<IStreamOut> stream;
+        ASSERT_NO_FATAL_FAILURE(stream.SetUpStreamForMixPort(module.get(), moduleConfig.get(), port,
+                                                             connectedOnly));
+        if (!stream.skipTestReason().empty()) continue;
+        atLeastOnePort = true;
         std::vector<AudioLatencyMode> supportedModes;
-        ndk::ScopedAStatus status = stream.get()->getRecommendedLatencyModes(&supportedModes);
+        ndk::ScopedAStatus status = stream.getStream()->getRecommendedLatencyModes(&supportedModes);
         if (status.getExceptionCode() == EX_UNSUPPORTED_OPERATION) continue;
         atLeastOneSupports = true;
         if (!status.isOk()) {
@@ -2994,7 +3531,7 @@ TEST_P(AudioStreamOut, LatencyMode) {
                                                     enum_range<AudioLatencyMode>().end());
         for (const auto mode : supportedModes) {
             unsupportedModes.erase(mode);
-            ndk::ScopedAStatus status = stream.get()->setLatencyMode(mode);
+            ndk::ScopedAStatus status = stream.getStream()->setLatencyMode(mode);
             if (status.getExceptionCode() == EX_UNSUPPORTED_OPERATION) {
                 ADD_FAILURE() << "When latency modes are supported, both getRecommendedLatencyModes"
                               << " and setLatencyMode must be supported";
@@ -3002,11 +3539,14 @@ TEST_P(AudioStreamOut, LatencyMode) {
             EXPECT_IS_OK(status) << "Setting of supported latency mode must succeed";
         }
         for (const auto mode : unsupportedModes) {
-            EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, stream.get()->setLatencyMode(mode));
+            EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, stream.getStream()->setLatencyMode(mode));
         }
     }
     if (!atLeastOneSupports) {
         GTEST_SKIP() << "Audio latency modes are not supported";
+    }
+    if (!atLeastOnePort) {
+        GTEST_SKIP() << "No output mix ports could be routed to devices";
     }
 }
 
@@ -3309,29 +3849,22 @@ class AudioStreamIo : public AudioCoreModuleBase,
         }
     }
 
-    bool ValidateObservablePosition(const AudioPortConfig& devicePortConfig) {
-        return !isTelephonyDeviceType(
-                devicePortConfig.ext.get<AudioPortExt::Tag::device>().device.type.type);
+    bool ValidateObservablePosition(const AudioDevice& device) {
+        return !isTelephonyDeviceType(device.type.type);
     }
 
     // Set up a patch first, then open a stream.
     void RunStreamIoCommandsImplSeq1(const AudioPortConfig& portConfig,
                                      std::shared_ptr<StateSequence> commandsAndStates,
                                      bool validatePositionIncrease) {
-        auto devicePorts = moduleConfig->getConnectedDevicesPortsForMixPort(
-                IOTraits<Stream>::is_input, portConfig);
-        ASSERT_FALSE(devicePorts.empty());
-        auto devicePortConfig = moduleConfig->getSingleConfigForDevicePort(devicePorts[0]);
-        SCOPED_TRACE(devicePortConfig.toString());
-        WithAudioPatch patch(IOTraits<Stream>::is_input, portConfig, devicePortConfig);
-        ASSERT_NO_FATAL_FAILURE(patch.SetUp(module.get()));
-
-        WithStream<Stream> stream(patch.getPortConfig(IOTraits<Stream>::is_input));
-        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
+        StreamFixture<Stream> stream;
+        ASSERT_NO_FATAL_FAILURE(
+                stream.SetUpStreamForMixPortConfig(module.get(), moduleConfig.get(), portConfig));
+        ASSERT_EQ("", stream.skipTestReason());
         StreamLogicDefaultDriver driver(commandsAndStates,
-                                        stream.getContext()->getFrameSizeBytes());
-        typename IOTraits<Stream>::Worker worker(*stream.getContext(), &driver,
-                                                 stream.getEventReceiver());
+                                        stream.getStreamContext()->getFrameSizeBytes());
+        typename IOTraits<Stream>::Worker worker(*stream.getStreamContext(), &driver,
+                                                 stream.getStreamEventReceiver());
 
         LOG(DEBUG) << __func__ << ": starting worker...";
         ASSERT_TRUE(worker.start());
@@ -3339,7 +3872,7 @@ class AudioStreamIo : public AudioCoreModuleBase,
         worker.join();
         EXPECT_FALSE(worker.hasError()) << worker.getError();
         EXPECT_EQ("", driver.getUnexpectedStateTransition());
-        if (ValidateObservablePosition(devicePortConfig)) {
+        if (ValidateObservablePosition(stream.getDevice())) {
             if (validatePositionIncrease) {
                 EXPECT_TRUE(driver.hasObservablePositionIncrease());
             }
@@ -3347,24 +3880,21 @@ class AudioStreamIo : public AudioCoreModuleBase,
         }
     }
 
-    // Open a stream, then set up a patch for it.
+    // Open a stream, then set up a patch for it. Since first it is needed to get
+    // the minimum buffer size, a preliminary patch is set up, then removed.
     void RunStreamIoCommandsImplSeq2(const AudioPortConfig& portConfig,
                                      std::shared_ptr<StateSequence> commandsAndStates,
                                      bool validatePositionIncrease) {
-        WithStream<Stream> stream(portConfig);
-        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
+        StreamFixture<Stream> stream;
+        ASSERT_NO_FATAL_FAILURE(
+                stream.SetUpPatchForMixPortConfig(module.get(), moduleConfig.get(), portConfig));
+        ASSERT_EQ("", stream.skipTestReason());
+        ASSERT_NO_FATAL_FAILURE(stream.TeardownPatchSetUpStream(module.get()));
         StreamLogicDefaultDriver driver(commandsAndStates,
-                                        stream.getContext()->getFrameSizeBytes());
-        typename IOTraits<Stream>::Worker worker(*stream.getContext(), &driver,
-                                                 stream.getEventReceiver());
-
-        auto devicePorts = moduleConfig->getConnectedDevicesPortsForMixPort(
-                IOTraits<Stream>::is_input, portConfig);
-        ASSERT_FALSE(devicePorts.empty());
-        auto devicePortConfig = moduleConfig->getSingleConfigForDevicePort(devicePorts[0]);
-        SCOPED_TRACE(devicePortConfig.toString());
-        WithAudioPatch patch(IOTraits<Stream>::is_input, stream.getPortConfig(), devicePortConfig);
-        ASSERT_NO_FATAL_FAILURE(patch.SetUp(module.get()));
+                                        stream.getStreamContext()->getFrameSizeBytes());
+        typename IOTraits<Stream>::Worker worker(*stream.getStreamContext(), &driver,
+                                                 stream.getStreamEventReceiver());
+        ASSERT_NO_FATAL_FAILURE(stream.ReconnectPatch(module.get()));
 
         LOG(DEBUG) << __func__ << ": starting worker...";
         ASSERT_TRUE(worker.start());
@@ -3372,7 +3902,7 @@ class AudioStreamIo : public AudioCoreModuleBase,
         worker.join();
         EXPECT_FALSE(worker.hasError()) << worker.getError();
         EXPECT_EQ("", driver.getUnexpectedStateTransition());
-        if (ValidateObservablePosition(devicePortConfig)) {
+        if (ValidateObservablePosition(stream.getDevice())) {
             if (validatePositionIncrease) {
                 EXPECT_TRUE(driver.hasObservablePositionIncrease());
             }
@@ -3494,9 +4024,12 @@ class AudioModulePatch : public AudioCoreModule {
                     patches.push_back(
                             std::make_unique<WithAudioPatch>(srcSink.first, srcSink.second));
                     EXPECT_NO_FATAL_FAILURE(patches[patches.size() - 1]->SetUp(module.get()));
+                    EXPECT_NO_FATAL_FAILURE(
+                            patches[patches.size() - 1]->VerifyAgainstAllPatches(module.get()));
                 } else {
                     WithAudioPatch patch(srcSink.first, srcSink.second);
                     EXPECT_NO_FATAL_FAILURE(patch.SetUp(module.get()));
+                    EXPECT_NO_FATAL_FAILURE(patch.VerifyAgainstAllPatches(module.get()));
                 }
             }
         }
@@ -3514,6 +4047,29 @@ class AudioModulePatch : public AudioCoreModule {
                 AudioPatch ignored;
                 EXPECT_NO_FATAL_FAILURE(module->setAudioPatch(patch.get(), &ignored));
             }
+        }
+    }
+
+    void UpdatePatchPorts(bool isInput) {
+        auto srcSinkGroups = moduleConfig->getRoutableSrcSinkGroups(isInput);
+        if (srcSinkGroups.empty()) {
+            GTEST_SKIP() << "No routes to any attached " << direction(isInput, false) << " devices";
+        }
+        bool hasAtLeastOnePair = false;
+        for (const auto& srcSinkGroup : srcSinkGroups) {
+            const auto& srcSinks = srcSinkGroup.second;
+            if (srcSinks.size() < 2) continue;
+            hasAtLeastOnePair = true;
+            const auto& pair1 = srcSinks[0];
+            const auto& pair2 = srcSinks[1];
+            WithAudioPatch patch(pair1.first, pair1.second);
+            ASSERT_NO_FATAL_FAILURE(patch.SetUp(module.get()));
+            WithAudioPatch update(patch, pair2.first, pair2.second);
+            EXPECT_NO_FATAL_FAILURE(update.SetUp(module.get()));
+            EXPECT_NO_FATAL_FAILURE(update.VerifyAgainstAllPatches(module.get()));
+        }
+        if (!hasAtLeastOnePair) {
+            GTEST_SKIP() << "No routes with multiple sources";
         }
     }
 
@@ -3556,6 +4112,7 @@ TEST_PATCH_BOTH_DIRECTIONS(SetNonRoutablePatch);
 TEST_PATCH_BOTH_DIRECTIONS(SetPatch);
 TEST_PATCH_BOTH_DIRECTIONS(UpdateInvalidPatchId);
 TEST_PATCH_BOTH_DIRECTIONS(UpdatePatch);
+TEST_PATCH_BOTH_DIRECTIONS(UpdatePatchPorts);
 
 TEST_P(AudioModulePatch, ResetInvalidPatchId) {
     std::set<int32_t> patchIds;
@@ -4036,173 +4593,163 @@ template <typename Stream>
 class WithRemoteSubmix {
   public:
     WithRemoteSubmix() = default;
-    WithRemoteSubmix(AudioDeviceAddress address) : mAddress(address) {}
+    explicit WithRemoteSubmix(AudioDeviceAddress address) : mAddress(address) {}
     WithRemoteSubmix(const WithRemoteSubmix&) = delete;
     WithRemoteSubmix& operator=(const WithRemoteSubmix&) = delete;
-    std::optional<AudioPort> getAudioPort() {
-        AudioDeviceType deviceType = IOTraits<Stream>::is_input ? AudioDeviceType::IN_SUBMIX
-                                                                : AudioDeviceType::OUT_SUBMIX;
-        auto ports = mModuleConfig->getAudioPortsForDeviceTypes(
-                std::vector<AudioDeviceType>{deviceType},
-                AudioDeviceDescription::CONNECTION_VIRTUAL);
-        if (!ports.empty()) return ports.front();
-        return {};
-    }
-    /* Connect remote submix external device */
-    void SetUpPortConnection() {
-        auto port = getAudioPort();
-        ASSERT_TRUE(port.has_value()) << "Device AudioPort for remote submix not found";
-        if (mAddress.has_value()) {
-            port.value().ext.template get<AudioPortExt::Tag::device>().device.address =
-                    mAddress.value();
-        } else {
-            port = GenerateUniqueDeviceAddress(port.value());
-        }
-        mConnectedPort = std::make_unique<WithDevicePortConnectedState>(port.value());
-        ASSERT_NO_FATAL_FAILURE(mConnectedPort->SetUp(mModule, mModuleConfig));
-    }
-    AudioDeviceAddress getAudioDeviceAddress() {
-        if (!mAddress.has_value()) {
-            mAddress = mConnectedPort->get()
-                               .ext.template get<AudioPortExt::Tag::device>()
-                               .device.address;
-        }
-        return mAddress.value();
-    }
-    /* Get mix port config for stream and setup patch for it. */
-    void SetupPatch() {
-        const auto portConfig =
-                mModuleConfig->getSingleConfigForMixPort(IOTraits<Stream>::is_input);
-        if (!portConfig.has_value()) {
-            LOG(DEBUG) << __func__ << ": portConfig not found";
-            mSkipTest = true;
-            return;
-        }
-        auto devicePortConfig = mModuleConfig->getSingleConfigForDevicePort(mConnectedPort->get());
-        mPatch = std::make_unique<WithAudioPatch>(IOTraits<Stream>::is_input, portConfig.value(),
-                                                  devicePortConfig);
-        ASSERT_NO_FATAL_FAILURE(mPatch->SetUp(mModule));
-    }
-    void SetUp(IModule* module, ModuleConfig* moduleConfig) {
-        mModule = module;
-        mModuleConfig = moduleConfig;
-        ASSERT_NO_FATAL_FAILURE(SetUpPortConnection());
-        ASSERT_NO_FATAL_FAILURE(SetupPatch());
-        if (!mSkipTest) {
-            // open stream
-            mStream = std::make_unique<WithStream<Stream>>(
-                    mPatch->getPortConfig(IOTraits<Stream>::is_input));
-            ASSERT_NO_FATAL_FAILURE(
-                    mStream->SetUp(mModule, AudioCoreModuleBase::kDefaultBufferSizeFrames));
-        }
-    }
-    void sendBurstCommands() {
-        const StreamContext* context = mStream->getContext();
-        StreamLogicDefaultDriver driver(makeBurstCommands(true), context->getFrameSizeBytes());
-        typename IOTraits<Stream>::Worker worker(*context, &driver, mStream->getEventReceiver());
 
-        LOG(DEBUG) << __func__ << ": starting worker...";
-        ASSERT_TRUE(worker.start());
-        LOG(DEBUG) << __func__ << ": joining worker...";
-        worker.join();
-        EXPECT_FALSE(worker.hasError()) << worker.getError();
-        EXPECT_EQ("", driver.getUnexpectedStateTransition());
-        if (IOTraits<Stream>::is_input) {
-            EXPECT_TRUE(driver.hasObservablePositionIncrease());
+    static std::optional<AudioPort> getRemoteSubmixAudioPort(
+            ModuleConfig* moduleConfig,
+            const std::optional<AudioDeviceAddress>& address = std::nullopt) {
+        auto ports =
+                moduleConfig->getRemoteSubmixPorts(IOTraits<Stream>::is_input, true /*singlePort*/);
+        if (ports.empty()) return {};
+        AudioPort port = ports.front();
+        if (address) {
+            port.ext.template get<AudioPortExt::Tag::device>().device.address = address.value();
         }
-        EXPECT_FALSE(driver.hasRetrogradeObservablePosition());
+        return port;
     }
-    bool skipTest() { return mSkipTest; }
+
+    void SetUp(IModule* module, ModuleConfig* moduleConfig) {
+        auto devicePort = getRemoteSubmixAudioPort(moduleConfig, mAddress);
+        ASSERT_TRUE(devicePort.has_value()) << "Device port for remote submix device not found";
+        ASSERT_NO_FATAL_FAILURE(SetUp(module, moduleConfig, *devicePort));
+    }
+
+    void SendBurstCommandsStartWorker() {
+        const StreamContext* context = mStream->getStreamContext();
+        mWorkerDriver = std::make_unique<StreamLogicDefaultDriver>(makeBurstCommands(true),
+                                                                   context->getFrameSizeBytes());
+        mWorker = std::make_unique<typename IOTraits<Stream>::Worker>(
+                *context, mWorkerDriver.get(), mStream->getStreamEventReceiver());
+        LOG(DEBUG) << __func__ << ": starting " << IOTraits<Stream>::directionStr << " worker...";
+        ASSERT_TRUE(mWorker->start());
+    }
+
+    void SendBurstCommandsJoinWorker() {
+        // Must call 'prepareToClose' before attempting to join because the stream may be
+        // stuck due to absence of activity from the other side of the remote submix pipe.
+        std::shared_ptr<IStreamCommon> common;
+        ASSERT_IS_OK(mStream->getStream()->getStreamCommon(&common));
+        ASSERT_IS_OK(common->prepareToClose());
+        LOG(DEBUG) << __func__ << ": joining " << IOTraits<Stream>::directionStr << " worker...";
+        mWorker->join();
+        EXPECT_FALSE(mWorker->hasError()) << mWorker->getError();
+        EXPECT_EQ("", mWorkerDriver->getUnexpectedStateTransition());
+        if (IOTraits<Stream>::is_input) {
+            EXPECT_TRUE(mWorkerDriver->hasObservablePositionIncrease());
+        }
+        EXPECT_FALSE(mWorkerDriver->hasRetrogradeObservablePosition());
+        mWorker.reset();
+        mWorkerDriver.reset();
+    }
+
+    void SendBurstCommands() {
+        ASSERT_NO_FATAL_FAILURE(SendBurstCommandsStartWorker());
+        ASSERT_NO_FATAL_FAILURE(SendBurstCommandsJoinWorker());
+    }
+
+    std::optional<AudioDeviceAddress> getAudioDeviceAddress() const { return mAddress; }
+    std::string skipTestReason() const { return mStream->skipTestReason(); }
 
   private:
-    bool mSkipTest = false;
-    IModule* mModule = nullptr;
-    ModuleConfig* mModuleConfig = nullptr;
+    void SetUp(IModule* module, ModuleConfig* moduleConfig, const AudioPort& devicePort) {
+        mStream = std::make_unique<StreamFixture<Stream>>();
+        ASSERT_NO_FATAL_FAILURE(
+                mStream->SetUpStreamForDevicePort(module, moduleConfig, devicePort));
+        mAddress = mStream->getDevice().address;
+    }
+
     std::optional<AudioDeviceAddress> mAddress;
-    std::unique_ptr<WithDevicePortConnectedState> mConnectedPort;
-    std::unique_ptr<WithAudioPatch> mPatch;
-    std::unique_ptr<WithStream<Stream>> mStream;
+    std::unique_ptr<StreamFixture<Stream>> mStream;
+    std::unique_ptr<StreamLogicDefaultDriver> mWorkerDriver;
+    std::unique_ptr<typename IOTraits<Stream>::Worker> mWorker;
 };
 
 class AudioModuleRemoteSubmix : public AudioCoreModule {
   public:
     void SetUp() override {
-        ASSERT_NO_FATAL_FAILURE(AudioCoreModule::SetUp());
+        // Turn off "debug" which enables connections simulation. Since devices of the remote
+        // submix module are virtual, there is no need for simulation.
+        ASSERT_NO_FATAL_FAILURE(SetUpImpl(GetParam(), false /*setUpDebug*/));
         ASSERT_NO_FATAL_FAILURE(SetUpModuleConfig());
     }
-
-    void TearDown() override { ASSERT_NO_FATAL_FAILURE(TearDownImpl()); }
 };
 
 TEST_P(AudioModuleRemoteSubmix, OutputDoesNotBlockWhenNoInput) {
-    // open output stream
     WithRemoteSubmix<IStreamOut> streamOut;
     ASSERT_NO_FATAL_FAILURE(streamOut.SetUp(module.get(), moduleConfig.get()));
-    if (streamOut.skipTest()) {
-        GTEST_SKIP() << "No mix port for attached devices";
-    }
-    // write something to stream
-    ASSERT_NO_FATAL_FAILURE(streamOut.sendBurstCommands());
+    // Note: here and in other tests any issue with connection attempts is considered as a problem.
+    ASSERT_EQ("", streamOut.skipTestReason());
+    ASSERT_NO_FATAL_FAILURE(streamOut.SendBurstCommands());
 }
 
 TEST_P(AudioModuleRemoteSubmix, OutputDoesNotBlockWhenInputStuck) {
-    // open output stream
     WithRemoteSubmix<IStreamOut> streamOut;
     ASSERT_NO_FATAL_FAILURE(streamOut.SetUp(module.get(), moduleConfig.get()));
-    if (streamOut.skipTest()) {
-        GTEST_SKIP() << "No mix port for attached devices";
-    }
+    ASSERT_EQ("", streamOut.skipTestReason());
+    auto address = streamOut.getAudioDeviceAddress();
+    ASSERT_TRUE(address.has_value());
 
-    // open input stream
-    WithRemoteSubmix<IStreamIn> streamIn(streamOut.getAudioDeviceAddress());
+    WithRemoteSubmix<IStreamIn> streamIn(address.value());
     ASSERT_NO_FATAL_FAILURE(streamIn.SetUp(module.get(), moduleConfig.get()));
-    if (streamIn.skipTest()) {
-        GTEST_SKIP() << "No mix port for attached devices";
-    }
+    ASSERT_EQ("", streamIn.skipTestReason());
 
-    // write something to stream
-    ASSERT_NO_FATAL_FAILURE(streamOut.sendBurstCommands());
+    ASSERT_NO_FATAL_FAILURE(streamOut.SendBurstCommands());
 }
 
 TEST_P(AudioModuleRemoteSubmix, OutputAndInput) {
-    // open output stream
     WithRemoteSubmix<IStreamOut> streamOut;
     ASSERT_NO_FATAL_FAILURE(streamOut.SetUp(module.get(), moduleConfig.get()));
-    if (streamOut.skipTest()) {
-        GTEST_SKIP() << "No mix port for attached devices";
-    }
+    ASSERT_EQ("", streamOut.skipTestReason());
+    auto address = streamOut.getAudioDeviceAddress();
+    ASSERT_TRUE(address.has_value());
 
-    // open input stream
-    WithRemoteSubmix<IStreamIn> streamIn(streamOut.getAudioDeviceAddress());
+    WithRemoteSubmix<IStreamIn> streamIn(address.value());
     ASSERT_NO_FATAL_FAILURE(streamIn.SetUp(module.get(), moduleConfig.get()));
-    if (streamIn.skipTest()) {
-        GTEST_SKIP() << "No mix port for attached devices";
-    }
+    ASSERT_EQ("", streamIn.skipTestReason());
 
-    // write something to stream
-    ASSERT_NO_FATAL_FAILURE(streamOut.sendBurstCommands());
-    // read from input stream
-    ASSERT_NO_FATAL_FAILURE(streamIn.sendBurstCommands());
+    // Start writing into the output stream.
+    ASSERT_NO_FATAL_FAILURE(streamOut.SendBurstCommandsStartWorker());
+    // Simultaneously, read from the input stream.
+    ASSERT_NO_FATAL_FAILURE(streamIn.SendBurstCommands());
+    ASSERT_NO_FATAL_FAILURE(streamOut.SendBurstCommandsJoinWorker());
+}
+
+TEST_P(AudioModuleRemoteSubmix, OpenInputMultipleTimes) {
+    WithRemoteSubmix<IStreamOut> streamOut;
+    ASSERT_NO_FATAL_FAILURE(streamOut.SetUp(module.get(), moduleConfig.get()));
+    ASSERT_EQ("", streamOut.skipTestReason());
+    auto address = streamOut.getAudioDeviceAddress();
+    ASSERT_TRUE(address.has_value());
+
+    const size_t streamInCount = 3;
+    std::vector<std::unique_ptr<WithRemoteSubmix<IStreamIn>>> streamIns(streamInCount);
+    for (size_t i = 0; i < streamInCount; i++) {
+        streamIns[i] = std::make_unique<WithRemoteSubmix<IStreamIn>>(address.value());
+        ASSERT_NO_FATAL_FAILURE(streamIns[i]->SetUp(module.get(), moduleConfig.get()));
+        ASSERT_EQ("", streamIns[i]->skipTestReason());
+    }
+    // Start writing into the output stream.
+    ASSERT_NO_FATAL_FAILURE(streamOut.SendBurstCommandsStartWorker());
+    // Simultaneously, read from input streams.
+    for (size_t i = 0; i < streamInCount; i++) {
+        ASSERT_NO_FATAL_FAILURE(streamIns[i]->SendBurstCommandsStartWorker());
+    }
+    for (size_t i = 0; i < streamInCount; i++) {
+        ASSERT_NO_FATAL_FAILURE(streamIns[i]->SendBurstCommandsJoinWorker());
+    }
+    ASSERT_NO_FATAL_FAILURE(streamOut.SendBurstCommandsJoinWorker());
+    // Clean up input streams in the reverse order because the device connection is owned
+    // by the first one.
+    for (size_t i = streamInCount; i != 0; --i) {
+        streamIns[i - 1].reset();
+    }
 }
 
 INSTANTIATE_TEST_SUITE_P(AudioModuleRemoteSubmixTest, AudioModuleRemoteSubmix,
                          ::testing::ValuesIn(getRemoteSubmixModuleInstance()));
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioModuleRemoteSubmix);
-
-class TestExecutionTracer : public ::testing::EmptyTestEventListener {
-  public:
-    void OnTestStart(const ::testing::TestInfo& test_info) override {
-        TraceTestState("Started", test_info);
-    }
-    void OnTestEnd(const ::testing::TestInfo& test_info) override {
-        TraceTestState("Completed", test_info);
-    }
-
-  private:
-    static void TraceTestState(const std::string& state, const ::testing::TestInfo& test_info) {
-        LOG(INFO) << state << " " << test_info.test_suite_name() << "::" << test_info.name();
-    }
-};
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);

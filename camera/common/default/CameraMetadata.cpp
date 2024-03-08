@@ -258,7 +258,7 @@ status_t CameraMetadata::update(uint32_t tag, const String8& string) {
         return res;
     }
     // string.size() doesn't count the null termination character.
-    return updateImpl(tag, (const void*)string.string(), string.size() + 1);
+    return updateImpl(tag, (const void*)string.c_str(), string.size() + 1);
 }
 
 status_t CameraMetadata::update(const camera_metadata_ro_entry& entry) {
@@ -455,7 +455,7 @@ status_t CameraMetadata::getTagFromName(const char* name, const VendorTagDescrip
     for (size_t i = 0; i < totalSectionCount; ++i) {
         const char* str = (i < ANDROID_SECTION_COUNT)
                                   ? camera_metadata_section_names[i]
-                                  : (*vendorSections)[i - ANDROID_SECTION_COUNT].string();
+                                  : (*vendorSections)[i - ANDROID_SECTION_COUNT].c_str();
 
         ALOGV("%s: Trying to match against section '%s'", __FUNCTION__, str);
 

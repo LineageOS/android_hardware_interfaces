@@ -1,0 +1,12 @@
+{
+  "presubmit": [
+    {
+      "name": "VtsHalBluetoothAudioTargetTest"
+    }
+  ],
+  "kernel-presubmit": [
+    {
+      "name": "VtsHalBluetoothAudioTargetTest"
+    }
+  ]
+}

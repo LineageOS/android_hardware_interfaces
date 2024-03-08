@@ -26,12 +26,7 @@ package {
 cc_binary {
     name: "android.hardware.gnss-service.example",
     relative_install_path: "hw",
-    init_rc: [
-        "gnss-default.rc",
-    ],
-    vintf_fragments: [
-        "gnss-default.xml",
-    ],
+    installable: false, // install APEX instead
     vendor: true,
     cflags: [
         "-Wall",
@@ -50,7 +45,7 @@ cc_binary {
         "android.hardware.gnss.measurement_corrections@1.1",
         "android.hardware.gnss.measurement_corrections@1.0",
         "android.hardware.gnss.visibility_control@1.0",
-        "android.hardware.gnss-V3-ndk",
+        "android.hardware.gnss-V4-ndk",
     ],
     srcs: [
         "AGnssRil.cpp",
@@ -71,5 +66,37 @@ cc_binary {
     ],
     static_libs: [
         "android.hardware.gnss@common-default-lib",
+    ],
+}
+
+prebuilt_etc {
+    name: "gnss-default.rc",
+    src: "gnss-default.rc",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "gnss-default.xml",
+    src: "gnss-default.xml",
+    sub_dir: "vintf",
+    installable: false,
+}
+
+apex {
+    name: "com.android.hardware.gnss",
+    manifest: "apex_manifest.json",
+    file_contexts: "apex_file_contexts",
+    key: "com.android.hardware.key",
+    certificate: ":com.android.hardware.certificate",
+    updatable: false,
+    vendor: true,
+
+    binaries: [
+        "android.hardware.gnss-service.example",
+    ],
+    prebuilts: [
+        "gnss-default.rc",
+        "gnss-default.xml",
+        "android.hardware.location.gps.prebuilt.xml", // permission
     ],
 }

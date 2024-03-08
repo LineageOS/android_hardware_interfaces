@@ -11,6 +11,7 @@ xsd_config {
     name: "audio_policy_engine_configurable_configuration_V1_0",
     srcs: ["AllSchemas.xsd"],
     package_name: "audio.policy.configurable.V1_0",
+    root_elements: ["ParameterFrameworkConfiguration"],
 }
 
 // Unfortunately, all rules only have a single output, thus

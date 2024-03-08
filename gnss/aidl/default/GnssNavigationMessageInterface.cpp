@@ -29,7 +29,9 @@ using GnssNavigationMessageType = GnssNavigationMessage::GnssNavigationMessageTy
 
 std::shared_ptr<IGnssNavigationMessageCallback> GnssNavigationMessageInterface::sCallback = nullptr;
 
-GnssNavigationMessageInterface::GnssNavigationMessageInterface() : mMinIntervalMillis(1000) {}
+GnssNavigationMessageInterface::GnssNavigationMessageInterface() : mMinIntervalMillis(1000) {
+    mThreads.reserve(2);
+}
 
 GnssNavigationMessageInterface::~GnssNavigationMessageInterface() {
     waitForStoppingThreads();
@@ -61,11 +63,11 @@ void GnssNavigationMessageInterface::start() {
         ALOGD("restarting since nav msg has started");
         stop();
     }
-    // Wait for stopping previous thread.
-    waitForStoppingThreads();
 
     mIsActive = true;
-    mThread = std::thread([this]() {
+    mThreads.emplace_back(std::thread([this]() {
+        waitForStoppingThreads();
+        mThreadBlocker.reset();
         do {
             if (!mIsActive) {
                 break;
@@ -81,15 +83,22 @@ void GnssNavigationMessageInterface::start() {
             this->reportMessage(message);
         } while (mIsActive &&
                  mThreadBlocker.wait_for(std::chrono::milliseconds(mMinIntervalMillis)));
-    });
+    }));
 }
 
 void GnssNavigationMessageInterface::stop() {
     ALOGD("stop");
     mIsActive = false;
     mThreadBlocker.notify();
-    if (mThread.joinable()) {
-        mFutures.push_back(std::async(std::launch::async, [this] { mThread.join(); }));
+    for (auto iter = mThreads.begin(); iter != mThreads.end(); ++iter) {
+        if (iter->joinable()) {
+            mFutures.push_back(std::async(std::launch::async, [this, iter] {
+                iter->join();
+                mThreads.erase(iter);
+            }));
+        } else {
+            mThreads.erase(iter);
+        }
     }
 }
 

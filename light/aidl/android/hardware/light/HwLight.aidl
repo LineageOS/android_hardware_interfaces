@@ -22,7 +22,7 @@ import android.hardware.light.LightType;
  * A description of a single light. Multiple lights can map to the same physical
  * LED. Separate physical LEDs are always represented by separate instances.
  */
-@VintfStability
+@RustDerive(Clone=true, Copy=true) @VintfStability
 parcelable HwLight {
     /**
      * Integer ID used for controlling this light

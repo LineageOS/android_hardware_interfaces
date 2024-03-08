@@ -470,23 +470,7 @@ package audio.policy.configurable.V1_0 {
 
   public class XmlParser {
     ctor public XmlParser();
-    method public static audio.policy.configurable.V1_0.BitParameterBlock readBitParameterBlock(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
-    method public static audio.policy.configurable.V1_0.BooleanParameter readBooleanParameter(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
-    method public static audio.policy.configurable.V1_0.ComponentTypeSetType readComponentTypeSetType(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
-    method public static audio.policy.configurable.V1_0.ComponentTypeSetType readComponentTypeSetType(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
-    method public static audio.policy.configurable.V1_0.ConfigurableDomainType readConfigurableDomainType(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
-    method public static audio.policy.configurable.V1_0.ConfigurableDomains readConfigurableDomains(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
-    method public static audio.policy.configurable.V1_0.EnumParameterType readEnumParameterType(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
-    method public static audio.policy.configurable.V1_0.FixedPointParameterType readFixedPointParameterType(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
-    method public static audio.policy.configurable.V1_0.FloatingPointParameterType readFloatingPointParameterType(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
-    method public static audio.policy.configurable.V1_0.IntegerParameterType readIntegerParameterType(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
-    method public static audio.policy.configurable.V1_0.LinearAdaptationType readLinearAdaptationType(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
-    method public static audio.policy.configurable.V1_0.LogarithmicAdaptation readLogarithmicAdaptation(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
     method public static audio.policy.configurable.V1_0.ParameterFrameworkConfiguration readParameterFrameworkConfiguration(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
-    method public static audio.policy.configurable.V1_0.StringParameter readStringParameter(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
-    method public static audio.policy.configurable.V1_0.SubsystemPlugins readSubsystemPlugins(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
-    method public static audio.policy.configurable.V1_0.SubsystemType readSubsystemType(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
-    method public static audio.policy.configurable.V1_0.SystemClass readSystemClass(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
     method public static String readText(org.xmlpull.v1.XmlPullParser) throws java.io.IOException, org.xmlpull.v1.XmlPullParserException;
     method public static void skip(org.xmlpull.v1.XmlPullParser) throws java.io.IOException, org.xmlpull.v1.XmlPullParserException;
   }

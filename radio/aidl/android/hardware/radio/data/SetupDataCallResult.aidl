@@ -24,6 +24,7 @@ import android.hardware.radio.data.QosSession;
 import android.hardware.radio.data.SliceInfo;
 import android.hardware.radio.data.TrafficDescriptor;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable SetupDataCallResult {

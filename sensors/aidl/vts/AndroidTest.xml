@@ -22,13 +22,13 @@
 
     <target_preparer class="com.android.tradefed.targetprep.PushFilePreparer">
         <option name="cleanup" value="true" />
-        <option name="push" value="VtsAidlHalSensorsTargetTest->/data/local/tmp/VtsAidlHalSensorsTargetTest" />
+        <option name="push" value="VtsAidlHalSensorsTargetTest->/data/local/tests/unrestricted/VtsAidlHalSensorsTargetTest" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.GTest" >
         <option name="native-test-timeout" value="900000" />
         <option name="runtime-hint" value="300000"/>
-        <option name="native-test-device-path" value="/data/local/tmp" />
+        <option name="native-test-device-path" value="/data/local/tests/unrestricted" />
         <option name="module-name" value="VtsAidlHalSensorsTargetTest" />
     </test>
 </configuration>

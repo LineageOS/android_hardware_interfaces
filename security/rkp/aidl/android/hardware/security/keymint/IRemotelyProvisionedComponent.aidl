@@ -185,77 +185,7 @@ interface IRemotelyProvisionedComponent {
      *
      *        In either case, the root is self-signed.
      *
-     *            EekChain = [ + SignedSignatureKey, SignedEek ]
-     *
-     *            SignedSignatureKey = [              ; COSE_Sign1
-     *                protected: bstr .cbor {
-     *                    1 : AlgorithmEdDSA / AlgorithmES256,  ; Algorithm
-     *                },
-     *                unprotected: {},
-     *                payload: bstr .cbor SignatureKeyEd25519 /
-     *                         bstr .cbor SignatureKeyP256,
-     *                signature: bstr PureEd25519(.cbor SignatureKeySignatureInput) /
-     *                           bstr ECDSA(.cbor SignatureKeySignatureInput)
-     *            ]
-     *
-     *            SignatureKeyEd25519 = {             ; COSE_Key
-     *                 1 : 1,                         ; Key type : Octet Key Pair
-     *                 3 : AlgorithmEdDSA,            ; Algorithm
-     *                 -1 : 6,                        ; Curve : Ed25519
-     *                 -2 : bstr                      ; Ed25519 public key
-     *            }
-     *
-     *            SignatureKeyP256 = {                ; COSE_Key
-     *                 1 : 2,                         ; Key type : EC2
-     *                 3 : AlgorithmES256,            ; Algorithm
-     *                 -1 : 1,                        ; Curve: P256
-     *                 -2 : bstr,                     ; X coordinate
-     *                 -3 : bstr                      ; Y coordinate
-     *            }
-     *
-     *            SignatureKeySignatureInput = [
-     *                context: "Signature1",
-     *                body_protected: bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 },
-     *                external_aad: bstr .size 0,
-     *                payload: bstr .cbor SignatureKeyEd25519 /
-     *                         bstr .cbor SignatureKeyP256
-     *            ]
-     *
-     *            ; COSE_Sign1
-     *            SignedEek = [
-     *                protected: bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 },
-     *                unprotected: {},
-     *                payload: bstr .cbor EekX25519 / .cbor EekP256,
-     *                signature: bstr PureEd25519(.cbor EekSignatureInput) /
-     *                           bstr ECDSA(.cbor EekSignatureInput)
-     *            ]
-     *
-     *            EekX25519 = {            ; COSE_Key
-     *                1 : 1,               ; Key type : Octet Key Pair
-     *                2 : bstr             ; KID : EEK ID
-     *                3 : -25,             ; Algorithm : ECDH-ES + HKDF-256
-     *                -1 : 4,              ; Curve : X25519
-     *                -2 : bstr            ; X25519 public key, little-endian
-     *            }
-     *
-     *            EekP256 = {              ; COSE_Key
-     *                1 : 2,               ; Key type : EC2
-     *                2 : bstr             ; KID : EEK ID
-     *                3 : -25,             ; Algorithm : ECDH-ES + HKDF-256
-     *                -1 : 1,              ; Curve : P256
-     *                -2 : bstr            ; Sender X coordinate
-     *                -3 : bstr            ; Sender Y coordinate
-     *            }
-     *
-     *            EekSignatureInput = [
-     *                context: "Signature1",
-     *                body_protected: bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 },
-     *                external_aad: bstr .size 0,
-     *                payload: bstr .cbor EekX25519 / .cbor EekP256
-     *            ]
-     *
-     *            AlgorithmES256 = -7      ; RFC 8152 section 8.1
-     *            AlgorithmEdDSA = -8      ; RFC 8152 section 8.2
+     *        See generateCertificateRequest.cddl for CDDL definitions.
      *
      *        If the contents of endpointEncryptionKey do not match the SignedEek structure above,
      *        the method must return STATUS_INVALID_EEK.
@@ -283,25 +213,9 @@ interface IRemotelyProvisionedComponent {
      *            HMAC-256(EK_mac, .cbor KeysToMacStructure)
      *
      *        Where EK_mac is an ephemeral MAC key, found in ProtectedData (see below).  The MACed
-     *        data is the "tag" field of a COSE_Mac0 structure like:
+     *        data is the "tag" field of a MacedKeys COSE_Mac0 structure.
      *
-     *            MacedKeys = [                            ; COSE_Mac0
-     *                protected : bstr .cbor {
-     *                    1 : 5,                           ; Algorithm : HMAC-256
-     *                },
-     *                unprotected : {},
-     *                ; Payload is PublicKeys from keysToSign argument, in provided order.
-     *                payload: bstr .cbor [ * PublicKey ],
-     *                tag: bstr
-     *            ]
-     *
-     *            KeysToMacStructure = [
-     *                context : "MAC0",
-     *                protected : bstr .cbor { 1 : 5 },    ; Algorithm : HMAC-256
-     *                external_aad : bstr .size 0,
-     *                ; Payload is PublicKeys from keysToSign argument, in provided order.
-     *                payload : bstr .cbor [ * PublicKey ]
-     *            ]
+     *        See generateCertificateRequest.cddl for CDDL definitions.
      */
     byte[] generateCertificateRequest(in boolean testMode, in MacedPublicKey[] keysToSign,
             in byte[] endpointEncryptionCertChain, in byte[] challenge, out DeviceInfo deviceInfo,
@@ -322,168 +236,9 @@ interface IRemotelyProvisionedComponent {
      *        use different semantic data for this field, but the supported sizes must be between 0
      *        and 64 bytes, inclusive.
      *
-     * @return the following CBOR Certificate Signing Request (Csr) serialized into a byte array:
+     * @return a CBOR Certificate Signing Request (Csr) serialized into a byte array.
      *
-     * Csr = AuthenticatedRequest<CsrPayload>
-     *
-     * CsrPayload = [                      ; CBOR Array defining the payload for Csr
-     *     version: 3,                     ; The CsrPayload CDDL Schema version.
-     *     CertificateType,                ; The type of certificate being requested.
-     *     DeviceInfo,                     ; Defined in DeviceInfo.aidl
-     *     KeysToSign,                     ; Provided by the method parameters
-     * ]
-     *
-     *  ; A tstr identifying the type of certificate. The set of supported certificate types may
-     *  ; be extended without requiring a version bump of the HAL. Custom certificate types may
-     *  ; be used, but the provisioning server may reject the request for an unknown certificate
-     *  ; type. The currently defined certificate types are:
-     *  ;  - "widevine"
-     *  ;  - "keymint"
-     *  CertificateType = tstr
-     *
-     * KeysToSign = [ * PublicKey ]   ; Please see MacedPublicKey.aidl for the PublicKey definition.
-     *
-     * AuthenticatedRequest<T> = [
-     *     version: 1,              ; The AuthenticatedRequest CDDL Schema version.
-     *     UdsCerts,
-     *     DiceCertChain,
-     *     SignedData<[
-     *         challenge: bstr .size (0..64), ; Provided by the method parameters
-     *         bstr .cbor T,
-     *     ]>,
-     * ]
-     *
-     * ; COSE_Sign1 (untagged)
-     * SignedData<Data> = [
-     *     protected: bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 / AlgorithmES384 },
-     *     unprotected: {},
-     *     payload: bstr .cbor Data / nil,
-     *     signature: bstr      ; PureEd25519(CDI_Leaf_Priv, SignedDataSigStruct<Data>) /
-     *                          ; ECDSA(CDI_Leaf_Priv, SignedDataSigStruct<Data>)
-     * ]
-     *
-     * ; Sig_structure for SignedData
-     * SignedDataSigStruct<Data> = [
-     *     context: "Signature1",
-     *     protected: bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 / AlgorithmES384 },
-     *     external_aad: bstr .size 0,
-     *     payload: bstr .cbor Data / nil,
-     * ]
-     *
-     * ; UdsCerts allows the platform to provide additional certifications for the UDS_Pub. For
-     * ; example, this could be provided by the hardware vendor, who certifies all of their chips.
-     * ; The SignerName is a free-form string describing who generated the signature. The root
-     * ; certificate will need to be communicated to the verifier out of band, along with the
-     * ; SignerName that is expected for the given root certificate.
-     * UdsCerts = {
-     *     * SignerName => UdsCertChain
-     * }
-     *
-     * ; SignerName is a string identifier that indicates both the signing authority as
-     * ; well as the format of the UdsCertChain
-     * SignerName = tstr
-     *
-     * UdsCertChain = [
-     *     2* X509Certificate       ; Root -> ... -> Leaf. "Root" is the vendor self-signed
-     *                              ; cert, "Leaf" contains UDS_Public. There may also be
-     *                              ; intermediate certificates between Root and Leaf.
-     * ]
-     *
-     * ; A bstr containing a DER-encoded X.509 certificate (RSA, NIST P-curve, or EdDSA)
-     * X509Certificate = bstr
-     *
-     * ; The DICE Chain contains measurements about the device firmware.
-     * ; The first entry in the DICE Chain is the UDS_Pub, encoded as a COSE_key. All entries
-     * ; after the first describe a link in the boot chain (e.g. bootloaders: BL1, BL2, ... BLN)
-     * ; Note that there is no DiceChainEntry for UDS_pub, only a "bare" COSE_key.
-     * DiceCertChain = [
-     *     PubKeyEd25519 / PubKeyECDSA256 / PubKeyECDSA384,  ; UDS_Pub
-     *     + DiceChainEntry,                ; First CDI_Certificate -> Last CDI_Certificate
-     *                                      ; Last certificate corresponds to KeyMint's DICE key.
-     * ]
-     *
-     * ; This is the signed payload for each entry in the DICE chain. Note that the "Configuration
-     * ; Input Values" described by the Open Profile are not used here. Instead, the DICE chain
-     * ; defines its own configuration values for the Configuration Descriptor field. See
-     * ; the Open Profile for DICE for more details on the fields. SHA256, SHA384 and SHA512 are
-     * ; acceptable hash algorithms. The digest bstr values in the payload are the digest values
-     * ; without any padding. Note that this implies that the digest is a 32-byte bstr for SHA256
-     * ; and a 48-byte bstr for SHA384. This is an intentional, minor deviation from Open Profile
-     * ; for DICE, which specifies all digests are 64 bytes.
-     * DiceChainEntryPayload = {                    ; CWT [RFC8392]
-     *     1 : tstr,                                ; Issuer
-     *     2 : tstr,                                ; Subject
-     *     -4670552 : bstr .cbor PubKeyEd25519 /
-     *                bstr .cbor PubKeyECDSA256,
-     *                bstr .cbor PubKeyECDSA384,    ; Subject Public Key
-     *     -4670553 : bstr                          ; Key Usage
-     *
-     *     ; NOTE: All of the following fields may be omitted for a "Degenerate DICE Chain", as
-     *     ;       described above.
-     *     -4670545 : bstr,                         ; Code Hash
-     *     ? -4670546 : bstr,                       ; Code Descriptor
-     *     ? -4670547 : bstr,                       ; Configuration Hash
-     *     -4670548 : bstr .cbor {                  ; Configuration Descriptor
-     *         ? -70002 : tstr,                         ; Component name
-     *         ? -70003 : int / tstr,                   ; Component version
-     *         ? -70004 : null,                         ; Resettable
-     *         ? -70005 : uint,                         ; Security version
-     *     },
-     *     -4670549 : bstr,                         ; Authority Hash
-     *     ? -4670550 : bstr,                       ; Authority Descriptor
-     *     -4670551 : bstr,                         ; Mode
-     * }
-     *
-     * ; Each entry in the DICE chain is a DiceChainEntryPayload signed by the key from the previous
-     * ; entry in the DICE chain array.
-     * DiceChainEntry = [                            ; COSE_Sign1 (untagged)
-     *     protected : bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 / AlgorithmES384 },
-     *     unprotected: {},
-     *     payload: bstr .cbor DiceChainEntryPayload,
-     *     signature: bstr ; PureEd25519(SigningKey, DiceChainEntryInput) /
-     *                     ; ECDSA(SigningKey, DiceChainEntryInput)
-     *                     ; See RFC 8032 for details of how to encode the signature value
-     *                     ; for Ed25519.
-     * ]
-     *
-     * DiceChainEntryInput = [
-     *     context: "Signature1",
-     *     protected: bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 / AlgorithmES384 },
-     *     external_aad: bstr .size 0,
-     *     payload: bstr .cbor DiceChainEntryPayload
-     * ]
-     *
-     * ; The following section defines some types that are reused throughout the above
-     * ; data structures.
-     * ; NOTE: Integer encoding is different for Ed25519 and P256 keys:
-     * ;       - Ed25519 is LE: https://www.rfc-editor.org/rfc/rfc8032#section-3.1
-     * ;       - P256 is BE: https://www.secg.org/sec1-v2.pdf#page=19 (section 2.3.7)
-     * PubKeyEd25519 = {                ; COSE_Key
-     *     1 : 1,                       ; Key type : octet key pair
-     *     3 : AlgorithmEdDSA,          ; Algorithm : EdDSA
-     *     -1 : 6,                      ; Curve : Ed25519
-     *     -2 : bstr                    ; X coordinate, little-endian
-     * }
-     *
-     * PubKeyECDSA256 = {               ; COSE_Key
-     *     1 : 2,                       ; Key type : EC2
-     *     3 : AlgorithmES256,          ; Algorithm : ECDSA w/ SHA-256
-     *     -1 : 1,                      ; Curve: P256
-     *     -2 : bstr,                   ; X coordinate, big-endian
-     *     -3 : bstr                    ; Y coordinate, big-endian
-     * }
-     *
-     * PubKeyECDSA384 = {               ; COSE_Key
-     *     1 : 2,                       ; Key type : EC2
-     *     3 : AlgorithmES384,          ; Algorithm : ECDSA w/ SHA-384
-     *     -1 : 2,                      ; Curve: P384
-     *     -2 : bstr,                   ; X coordinate
-     *     -3 : bstr                    ; Y coordinate
-     * }
-     *
-     * AlgorithmES256 = -7
-     * AlgorithmES384 = -35
-     * AlgorithmEdDSA = -8
+     *         See generateCertificateRequestV2.cddl for CDDL definitions.
      */
     byte[] generateCertificateRequestV2(in MacedPublicKey[] keysToSign, in byte[] challenge);
 }

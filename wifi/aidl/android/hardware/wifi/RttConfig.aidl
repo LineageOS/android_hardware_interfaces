@@ -32,7 +32,7 @@ parcelable RttConfig {
      */
     byte[6] addr;
     /**
-     * 1-sided or 2-sided RTT.
+     * 1-sided or 2-sided RTT (IEEE 802.11mc or IEEE 802. 11az).
      */
     RttType type;
     /**
@@ -47,6 +47,8 @@ parcelable RttConfig {
      * Time interval between bursts (units: 100 ms).
      * Applies to 1-sided and 2-sided RTT multi-burst requests.
      * Range: 0-31, 0: no preference by initiator (2-sided RTT).
+     *
+     * Note: Applicable to IEEE 802.11mc only.
      */
     int burstPeriod;
     /**
@@ -60,6 +62,9 @@ parcelable RttConfig {
      * number of RTT results is the following:
      * for 1-sided RTT: max num of RTT results = (2^num_burst)*(num_frames_per_burst)
      * for 2-sided RTT: max num of RTT results = (2^num_burst)*(num_frames_per_burst - 1)
+     *
+     * Note: Applicable to IEEE 802.11mc only. For IEEE 802.11az refer
+     * |RttConfig.txLtfRepetitionCount|.
      */
     int numBurst;
     /**
@@ -70,6 +75,8 @@ parcelable RttConfig {
      * equals the number of FTM frames that the
      * initiator will request that the responder sends
      * in a single frame.
+     *
+     * Note: Applicable to IEEE 802.11mc only.
      */
     int numFramesPerBurst;
     /**
@@ -95,8 +102,8 @@ parcelable RttConfig {
      */
     boolean mustRequestLcr;
     /**
-     * Applies to 1-sided and 2-sided RTT. Valid values will
-     * be 2-11 and 15 as specified by the 802.11mc std for
+     * Applies to 1-sided and 2-sided IEEE 802.11mc RTT. Valid values will
+     * be 2-11 and 15 as specified by the IEEE 802.11mc std for
      * the FTM parameter burst duration. In a multi-burst
      * request, if responder overrides with larger value,
      * the initiator will return failure. In a single-burst
@@ -113,4 +120,17 @@ parcelable RttConfig {
      * RTT BW to be used in the RTT frames.
      */
     RttBw bw;
+    /**
+     * IEEE 802.11az Non-Trigger-based (non-TB) minimum measurement time in milliseconds.
+     */
+    int ntbMinMeasurementTimeMillis;
+    /**
+     * IEEE 802.11az Non-Trigger-based (non-TB) maximum measurement time in milliseconds.
+     */
+    int ntbMaxMeasurementTimeMillis;
+    /**
+     * Multiple transmissions of HE-LTF symbols in an HE Ranging NDP. A value of 1 indicates no
+     * repetition.
+     */
+    int txLtfRepetitionCount;
 }

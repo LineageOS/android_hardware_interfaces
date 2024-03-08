@@ -11,15 +11,17 @@ rust_binary {
     name: "android.hardware.uwb-service",
     crate_name: "uwb_default_hal",
     relative_install_path: "hw",
-    vintf_fragments: ["uwb-service.xml"],
     vendor: true,
+    prefer_rlib: true,
     rustlibs: [
         "android.hardware.uwb-V1-rust",
+        "liblibc",
         "liblogger",
         "liblog_rust",
         "libbinder_rs",
         "libbinder_tokio_rs",
         "libtokio",
+        "libtokio_util",
         "libnix",
         "libanyhow",
     ],
@@ -28,5 +30,38 @@ rust_binary {
     ],
     srcs: [
         "src/service.rs",
+    ],
+}
+
+prebuilt_etc {
+    name: "uwb-service.rc",
+    src: "uwb-service.rc",
+    vendor: true,
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "uwb-service.xml",
+    src: "uwb-service.xml",
+    sub_dir: "vintf",
+    vendor: true,
+    installable: false,
+}
+
+apex {
+    name: "com.android.hardware.uwb",
+    manifest: "manifest.json",
+    file_contexts: "file_contexts",
+    key: "com.android.hardware.key",
+    certificate: ":com.android.hardware.certificate",
+    updatable: false,
+    vendor: true,
+
+    binaries: [
+        "android.hardware.uwb-service",
+    ],
+    prebuilts: [
+        "uwb-service.rc", // init_rc
+        "uwb-service.xml", // vintf_fragments
     ],
 }

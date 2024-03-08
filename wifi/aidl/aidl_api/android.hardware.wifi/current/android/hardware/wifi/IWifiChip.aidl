@@ -83,6 +83,8 @@ interface IWifiChip {
   void triggerSubsystemRestart();
   void enableStaChannelForPeerNetwork(in int channelCategoryEnableFlag);
   void setMloMode(in android.hardware.wifi.IWifiChip.ChipMloMode mode);
+  @PropagateAllowBlocking android.hardware.wifi.IWifiApIface createApOrBridgedApIface(in android.hardware.wifi.IfaceConcurrencyType iface, in android.hardware.wifi.common.OuiKeyedData[] vendorData);
+  void setVoipMode(in android.hardware.wifi.IWifiChip.VoipMode mode);
   const int NO_POWER_CAP_CONSTANT = 0x7FFFFFFF;
   @Backing(type="int") @VintfStability
   enum FeatureSetMask {
@@ -95,6 +97,7 @@ interface IWifiChip {
     WIGIG = (1 << 6) /* 64 */,
     SET_AFC_CHANNEL_ALLOWANCE = (1 << 7) /* 128 */,
     T2LM_NEGOTIATION = (1 << 8) /* 256 */,
+    SET_VOIP_MODE = (1 << 9) /* 512 */,
   }
   @VintfStability
   parcelable ChipConcurrencyCombinationLimit {
@@ -159,6 +162,11 @@ interface IWifiChip {
     CELLULAR_COEXISTENCE = (1 << 0) /* 1 */,
     CONCURRENCY = (1 << 1) /* 2 */,
     NAN_INSTANT_MODE = (1 << 2) /* 4 */,
+  }
+  @Backing(type="int") @VintfStability
+  enum VoipMode {
+    OFF = 0,
+    VOICE = 1,
   }
   @Backing(type="int") @VintfStability
   enum ChannelCategoryMask {

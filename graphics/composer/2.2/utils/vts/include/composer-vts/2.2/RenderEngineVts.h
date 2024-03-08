@@ -22,7 +22,6 @@
 #include <renderengine/ExternalTexture.h>
 #include <renderengine/RenderEngine.h>
 #include <ui/GraphicBuffer.h>
-#include <ui/GraphicBufferAllocator.h>
 #include <ui/PixelFormat.h>
 #include <ui/Rect.h>
 #include <ui/Region.h>
@@ -34,10 +33,8 @@ namespace composer {
 namespace V2_2 {
 namespace vts {
 
-using mapper::V2_1::IMapper;
 using renderengine::DisplaySettings;
 using renderengine::RenderEngineCreationArgs;
-using vts::Gralloc;
 
 class TestRenderEngine {
   public:

@@ -2,17 +2,6 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
-apex_key {
-    name: "com.android.hardware.wifi.key",
-    public_key: "com.android.hardware.wifi.avbpubkey",
-    private_key: "com.android.hardware.wifi.pem",
-}
-
-android_app_certificate {
-    name: "com.android.hardware.wifi.certificate",
-    certificate: "com.android.hardware.wifi",
-}
-
 genrule {
     name: "gen-android.hardware.wifi.rc",
     srcs: [":default-android.hardware.wifi-service.rc"],
@@ -36,12 +25,12 @@ prebuilt_etc {
 apex {
     name: "com.android.hardware.wifi",
     manifest: "apex_manifest.json",
-    key: "com.android.hardware.wifi.key",
-    certificate: ":com.android.hardware.wifi.certificate",
+    key: "com.android.hardware.key",
+    certificate: ":com.android.hardware.certificate",
     file_contexts: "file_contexts",
-    use_vndk_as_stable: true,
     updatable: false,
-    soc_specific: true,
+    vendor: true,
+
     binaries: [
         "android.hardware.wifi-service",
     ],

@@ -6,6 +6,11 @@
 // Source Licenses. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+
+// TODO(152067309): Remove this once the libc++ upgrade is complete.
+#include <__config>
+#if defined(_LIBCPP_VERSION) && _LIBCPP_VERSION <= 8000
+
 /* clang-format off */
 #include "automotive/filesystem"
 #include <array>
@@ -1771,3 +1776,5 @@ error_code directory_entry::__do_refresh() noexcept {
 #endif
 }  // namespace android::hardware::automotive::filesystem
 /* clang-format on */
+
+#endif // defined(_LIBCPP_VERSION) && _LIBCPP_VERSION <= 8000

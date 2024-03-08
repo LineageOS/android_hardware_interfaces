@@ -75,13 +75,13 @@ ExternalCameraProvider::~ExternalCameraProvider() {
 
 ndk::ScopedAStatus ExternalCameraProvider::setCallback(
         const std::shared_ptr<ICameraProviderCallback>& in_callback) {
+    if (in_callback == nullptr) {
+        return fromStatus(Status::ILLEGAL_ARGUMENT);
+    }
+
     {
         Mutex::Autolock _l(mLock);
         mCallback = in_callback;
-    }
-
-    if (mCallback == nullptr) {
-        return fromStatus(Status::OK);
     }
 
     for (const auto& pair : mCameraStatusMap) {

@@ -54,6 +54,9 @@ interface ISupplicantStaIface {
   android.hardware.wifi.supplicant.IfaceType getType();
   android.hardware.wifi.supplicant.WpaDriverCapabilitiesMask getWpaDriverCapabilities();
   void initiateAnqpQuery(in byte[] macAddress, in android.hardware.wifi.supplicant.AnqpInfoId[] infoElements, in android.hardware.wifi.supplicant.Hs20AnqpSubtypes[] subTypes);
+  /**
+   * @deprecated No longer in use.
+   */
   void initiateHs20IconQuery(in byte[] macAddress, in String fileName);
   void initiateTdlsDiscover(in byte[] macAddress);
   void initiateTdlsSetup(in byte[] macAddress);
@@ -98,5 +101,7 @@ interface ISupplicantStaIface {
   android.hardware.wifi.supplicant.SignalPollResult[] getSignalPollResults();
   android.hardware.wifi.supplicant.QosPolicyScsRequestStatus[] addQosPolicyRequestForScs(in android.hardware.wifi.supplicant.QosPolicyScsData[] qosPolicyData);
   android.hardware.wifi.supplicant.QosPolicyScsRequestStatus[] removeQosPolicyForScs(in byte[] scsPolicyIds);
+  void configureMscs(in android.hardware.wifi.supplicant.MscsParams params);
+  void disableMscs();
   const int MAX_POLICIES_PER_QOS_SCS_REQUEST = 16;
 }

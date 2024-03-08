@@ -51,6 +51,7 @@ using aidl::android::media::audio::common::AudioDeviceDescription;
 using aidl::android::media::audio::common::AudioDeviceType;
 using aidl::android::media::audio::common::AudioMode;
 using aidl::android::media::audio::common::AudioSource;
+using android::hardware::audio::common::testing::detail::TestExecutionTracer;
 
 enum ParamName { PARAM_INSTANCE_NAME };
 using EffectTestParam = std::tuple<std::pair<std::shared_ptr<IFactory>, Descriptor>>;
@@ -595,8 +596,14 @@ TEST_P(AudioEffectTest, SetAndGetParameterVolume) {
 
     Parameter::Id id = Parameter::Id::make<Parameter::Id::commonTag>(Parameter::volumeStereo);
     Parameter::VolumeStereo volume = {.left = 10.0, .right = 10.0};
-    ASSERT_NO_FATAL_FAILURE(
-            setAndGetParameter(id, Parameter::make<Parameter::volumeStereo>(volume)));
+    if (mDescriptor.common.flags.volume == Flags::Volume::CTRL) {
+        Parameter get;
+        EXPECT_IS_OK(mEffect->setParameter(volume));
+        EXPECT_IS_OK(mEffect->getParameter(id, &get));
+    } else {
+        ASSERT_NO_FATAL_FAILURE(
+                setAndGetParameter(id, Parameter::make<Parameter::volumeStereo>(volume)));
+    }
 
     ASSERT_NO_FATAL_FAILURE(command(mEffect, CommandId::STOP));
     ASSERT_NO_FATAL_FAILURE(expectState(mEffect, State::IDLE));
@@ -907,6 +914,7 @@ GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioEffectDataPathTest);
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
+    ::testing::UnitTest::GetInstance()->listeners().Append(new TestExecutionTracer());
     ABinderProcess_setThreadPoolMaxThreadCount(1);
     ABinderProcess_startThreadPool();
     return RUN_ALL_TESTS();

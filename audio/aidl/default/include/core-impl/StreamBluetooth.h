@@ -24,7 +24,7 @@
 #include <aidl/android/hardware/audio/core/IBluetoothLe.h>
 
 #include "core-impl/DevicePortProxy.h"
-#include "core-impl/Module.h"
+#include "core-impl/ModuleBluetooth.h"
 #include "core-impl/Stream.h"
 
 namespace aidl::android::hardware::audio::core {
@@ -32,7 +32,7 @@ namespace aidl::android::hardware::audio::core {
 class StreamBluetooth : public StreamCommonImpl {
   public:
     StreamBluetooth(StreamContext* context, const Metadata& metadata,
-                    Module::BtProfileHandles&& btHandles);
+                    ModuleBluetooth::BtProfileHandles&& btHandles);
     // Methods of 'DriverInterface'.
     ::android::status_t init() override;
     ::android::status_t drain(StreamDescriptor::DrainMode) override;
@@ -80,7 +80,7 @@ class StreamInBluetooth final : public StreamIn, public StreamBluetooth {
             StreamContext&& context,
             const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
             const std::vector<::aidl::android::media::audio::common::MicrophoneInfo>& microphones,
-            Module::BtProfileHandles&& btHandles);
+            ModuleBluetooth::BtProfileHandles&& btHandles);
 
   private:
     void onClose(StreamDescriptor::State) override { defaultOnClose(); }
@@ -97,7 +97,7 @@ class StreamOutBluetooth final : public StreamOut, public StreamBluetooth {
             const ::aidl::android::hardware::audio::common::SourceMetadata& sourceMetadata,
             const std::optional<::aidl::android::media::audio::common::AudioOffloadInfo>&
                     offloadInfo,
-            Module::BtProfileHandles&& btHandles);
+            ModuleBluetooth::BtProfileHandles&& btHandles);
 
   private:
     void onClose(StreamDescriptor::State) override { defaultOnClose(); }

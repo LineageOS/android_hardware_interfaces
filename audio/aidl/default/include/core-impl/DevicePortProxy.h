@@ -25,10 +25,9 @@
 #include <aidl/android/hardware/audio/common/SourceMetadata.h>
 #include <aidl/android/hardware/bluetooth/audio/BluetoothAudioStatus.h>
 #include <aidl/android/hardware/bluetooth/audio/PcmConfiguration.h>
+#include <aidl/android/hardware/bluetooth/audio/PresentationPosition.h>
 #include <aidl/android/hardware/bluetooth/audio/SessionType.h>
 #include <aidl/android/media/audio/common/AudioDeviceDescription.h>
-
-#include "BluetoothAudioSessionControl.h"
 
 namespace android::bluetooth::audio::aidl {
 

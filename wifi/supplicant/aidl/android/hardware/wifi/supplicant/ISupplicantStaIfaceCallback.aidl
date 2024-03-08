@@ -198,6 +198,8 @@ oneway interface ISupplicantStaIfaceCallback {
     /**
      * Used to indicate the result of Hotspot 2.0 Icon query.
      *
+     * @deprecated No longer in use.
+     *
      * @param bssid BSSID of the access point.
      * @param fileName Name of the file that was requested.
      * @param data Icon data fetched from the access point.

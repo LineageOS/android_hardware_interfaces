@@ -18,6 +18,7 @@ package android.hardware.biometrics.common;
 
 import android.hardware.biometrics.common.AuthenticateReason;
 import android.hardware.biometrics.common.DisplayState;
+import android.hardware.biometrics.common.FoldState;
 import android.hardware.biometrics.common.OperationReason;
 import android.hardware.biometrics.common.WakeReason;
 
@@ -71,4 +72,7 @@ parcelable OperationContext {
      * framework may choose to omit the reason at any time based on the device's policy.
      */
     @nullable AuthenticateReason authenticateReason;
+
+    /** The current fold/unfold state. */
+    FoldState foldState = FoldState.UNKNOWN;
 }

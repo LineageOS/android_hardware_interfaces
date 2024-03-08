@@ -16,8 +16,10 @@
 
 package android.hardware.radio.ims.media;
 
+/** @hide */
 @VintfStability
 @Backing(type="int")
+@JavaDerive(toString=true)
 enum RtpError {
     /** Success */
     NONE = 0,

@@ -37,10 +37,10 @@ package android.hardware.gnss;
 interface IGnssPowerIndicationCallback {
   void setCapabilitiesCb(in int capabilities);
   oneway void gnssPowerStatsCb(in android.hardware.gnss.GnssPowerStats gnssPowerStats);
-  const int CAPABILITY_TOTAL = 1;
-  const int CAPABILITY_SINGLEBAND_TRACKING = 2;
-  const int CAPABILITY_MULTIBAND_TRACKING = 4;
-  const int CAPABILITY_SINGLEBAND_ACQUISITION = 8;
-  const int CAPABILITY_MULTIBAND_ACQUISITION = 16;
-  const int CAPABILITY_OTHER_MODES = 32;
+  const int CAPABILITY_TOTAL = (1 << 0) /* 1 */;
+  const int CAPABILITY_SINGLEBAND_TRACKING = (1 << 1) /* 2 */;
+  const int CAPABILITY_MULTIBAND_TRACKING = (1 << 2) /* 4 */;
+  const int CAPABILITY_SINGLEBAND_ACQUISITION = (1 << 3) /* 8 */;
+  const int CAPABILITY_MULTIBAND_ACQUISITION = (1 << 4) /* 16 */;
+  const int CAPABILITY_OTHER_MODES = (1 << 5) /* 32 */;
 }

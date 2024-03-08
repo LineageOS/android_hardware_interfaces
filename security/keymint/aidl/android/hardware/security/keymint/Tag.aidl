@@ -643,6 +643,8 @@ enum Tag {
      * Tag::ATTESTATION_CHALLENGE is used to deliver a "challenge" value to the attested key
      * generation/import methods, which must place the value in the KeyDescription SEQUENCE of the
      * attestation extension.
+     * The challenge value may be up to 128 bytes. If the caller provides a bigger challenge,
+     * INVALID_INPUT_LENGTH error should be returned.
      *
      * Must never appear in KeyCharacteristics.
      */
@@ -971,7 +973,9 @@ enum Tag {
      * Tag::CERTIFICATE_NOT_BEFORE the beginning of the validity of the certificate in UNIX epoch
      * time in milliseconds.  This value is used when generating attestation or self signed
      * certificates.  ErrorCode::MISSING_NOT_BEFORE must be returned if this tag is not provided if
-     * this tag is not provided to generateKey or importKey.
+     * this tag is not provided to generateKey or importKey.  For importWrappedKey, there is no way
+     * to specify the value of this tag for a wrapped asymmetric key, so a value of 0 is suggested
+     * for certificate generation.
      */
     CERTIFICATE_NOT_BEFORE = TagType.DATE | 1008,
 
@@ -979,7 +983,9 @@ enum Tag {
      * Tag::CERTIFICATE_NOT_AFTER the end of the validity of the certificate in UNIX epoch time in
      * milliseconds.  This value is used when generating attestation or self signed certificates.
      * ErrorCode::MISSING_NOT_AFTER must be returned if this tag is not provided to generateKey or
-     * importKey.
+     * importKey.  For importWrappedKey, there is no way to specify the value of this tag for a
+     * wrapped asymmetric key, so a value of 253402300799000 is suggested for certificate
+     * generation.
      */
     CERTIFICATE_NOT_AFTER = TagType.DATE | 1009,
 

@@ -22,7 +22,8 @@ namespace aidl::android::hardware::audio::core {
 
 class ModulePrimary final : public Module {
   public:
-    ModulePrimary() : Module(Type::DEFAULT) {}
+    ModulePrimary(std::unique_ptr<Configuration>&& config)
+        : Module(Type::DEFAULT, std::move(config)) {}
 
   protected:
     ndk::ScopedAStatus getTelephony(std::shared_ptr<ITelephony>* _aidl_return) override;
@@ -38,6 +39,8 @@ class ModulePrimary final : public Module {
             const std::optional<::aidl::android::media::audio::common::AudioOffloadInfo>&
                     offloadInfo,
             std::shared_ptr<StreamOut>* result) override;
+    int32_t getNominalLatencyMs(
+            const ::aidl::android::media::audio::common::AudioPortConfig& portConfig) override;
 
   private:
     ChildInterface<ITelephony> mTelephony;

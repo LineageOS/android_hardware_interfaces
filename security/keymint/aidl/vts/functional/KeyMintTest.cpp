@@ -693,6 +693,7 @@ TEST_P(NewKeyGenerationTest, Aes) {
                     builder.Authorization(TAG_MIN_MAC_LENGTH, 128);
                 }
                 ASSERT_EQ(ErrorCode::OK, GenerateKey(builder, &key_blob, &key_characteristics));
+                KeyBlobDeleter deleter(keymint_, key_blob);
 
                 EXPECT_GT(key_blob.size(), 0U);
                 CheckSymmetricParams(key_characteristics);
@@ -703,8 +704,6 @@ TEST_P(NewKeyGenerationTest, Aes) {
                 EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::AES));
                 EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
                         << "Key size " << key_size << "missing";
-
-                CheckedDeleteKey(&key_blob);
             }
         }
     }
@@ -877,6 +876,7 @@ TEST_P(NewKeyGenerationTest, TripleDes) {
                                                              .Authorization(TAG_NO_AUTH_REQUIRED)
                                                              .SetDefaultValidity(),
                                                      &key_blob, &key_characteristics));
+                KeyBlobDeleter deleter(keymint_, key_blob);
 
                 EXPECT_GT(key_blob.size(), 0U);
                 CheckSymmetricParams(key_characteristics);
@@ -887,8 +887,6 @@ TEST_P(NewKeyGenerationTest, TripleDes) {
                 EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::TRIPLE_DES));
                 EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
                         << "Key size " << key_size << "missing";
-
-                CheckedDeleteKey(&key_blob);
             }
         }
     }
@@ -924,6 +922,7 @@ TEST_P(NewKeyGenerationTest, TripleDesWithAttestation) {
                                                              .AttestationApplicationId(app_id)
                                                              .SetDefaultValidity(),
                                                      &key_blob, &key_characteristics));
+                KeyBlobDeleter deleter(keymint_, key_blob);
 
                 EXPECT_GT(key_blob.size(), 0U);
                 CheckSymmetricParams(key_characteristics);
@@ -934,8 +933,6 @@ TEST_P(NewKeyGenerationTest, TripleDesWithAttestation) {
                 EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::TRIPLE_DES));
                 EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
                         << "Key size " << key_size << "missing";
-
-                CheckedDeleteKey(&key_blob);
             }
         }
     }
@@ -1003,6 +1000,7 @@ TEST_P(NewKeyGenerationTest, Rsa) {
                                                      .Padding(PaddingMode::NONE)
                                                      .SetDefaultValidity(),
                                              &key_blob, &key_characteristics));
+        KeyBlobDeleter deleter(keymint_, key_blob);
 
         ASSERT_GT(key_blob.size(), 0U);
         CheckBaseParams(key_characteristics);
@@ -1014,8 +1012,6 @@ TEST_P(NewKeyGenerationTest, Rsa) {
         EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
                 << "Key size " << key_size << "missing";
         EXPECT_TRUE(crypto_params.Contains(TAG_RSA_PUBLIC_EXPONENT, 65537U));
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -1139,6 +1135,7 @@ TEST_P(NewKeyGenerationTest, RsaWithAttestation) {
             }
         }
         ASSERT_EQ(ErrorCode::OK, result);
+        KeyBlobDeleter deleter(keymint_, key_blob);
         ASSERT_GT(key_blob.size(), 0U);
         CheckBaseParams(key_characteristics);
         CheckCharacteristics(key_blob, key_characteristics);
@@ -1159,8 +1156,6 @@ TEST_P(NewKeyGenerationTest, RsaWithAttestation) {
         EXPECT_TRUE(verify_attestation_record(AidlVersion(), challenge, app_id,  //
                                               sw_enforced, hw_enforced, SecLevel(),
                                               cert_chain_[0].encodedCertificate));
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -1214,6 +1209,7 @@ TEST_P(NewKeyGenerationTest, RsaWithRkpAttestation) {
                                       .Authorization(TAG_NO_AUTH_REQUIRED)
                                       .SetDefaultValidity(),
                               attestation_key, &key_blob, &key_characteristics, &cert_chain_));
+        KeyBlobDeleter deleter(keymint_, key_blob);
 
         ASSERT_GT(key_blob.size(), 0U);
         CheckBaseParams(key_characteristics);
@@ -1240,8 +1236,6 @@ TEST_P(NewKeyGenerationTest, RsaWithRkpAttestation) {
         ASSERT_TRUE(X509_verify(key_cert.get(), signing_pubkey.get()))
                 << "Verification of attested certificate failed "
                 << "OpenSSL error string: " << ERR_error_string(ERR_get_error(), NULL);
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -1294,6 +1288,7 @@ TEST_P(NewKeyGenerationTest, EcdsaWithRkpAttestation) {
                                       .Authorization(TAG_NO_AUTH_REQUIRED)
                                       .SetDefaultValidity(),
                               attestation_key, &key_blob, &key_characteristics, &cert_chain_));
+        KeyBlobDeleter deleter(keymint_, key_blob);
 
         ASSERT_GT(key_blob.size(), 0U);
         CheckBaseParams(key_characteristics);
@@ -1318,8 +1313,6 @@ TEST_P(NewKeyGenerationTest, EcdsaWithRkpAttestation) {
         ASSERT_TRUE(X509_verify(key_cert.get(), signing_pubkey.get()))
                 << "Verification of attested certificate failed "
                 << "OpenSSL error string: " << ERR_error_string(ERR_get_error(), NULL);
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -1365,6 +1358,7 @@ TEST_P(NewKeyGenerationTest, RsaEncryptionWithAttestation) {
         }
     }
     ASSERT_EQ(ErrorCode::OK, result);
+    KeyBlobDeleter deleter(keymint_, key_blob);
 
     ASSERT_GT(key_blob.size(), 0U);
     AuthorizationSet auths;
@@ -1405,8 +1399,6 @@ TEST_P(NewKeyGenerationTest, RsaEncryptionWithAttestation) {
     EXPECT_TRUE(verify_attestation_record(AidlVersion(), challenge, app_id,  //
                                           sw_enforced, hw_enforced, SecLevel(),
                                           cert_chain_[0].encodedCertificate));
-
-    CheckedDeleteKey(&key_blob);
 }
 
 /*
@@ -1437,6 +1429,7 @@ TEST_P(NewKeyGenerationTest, RsaWithSelfSign) {
                                       .Authorization(TAG_CERTIFICATE_SUBJECT, subject_der)
                                       .SetDefaultValidity(),
                               &key_blob, &key_characteristics));
+        KeyBlobDeleter deleter(keymint_, key_blob);
 
         ASSERT_GT(key_blob.size(), 0U);
         CheckBaseParams(key_characteristics);
@@ -1452,8 +1445,6 @@ TEST_P(NewKeyGenerationTest, RsaWithSelfSign) {
         ASSERT_EQ(cert_chain_.size(), 1);
         verify_subject_and_serial(cert_chain_[0], serial_int, subject, false);
         EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -1518,6 +1509,7 @@ TEST_P(NewKeyGenerationTest, RsaWithAttestationAppIdIgnored) {
                                   .Authorization(TAG_CERTIFICATE_SUBJECT, subject_der)
                                   .SetDefaultValidity(),
                           &key_blob, &key_characteristics));
+    KeyBlobDeleter deleter(keymint_, key_blob);
 
     ASSERT_GT(key_blob.size(), 0U);
     CheckBaseParams(key_characteristics);
@@ -1534,8 +1526,6 @@ TEST_P(NewKeyGenerationTest, RsaWithAttestationAppIdIgnored) {
     verify_subject_and_serial(cert_chain_[0], serial_int, subject, false);
     EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
     ASSERT_EQ(cert_chain_.size(), 1);
-
-    CheckedDeleteKey(&key_blob);
 }
 
 /*
@@ -1556,6 +1546,7 @@ TEST_P(NewKeyGenerationTest, LimitedUsageRsa) {
                                                      .Authorization(TAG_USAGE_COUNT_LIMIT, 1)
                                                      .SetDefaultValidity(),
                                              &key_blob, &key_characteristics));
+        KeyBlobDeleter deleter(keymint_, key_blob);
 
         ASSERT_GT(key_blob.size(), 0U);
         CheckBaseParams(key_characteristics);
@@ -1575,8 +1566,6 @@ TEST_P(NewKeyGenerationTest, LimitedUsageRsa) {
         }
         EXPECT_TRUE(auths.Contains(TAG_USAGE_COUNT_LIMIT, 1U))
                 << "key usage count limit " << 1U << " missing";
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -1625,6 +1614,7 @@ TEST_P(NewKeyGenerationTest, LimitedUsageRsaWithAttestation) {
             }
         }
         ASSERT_EQ(ErrorCode::OK, result);
+        KeyBlobDeleter deleter(keymint_, key_blob);
 
         ASSERT_GT(key_blob.size(), 0U);
         CheckBaseParams(key_characteristics);
@@ -1655,8 +1645,6 @@ TEST_P(NewKeyGenerationTest, LimitedUsageRsaWithAttestation) {
         EXPECT_TRUE(verify_attestation_record(AidlVersion(), challenge, app_id,  //
                                               sw_enforced, hw_enforced, SecLevel(),
                                               cert_chain_[0].encodedCertificate));
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -1726,6 +1714,7 @@ TEST_P(NewKeyGenerationTest, Ecdsa) {
                                                      .Digest(Digest::NONE)
                                                      .SetDefaultValidity(),
                                              &key_blob, &key_characteristics));
+        KeyBlobDeleter deleter(keymint_, key_blob);
         ASSERT_GT(key_blob.size(), 0U);
         CheckBaseParams(key_characteristics);
         CheckCharacteristics(key_blob, key_characteristics);
@@ -1734,8 +1723,6 @@ TEST_P(NewKeyGenerationTest, Ecdsa) {
 
         EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::EC));
         EXPECT_TRUE(crypto_params.Contains(TAG_EC_CURVE, curve)) << "Curve " << curve << "missing";
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -1759,6 +1746,8 @@ TEST_P(NewKeyGenerationTest, EcdsaCurve25519) {
                                            .SetDefaultValidity(),
                                    &key_blob, &key_characteristics);
     ASSERT_EQ(result, ErrorCode::OK);
+    KeyBlobDeleter deleter(keymint_, key_blob);
+
     ASSERT_GT(key_blob.size(), 0U);
 
     EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
@@ -1771,8 +1760,6 @@ TEST_P(NewKeyGenerationTest, EcdsaCurve25519) {
 
     EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::EC));
     EXPECT_TRUE(crypto_params.Contains(TAG_EC_CURVE, curve)) << "Curve " << curve << "missing";
-
-    CheckedDeleteKey(&key_blob);
 }
 
 /*
@@ -1879,6 +1866,7 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestation) {
             }
         }
         ASSERT_EQ(ErrorCode::OK, result);
+        KeyBlobDeleter deleter(keymint_, key_blob);
         ASSERT_GT(key_blob.size(), 0U);
         CheckBaseParams(key_characteristics);
         CheckCharacteristics(key_blob, key_characteristics);
@@ -1897,8 +1885,6 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestation) {
         EXPECT_TRUE(verify_attestation_record(AidlVersion(), challenge, app_id,  //
                                               sw_enforced, hw_enforced, SecLevel(),
                                               cert_chain_[0].encodedCertificate));
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -1936,6 +1922,7 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationCurve25519) {
                                            .SetDefaultValidity(),
                                    &key_blob, &key_characteristics);
     ASSERT_EQ(ErrorCode::OK, result);
+    KeyBlobDeleter deleter(keymint_, key_blob);
     ASSERT_GT(key_blob.size(), 0U);
     CheckBaseParams(key_characteristics);
     CheckCharacteristics(key_blob, key_characteristics);
@@ -1954,8 +1941,6 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationCurve25519) {
     EXPECT_TRUE(verify_attestation_record(AidlVersion(), challenge, app_id,  //
                                           sw_enforced, hw_enforced, SecLevel(),
                                           cert_chain_[0].encodedCertificate));
-
-    CheckedDeleteKey(&key_blob);
 }
 
 /*
@@ -2024,6 +2009,7 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationTags) {
             }
         }
         ASSERT_EQ(result, ErrorCode::OK);
+        KeyBlobDeleter deleter(keymint_, key_blob);
         ASSERT_GT(key_blob.size(), 0U);
 
         EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
@@ -2043,8 +2029,6 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationTags) {
         EXPECT_TRUE(verify_attestation_record(AidlVersion(), challenge, app_id, sw_enforced,
                                               hw_enforced, SecLevel(),
                                               cert_chain_[0].encodedCertificate));
-
-        CheckedDeleteKey(&key_blob);
     }
 
     // Collection of invalid attestation ID tags.
@@ -2098,11 +2082,6 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationTags) {
  * attestation extension.
  */
 TEST_P(NewKeyGenerationTest, EcdsaAttestationIdTags) {
-    if (is_gsi_image()) {
-        // GSI sets up a standard set of device identifiers that may not match
-        // the device identifiers held by the device.
-        GTEST_SKIP() << "Test not applicable under GSI";
-    }
     auto challenge = "hello";
     auto app_id = "foo";
     auto subject = "cert subj 2";
@@ -2122,38 +2101,12 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationIdTags) {
 
     // Various ATTESTATION_ID_* tags that map to fields in the attestation extension ASN.1 schema.
     auto extra_tags = AuthorizationSetBuilder();
-    // Use ro.product.brand_for_attestation property for attestation if it is present else fallback
-    // to ro.product.brand
-    std::string prop_value =
-            ::android::base::GetProperty("ro.product.brand_for_attestation", /* default= */ "");
-    if (!prop_value.empty()) {
-        add_tag_from_prop(&extra_tags, TAG_ATTESTATION_ID_BRAND,
-                          "ro.product.brand_for_attestation");
-    } else {
-        add_tag_from_prop(&extra_tags, TAG_ATTESTATION_ID_BRAND, "ro.product.brand");
-    }
-    add_tag_from_prop(&extra_tags, TAG_ATTESTATION_ID_DEVICE, "ro.product.device");
-    // Use ro.product.name_for_attestation property for attestation if it is present else fallback
-    // to ro.product.name
-    prop_value = ::android::base::GetProperty("ro.product.name_for_attestation", /* default= */ "");
-    if (!prop_value.empty()) {
-        add_tag_from_prop(&extra_tags, TAG_ATTESTATION_ID_PRODUCT,
-                          "ro.product.name_for_attestation");
-    } else {
-        add_tag_from_prop(&extra_tags, TAG_ATTESTATION_ID_PRODUCT, "ro.product.name");
-    }
+    add_attestation_id(&extra_tags, TAG_ATTESTATION_ID_BRAND, "brand");
+    add_attestation_id(&extra_tags, TAG_ATTESTATION_ID_DEVICE, "device");
+    add_attestation_id(&extra_tags, TAG_ATTESTATION_ID_PRODUCT, "name");
+    add_attestation_id(&extra_tags, TAG_ATTESTATION_ID_MANUFACTURER, "manufacturer");
+    add_attestation_id(&extra_tags, TAG_ATTESTATION_ID_MODEL, "model");
     add_tag_from_prop(&extra_tags, TAG_ATTESTATION_ID_SERIAL, "ro.serialno");
-    add_tag_from_prop(&extra_tags, TAG_ATTESTATION_ID_MANUFACTURER, "ro.product.manufacturer");
-    // Use ro.product.model_for_attestation property for attestation if it is present else fallback
-    // to ro.product.model
-    prop_value =
-            ::android::base::GetProperty("ro.product.model_for_attestation", /* default= */ "");
-    if (!prop_value.empty()) {
-        add_tag_from_prop(&extra_tags, TAG_ATTESTATION_ID_MODEL,
-                          "ro.product.model_for_attestation");
-    } else {
-        add_tag_from_prop(&extra_tags, TAG_ATTESTATION_ID_MODEL, "ro.product.model");
-    }
 
     for (const KeyParameter& tag : extra_tags) {
         SCOPED_TRACE(testing::Message() << "tag-" << tag);
@@ -2171,6 +2124,7 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationIdTags) {
             continue;
         }
         ASSERT_EQ(result, ErrorCode::OK);
+        KeyBlobDeleter deleter(keymint_, key_blob);
         ASSERT_GT(key_blob.size(), 0U);
 
         EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
@@ -2190,8 +2144,6 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationIdTags) {
         EXPECT_TRUE(verify_attestation_record(AidlVersion(), challenge, app_id, sw_enforced,
                                               hw_enforced, SecLevel(),
                                               cert_chain_[0].encodedCertificate));
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -2346,6 +2298,7 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationTagNoApplicationId) {
         }
     }
     ASSERT_EQ(result, ErrorCode::OK);
+    KeyBlobDeleter deleter(keymint_, key_blob);
     ASSERT_GT(key_blob.size(), 0U);
 
     EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
@@ -2365,8 +2318,6 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationTagNoApplicationId) {
     ASSERT_EQ(std::search(cert_chain_[0].encodedCertificate.begin(),
                           cert_chain_[0].encodedCertificate.end(), needle.begin(), needle.end()),
               cert_chain_[0].encodedCertificate.end());
-
-    CheckedDeleteKey(&key_blob);
 }
 
 /*
@@ -2394,6 +2345,7 @@ TEST_P(NewKeyGenerationTest, EcdsaSelfSignAttestation) {
                                       .Authorization(TAG_CERTIFICATE_SUBJECT, subject_der)
                                       .SetDefaultValidity(),
                               &key_blob, &key_characteristics));
+        KeyBlobDeleter deleter(keymint_, key_blob);
         ASSERT_GT(key_blob.size(), 0U);
         CheckBaseParams(key_characteristics);
         CheckCharacteristics(key_blob, key_characteristics);
@@ -2409,8 +2361,6 @@ TEST_P(NewKeyGenerationTest, EcdsaSelfSignAttestation) {
 
         AuthorizationSet hw_enforced = HwEnforcedAuthorizations(key_characteristics);
         AuthorizationSet sw_enforced = SwEnforcedAuthorizations(key_characteristics);
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -2464,6 +2414,7 @@ TEST_P(NewKeyGenerationTest, EcdsaIgnoreAppId) {
                                                      .AttestationApplicationId(app_id)
                                                      .SetDefaultValidity(),
                                              &key_blob, &key_characteristics));
+        KeyBlobDeleter deleter(keymint_, key_blob);
 
         ASSERT_GT(key_blob.size(), 0U);
         CheckBaseParams(key_characteristics);
@@ -2479,8 +2430,6 @@ TEST_P(NewKeyGenerationTest, EcdsaIgnoreAppId) {
 
         AuthorizationSet hw_enforced = HwEnforcedAuthorizations(key_characteristics);
         AuthorizationSet sw_enforced = SwEnforcedAuthorizations(key_characteristics);
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -2522,6 +2471,7 @@ TEST_P(NewKeyGenerationTest, AttestationApplicationIDLengthProperlyEncoded) {
             }
         }
         ASSERT_EQ(ErrorCode::OK, result);
+        KeyBlobDeleter deleter(keymint_, key_blob);
         ASSERT_GT(key_blob.size(), 0U);
         CheckBaseParams(key_characteristics);
         CheckCharacteristics(key_blob, key_characteristics);
@@ -2539,8 +2489,6 @@ TEST_P(NewKeyGenerationTest, AttestationApplicationIDLengthProperlyEncoded) {
         EXPECT_TRUE(verify_attestation_record(AidlVersion(), challenge, app_id,  //
                                               sw_enforced, hw_enforced, SecLevel(),
                                               cert_chain_[0].encodedCertificate));
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -2561,6 +2509,7 @@ TEST_P(NewKeyGenerationTest, LimitedUsageEcdsa) {
                                                      .Authorization(TAG_USAGE_COUNT_LIMIT, 1)
                                                      .SetDefaultValidity(),
                                              &key_blob, &key_characteristics));
+        KeyBlobDeleter deleter(keymint_, key_blob);
 
         ASSERT_GT(key_blob.size(), 0U);
         CheckBaseParams(key_characteristics);
@@ -2578,8 +2527,6 @@ TEST_P(NewKeyGenerationTest, LimitedUsageEcdsa) {
         }
         EXPECT_TRUE(auths.Contains(TAG_USAGE_COUNT_LIMIT, 1U))
                 << "key usage count limit " << 1U << " missing";
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -2587,22 +2534,24 @@ TEST_P(NewKeyGenerationTest, LimitedUsageEcdsa) {
  * NewKeyGenerationTest.EcdsaDefaultSize
  *
  * Verifies that failing to specify a curve for EC key generation returns
- * UNSUPPORTED_KEY_SIZE.
+ * UNSUPPORTED_KEY_SIZE or UNSUPPORTED_EC_CURVE.
  */
 TEST_P(NewKeyGenerationTest, EcdsaDefaultSize) {
-    ASSERT_EQ(ErrorCode::UNSUPPORTED_KEY_SIZE,
-              GenerateKey(AuthorizationSetBuilder()
-                                  .Authorization(TAG_ALGORITHM, Algorithm::EC)
-                                  .SigningKey()
-                                  .Digest(Digest::NONE)
-                                  .SetDefaultValidity()));
+    auto result = GenerateKey(AuthorizationSetBuilder()
+                                      .Authorization(TAG_ALGORITHM, Algorithm::EC)
+                                      .SigningKey()
+                                      .Digest(Digest::NONE)
+                                      .SetDefaultValidity());
+    ASSERT_TRUE(result == ErrorCode::UNSUPPORTED_KEY_SIZE ||
+                result == ErrorCode::UNSUPPORTED_EC_CURVE)
+            << "unexpected result " << result;
 }
 
 /*
  * NewKeyGenerationTest.EcdsaInvalidCurve
  *
  * Verifies that specifying an invalid curve for EC key generation returns
- * UNSUPPORTED_KEY_SIZE.
+ * UNSUPPORTED_KEY_SIZE or UNSUPPORTED_EC_CURVE.
  */
 TEST_P(NewKeyGenerationTest, EcdsaInvalidCurve) {
     for (auto curve : InvalidCurves()) {
@@ -2615,7 +2564,8 @@ TEST_P(NewKeyGenerationTest, EcdsaInvalidCurve) {
                                           .SetDefaultValidity(),
                                   &key_blob, &key_characteristics);
         ASSERT_TRUE(result == ErrorCode::UNSUPPORTED_KEY_SIZE ||
-                    result == ErrorCode::UNSUPPORTED_EC_CURVE);
+                    result == ErrorCode::UNSUPPORTED_EC_CURVE)
+                << "unexpected result " << result;
     }
 
     ASSERT_EQ(ErrorCode::UNSUPPORTED_KEY_SIZE,
@@ -2711,6 +2661,7 @@ TEST_P(NewKeyGenerationTest, Hmac) {
                           AuthorizationSetBuilder().HmacKey(key_size).Digest(digest).Authorization(
                                   TAG_MIN_MAC_LENGTH, 128),
                           &key_blob, &key_characteristics));
+        KeyBlobDeleter deleter(keymint_, key_blob);
 
         ASSERT_GT(key_blob.size(), 0U);
         CheckBaseParams(key_characteristics);
@@ -2720,8 +2671,6 @@ TEST_P(NewKeyGenerationTest, Hmac) {
         EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::HMAC));
         EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
                 << "Key size " << key_size << "missing";
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -2747,6 +2696,7 @@ TEST_P(NewKeyGenerationTest, HmacNoAttestation) {
                                                      .AttestationApplicationId(app_id)
                                                      .Authorization(TAG_MIN_MAC_LENGTH, 128),
                                              &key_blob, &key_characteristics));
+        KeyBlobDeleter deleter(keymint_, key_blob);
 
         ASSERT_GT(key_blob.size(), 0U);
         ASSERT_EQ(cert_chain_.size(), 0);
@@ -2757,8 +2707,6 @@ TEST_P(NewKeyGenerationTest, HmacNoAttestation) {
         EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::HMAC));
         EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
                 << "Key size " << key_size << "missing";
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -2780,6 +2728,7 @@ TEST_P(NewKeyGenerationTest, LimitedUsageHmac) {
                                                      .Authorization(TAG_MIN_MAC_LENGTH, 128)
                                                      .Authorization(TAG_USAGE_COUNT_LIMIT, 1),
                                              &key_blob, &key_characteristics));
+        KeyBlobDeleter deleter(keymint_, key_blob);
 
         ASSERT_GT(key_blob.size(), 0U);
         CheckBaseParams(key_characteristics);
@@ -2797,8 +2746,6 @@ TEST_P(NewKeyGenerationTest, LimitedUsageHmac) {
         }
         EXPECT_TRUE(auths.Contains(TAG_USAGE_COUNT_LIMIT, 1U))
                 << "key usage count limit " << 1U << " missing";
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -3456,7 +3403,6 @@ TEST_P(SigningOperationsTest, RsaSignTooLargeMessage) {
  * Verifies ECDSA signature/verification for all digests and required curves.
  */
 TEST_P(SigningOperationsTest, EcdsaAllDigestsAndCurves) {
-
     string message = "1234567890";
     string corrupt_message = "2234567890";
     for (auto curve : ValidCurves()) {
@@ -3892,6 +3838,7 @@ TEST_P(VerificationOperationsTest, HmacSigningKeyCannotVerify) {
                                 .Digest(Digest::SHA_2_256)
                                 .Authorization(TAG_MIN_MAC_LENGTH, 160),
                         KeyFormat::RAW, key_material, &signing_key, &signing_key_chars));
+    KeyBlobDeleter sign_deleter(keymint_, signing_key);
     EXPECT_EQ(ErrorCode::OK,
               ImportKey(AuthorizationSetBuilder()
                                 .Authorization(TAG_NO_AUTH_REQUIRED)
@@ -3900,6 +3847,7 @@ TEST_P(VerificationOperationsTest, HmacSigningKeyCannotVerify) {
                                 .Digest(Digest::SHA_2_256)
                                 .Authorization(TAG_MIN_MAC_LENGTH, 160),
                         KeyFormat::RAW, key_material, &verification_key, &verification_key_chars));
+    KeyBlobDeleter verify_deleter(keymint_, verification_key);
 
     string message = "This is a message.";
     string signature = SignMessage(
@@ -3915,9 +3863,6 @@ TEST_P(VerificationOperationsTest, HmacSigningKeyCannotVerify) {
     // Verification key should work.
     VerifyMessage(verification_key, message, signature,
                   AuthorizationSetBuilder().Digest(Digest::SHA_2_256));
-
-    CheckedDeleteKey(&signing_key);
-    CheckedDeleteKey(&verification_key);
 }
 
 /*
@@ -3938,6 +3883,7 @@ TEST_P(VerificationOperationsTest, HmacVerificationFailsForCorruptSignature) {
                                 .Digest(Digest::SHA_2_256)
                                 .Authorization(TAG_MIN_MAC_LENGTH, 160),
                         KeyFormat::RAW, key_material, &signing_key, &signing_key_chars));
+    KeyBlobDeleter sign_deleter(keymint_, signing_key);
     EXPECT_EQ(ErrorCode::OK,
               ImportKey(AuthorizationSetBuilder()
                                 .Authorization(TAG_NO_AUTH_REQUIRED)
@@ -3946,6 +3892,7 @@ TEST_P(VerificationOperationsTest, HmacVerificationFailsForCorruptSignature) {
                                 .Digest(Digest::SHA_2_256)
                                 .Authorization(TAG_MIN_MAC_LENGTH, 160),
                         KeyFormat::RAW, key_material, &verification_key, &verification_key_chars));
+    KeyBlobDeleter verify_deleter(keymint_, verification_key);
 
     string message = "This is a message.";
     string signature = SignMessage(
@@ -3967,9 +3914,6 @@ TEST_P(VerificationOperationsTest, HmacVerificationFailsForCorruptSignature) {
 
     signature[0] += 1;  // Corrupt a signature
     EXPECT_EQ(ErrorCode::VERIFICATION_FAILED, Finish(message, signature, &output));
-
-    CheckedDeleteKey(&signing_key);
-    CheckedDeleteKey(&verification_key);
 }
 
 INSTANTIATE_KEYMINT_AIDL_TEST(VerificationOperationsTest);
@@ -4156,6 +4100,42 @@ TEST_P(ImportKeyTest, EcdsaSuccess) {
     ASSERT_EQ(ErrorCode::OK, ImportKey(AuthorizationSetBuilder()
                                                .Authorization(TAG_NO_AUTH_REQUIRED)
                                                .EcdsaSigningKey(EcCurve::P_256)
+                                               .Digest(Digest::SHA_2_256)
+                                               .SetDefaultValidity(),
+                                       KeyFormat::PKCS8, ec_256_key));
+
+    CheckCryptoParam(TAG_ALGORITHM, Algorithm::EC);
+    CheckCryptoParam(TAG_DIGEST, Digest::SHA_2_256);
+    CheckCryptoParam(TAG_EC_CURVE, EcCurve::P_256);
+
+    CheckOrigin();
+
+    string message(32, 'a');
+    auto params = AuthorizationSetBuilder().Digest(Digest::SHA_2_256);
+    string signature = SignMessage(message, params);
+    LocalVerifyMessage(message, signature, params);
+}
+
+/*
+ * ImportKeyTest.EcdsaSuccessCurveNotSpecified
+ *
+ * Verifies that importing and using an ECDSA P-256 key pair works correctly
+ * when the EC_CURVE is not explicitly specified.
+ */
+TEST_P(ImportKeyTest, EcdsaSuccessCurveNotSpecified) {
+    if (get_vsr_api_level() < __ANDROID_API_V__) {
+        /*
+         * The KeyMint spec was previously not clear as to whether EC_CURVE was optional on import
+         * of EC keys. However, this was not checked at the time so we can only be strict about
+         * checking this for implementations at VSR-V or later.
+         */
+        GTEST_SKIP() << "Skipping EC_CURVE on import only strict >= VSR-V";
+    }
+
+    ASSERT_EQ(ErrorCode::OK, ImportKey(AuthorizationSetBuilder()
+                                               .Authorization(TAG_NO_AUTH_REQUIRED)
+                                               .Authorization(TAG_ALGORITHM, Algorithm::EC)
+                                               .SigningKey()
                                                .Digest(Digest::SHA_2_256)
                                                .SetDefaultValidity(),
                                        KeyFormat::PKCS8, ec_256_key));
@@ -4755,6 +4735,109 @@ TEST_P(ImportKeyTest, GetKeyCharacteristics) {
     }
 }
 
+/*
+ * ImportKeyTest.RsaOaepMGFDigestSuccess
+ *
+ * Include MGF-Digest explicitly in import key authorization list.
+ * Test should import RSA key with OAEP padding and mgf-digests and verify that imported key
+ * should have the correct characteristics.
+ */
+TEST_P(ImportKeyTest, RsaOaepMGFDigestSuccess) {
+    // There was no test to assert that MGF1 digest was present in generated/imported key
+    // characteristics before Keymint V3, so there are some Keymint implementations where
+    // this test case fails(b/297306437), hence this test is skipped for Keymint < 3.
+    if (AidlVersion() < 3) {
+        GTEST_SKIP() << "Test not applicable to Keymint < V3";
+    }
+    auto mgf_digests = ValidDigests(false /* withNone */, true /* withMD5 */);
+    size_t key_size = 2048;
+
+    ASSERT_EQ(ErrorCode::OK, ImportKey(AuthorizationSetBuilder()
+                                               .OaepMGFDigest(mgf_digests)
+                                               .Authorization(TAG_NO_AUTH_REQUIRED)
+                                               .RsaEncryptionKey(key_size, 65537)
+                                               .Digest(Digest::SHA_2_256)
+                                               .Padding(PaddingMode::RSA_OAEP)
+                                               .SetDefaultValidity(),
+                                       KeyFormat::PKCS8, rsa_2048_key));
+
+    CheckCryptoParam(TAG_ALGORITHM, Algorithm::RSA);
+    CheckCryptoParam(TAG_KEY_SIZE, key_size);
+    CheckCryptoParam(TAG_RSA_PUBLIC_EXPONENT, 65537U);
+    CheckCryptoParam(TAG_DIGEST, Digest::SHA_2_256);
+    CheckCryptoParam(TAG_PADDING, PaddingMode::RSA_OAEP);
+    CheckOrigin();
+
+    // Make sure explicitly specified mgf-digests exist in key characteristics.
+    assert_mgf_digests_present_or_not_in_key_characteristics(mgf_digests, true);
+
+    string message = "Hello";
+
+    for (auto digest : mgf_digests) {
+        SCOPED_TRACE(testing::Message() << "digest-" << digest);
+        auto params = AuthorizationSetBuilder()
+                              .Authorization(TAG_RSA_OAEP_MGF_DIGEST, digest)
+                              .Digest(Digest::SHA_2_256)
+                              .Padding(PaddingMode::RSA_OAEP);
+        string ciphertext1 = LocalRsaEncryptMessage(message, params);
+        if (HasNonfatalFailure()) std::cout << "-->" << digest << std::endl;
+        EXPECT_EQ(key_size / 8, ciphertext1.size());
+
+        string ciphertext2 = LocalRsaEncryptMessage(message, params);
+        if (HasNonfatalFailure()) std::cout << "-->" << digest << std::endl;
+        EXPECT_EQ(key_size / 8, ciphertext2.size());
+
+        // OAEP randomizes padding so every result should be different (with astronomically high
+        // probability).
+        EXPECT_NE(ciphertext1, ciphertext2);
+
+        string plaintext1 = DecryptMessage(ciphertext1, params);
+        EXPECT_EQ(message, plaintext1) << "RSA-OAEP failed with digest " << digest;
+        string plaintext2 = DecryptMessage(ciphertext2, params);
+        EXPECT_EQ(message, plaintext2) << "RSA-OAEP failed with digest " << digest;
+
+        // Decrypting corrupted ciphertext should fail.
+        size_t offset_to_corrupt = ciphertext1.size() - 1;
+        char corrupt_byte = ~ciphertext1[offset_to_corrupt];
+        ciphertext1[offset_to_corrupt] = corrupt_byte;
+
+        EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, params));
+        string result;
+        EXPECT_NE(ErrorCode::OK, Finish(ciphertext1, &result));
+        EXPECT_EQ(0U, result.size());
+    }
+}
+
+/*
+ * ImportKeyTest.RsaOaepMGFDigestDefaultSuccess
+ *
+ * Don't specify MGF-Digest explicitly in import key authorization list.
+ * Test should import RSA key with OAEP padding and default mgf-digest (SHA1) and
+ * verify that imported key should have the correct characteristics. Default
+ * mgf-digest shouldn't be included in key charecteristics.
+ */
+TEST_P(ImportKeyTest, RsaOaepMGFDigestDefaultSuccess) {
+    size_t key_size = 2048;
+    ASSERT_EQ(ErrorCode::OK, ImportKey(AuthorizationSetBuilder()
+                                               .Authorization(TAG_NO_AUTH_REQUIRED)
+                                               .RsaEncryptionKey(key_size, 65537)
+                                               .Digest(Digest::SHA_2_256)
+                                               .Padding(PaddingMode::RSA_OAEP)
+                                               .SetDefaultValidity(),
+                                       KeyFormat::PKCS8, rsa_2048_key));
+
+    CheckCryptoParam(TAG_ALGORITHM, Algorithm::RSA);
+    CheckCryptoParam(TAG_KEY_SIZE, key_size);
+    CheckCryptoParam(TAG_RSA_PUBLIC_EXPONENT, 65537U);
+    CheckCryptoParam(TAG_DIGEST, Digest::SHA_2_256);
+    CheckCryptoParam(TAG_PADDING, PaddingMode::RSA_OAEP);
+    CheckOrigin();
+
+    vector defaultDigest = {Digest::SHA1};
+    // Make sure default mgf-digest (SHA1) is not included in Key characteristics.
+    assert_mgf_digests_present_or_not_in_key_characteristics(defaultDigest, false);
+}
+
 INSTANTIATE_KEYMINT_AIDL_TEST(ImportKeyTest);
 
 auto wrapped_key = hex2str(
@@ -5180,16 +5263,19 @@ TEST_P(EncryptionOperationsTest, RsaNoPaddingShortMessage) {
  */
 TEST_P(EncryptionOperationsTest, RsaOaepSuccess) {
     auto digests = ValidDigests(false /* withNone */, true /* withMD5 */);
+    auto mgf_digest = vector{Digest::SHA1};
 
     size_t key_size = 2048;  // Need largish key for SHA-512 test.
-    ASSERT_EQ(ErrorCode::OK,
-              GenerateKey(AuthorizationSetBuilder()
-                                  .Authorization(TAG_NO_AUTH_REQUIRED)
-                                  .RsaEncryptionKey(key_size, 65537)
-                                  .Padding(PaddingMode::RSA_OAEP)
-                                  .Digest(digests)
-                                  .Authorization(TAG_RSA_OAEP_MGF_DIGEST, Digest::SHA1)
-                                  .SetDefaultValidity()));
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                 .RsaEncryptionKey(key_size, 65537)
+                                                 .Padding(PaddingMode::RSA_OAEP)
+                                                 .Digest(digests)
+                                                 .OaepMGFDigest(mgf_digest)
+                                                 .SetDefaultValidity()));
+
+    // Make sure explicitly specified mgf-digest exist in key characteristics.
+    assert_mgf_digests_present_or_not_in_key_characteristics(mgf_digest, true);
 
     string message = "Hello";
 
@@ -5226,7 +5312,7 @@ TEST_P(EncryptionOperationsTest, RsaOaepSuccess) {
 
         EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, params));
         string result;
-        EXPECT_EQ(ErrorCode::UNKNOWN_ERROR, Finish(ciphertext1, &result));
+        EXPECT_NE(ErrorCode::OK, Finish(ciphertext1, &result));
         EXPECT_EQ(0U, result.size());
     }
 }
@@ -5293,7 +5379,7 @@ TEST_P(EncryptionOperationsTest, RsaOaepDecryptWithWrongDigest) {
                                                                 .Digest(Digest::SHA_2_256)
                                                                 .Padding(PaddingMode::RSA_OAEP)));
     string result;
-    EXPECT_EQ(ErrorCode::UNKNOWN_ERROR, Finish(ciphertext, &result));
+    EXPECT_NE(ErrorCode::OK, Finish(ciphertext, &result));
     EXPECT_EQ(0U, result.size());
 }
 
@@ -5314,7 +5400,21 @@ TEST_P(EncryptionOperationsTest, RsaOaepWithMGFDigestSuccess) {
                                                  .Padding(PaddingMode::RSA_OAEP)
                                                  .Digest(Digest::SHA_2_256)
                                                  .SetDefaultValidity()));
+    if (AidlVersion() >= 3) {
+        std::vector<Digest> mgf1DigestsInAuths;
+        mgf1DigestsInAuths.reserve(digests.size());
+        const auto& hw_auths = SecLevelAuthorizations(key_characteristics_);
+        std::for_each(hw_auths.begin(), hw_auths.end(), [&](auto& param) {
+            if (param.tag == Tag::RSA_OAEP_MGF_DIGEST) {
+                KeyParameterValue value = param.value;
+                mgf1DigestsInAuths.push_back(param.value.template get<KeyParameterValue::digest>());
+            }
+        });
 
+        std::sort(digests.begin(), digests.end());
+        std::sort(mgf1DigestsInAuths.begin(), mgf1DigestsInAuths.end());
+        EXPECT_EQ(digests, mgf1DigestsInAuths);
+    }
     string message = "Hello";
 
     for (auto digest : digests) {
@@ -5349,7 +5449,7 @@ TEST_P(EncryptionOperationsTest, RsaOaepWithMGFDigestSuccess) {
 
         EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, params));
         string result;
-        EXPECT_EQ(ErrorCode::UNKNOWN_ERROR, Finish(ciphertext1, &result));
+        EXPECT_NE(ErrorCode::OK, Finish(ciphertext1, &result));
         EXPECT_EQ(0U, result.size());
     }
 }
@@ -5368,6 +5468,10 @@ TEST_P(EncryptionOperationsTest, RsaOaepMGFDigestDefaultSuccess) {
                                                  .Padding(PaddingMode::RSA_OAEP)
                                                  .Digest(Digest::SHA_2_256)
                                                  .SetDefaultValidity()));
+
+    vector defaultDigest = vector{Digest::SHA1};
+    // Make sure default mgf-digest (SHA1) is not included in Key characteristics.
+    assert_mgf_digests_present_or_not_in_key_characteristics(defaultDigest, false);
 
     // Do local RSA encryption using the default MGF digest of SHA-1.
     string message = "Hello";
@@ -5390,7 +5494,7 @@ TEST_P(EncryptionOperationsTest, RsaOaepMGFDigestDefaultSuccess) {
 
     EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, params));
     string result;
-    EXPECT_EQ(ErrorCode::UNKNOWN_ERROR, Finish(ciphertext, &result));
+    EXPECT_NE(ErrorCode::OK, Finish(ciphertext, &result));
     EXPECT_EQ(0U, result.size());
 }
 
@@ -5403,14 +5507,20 @@ TEST_P(EncryptionOperationsTest, RsaOaepMGFDigestDefaultSuccess) {
  */
 TEST_P(EncryptionOperationsTest, RsaOaepMGFDigestDefaultFail) {
     size_t key_size = 2048;
-    ASSERT_EQ(ErrorCode::OK,
-              GenerateKey(AuthorizationSetBuilder()
-                                  .Authorization(TAG_NO_AUTH_REQUIRED)
-                                  .Authorization(TAG_RSA_OAEP_MGF_DIGEST, Digest::SHA_2_256)
-                                  .RsaEncryptionKey(key_size, 65537)
-                                  .Padding(PaddingMode::RSA_OAEP)
-                                  .Digest(Digest::SHA_2_256)
-                                  .SetDefaultValidity()));
+    auto mgf_digest = vector{Digest::SHA_2_256};
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                 .OaepMGFDigest(mgf_digest)
+                                                 .RsaEncryptionKey(key_size, 65537)
+                                                 .Padding(PaddingMode::RSA_OAEP)
+                                                 .Digest(Digest::SHA_2_256)
+                                                 .SetDefaultValidity()));
+
+    // Make sure explicitly specified mgf-digest exist in key characteristics.
+    assert_mgf_digests_present_or_not_in_key_characteristics(mgf_digest, true);
+    vector defaultDigest = vector{Digest::SHA1};
+    // Make sure default mgf-digest is not included in key characteristics.
+    assert_mgf_digests_present_or_not_in_key_characteristics(defaultDigest, false);
 
     // Do local RSA encryption using the default MGF digest of SHA-1.
     string message = "Hello";
@@ -5434,14 +5544,18 @@ TEST_P(EncryptionOperationsTest, RsaOaepMGFDigestDefaultFail) {
  * with incompatible MGF digest.
  */
 TEST_P(EncryptionOperationsTest, RsaOaepWithMGFIncompatibleDigest) {
-    ASSERT_EQ(ErrorCode::OK,
-              GenerateKey(AuthorizationSetBuilder()
-                                  .Authorization(TAG_RSA_OAEP_MGF_DIGEST, Digest::SHA_2_256)
-                                  .Authorization(TAG_NO_AUTH_REQUIRED)
-                                  .RsaEncryptionKey(2048, 65537)
-                                  .Padding(PaddingMode::RSA_OAEP)
-                                  .Digest(Digest::SHA_2_256)
-                                  .SetDefaultValidity()));
+    auto mgf_digest = vector{Digest::SHA_2_256};
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                 .OaepMGFDigest(mgf_digest)
+                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                 .RsaEncryptionKey(2048, 65537)
+                                                 .Padding(PaddingMode::RSA_OAEP)
+                                                 .Digest(Digest::SHA_2_256)
+                                                 .SetDefaultValidity()));
+
+    // Make sure explicitly specified mgf-digest exist in key characteristics.
+    assert_mgf_digests_present_or_not_in_key_characteristics(mgf_digest, true);
+
     string message = "Hello World!";
 
     auto params = AuthorizationSetBuilder()
@@ -5458,14 +5572,18 @@ TEST_P(EncryptionOperationsTest, RsaOaepWithMGFIncompatibleDigest) {
  * with unsupported MGF digest.
  */
 TEST_P(EncryptionOperationsTest, RsaOaepWithMGFUnsupportedDigest) {
-    ASSERT_EQ(ErrorCode::OK,
-              GenerateKey(AuthorizationSetBuilder()
-                                  .Authorization(TAG_RSA_OAEP_MGF_DIGEST, Digest::SHA_2_256)
-                                  .Authorization(TAG_NO_AUTH_REQUIRED)
-                                  .RsaEncryptionKey(2048, 65537)
-                                  .Padding(PaddingMode::RSA_OAEP)
-                                  .Digest(Digest::SHA_2_256)
-                                  .SetDefaultValidity()));
+    auto mgf_digest = vector{Digest::SHA_2_256};
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                 .OaepMGFDigest(mgf_digest)
+                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                 .RsaEncryptionKey(2048, 65537)
+                                                 .Padding(PaddingMode::RSA_OAEP)
+                                                 .Digest(Digest::SHA_2_256)
+                                                 .SetDefaultValidity()));
+
+    // Make sure explicitly specified mgf-digest exist in key characteristics.
+    assert_mgf_digests_present_or_not_in_key_characteristics(mgf_digest, true);
+
     string message = "Hello World!";
 
     auto params = AuthorizationSetBuilder()
@@ -5511,7 +5629,7 @@ TEST_P(EncryptionOperationsTest, RsaPkcs1Success) {
 
     EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, params));
     string result;
-    EXPECT_EQ(ErrorCode::UNKNOWN_ERROR, Finish(ciphertext1, &result));
+    EXPECT_NE(ErrorCode::OK, Finish(ciphertext1, &result));
     EXPECT_EQ(0U, result.size());
 }
 
@@ -8498,16 +8616,16 @@ TEST_P(EarlyBootKeyTest, CreateEarlyBootKeys) {
     // Early boot keys can be created after early boot.
     auto [aesKeyData, hmacKeyData, rsaKeyData, ecdsaKeyData] =
             CreateTestKeys(TAG_EARLY_BOOT_ONLY, ErrorCode::OK);
+    KeyBlobDeleter aes_deleter(keymint_, aesKeyData.blob);
+    KeyBlobDeleter hmac_deleter(keymint_, hmacKeyData.blob);
+    KeyBlobDeleter rsa_deleter(keymint_, rsaKeyData.blob);
+    KeyBlobDeleter ecdsa_deleter(keymint_, ecdsaKeyData.blob);
 
     for (const auto& keyData : {aesKeyData, hmacKeyData, rsaKeyData, ecdsaKeyData}) {
         ASSERT_GT(keyData.blob.size(), 0U);
         AuthorizationSet crypto_params = SecLevelAuthorizations(keyData.characteristics);
         EXPECT_TRUE(crypto_params.Contains(TAG_EARLY_BOOT_ONLY)) << crypto_params;
     }
-    CheckedDeleteKey(&aesKeyData.blob);
-    CheckedDeleteKey(&hmacKeyData.blob);
-    CheckedDeleteKey(&rsaKeyData.blob);
-    CheckedDeleteKey(&ecdsaKeyData.blob);
 }
 
 /*
@@ -8521,6 +8639,10 @@ TEST_P(EarlyBootKeyTest, CreateAttestedEarlyBootKey) {
                 builder->AttestationChallenge("challenge");
                 builder->AttestationApplicationId("app_id");
             });
+    KeyBlobDeleter aes_deleter(keymint_, aesKeyData.blob);
+    KeyBlobDeleter hmac_deleter(keymint_, hmacKeyData.blob);
+    KeyBlobDeleter rsa_deleter(keymint_, rsaKeyData.blob);
+    KeyBlobDeleter ecdsa_deleter(keymint_, ecdsaKeyData.blob);
 
     for (const auto& keyData : {aesKeyData, hmacKeyData, rsaKeyData, ecdsaKeyData}) {
         // Strongbox may not support factory attestation. Key creation might fail with
@@ -8531,14 +8653,6 @@ TEST_P(EarlyBootKeyTest, CreateAttestedEarlyBootKey) {
         ASSERT_GT(keyData.blob.size(), 0U);
         AuthorizationSet crypto_params = SecLevelAuthorizations(keyData.characteristics);
         EXPECT_TRUE(crypto_params.Contains(TAG_EARLY_BOOT_ONLY)) << crypto_params;
-    }
-    CheckedDeleteKey(&aesKeyData.blob);
-    CheckedDeleteKey(&hmacKeyData.blob);
-    if (rsaKeyData.blob.size() != 0U) {
-        CheckedDeleteKey(&rsaKeyData.blob);
-    }
-    if (ecdsaKeyData.blob.size() != 0U) {
-        CheckedDeleteKey(&ecdsaKeyData.blob);
     }
 }
 
@@ -8584,6 +8698,11 @@ TEST_P(EarlyBootKeyTest, ImportEarlyBootKeyFailure) {
 TEST_P(EarlyBootKeyTest, DISABLED_FullTest) {
     auto [aesKeyData, hmacKeyData, rsaKeyData, ecdsaKeyData] =
             CreateTestKeys(TAG_EARLY_BOOT_ONLY, ErrorCode::OK);
+    KeyBlobDeleter aes_deleter(keymint_, aesKeyData.blob);
+    KeyBlobDeleter hmac_deleter(keymint_, hmacKeyData.blob);
+    KeyBlobDeleter rsa_deleter(keymint_, rsaKeyData.blob);
+    KeyBlobDeleter ecdsa_deleter(keymint_, ecdsaKeyData.blob);
+
     // TAG_EARLY_BOOT_ONLY should be in hw-enforced.
     EXPECT_TRUE(HwEnforcedAuthorizations(aesKeyData.characteristics).Contains(TAG_EARLY_BOOT_ONLY));
     EXPECT_TRUE(
@@ -8608,19 +8727,13 @@ TEST_P(EarlyBootKeyTest, DISABLED_FullTest) {
     EXPECT_EQ(ErrorCode::EARLY_BOOT_ENDED, UseRsaKey(rsaKeyData.blob));
     EXPECT_EQ(ErrorCode::EARLY_BOOT_ENDED, UseEcdsaKey(ecdsaKeyData.blob));
 
-    CheckedDeleteKey(&aesKeyData.blob);
-    CheckedDeleteKey(&hmacKeyData.blob);
-    CheckedDeleteKey(&rsaKeyData.blob);
-    CheckedDeleteKey(&ecdsaKeyData.blob);
-
     // Should not be able to create new keys
-    std::tie(aesKeyData, hmacKeyData, rsaKeyData, ecdsaKeyData) =
+    auto [aesKeyData2, hmacKeyData2, rsaKeyData2, ecdsaKeyData2] =
             CreateTestKeys(TAG_EARLY_BOOT_ONLY, ErrorCode::EARLY_BOOT_ENDED);
-
-    CheckedDeleteKey(&aesKeyData.blob);
-    CheckedDeleteKey(&hmacKeyData.blob);
-    CheckedDeleteKey(&rsaKeyData.blob);
-    CheckedDeleteKey(&ecdsaKeyData.blob);
+    KeyBlobDeleter aes_deleter2(keymint_, aesKeyData2.blob);
+    KeyBlobDeleter hmac_deleter2(keymint_, hmacKeyData2.blob);
+    KeyBlobDeleter rsa_deleter2(keymint_, rsaKeyData2.blob);
+    KeyBlobDeleter ecdsa_deleter2(keymint_, ecdsaKeyData2.blob);
 }
 
 INSTANTIATE_KEYMINT_AIDL_TEST(EarlyBootKeyTest);
@@ -8638,6 +8751,10 @@ using UnlockedDeviceRequiredTest = KeyMintAidlTestBase;
 TEST_P(UnlockedDeviceRequiredTest, DISABLED_KeysBecomeUnusable) {
     auto [aesKeyData, hmacKeyData, rsaKeyData, ecdsaKeyData] =
             CreateTestKeys(TAG_UNLOCKED_DEVICE_REQUIRED, ErrorCode::OK);
+    KeyBlobDeleter aes_deleter(keymint_, aesKeyData.blob);
+    KeyBlobDeleter hmac_deleter(keymint_, hmacKeyData.blob);
+    KeyBlobDeleter rsa_deleter(keymint_, rsaKeyData.blob);
+    KeyBlobDeleter ecdsa_deleter(keymint_, ecdsaKeyData.blob);
 
     EXPECT_EQ(ErrorCode::OK, UseAesKey(aesKeyData.blob));
     EXPECT_EQ(ErrorCode::OK, UseHmacKey(hmacKeyData.blob));
@@ -8651,17 +8768,13 @@ TEST_P(UnlockedDeviceRequiredTest, DISABLED_KeysBecomeUnusable) {
     EXPECT_EQ(ErrorCode::DEVICE_LOCKED, UseHmacKey(hmacKeyData.blob));
     EXPECT_EQ(ErrorCode::DEVICE_LOCKED, UseRsaKey(rsaKeyData.blob));
     EXPECT_EQ(ErrorCode::DEVICE_LOCKED, UseEcdsaKey(ecdsaKeyData.blob));
-
-    CheckedDeleteKey(&aesKeyData.blob);
-    CheckedDeleteKey(&hmacKeyData.blob);
-    CheckedDeleteKey(&rsaKeyData.blob);
-    CheckedDeleteKey(&ecdsaKeyData.blob);
 }
 
 INSTANTIATE_KEYMINT_AIDL_TEST(UnlockedDeviceRequiredTest);
 
 using VsrRequirementTest = KeyMintAidlTestBase;
 
+// @VsrTest = VSR-3.10-008
 TEST_P(VsrRequirementTest, Vsr13Test) {
     int vsr_api_level = get_vsr_api_level();
     if (vsr_api_level < __ANDROID_API_T__) {
@@ -8670,6 +8783,7 @@ TEST_P(VsrRequirementTest, Vsr13Test) {
     EXPECT_GE(AidlVersion(), 2) << "VSR 13+ requires KeyMint version 2";
 }
 
+// @VsrTest = VSR-3.10-013.001
 TEST_P(VsrRequirementTest, Vsr14Test) {
     int vsr_api_level = get_vsr_api_level();
     if (vsr_api_level < __ANDROID_API_U__) {
@@ -8717,6 +8831,19 @@ int main(int argc, char** argv) {
                 }
                 aidl::android::hardware::security::keymint::test::KeyMintAidlTestBase::keyblob_dir =
                         std::string(argv[i + 1]);
+                ++i;
+            }
+            if (std::string(argv[i]) == "--expect_upgrade") {
+                if (i + 1 >= argc) {
+                    std::cerr << "Missing argument for --expect_upgrade\n";
+                    return 1;
+                }
+                std::string arg = argv[i + 1];
+                aidl::android::hardware::security::keymint::test::KeyMintAidlTestBase::
+                        expect_upgrade =
+                                arg == "yes"
+                                        ? true
+                                        : (arg == "no" ? false : std::optional<bool>(std::nullopt));
                 ++i;
             }
         }

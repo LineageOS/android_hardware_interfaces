@@ -305,13 +305,18 @@ AssertionResult FilterTests::configureMonitorEvent(int64_t filterId, int32_t mon
     ndk::ScopedAStatus status;
 
     status = mFilters[filterId]->configureMonitorEvent(monitorEventTypes);
+    return AssertionResult(status.isOk());
+}
+
+AssertionResult FilterTests::testMonitorEvent(uint64_t filterId, uint32_t monitorEventTypes) {
+    EXPECT_TRUE(mFilterCallbacks[filterId]) << "Test with getNewlyOpenedFilterId first.";
     if (monitorEventTypes & static_cast<int32_t>(DemuxFilterMonitorEventType::SCRAMBLING_STATUS)) {
         mFilterCallbacks[filterId]->testFilterScramblingEvent();
     }
     if (monitorEventTypes & static_cast<int32_t>(DemuxFilterMonitorEventType::IP_CID_CHANGE)) {
         mFilterCallbacks[filterId]->testFilterIpCidEvent();
     }
-    return AssertionResult(status.isOk());
+    return AssertionResult(true);
 }
 
 AssertionResult FilterTests::startIdTest(int64_t filterId) {

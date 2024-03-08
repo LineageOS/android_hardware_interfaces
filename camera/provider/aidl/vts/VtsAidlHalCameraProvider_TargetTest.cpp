@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <gtest/gtest.h>
 
 #include <aidl/Vintf.h>
 #include <aidl/android/hardware/camera/common/VendorTagSection.h>
@@ -29,6 +30,7 @@
 #include <hidl/GtestPrinter.h>
 #include <hidl/HidlSupport.h>
 #include <torch_provider_cb.h>
+#include <com_android_internal_camera_flags.h>
 #include <list>
 
 using ::aidl::android::hardware::camera::common::CameraDeviceStatus;
@@ -50,6 +52,7 @@ const uint32_t kMaxStillWidth = 2048;
 const uint32_t kMaxStillHeight = 1536;
 
 const int64_t kEmptyFlushTimeoutMSec = 200;
+namespace flags = com::android::internal::camera::flags;
 
 const static std::vector<int64_t> kMandatoryUseCases = {
         ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_DEFAULT,
@@ -159,6 +162,28 @@ TEST_P(CameraAidlTest, getResourceCost) {
     }
 }
 
+// Validate the integrity of manual flash strength control metadata
+TEST_P(CameraAidlTest, validateManualFlashStrengthControlKeys) {
+    if (flags::camera_manual_flash_strength_control()) {
+        std::vector<std::string> cameraDeviceNames = getCameraDeviceNames(mProvider);
+        for (const auto& name : cameraDeviceNames) {
+            ALOGI("validateManualFlashStrengthControlKeys: Testing camera device %s", name.c_str());
+            CameraMetadata meta;
+            std::shared_ptr<ICameraDevice> cameraDevice;
+            openEmptyDeviceSession(name, mProvider, &mSession /*out*/, &meta /*out*/,
+                    &cameraDevice /*out*/);
+            ndk::ScopedAStatus ret = cameraDevice->getCameraCharacteristics(&meta);
+            ASSERT_TRUE(ret.isOk());
+            const camera_metadata_t* staticMeta =
+                    reinterpret_cast<const camera_metadata_t*>(meta.metadata.data());
+            verifyManualFlashStrengthControlCharacteristics(staticMeta);
+        }
+    } else {
+        ALOGI("validateManualFlashStrengthControlKeys: Test skipped.\n");
+        GTEST_SKIP();
+    }
+}
+
 TEST_P(CameraAidlTest, systemCameraTest) {
     std::vector<std::string> cameraDeviceNames = getCameraDeviceNames(mProvider);
     std::map<std::string, std::vector<SystemCameraKind>> hiddenPhysicalIdToLogicalMap;
@@ -242,6 +267,7 @@ TEST_P(CameraAidlTest, getCameraCharacteristics) {
         verifyCameraCharacteristics(chars);
         verifyMonochromeCharacteristics(chars);
         verifyRecommendedConfigs(chars);
+        verifyHighSpeedRecordingCharacteristics(name, chars);
         verifyLogicalOrUltraHighResCameraMetadata(name, device, chars, cameraDeviceNames);
 
         ASSERT_TRUE(ret.isOk());
@@ -474,6 +500,12 @@ TEST_P(CameraAidlTest, constructDefaultRequestSettings) {
         ASSERT_TRUE(ret.isOk());
         ASSERT_NE(device, nullptr);
 
+        int32_t interfaceVersion;
+        ret = device->getInterfaceVersion(&interfaceVersion);
+        ASSERT_TRUE(ret.isOk());
+        bool supportFeatureCombinationQuery =
+                (interfaceVersion >= CAMERA_DEVICE_API_MINOR_VERSION_3);
+
         std::shared_ptr<EmptyDeviceCb> cb = ndk::SharedRefBase::make<EmptyDeviceCb>();
         ret = device->open(cb, &mSession);
         ALOGI("device::open returns status:%d:%d", ret.getExceptionCode(),
@@ -506,6 +538,34 @@ TEST_P(CameraAidlTest, constructDefaultRequestSettings) {
                 verifyRequestTemplate(metadata, reqTemplate);
             } else {
                 ASSERT_EQ(0u, rawMetadata.metadata.size());
+            }
+
+            if (flags::feature_combination_query()) {
+                if (supportFeatureCombinationQuery) {
+                    CameraMetadata rawMetadata2;
+                    ndk::ScopedAStatus ret2 =
+                            device->constructDefaultRequestSettings(reqTemplate, &rawMetadata2);
+
+                    // TODO: Do not allow OPERATION_NOT_SUPPORTED once HAL
+                    // implementation is in place.
+                    if (static_cast<Status>(ret2.getServiceSpecificError()) !=
+                        Status::OPERATION_NOT_SUPPORTED) {
+                        ASSERT_EQ(ret.isOk(), ret2.isOk());
+                        ASSERT_EQ(ret.getStatus(), ret2.getStatus());
+
+                        ASSERT_EQ(rawMetadata.metadata.size(), rawMetadata2.metadata.size());
+                        if (ret2.isOk()) {
+                            const camera_metadata_t* metadata =
+                                    (camera_metadata_t*)rawMetadata2.metadata.data();
+                            size_t expectedSize = rawMetadata2.metadata.size();
+                            int result =
+                                    validate_camera_metadata_structure(metadata, &expectedSize);
+                            ASSERT_TRUE((result == 0) ||
+                                        (result == CAMERA_METADATA_VALIDATION_SHIFTED));
+                            verifyRequestTemplate(metadata, reqTemplate);
+                        }
+                    }
+                }
             }
         }
         ret = mSession->close();
@@ -562,8 +622,7 @@ TEST_P(CameraAidlTest, configureStreamsAvailableOutputs) {
             createStreamConfiguration(streams, StreamConfigurationMode::NORMAL_MODE, &config,
                                       jpegBufferSize);
 
-            bool expectStreamCombQuery = (isLogicalMultiCamera(staticMeta) == Status::OK);
-            verifyStreamCombination(device, config, /*expectedStatus*/ true, expectStreamCombQuery);
+            verifyStreamCombination(device, config, /*expectedStatus*/ true);
 
             config.streamConfigCounter = streamConfigCounter++;
             std::vector<HalStream> halConfigs;
@@ -661,11 +720,7 @@ TEST_P(CameraAidlTest, configureConcurrentStreamsAvailableOutputs) {
         // Test the stream can actually be configured
         for (auto& cti : cameraTestInfos) {
             if (cti.session != nullptr) {
-                camera_metadata_t* staticMeta =
-                        reinterpret_cast<camera_metadata_t*>(cti.staticMeta.metadata.data());
-                bool expectStreamCombQuery = (isLogicalMultiCamera(staticMeta) == Status::OK);
-                verifyStreamCombination(cti.cameraDevice, cti.config, /*expectedStatus*/ true,
-                                        expectStreamCombQuery);
+                verifyStreamCombination(cti.cameraDevice, cti.config, /*expectedStatus*/ true);
             }
 
             if (cti.session != nullptr) {
@@ -726,8 +781,7 @@ TEST_P(CameraAidlTest, configureStreamsInvalidOutputs) {
         createStreamConfiguration(streams, StreamConfigurationMode::NORMAL_MODE, &config,
                                   jpegBufferSize);
 
-        verifyStreamCombination(cameraDevice, config, /*expectedStatus*/ false,
-                                /*expectStreamCombQuery*/ false);
+        verifyStreamCombination(cameraDevice, config, /*expectedStatus*/ false);
 
         config.streamConfigCounter = streamConfigCounter++;
         std::vector<HalStream> halConfigs;
@@ -946,8 +1000,7 @@ TEST_P(CameraAidlTest, configureStreamsZSLInputOutputs) {
                 createStreamConfiguration(streams, StreamConfigurationMode::NORMAL_MODE, &config,
                                           jpegBufferSize);
 
-                verifyStreamCombination(cameraDevice, config, /*expectedStatus*/ true,
-                                        /*expectStreamCombQuery*/ false);
+                verifyStreamCombination(cameraDevice, config, /*expectedStatus*/ true);
 
                 config.streamConfigCounter = streamConfigCounter++;
                 std::vector<HalStream> halConfigs;
@@ -1165,8 +1218,7 @@ TEST_P(CameraAidlTest, configureStreamsPreviewStillOutputs) {
                 createStreamConfiguration(streams, StreamConfigurationMode::NORMAL_MODE, &config,
                                           jpegBufferSize);
                 config.streamConfigCounter = streamConfigCounter++;
-                verifyStreamCombination(cameraDevice, config, /*expectedStatus*/ true,
-                                        /*expectStreamCombQuery*/ false);
+                verifyStreamCombination(cameraDevice, config, /*expectedStatus*/ true);
 
                 std::vector<HalStream> halConfigs;
                 ndk::ScopedAStatus ret = mSession->configureStreams(config, &halConfigs);
@@ -1230,8 +1282,7 @@ TEST_P(CameraAidlTest, configureStreamsConstrainedOutputs) {
         createStreamConfiguration(streams, StreamConfigurationMode::CONSTRAINED_HIGH_SPEED_MODE,
                                   &config);
 
-        verifyStreamCombination(cameraDevice, config, /*expectedStatus*/ true,
-                                /*expectStreamCombQuery*/ false);
+        verifyStreamCombination(cameraDevice, config, /*expectedStatus*/ true);
 
         config.streamConfigCounter = streamConfigCounter++;
         std::vector<HalStream> halConfigs;
@@ -1403,8 +1454,7 @@ TEST_P(CameraAidlTest, configureStreamsVideoStillOutputs) {
 
                 createStreamConfiguration(streams, StreamConfigurationMode::NORMAL_MODE, &config,
                                           jpegBufferSize);
-                verifyStreamCombination(cameraDevice, config, /*expectedStatus*/ true,
-                                        /*expectStreamCombQuery*/ false);
+                verifyStreamCombination(cameraDevice, config, /*expectedStatus*/ true);
 
                 config.streamConfigCounter = streamConfigCounter++;
                 std::vector<HalStream> halConfigs;

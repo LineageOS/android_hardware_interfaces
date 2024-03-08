@@ -20,11 +20,13 @@ import android.hardware.common.NativeHandle;
 import android.hardware.graphics.common.HardwareBufferDescription;
 
 /**
- * Stable AIDL counterpart of AHardwareBuffer.
+ * [Deprecated] Stable AIDL counterpart of AHardwareBuffer.
  *
- * @note This is different from the public HardwareBuffer.
- * @sa +ndk libnativewindow#AHardwareBuffer
+ * @note This is different from the public HardwareBuffer. As the public
+         HardwareBuffer now supports being used in stable-aidl interfaces,
+         that is strongly preferred for new usages.
  * @hide
+ * @deprecated: Use instead android.hardware.HardwareBuffer in frameworks/base
  */
 @VintfStability
 parcelable HardwareBuffer {

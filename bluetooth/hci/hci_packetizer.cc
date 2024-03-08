@@ -51,9 +51,10 @@ const std::vector<uint8_t>& HciPacketizer::GetPacket() const { return packet_; }
 
 bool HciPacketizer::OnDataReady(PacketType packet_type,
                                 const std::vector<uint8_t>& buffer,
-                                size_t offset) {
+                                size_t* offset) {
   bool packet_completed = false;
-  size_t bytes_available = buffer.size() - offset;
+  size_t bytes_available = buffer.size() - *offset;
+
   switch (state_) {
     case HCI_HEADER: {
       size_t header_size =
@@ -62,18 +63,20 @@ bool HciPacketizer::OnDataReady(PacketType packet_type,
         bytes_remaining_ = header_size;
         packet_.clear();
       }
+
       size_t bytes_to_copy = std::min(bytes_remaining_, bytes_available);
-      packet_.insert(packet_.end(), buffer.begin() + offset,
-                     buffer.begin() + offset + bytes_to_copy);
+      packet_.insert(packet_.end(), buffer.begin() + *offset,
+                     buffer.begin() + *offset + bytes_to_copy);
       bytes_remaining_ -= bytes_to_copy;
       bytes_available -= bytes_to_copy;
+      *offset += bytes_to_copy;
+
       if (bytes_remaining_ == 0) {
         bytes_remaining_ = HciGetPacketLengthForType(packet_type, packet_);
         if (bytes_remaining_ > 0) {
           state_ = HCI_PAYLOAD;
           if (bytes_available > 0) {
-            packet_completed =
-                OnDataReady(packet_type, buffer, offset + bytes_to_copy);
+            packet_completed = OnDataReady(packet_type, buffer, offset);
           }
         } else {
           packet_completed = true;
@@ -84,9 +87,10 @@ bool HciPacketizer::OnDataReady(PacketType packet_type,
 
     case HCI_PAYLOAD: {
       size_t bytes_to_copy = std::min(bytes_remaining_, bytes_available);
-      packet_.insert(packet_.end(), buffer.begin() + offset,
-                     buffer.begin() + offset + bytes_to_copy);
+      packet_.insert(packet_.end(), buffer.begin() + *offset,
+                     buffer.begin() + *offset + bytes_to_copy);
       bytes_remaining_ -= bytes_to_copy;
+      *offset += bytes_to_copy;
       if (bytes_remaining_ == 0) {
         state_ = HCI_HEADER;
         packet_completed = true;
@@ -94,6 +98,7 @@ bool HciPacketizer::OnDataReady(PacketType packet_type,
       break;
     }
   }
+
   return packet_completed;
 }
 

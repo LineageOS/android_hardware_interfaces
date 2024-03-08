@@ -14,10 +14,10 @@ aidl_interface {
         "android/hardware/camera/provider/*.aidl",
     ],
     imports: [
-        "android.hardware.camera.device-V2",
+        "android.hardware.camera.device-V3",
         "android.hardware.camera.common-V1",
     ],
-    frozen: true,
+    frozen: false,
     stability: "vintf",
     backend: {
         java: {

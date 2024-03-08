@@ -22,12 +22,14 @@ import android.hardware.graphics.common.HdrConversionCapability;
 import android.hardware.graphics.common.HdrConversionStrategy;
 import android.hardware.graphics.common.Transform;
 import android.hardware.graphics.composer3.ClientTargetProperty;
+import android.hardware.graphics.composer3.ClockMonotonicTimestamp;
 import android.hardware.graphics.composer3.ColorMode;
 import android.hardware.graphics.composer3.CommandResultPayload;
 import android.hardware.graphics.composer3.ContentType;
 import android.hardware.graphics.composer3.DisplayAttribute;
 import android.hardware.graphics.composer3.DisplayCapability;
 import android.hardware.graphics.composer3.DisplayCommand;
+import android.hardware.graphics.composer3.DisplayConfiguration;
 import android.hardware.graphics.composer3.DisplayConnectionType;
 import android.hardware.graphics.composer3.DisplayContentSample;
 import android.hardware.graphics.composer3.DisplayContentSamplingAttributes;
@@ -234,8 +236,17 @@ interface IComposerClient {
     float[] getDataspaceSaturationMatrix(android.hardware.graphics.common.Dataspace dataspace);
 
     /**
+     * @deprecated use getDisplayConfigurations instead.
+     *
      * Returns a display attribute value for a particular display
      * configuration.
+     *
+     * For legacy support getDisplayAttribute should return valid values for any requested
+     * DisplayAttribute, and for all of the configs obtained either through getDisplayConfigs
+     * or getDisplayConfigurations.
+     *
+     * @see getDisplayConfigurations
+     * @see getDisplayConfigs
      *
      * @param display is the display to query.
      * @param config is the display configuration for which to return
@@ -263,15 +274,12 @@ interface IComposerClient {
     DisplayCapability[] getDisplayCapabilities(long display);
 
     /**
-     * Returns handles for all of the valid display configurations on this
-     * display.
-     * This should never return INVALID_CONFIGURATION as a valid value.
+     * @deprecated use getDisplayConfigurations instead.
+     * For legacy support getDisplayConfigs should return at least one valid config.
+     * All the configs returned from the getDisplayConfigs should also be returned
+     * from getDisplayConfigurations.
      *
-     * @param display is the display to query.
-     *
-     * @return is an array of configuration handles.
-     *
-     * @exception EX_BAD_DISPLAY when an invalid display handle was passed in.
+     * @see getDisplayConfigurations
      */
     int[] getDisplayConfigs(long display);
 
@@ -864,4 +872,45 @@ interface IComposerClient {
      *        false when refresh rate callback is disabled.
      */
     void setRefreshRateChangedCallbackDebugEnabled(long display, boolean enabled);
+
+    /**
+     * Returns all of the valid display configurations.
+     * getDisplayConfigurations is the superset of getDisplayConfigs and
+     * getDisplayConfigs should return at least one config.
+     *
+     * @param display is the display for which the configurations are requested.
+     * @param maxFrameIntervalNs refers to the largest frameInterval to be set for
+     * VrrConfig.frameIntervalPowerHints in nanoseconds
+     *
+     * @see getDisplayConfigs
+     */
+    DisplayConfiguration[] getDisplayConfigurations(long display, int maxFrameIntervalNs);
+
+    /**
+     * Provides an early hint for a frame that is likely to be presented.
+     * This is used for the implementation to take the necessary steps to ensure that
+     * the next frame(s) could be presented as close as possible to the expectedPresentTime and
+     * according to the frameIntervalNs cadence.
+     * See DisplayCommand.expectedPresentTime and DisplayCommand.frameIntervalNs.
+     *
+     * The framework will call this function based on the parameters specified in
+     * DisplayConfiguration.VrrConfig:
+     * - notifyExpectedPresentTimeoutNs specifies the idle time from the previous present command
+     * where the framework must send the early hint for the next frame.
+     * - notifyExpectedPresentHeadsUpNs specifies minimal time that framework must send
+     * the early hint before the next frame.
+     *
+     * The framework can omit calling this API when the next present command matches
+     * the cadence of the previous present command frameIntervalNs.
+     *
+     * If DisplayConfiguration.notifyExpectedPresentConfig is null, this function will never be
+     * called.
+     *
+     * @param display is the display for which the notifyExpectedPresent is called.
+     * @param expectedPresentTime is the expectedPresentTime that will be provided in the next
+     * present command
+     * @param frameIntervalNs is a hint about the cadence of the next frames in nanoseconds.
+     */
+    oneway void notifyExpectedPresent(
+            long display, in ClockMonotonicTimestamp expectedPresentTime, int frameIntervalNs);
 }

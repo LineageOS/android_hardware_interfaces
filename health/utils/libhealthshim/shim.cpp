@@ -230,6 +230,7 @@ ScopedAStatus HealthShim::getChargingPolicy(BatteryChargingPolicy* out) {
 ScopedAStatus HealthShim::getBatteryHealthData(BatteryHealthData* out) {
     out->batteryManufacturingDateSeconds = 0;
     out->batteryFirstUsageSeconds = 0;
+    out->batteryPartStatus = BatteryPartStatus::UNSUPPORTED;
     return ResultToStatus(Result::NOT_SUPPORTED);
 }
 

@@ -18,6 +18,7 @@ package android.hardware.radio.voice;
 
 /**
  * See also com.android.internal.telephony.gsm.CallForwardInfo
+ * @hide
  */
 @VintfStability
 @JavaDerive(toString=true)

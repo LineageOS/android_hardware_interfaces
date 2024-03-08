@@ -29,7 +29,7 @@ namespace V1_0 {
 namespace implementation {
 
 SharedLibrary::SharedLibrary(const String8 &path) {
-    mLibHandle = dlopen(path.string(), RTLD_NOW);
+    mLibHandle = dlopen(path.c_str(), RTLD_NOW);
 }
 
 SharedLibrary::~SharedLibrary() {

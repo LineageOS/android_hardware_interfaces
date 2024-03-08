@@ -34,11 +34,11 @@
 package android.hardware.wifi.supplicant;
 @Backing(type="int") @VintfStability
 enum WpaDriverCapabilitiesMask {
-  MBO = 1,
-  OCE = 2,
-  SAE_PK = 4,
-  WFD_R2 = 8,
-  TRUST_ON_FIRST_USE = 16,
-  SET_TLS_MINIMUM_VERSION = 32,
-  TLS_V1_3 = 64,
+  MBO = (1 << 0) /* 1 */,
+  OCE = (1 << 1) /* 2 */,
+  SAE_PK = (1 << 2) /* 4 */,
+  WFD_R2 = (1 << 3) /* 8 */,
+  TRUST_ON_FIRST_USE = (1 << 4) /* 16 */,
+  SET_TLS_MINIMUM_VERSION = (1 << 5) /* 32 */,
+  TLS_V1_3 = (1 << 6) /* 64 */,
 }

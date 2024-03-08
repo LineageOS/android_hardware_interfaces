@@ -22,7 +22,7 @@ hidl_interface {
         "android.hidl.base@1.0",
     ],
     apex_available: [
-        "//apex_available:platform", // Used by InProcessTethering
+        "//apex_available:platform",
         "com.android.tethering",
     ],
     gen_java: true,

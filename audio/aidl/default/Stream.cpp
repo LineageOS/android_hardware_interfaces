@@ -90,6 +90,14 @@ bool StreamContext::isValid() const {
     return true;
 }
 
+void StreamContext::startStreamDataProcessor() {
+    auto streamDataProcessor = mStreamDataProcessor.lock();
+    if (streamDataProcessor != nullptr) {
+        streamDataProcessor->startDataProcessor(mSampleRate, getChannelCount(mChannelLayout),
+                                                mFormat);
+    }
+}
+
 void StreamContext::reset() {
     mCommandMQ.reset();
     mReplyMQ.reset();
@@ -130,7 +138,7 @@ void StreamWorkerCommonLogic::populateReply(StreamDescriptor::Reply* reply,
     reply->status = STATUS_OK;
     if (isConnected) {
         reply->observable.frames = mContext->getFrameCount();
-        reply->observable.timeNs = ::android::elapsedRealtimeNano();
+        reply->observable.timeNs = ::android::uptimeNanos();
         if (auto status = mDriver->refinePosition(&reply->observable); status == ::android::OK) {
             return;
         }
@@ -307,7 +315,7 @@ bool StreamInWorkerLogic::read(size_t clientSize, StreamDescriptor::Reply* reply
     const size_t frameSize = mContext->getFrameSize();
     size_t actualFrameCount = 0;
     bool fatal = false;
-    int32_t latency = Module::kLatencyMs;
+    int32_t latency = mContext->getNominalLatencyMs();
     if (isConnected) {
         if (::android::status_t status = mDriver->transfer(mDataBuffer.get(), byteCount / frameSize,
                                                            &actualFrameCount, &latency);
@@ -573,8 +581,8 @@ bool StreamOutWorkerLogic::write(size_t clientSize, StreamDescriptor::Reply* rep
     const size_t readByteCount = dataMQ->availableToRead();
     const size_t frameSize = mContext->getFrameSize();
     bool fatal = false;
-    int32_t latency = Module::kLatencyMs;
-    if (bool success = readByteCount > 0 ? dataMQ->read(&mDataBuffer[0], readByteCount) : true) {
+    int32_t latency = mContext->getNominalLatencyMs();
+    if (readByteCount > 0 ? dataMQ->read(&mDataBuffer[0], readByteCount) : true) {
         const bool isConnected = mIsConnected;
         LOG(VERBOSE) << __func__ << ": reading of " << readByteCount << " bytes from data MQ"
                      << " succeeded; connected? " << isConnected;
@@ -592,6 +600,10 @@ bool StreamOutWorkerLogic::write(size_t clientSize, StreamDescriptor::Reply* rep
                 status != ::android::OK) {
                 fatal = true;
                 LOG(ERROR) << __func__ << ": write failed: " << status;
+            }
+            auto streamDataProcessor = mContext->getStreamDataProcessor().lock();
+            if (streamDataProcessor != nullptr) {
+                streamDataProcessor->process(mDataBuffer.get(), actualFrameCount * frameSize);
             }
         } else {
             if (mContext->getAsyncCallback() == nullptr) {
@@ -836,7 +848,7 @@ ndk::ScopedAStatus StreamIn::setHwGain(const std::vector<float>& in_channelGains
 }
 
 StreamInHwGainHelper::StreamInHwGainHelper(const StreamContext* context)
-    : mChannelCount(getChannelCount(context->getChannelLayout())) {}
+    : mChannelCount(getChannelCount(context->getChannelLayout())), mHwGains(mChannelCount, 0.0f) {}
 
 ndk::ScopedAStatus StreamInHwGainHelper::getHwGainImpl(std::vector<float>* _aidl_return) {
     *_aidl_return = mHwGains;
@@ -967,7 +979,8 @@ ndk::ScopedAStatus StreamOut::selectPresentation(int32_t in_presentationId, int3
 }
 
 StreamOutHwVolumeHelper::StreamOutHwVolumeHelper(const StreamContext* context)
-    : mChannelCount(getChannelCount(context->getChannelLayout())) {}
+    : mChannelCount(getChannelCount(context->getChannelLayout())),
+      mHwVolumes(mChannelCount, 0.0f) {}
 
 ndk::ScopedAStatus StreamOutHwVolumeHelper::getHwVolumeImpl(std::vector<float>* _aidl_return) {
     *_aidl_return = mHwVolumes;

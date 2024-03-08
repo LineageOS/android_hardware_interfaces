@@ -25,6 +25,9 @@ aidl_interface {
         cpp: {
             enabled: false,
         },
+        rust: {
+            enabled: true,
+        },
     },
     versions_with_info: [
         {

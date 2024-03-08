@@ -41,6 +41,8 @@ union Parameter {
   boolean offload;
   android.hardware.audio.effect.Parameter.VolumeStereo volumeStereo;
   android.hardware.audio.effect.Parameter.Specific specific;
+  android.hardware.audio.common.SinkMetadata sinkMetadata;
+  android.hardware.audio.common.SourceMetadata sourceMetadata;
   @VintfStability
   union Id {
     android.hardware.audio.effect.VendorExtension vendorEffectTag;
@@ -60,6 +62,7 @@ union Parameter {
     android.hardware.audio.effect.Visualizer.Id visualizerTag;
     android.hardware.audio.effect.Volume.Id volumeTag;
     android.hardware.audio.effect.Parameter.Tag commonTag;
+    android.hardware.audio.effect.Spatializer.Id spatializerTag;
   }
   @VintfStability
   parcelable Common {
@@ -91,5 +94,6 @@ union Parameter {
     android.hardware.audio.effect.Virtualizer virtualizer;
     android.hardware.audio.effect.Visualizer visualizer;
     android.hardware.audio.effect.Volume volume;
+    android.hardware.audio.effect.Spatializer spatializer;
   }
 }

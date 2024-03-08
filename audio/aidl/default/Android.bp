@@ -12,6 +12,7 @@ cc_defaults {
     vendor: true,
     shared_libs: [
         "libalsautilsv2",
+        "libaudio_aidl_conversion_common_ndk",
         "libaudioaidlcommon",
         "libaudioutils",
         "libbase",
@@ -19,6 +20,8 @@ cc_defaults {
         "libcutils",
         "libfmq",
         "libnbaio_mono",
+        "liblog",
+        "libmedia_helper",
         "libstagefright_foundation",
         "libtinyalsav2",
         "libutils",
@@ -31,28 +34,8 @@ cc_defaults {
         "libaudioaidl_headers",
         "libxsdc-utils",
     ],
-}
-
-cc_library {
-    name: "libaudioservicesounddoseimpl",
-    vendor: true,
-    defaults: [
-        "latest_android_media_audio_common_types_ndk_shared",
-        "latest_android_hardware_audio_core_sounddose_ndk_shared",
-        "latest_android_hardware_audio_sounddose_ndk_shared",
-    ],
-    export_include_dirs: ["include"],
-    srcs: [
-        "SoundDose.cpp",
-    ],
-    shared_libs: [
-        "libbase",
-        "libbinder_ndk",
-        "libcutils",
-        "libutils",
-    ],
-    visibility: [
-        "//hardware/interfaces/audio/aidl/sounddose/default",
+    cflags: [
+        "-DBACKEND_NDK",
     ],
 }
 
@@ -63,6 +46,7 @@ cc_library {
         "latest_android_media_audio_common_types_ndk_shared",
         "latest_android_hardware_audio_core_ndk_shared",
         "latest_android_hardware_audio_core_sounddose_ndk_shared",
+        "latest_android_hardware_bluetooth_audio_ndk_shared",
     ],
     export_include_dirs: ["include"],
     srcs: [
@@ -78,6 +62,7 @@ cc_library {
         "Stream.cpp",
         "StreamSwitcher.cpp",
         "Telephony.cpp",
+        "XsdcConversion.cpp",
         "alsa/Mixer.cpp",
         "alsa/ModuleAlsa.cpp",
         "alsa/StreamAlsa.cpp",
@@ -109,10 +94,13 @@ cc_library {
         "audio_policy_engine_configuration_aidl_default",
     ],
     shared_libs: [
-        "android.hardware.bluetooth.audio-V3-ndk",
+        "android.hardware.bluetooth.audio-impl",
         "libaudio_aidl_conversion_common_ndk",
+        "libaudioutils",
         "libbluetooth_audio_session_aidl",
+        "liblog",
         "libmedia_helper",
+        "libmediautils_vendor",
         "libstagefright_foundation",
     ],
     export_shared_lib_headers: [
@@ -134,17 +122,19 @@ cc_binary {
     vintf_fragments: ["android.hardware.audio.service-aidl.xml"],
     defaults: [
         "aidlaudioservice_defaults",
-        "latest_android_media_audio_common_types_ndk_shared",
         "latest_android_hardware_audio_core_sounddose_ndk_shared",
         "latest_android_hardware_audio_core_ndk_shared",
+        "latest_android_hardware_bluetooth_audio_ndk_shared",
+        "latest_android_media_audio_common_types_ndk_shared",
     ],
     static_libs: [
         "libaudioserviceexampleimpl",
     ],
     shared_libs: [
-        "android.hardware.bluetooth.audio-V3-ndk",
+        "android.hardware.bluetooth.audio-impl",
         "libaudio_aidl_conversion_common_ndk",
         "libbluetooth_audio_session_aidl",
+        "liblog",
         "libmedia_helper",
         "libstagefright_foundation",
     ],
@@ -172,6 +162,7 @@ cc_test {
         "libbase",
         "libbinder_ndk",
         "libcutils",
+        "libfmq",
         "libmedia_helper",
         "libstagefright_foundation",
         "libutils",
@@ -184,9 +175,11 @@ cc_test {
     ],
     generated_sources: [
         "audio_policy_configuration_aidl_default",
+        "audio_policy_engine_configuration_aidl_default",
     ],
     generated_headers: [
         "audio_policy_configuration_aidl_default",
+        "audio_policy_engine_configuration_aidl_default",
     ],
     srcs: [
         "AudioPolicyConfigXmlConverter.cpp",

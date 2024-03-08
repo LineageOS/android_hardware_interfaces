@@ -379,6 +379,12 @@ interface IKeyMintDevice {
      *   validate it against the key material.  In the event of a mismatch, importKey must return
      *   ErrorCode::IMPORT_PARAMETER_MISMATCH.
      *
+     * o Tag::EC_CURVE is not necessary in the input parameters for import of EC keys. If not
+     *   provided the IKeyMintDevice must deduce the value from the provided key material and add
+     *   the tag and value to the key characteristics.  If Tag::EC_CURVE is provided, the
+     *   IKeyMintDevice must validate it against the key material.  In the event of a mismatch,
+     *   importKey must return ErrorCode::IMPORT_PARAMETER_MISMATCH.
+     *
      * o Tag::RSA_PUBLIC_EXPONENT (for RSA keys only) is not necessary in the input parameters.  If
      *   not provided, the IKeyMintDevice must deduce the value from the provided key material and
      *   add the tag and value to the key characteristics.  If Tag::RSA_PUBLIC_EXPONENT is provided,

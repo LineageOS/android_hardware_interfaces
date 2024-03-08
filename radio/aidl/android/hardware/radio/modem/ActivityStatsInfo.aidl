@@ -18,6 +18,7 @@ package android.hardware.radio.modem;
 
 import android.hardware.radio.modem.ActivityStatsTechSpecificInfo;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable ActivityStatsInfo {

@@ -32,6 +32,8 @@ package aidl.android.hardware.bluetooth.audio.setting {
 
   public enum CodecType {
     method public String getRawName();
+    enum_constant public static final aidl.android.hardware.bluetooth.audio.setting.CodecType APTX_ADAPTIVE_LE;
+    enum_constant public static final aidl.android.hardware.bluetooth.audio.setting.CodecType APTX_ADAPTIVE_LEX;
     enum_constant public static final aidl.android.hardware.bluetooth.audio.setting.CodecType LC3;
   }
 
@@ -96,15 +98,7 @@ package aidl.android.hardware.bluetooth.audio.setting {
 
   public class XmlParser {
     ctor public XmlParser();
-    method public static aidl.android.hardware.bluetooth.audio.setting.CodecConfiguration readCodecConfiguration(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
-    method public static aidl.android.hardware.bluetooth.audio.setting.CodecConfigurationList readCodecConfigurationList(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
-    method public static aidl.android.hardware.bluetooth.audio.setting.Configuration readConfiguration(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
-    method public static aidl.android.hardware.bluetooth.audio.setting.ConfigurationList readConfigurationList(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
     method public static aidl.android.hardware.bluetooth.audio.setting.LeAudioOffloadSetting readLeAudioOffloadSetting(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
-    method public static aidl.android.hardware.bluetooth.audio.setting.Scenario readScenario(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
-    method public static aidl.android.hardware.bluetooth.audio.setting.ScenarioList readScenarioList(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
-    method public static aidl.android.hardware.bluetooth.audio.setting.StrategyConfiguration readStrategyConfiguration(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
-    method public static aidl.android.hardware.bluetooth.audio.setting.StrategyConfigurationList readStrategyConfigurationList(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
     method public static String readText(org.xmlpull.v1.XmlPullParser) throws java.io.IOException, org.xmlpull.v1.XmlPullParserException;
     method public static void skip(org.xmlpull.v1.XmlPullParser) throws java.io.IOException, org.xmlpull.v1.XmlPullParserException;
   }

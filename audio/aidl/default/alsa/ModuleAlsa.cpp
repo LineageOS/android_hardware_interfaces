@@ -39,13 +39,14 @@ ndk::ScopedAStatus ModuleAlsa::populateConnectedDevicePort(AudioPort* audioPort)
     if (!deviceProfile.has_value()) {
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
-    auto profile = alsa::readAlsaDeviceInfo(*deviceProfile);
-    if (!profile.has_value()) {
+    auto proxy = alsa::readAlsaDeviceInfo(*deviceProfile);
+    if (proxy.get() == nullptr) {
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
     }
 
-    std::vector<AudioChannelLayout> channels = alsa::getChannelMasksFromProfile(&profile.value());
-    std::vector<int> sampleRates = alsa::getSampleRatesFromProfile(&profile.value());
+    alsa_device_profile* profile = proxy.getProfile();
+    std::vector<AudioChannelLayout> channels = alsa::getChannelMasksFromProfile(profile);
+    std::vector<int> sampleRates = alsa::getSampleRatesFromProfile(profile);
 
     for (size_t i = 0; i < std::min(MAX_PROFILE_FORMATS, AUDIO_PORT_MAX_AUDIO_PROFILES) &&
                        profile->formats[i] != PCM_FORMAT_INVALID;

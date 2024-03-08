@@ -37,3 +37,56 @@ cc_binary {
         "Memtrack.cpp",
     ],
 }
+
+cc_binary {
+    name: "android.hardware.memtrack-service.apex",
+    stem: "android.hardware.memtrack-service.example",
+    relative_install_path: "hw",
+    vendor: true,
+
+    stl: "c++_static",
+    static_libs: [
+        "libbase",
+        "android.hardware.memtrack-V1-ndk",
+    ],
+    shared_libs: [
+        "libbinder_ndk",
+        "liblog",
+    ],
+    srcs: [
+        "main.cpp",
+        "Memtrack.cpp",
+    ],
+    installable: false, // installed in APEX
+}
+
+prebuilt_etc {
+    name: "memtrack-default-apex.rc",
+    src: "memtrack-default-apex.rc",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "memtrack-default.xml",
+    src: "memtrack-default.xml",
+    sub_dir: "vintf",
+    installable: false,
+}
+
+apex {
+    name: "com.android.hardware.memtrack",
+    file_contexts: "apex_file_contexts",
+    manifest: "apex_manifest.json",
+    key: "com.android.hardware.key",
+    certificate: ":com.android.hardware.certificate",
+    updatable: false,
+    vendor: true,
+
+    binaries: [
+        "android.hardware.memtrack-service.apex",
+    ],
+    prebuilts: [
+        "memtrack-default-apex.rc",
+        "memtrack-default.xml",
+    ],
+}

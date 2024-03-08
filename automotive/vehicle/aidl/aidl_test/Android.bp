@@ -51,10 +51,10 @@ android_test {
         ":IVehicleGeneratedJavaFiles",
     ],
     static_libs: [
-        "android.hardware.automotive.vehicle-V2-java",
-        "android.hardware.automotive.vehicle.property-V2-java",
+        "android.hardware.automotive.vehicle-V3-java",
+        "android.hardware.automotive.vehicle.property-V3-java",
         "androidx.test.runner",
-        "truth-prebuilt",
+        "truth",
     ],
     test_suites: ["general-tests"],
 }

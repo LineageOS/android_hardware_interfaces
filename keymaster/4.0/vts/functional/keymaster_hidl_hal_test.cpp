@@ -2449,10 +2449,11 @@ TEST_P(EncryptionOperationsTest, RsaNoPaddingTooLarge) {
     EVP_PKEY_Ptr pkey(d2i_PUBKEY(nullptr /* alloc new */, &p, exported.size()));
     RSA_Ptr rsa(EVP_PKEY_get1_RSA(pkey.get()));
 
-    size_t modulus_len = BN_num_bytes(rsa->n);
+    const BIGNUM* n = RSA_get0_n(rsa.get());
+    size_t modulus_len = BN_num_bytes(n);
     ASSERT_EQ(2048U / 8, modulus_len);
     std::unique_ptr<uint8_t[]> modulus_buf(new uint8_t[modulus_len]);
-    BN_bn2bin(rsa->n, modulus_buf.get());
+    BN_bn2bin(n, modulus_buf.get());
 
     // The modulus is too big to encrypt.
     string message(reinterpret_cast<const char*>(modulus_buf.get()), modulus_len);
@@ -2464,10 +2465,12 @@ TEST_P(EncryptionOperationsTest, RsaNoPaddingTooLarge) {
     EXPECT_EQ(ErrorCode::INVALID_ARGUMENT, Finish(message, &result));
 
     // One smaller than the modulus is okay.
-    BN_sub(rsa->n, rsa->n, BN_value_one());
-    modulus_len = BN_num_bytes(rsa->n);
+    BIGNUM_Ptr n_minus_1(BN_new());
+    ASSERT_TRUE(n_minus_1);
+    ASSERT_TRUE(BN_sub(n_minus_1.get(), n, BN_value_one()));
+    modulus_len = BN_num_bytes(n_minus_1.get());
     ASSERT_EQ(2048U / 8, modulus_len);
-    BN_bn2bin(rsa->n, modulus_buf.get());
+    BN_bn2bin(n_minus_1.get(), modulus_buf.get());
     message = string(reinterpret_cast<const char*>(modulus_buf.get()), modulus_len);
     EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, params));
     EXPECT_EQ(ErrorCode::OK, Finish(message, &result));

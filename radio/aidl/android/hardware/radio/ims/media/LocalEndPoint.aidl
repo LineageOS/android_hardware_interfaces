@@ -18,7 +18,9 @@ package android.hardware.radio.ims.media;
 
 import android.os.ParcelFileDescriptor;
 
+/** @hide */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable LocalEndPoint {
     /** Socket file descriptor for RTP traffic */
     ParcelFileDescriptor rtpFd;

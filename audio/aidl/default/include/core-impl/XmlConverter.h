@@ -22,7 +22,6 @@
 
 #include <media/AidlConversionUtil.h>
 #include <system/audio_config.h>
-#include <utils/Errors.h>
 
 namespace aidl::android::hardware::audio::core::internal {
 
@@ -85,10 +84,10 @@ class XmlConverter {
  *     </Modules>
  */
 template <typename W, typename X, typename A>
-std::vector<A> convertWrappedCollectionToAidlUnchecked(
+static ConversionResult<std::vector<A>> convertWrappedCollectionToAidl(
         const std::vector<W>& xsdcWrapperTypeVec,
         std::function<const std::vector<X>&(const W&)> getInnerTypeVec,
-        std::function<A(const X&)> convertToAidl) {
+        std::function<ConversionResult<A>(const X&)> convertToAidl) {
     std::vector<A> resultAidlTypeVec;
     if (!xsdcWrapperTypeVec.empty()) {
         /*
@@ -98,21 +97,23 @@ std::vector<A> convertWrappedCollectionToAidlUnchecked(
          */
         resultAidlTypeVec.reserve(getInnerTypeVec(xsdcWrapperTypeVec[0]).size());
         for (const W& xsdcWrapperType : xsdcWrapperTypeVec) {
-            std::transform(getInnerTypeVec(xsdcWrapperType).begin(),
-                           getInnerTypeVec(xsdcWrapperType).end(),
-                           std::back_inserter(resultAidlTypeVec), convertToAidl);
+            for (const X& xsdcType : getInnerTypeVec(xsdcWrapperType)) {
+                resultAidlTypeVec.push_back(VALUE_OR_FATAL(convertToAidl(xsdcType)));
+            }
         }
     }
     return resultAidlTypeVec;
 }
 
 template <typename X, typename A>
-std::vector<A> convertCollectionToAidlUnchecked(const std::vector<X>& xsdcTypeVec,
-                                                std::function<A(const X&)> itemConversion) {
+static ConversionResult<std::vector<A>> convertCollectionToAidl(
+        const std::vector<X>& xsdcTypeVec,
+        std::function<ConversionResult<A>(const X&)> convertToAidl) {
     std::vector<A> resultAidlTypeVec;
     resultAidlTypeVec.reserve(xsdcTypeVec.size());
-    std::transform(xsdcTypeVec.begin(), xsdcTypeVec.end(), std::back_inserter(resultAidlTypeVec),
-                   itemConversion);
+    for (const X& xsdcType : xsdcTypeVec) {
+        resultAidlTypeVec.push_back(VALUE_OR_FATAL(convertToAidl(xsdcType)));
+    }
     return resultAidlTypeVec;
 }
 

@@ -1,5 +1,0 @@
-service vendor.face-default /vendor/bin/hw/android.hardware.biometrics.face-service.example
-    class hal
-    user nobody
-    group nobody
-

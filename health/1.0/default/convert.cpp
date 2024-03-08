@@ -26,19 +26,18 @@ void convertToHealthConfig(const struct healthd_config *hc, HealthConfig& config
     config.periodicChoresIntervalFast = hc->periodic_chores_interval_fast;
     config.periodicChoresIntervalSlow = hc->periodic_chores_interval_slow;
 
-    config.batteryStatusPath        = hc->batteryStatusPath.string();
-    config.batteryHealthPath        = hc->batteryHealthPath.string();
-    config.batteryPresentPath       = hc->batteryPresentPath.string();
-    config.batteryCapacityPath      = hc->batteryCapacityPath.string();
-    config.batteryVoltagePath       = hc->batteryVoltagePath.string();
-    config.batteryTemperaturePath   = hc->batteryTemperaturePath.string();
-    config.batteryTechnologyPath    = hc->batteryTechnologyPath.string();
-    config.batteryCurrentNowPath    = hc->batteryCurrentNowPath.string();
-    config.batteryCurrentAvgPath    = hc->batteryCurrentAvgPath.string();
-    config.batteryChargeCounterPath = hc->batteryChargeCounterPath.string();
-    config.batteryFullChargePath    = hc->batteryFullChargePath.string();
-    config.batteryCycleCountPath    = hc->batteryCycleCountPath.string();
-
+    config.batteryStatusPath = hc->batteryStatusPath.c_str();
+    config.batteryHealthPath = hc->batteryHealthPath.c_str();
+    config.batteryPresentPath = hc->batteryPresentPath.c_str();
+    config.batteryCapacityPath = hc->batteryCapacityPath.c_str();
+    config.batteryVoltagePath = hc->batteryVoltagePath.c_str();
+    config.batteryTemperaturePath = hc->batteryTemperaturePath.c_str();
+    config.batteryTechnologyPath = hc->batteryTechnologyPath.c_str();
+    config.batteryCurrentNowPath = hc->batteryCurrentNowPath.c_str();
+    config.batteryCurrentAvgPath = hc->batteryCurrentAvgPath.c_str();
+    config.batteryChargeCounterPath = hc->batteryChargeCounterPath.c_str();
+    config.batteryFullChargePath = hc->batteryFullChargePath.c_str();
+    config.batteryCycleCountPath = hc->batteryCycleCountPath.c_str();
 }
 
 void convertFromHealthConfig(const HealthConfig& c, struct healthd_config *hc) {
@@ -118,7 +117,7 @@ void convertToHealthInfo(const struct android::BatteryProperties *p,
     info.batteryCycleCount      = p->batteryCycleCount;
     info.batteryFullCharge      = p->batteryFullCharge;
     info.batteryChargeCounter   = p->batteryChargeCounter;
-    info.batteryTechnology      = p->batteryTechnology;
+    info.batteryTechnology      = p->batteryTechnology.c_str();
 }
 
 void convertFromHealthInfo(const HealthInfo& info,

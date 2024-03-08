@@ -23,14 +23,16 @@ import android.hardware.radio.ims.media.RtpError;
 
 /**
  * This interface is used by IMS media framework to talk to RTP stack located in another processor.
+ * @hide
  */
 @VintfStability
 oneway interface IImsMedia {
-
     /**
      * Set the listener functions for receiving notifications from the RTP stack.
      *
      * @param mediaListener Object containing listener methods
+     *
+     * This is available when android.hardware.telephony.ims is defined.
      */
     void setListener(in IImsMediaListener mediaListener);
 
@@ -46,6 +48,8 @@ oneway interface IImsMedia {
      * @param localEndPoint provides IP address, port and logical modem id for local RTP endpoint
      * @param config provides remote end point info and codec details. This could be null initially
      *        and the application may update this later using modifySession() API.
+     *
+     * This is available when android.hardware.telephony.ims is defined.
      */
     void openSession(int sessionId, in LocalEndPoint localEndPoint, in RtpConfig config);
 
@@ -54,6 +58,8 @@ oneway interface IImsMedia {
      * This shall also close the session specific binder connection opened as part of openSession().
      *
      * @param sessionId identifier for the rtp session that needs to be closed
+     *
+     * This is available when android.hardware.telephony.ims is defined.
      */
     void closeSession(int sessionId);
 }

@@ -34,6 +34,7 @@
 package android.hardware.automotive.vehicle;
 @Backing(type="int") @VintfStability
 enum VehicleAreaSeat {
+  UNKNOWN = 0x0000,
   ROW_1_LEFT = 0x0001,
   ROW_1_CENTER = 0x0002,
   ROW_1_RIGHT = 0x0004,

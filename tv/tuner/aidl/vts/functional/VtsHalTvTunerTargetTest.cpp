@@ -60,6 +60,11 @@ void TunerFilterAidlTest::configSingleFilterInDemuxTest(FilterConfig filterConf,
     }
     ASSERT_TRUE(mFilterTests.getFilterMQDescriptor(filterId, filterConf.getMqDesc));
     ASSERT_TRUE(mFilterTests.startFilter(filterId));
+    ASSERT_TRUE(mFrontendTests.tuneFrontend(frontendConf, true /*testWithDemux*/));
+    if (filterConf.monitorEventTypes > 0) {
+        ASSERT_TRUE(mFilterTests.testMonitorEvent(filterId, filterConf.monitorEventTypes));
+    }
+    ASSERT_TRUE(mFrontendTests.stopTuneFrontend(true /*testWithDemux*/));
     ASSERT_TRUE(mFilterTests.stopFilter(filterId));
     ASSERT_TRUE(mFilterTests.closeFilter(filterId));
     ASSERT_TRUE(mDemuxTests.closeDemux());

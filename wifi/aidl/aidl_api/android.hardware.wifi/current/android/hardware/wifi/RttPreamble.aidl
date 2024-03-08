@@ -34,6 +34,7 @@
 package android.hardware.wifi;
 @Backing(type="int") @VintfStability
 enum RttPreamble {
+  INVALID = 0,
   LEGACY = 0x1,
   HT = 0x2,
   VHT = 0x4,

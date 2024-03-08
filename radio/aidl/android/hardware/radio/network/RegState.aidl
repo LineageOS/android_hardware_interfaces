@@ -20,6 +20,7 @@ package android.hardware.radio.network;
  * Please note that registration state UNKNOWN is treated as "out of service" in Android telephony.
  * Registration state REG_DENIED must be returned if Location Update Reject (with cause 17 - Network
  * Failure) is received repeatedly from the network, to facilitate "managed roaming".
+ * @hide
  */
 @VintfStability
 @Backing(type="int")

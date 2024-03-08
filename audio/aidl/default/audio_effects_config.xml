@@ -96,8 +96,8 @@
             <libsw library="bundle" uuid="ce772f20-847d-11df-bb17-0002a5d5c51b"/>
         </effectProxy>
         <effect name="extension_effect" library="extensioneffect" uuid="fa81dd00-588b-11ed-9b6a-0242ac120002" type="fa81de0e-588b-11ed-9b6a-0242ac120002"/>
-        <effect name="acoustic_echo_canceler" library="aecsw" uuid="bb392ec0-8d4d-11e0-a896-0002a5d5c51b"/>
-        <effect name="noise_suppression" library="nssw" uuid="c06c8400-8e06-11e0-9cb6-0002a5d5c51b"/>
+        <effect name="acoustic_echo_canceler" library="pre_processing" uuid="bb392ec0-8d4d-11e0-a896-0002a5d5c51b"/>
+        <effect name="noise_suppression" library="pre_processing" uuid="c06c8400-8e06-11e0-9cb6-0002a5d5c51b"/>
     </effects>
 
     <preprocess>

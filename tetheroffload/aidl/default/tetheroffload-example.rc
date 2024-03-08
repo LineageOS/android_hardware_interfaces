@@ -1,4 +1,4 @@
-service vendor.tetheroffload-example /vendor/bin/hw/android.hardware.tetheroffload-service.example
+service vendor.tetheroffload-example /apex/com.android.hardware.tetheroffload/bin/hw/android.hardware.tetheroffload-service.example
     class hal
     user nobody
     group nobody

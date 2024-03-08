@@ -34,6 +34,7 @@ import android.hardware.radio.data.TrafficDescriptor;
  * duration of a method call. If clients provide colliding serials (including passing the same
  * serial to different methods), multiple responses (one for each method call) must still be served.
  * setResponseFunctions must work with IRadioDataResponse and IRadioDataIndication.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioData {
@@ -47,6 +48,8 @@ oneway interface IRadioData {
      * @param serial Serial number of request.
      *
      * Response function is IRadioDataResponse.allocatePduSessionIdResponse()
+     *
+     * This is available when android.hardware.telephony.data is defined.
      */
     void allocatePduSessionId(in int serial);
 
@@ -59,6 +62,8 @@ oneway interface IRadioData {
      * @param id callId The identifier of the data call which is provided in SetupDataCallResult
      *
      * Response function is IRadioDataResponse.cancelHandoverResponse()
+     *
+     * This is available when android.hardware.telephony.ims is defined.
      */
     void cancelHandover(in int serial, in int callId);
 
@@ -72,6 +77,8 @@ oneway interface IRadioData {
      * @param reason The request reason. Must be normal, handover, or shutdown.
      *
      * Response function is IRadioDataResponse.deactivateDataCallResponse()
+     *
+     * This is available when android.hardware.telephony.data is defined.
      */
     void deactivateDataCall(in int serial, in int cid, in DataRequestReason reason);
 
@@ -82,6 +89,8 @@ oneway interface IRadioData {
      * @param serial Serial number of request.
      *
      * Response function is IRadioDataResponse.getDataCallListResponse()
+     *
+     * This is available when android.hardware.telephony.data is defined.
      */
     void getDataCallList(in int serial);
 
@@ -95,6 +104,8 @@ oneway interface IRadioData {
      * @param serial Serial number of request.
      *
      * Response function is IRadioDataResponse.getSlicingConfigResponse()
+     *
+     * This is available when android.hardware.telephony.data is defined.
      */
     void getSlicingConfig(in int serial);
 
@@ -106,6 +117,8 @@ oneway interface IRadioData {
      * @param id Pdu session id to release.
      *
      * Response function is IRadioDataResponse.releasePduSessionIdResponse()
+     *
+     * This is available when android.hardware.telephony.ims is defined.
      */
     void releasePduSessionId(in int serial, in int id);
 
@@ -113,6 +126,8 @@ oneway interface IRadioData {
      * When response type received from a radio indication or radio response is
      * RadioIndicationType:UNSOLICITED_ACK_EXP or RadioResponseType:SOLICITED_ACK_EXP respectively,
      * acknowledge the receipt of those messages by sending responseAcknowledgement().
+     *
+     * This is available when android.hardware.telephony.data is defined.
      */
     void responseAcknowledgement();
 
@@ -123,6 +138,8 @@ oneway interface IRadioData {
      * @param allow true to allow data calls, false to disallow data calls
      *
      * Response function is IRadioDataResponse.setDataAllowedResponse()
+     *
+     * This is available when android.hardware.telephony.data is defined.
      */
     void setDataAllowed(in int serial, in boolean allow);
 
@@ -133,6 +150,8 @@ oneway interface IRadioData {
      * @param profiles Array of DataProfileInfo to set.
      *
      * Response function is IRadioDataResponse.setDataProfileResponse()
+     *
+     * This is available when android.hardware.telephony.data is defined.
      */
     void setDataProfile(in int serial, in DataProfileInfo[] profiles);
 
@@ -154,6 +173,8 @@ oneway interface IRadioData {
      *        DataThrottlingAction:HOLD.
      *
      * Response function is IRadioDataResponse.setDataThrottlingResponse()
+     *
+     * This is available when android.hardware.telephony.data is defined.
      */
     void setDataThrottling(in int serial, in DataThrottlingAction dataThrottlingAction,
             in long completionDurationMillis);
@@ -166,6 +187,8 @@ oneway interface IRadioData {
      *        initial attach APN.
      *
      * Response function is IRadioDataResponse.setInitialAttachApnResponse()
+     *
+     * This is available when android.hardware.telephony.data is defined.
      */
     void setInitialAttachApn(in int serial, in @nullable DataProfileInfo dataProfileInfo);
 
@@ -174,6 +197,8 @@ oneway interface IRadioData {
      *
      * @param radioDataResponse Object containing response functions
      * @param radioDataIndication Object containing radio indications
+     *
+     * This is available when android.hardware.telephony.data is defined.
      */
     void setResponseFunctions(
             in IRadioDataResponse radioDataResponse, in IRadioDataIndication radioDataIndication);
@@ -228,6 +253,8 @@ oneway interface IRadioData {
      *        example, a zero-rating slice.
      *
      * Response function is IRadioDataResponse.setupDataCallResponse()
+     *
+     * This is available when android.hardware.telephony.data is defined.
      */
     void setupDataCall(in int serial, in AccessNetwork accessNetwork,
             in DataProfileInfo dataProfileInfo, in boolean roamingAllowed,
@@ -249,6 +276,8 @@ oneway interface IRadioData {
      * @param id callId The identifier of the data call which is provided in SetupDataCallResult
      *
      * Response function is IRadioDataResponse.startHandoverResponse()
+     *
+     * This is available when android.hardware.telephony.ims is defined.
      */
     void startHandover(in int serial, in int callId);
 
@@ -259,6 +288,8 @@ oneway interface IRadioData {
      * @param keepalive A request structure containing all necessary info to describe a keepalive
      *
      * Response function is IRadioDataResponse.startKeepaliveResponse()
+     *
+     * This is available when android.hardware.telephony.data is defined.
      */
     void startKeepalive(in int serial, in KeepaliveRequest keepalive);
 
@@ -270,6 +301,8 @@ oneway interface IRadioData {
      *        IRadioDataResponse.startKeepaliveResponse
      *
      * Response function is IRadioDataResponse.stopKeepaliveResponse()
+     *
+     * This is available when android.hardware.telephony.data is defined.
      */
     void stopKeepalive(in int serial, in int sessionHandle);
 }

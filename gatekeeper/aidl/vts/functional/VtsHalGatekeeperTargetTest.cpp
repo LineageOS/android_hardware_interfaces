@@ -221,6 +221,47 @@ TEST_P(GatekeeperAidlTest, VerifySuccess) {
 }
 
 /**
+ * Ensure that passwords containing a NUL byte aren't truncated
+ */
+TEST_P(GatekeeperAidlTest, PasswordIsBinaryData) {
+    GatekeeperEnrollResponse enrollRsp;
+    GatekeeperVerifyResponse verifyRsp;
+    std::vector<uint8_t> rightPassword = {'A', 'B', 'C', '\0', 'D', 'E', 'F'};
+    std::vector<uint8_t> wrongPassword = {'A', 'B', 'C', '\0', '\0', '\0', '\0'};
+
+    ALOGI("Testing Enroll+Verify of password with embedded NUL (expected success)");
+    enrollNewPassword(rightPassword, enrollRsp, true);
+    verifyPassword(rightPassword, enrollRsp.data, 1, verifyRsp, true);
+
+    ALOGI("Testing Verify of wrong password (expected failure)");
+    verifyPassword(wrongPassword, enrollRsp.data, 1, verifyRsp, false);
+
+    ALOGI("PasswordIsBinaryData test done");
+}
+
+/**
+ * Ensure that long passwords aren't truncated
+ */
+TEST_P(GatekeeperAidlTest, LongPassword) {
+    GatekeeperEnrollResponse enrollRsp;
+    GatekeeperVerifyResponse verifyRsp;
+    std::vector<uint8_t> password;
+
+    password.resize(64);  // maximum length used by Android
+    memset(password.data(), 'A', password.size());
+
+    ALOGI("Testing Enroll+Verify of long password (expected success)");
+    enrollNewPassword(password, enrollRsp, true);
+    verifyPassword(password, enrollRsp.data, 1, verifyRsp, true);
+
+    ALOGI("Testing Verify of wrong password (expected failure)");
+    password[password.size() - 1] ^= 1;
+    verifyPassword(password, enrollRsp.data, 1, verifyRsp, false);
+
+    ALOGI("LongPassword test done");
+}
+
+/**
  * Ensure we can securely update password (keep the same
  * secure user_id) if we prove we know old password
  */

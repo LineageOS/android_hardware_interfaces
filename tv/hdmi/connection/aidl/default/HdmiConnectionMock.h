@@ -41,7 +41,7 @@ using ::aidl::android::hardware::tv::hdmi::connection::Result;
 
 struct HdmiConnectionMock : public BnHdmiConnection {
     HdmiConnectionMock();
-
+    ~HdmiConnectionMock();
     ::ndk::ScopedAStatus getPortInfo(std::vector<HdmiPortInfo>* _aidl_return) override;
     ::ndk::ScopedAStatus isConnected(int32_t portId, bool* _aidl_return) override;
     ::ndk::ScopedAStatus setCallback(
@@ -56,6 +56,7 @@ struct HdmiConnectionMock : public BnHdmiConnection {
     void threadLoop();
     int readMessageFromFifo(unsigned char* buf, int msgCount);
     void handleHotplugMessage(unsigned char* msgBuf);
+    void stopThread();
 
   private:
     static void serviceDied(void* cookie);

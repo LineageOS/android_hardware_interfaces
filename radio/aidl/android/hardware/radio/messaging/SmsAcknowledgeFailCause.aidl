@@ -16,6 +16,7 @@
 
 package android.hardware.radio.messaging;
 
+/** @hide */
 @VintfStability
 @Backing(type="int")
 @JavaDerive(toString=true)

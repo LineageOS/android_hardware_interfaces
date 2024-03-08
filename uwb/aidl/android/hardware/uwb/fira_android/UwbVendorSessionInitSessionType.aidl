@@ -29,4 +29,5 @@ package android.hardware.uwb.fira_android;
 enum UwbVendorSessionInitSessionType {
     /** Added in vendor version 0. */
     CCC = 0xA0,
+    RADAR = 0xA1,
 }

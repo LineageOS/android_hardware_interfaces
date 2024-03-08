@@ -21,10 +21,12 @@ cc_library_static {
 
     shared_libs: [
         "android.hardware.cas-V1-ndk",
+        "libbase",
         "libbinder_ndk",
         "liblog",
         "libutils",
         "libcutils",
+        "libvndksupport",
     ],
     static_libs: [
         "libaidlcommonsupport",
@@ -42,37 +44,44 @@ cc_defaults {
 
     srcs: ["service.cpp"],
 
+    stl: "c++_static",
     static_libs: [
+        "android.hardware.cas-V1-ndk",
+        "android.hardware.common-V2-ndk",
         "libaidlcommonsupport",
+        "libbase",
         "libcasexampleimpl",
+        "libcutils",
+        "libutils",
     ],
     shared_libs: [
-        "android.hardware.cas-V1-ndk",
         "libbinder_ndk",
         "liblog",
-        "libutils",
-        "libcutils",
     ],
     header_libs: ["media_plugin_headers"],
-    vintf_fragments: ["android.hardware.cas-service.xml"],
 }
 
 cc_binary {
     name: "android.hardware.cas-service.example",
     defaults: ["cas_service_example_defaults"],
-    init_rc: ["cas-default.rc"],
+    // Installed in APEX
+    installable: false,
 }
 
+// TODO(b/297467514) Convert to VAPEX
 cc_binary {
     name: "android.hardware.cas-service.example-lazy",
     defaults: ["cas_service_example_defaults"],
     init_rc: ["cas-default-lazy.rc"],
+    vintf_fragments: ["android.hardware.cas-service.xml"],
     cflags: ["-DLAZY_SERVICE"],
+    overrides: ["com.android.hardware.cas"],
 }
 
 cc_fuzz {
     name: "android.hardware.cas-service_fuzzer",
-    vendor: true,
+    // TODO(b/307611931): avoid fuzzing on vendor until hermiticity issue is fixed
+    // vendor: true,
 
     defaults: ["service_fuzzer_defaults"],
     srcs: ["fuzzer.cpp"],
@@ -81,6 +90,7 @@ cc_fuzz {
         "android.hardware.cas-V1-ndk",
         "libcutils",
         "liblog",
+        "libvndksupport",
     ],
     static_libs: [
         "libaidlcommonsupport",
@@ -90,4 +100,35 @@ cc_fuzz {
     fuzz_config: {
         componentid: 1344,
     },
+}
+
+apex {
+    name: "com.android.hardware.cas",
+    manifest: "manifest.json",
+    file_contexts: "file_contexts",
+    key: "com.android.hardware.key",
+    certificate: ":com.android.hardware.certificate",
+    updatable: false,
+    vendor: true,
+
+    binaries: [
+        "android.hardware.cas-service.example",
+    ],
+    prebuilts: [
+        "cas-default.rc",
+        "android.hardware.cas-service.xml",
+    ],
+}
+
+prebuilt_etc {
+    name: "cas-default.rc",
+    src: "cas-default.rc",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "android.hardware.cas-service.xml",
+    src: "android.hardware.cas-service.xml",
+    sub_dir: "vintf",
+    installable: false,
 }

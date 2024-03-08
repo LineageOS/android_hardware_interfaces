@@ -1,0 +1,5 @@
+# Bug component: 27441
+
+include platform/packages/modules/Bluetooth:/OWNERS
+
+chienyuanhuang@google.com

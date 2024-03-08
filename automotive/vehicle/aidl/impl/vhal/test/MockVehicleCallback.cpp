@@ -137,6 +137,14 @@ bool MockVehicleCallback::waitForGetValueResults(size_t size, size_t timeoutInNa
     });
 }
 
+bool MockVehicleCallback::waitForOnPropertyEventResults(size_t size, size_t timeoutInNano) {
+    std::unique_lock lk(mLock);
+    return mCond.wait_for(lk, std::chrono::nanoseconds(timeoutInNano), [this, size] {
+        ScopedLockAssertion lockAssertion(mLock);
+        return mOnPropertyEventResults.size() >= size;
+    });
+}
+
 }  // namespace vehicle
 }  // namespace automotive
 }  // namespace hardware

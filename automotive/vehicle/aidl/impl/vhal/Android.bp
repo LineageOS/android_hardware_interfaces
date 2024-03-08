@@ -19,7 +19,7 @@ package {
 }
 
 cc_binary {
-    name: "android.hardware.automotive.vehicle@V1-default-service",
+    name: "android.hardware.automotive.vehicle@V3-default-service",
     vendor: true,
     defaults: [
         "FakeVehicleHardwareDefaults",
@@ -68,7 +68,7 @@ cc_library {
 }
 
 cc_fuzz {
-    name: "android.hardware.automotive.vehicle@V1-default-service_fuzzer",
+    name: "android.hardware.automotive.vehicle-default-service_fuzzer",
     vendor: true,
     defaults: [
         "FakeVehicleHardwareDefaults",

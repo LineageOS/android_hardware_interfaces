@@ -41,27 +41,24 @@ constexpr size_t kMaxSvBuffers = 10;
 
 void SurroundViewFuzzer::invoke2dSessionAPI() {
     sp<ISurroundView2dSession> surroundView2dSession;
+    sp<SurroundViewStream> handler;
+    mSurroundViewService->start2dSession(
+            [&surroundView2dSession](const sp<ISurroundView2dSession>& session, SvResult result) {
+                if (result == SvResult::OK) {
+                    surroundView2dSession = session;
+                }
+            });
+
+    if (surroundView2dSession && !mIs2dStreamStarted) {
+        handler = sp<SurroundViewStream>::make(surroundView2dSession);
+        if (surroundView2dSession->startStream(handler) == SvResult::OK) {
+            mIs2dStreamStarted = true;
+        }
+    }
 
     while (mFuzzedDataProvider.remaining_bytes() > 0) {
         auto surroundView2dFunc = mFuzzedDataProvider.PickValueInArray<
                 const std::function<void()>>({
-                [&]() {
-                    mSurroundViewService->start2dSession(
-                            [&surroundView2dSession](const sp<ISurroundView2dSession>& session,
-                                                     SvResult result) {
-                                if (result == SvResult::OK) {
-                                    surroundView2dSession = session;
-                                }
-                            });
-                },
-                [&]() {
-                    if (surroundView2dSession) {
-                        sp<SurroundViewStream> handler =
-                                sp<SurroundViewStream>::make(surroundView2dSession);
-                        surroundView2dSession->startStream(handler);
-                        mIs2dStreamStarted = true;
-                    }
-                },
                 [&]() {
                     if (surroundView2dSession) {
                         surroundView2dSession->get2dMappingInfo(
@@ -69,7 +66,7 @@ void SurroundViewFuzzer::invoke2dSessionAPI() {
                     }
                 },
                 [&]() {
-                    if (surroundView2dSession) {
+                    if (surroundView2dSession && mIs2dStreamStarted) {
                         Sv2dConfig config;
                         config.width = mFuzzedDataProvider.ConsumeIntegralInRange<uint32_t>(
                                 kMinConfigDimension, kMaxConfigDimension);
@@ -149,8 +146,11 @@ void SurroundViewFuzzer::invoke2dSessionAPI() {
                     }
                 },
                 [&]() {
-                    mSurroundViewService->stop2dSession(
+                    SvResult result = mSurroundViewService->stop2dSession(
                             mFuzzedDataProvider.ConsumeBool() ? surroundView2dSession : nullptr);
+                    if (result == SvResult::OK) {
+                        mIs2dStreamStarted = false;
+                    }
                 },
         });
         surroundView2dFunc();
@@ -159,30 +159,39 @@ void SurroundViewFuzzer::invoke2dSessionAPI() {
     if (surroundView2dSession && mIs2dStreamStarted) {
         surroundView2dSession->stopStream();
     }
+
+    if (surroundView2dSession) {
+        mSurroundViewService->stop2dSession(surroundView2dSession);
+    }
 }
 
 void SurroundViewFuzzer::invoke3dSessionAPI() {
     sp<ISurroundView3dSession> surroundView3dSession;
+    sp<SurroundViewStream> handler;
+    mSurroundViewService->start3dSession(
+            [&surroundView3dSession](const sp<ISurroundView3dSession>& session, SvResult result) {
+                if (result == SvResult::OK) {
+                    surroundView3dSession = session;
+                }
+            });
+
+    const size_t numViews = mFuzzedDataProvider.ConsumeIntegralInRange<size_t>(1, kMaxViews);
+    std::vector<View3d> views(numViews);
+    for (size_t i = 0; i < numViews; ++i) {
+        views[i].viewId = mFuzzedDataProvider.ConsumeIntegral<uint32_t>();
+    }
+    surroundView3dSession->setViews(views);
+
+    if (surroundView3dSession) {
+        handler = sp<SurroundViewStream>::make(surroundView3dSession);
+
+        if (surroundView3dSession->startStream(handler) == SvResult::OK) {
+            mIs3dStreamStarted = true;
+        }
+    }
     while (mFuzzedDataProvider.remaining_bytes() > 0) {
         auto surroundView3dFunc = mFuzzedDataProvider.PickValueInArray<
                 const std::function<void()>>({
-                [&]() {
-                    mSurroundViewService->start3dSession(
-                            [&surroundView3dSession](const sp<ISurroundView3dSession>& session,
-                                                     SvResult result) {
-                                if (result == SvResult::OK) {
-                                    surroundView3dSession = session;
-                                }
-                            });
-                },
-                [&]() {
-                    if (surroundView3dSession) {
-                        sp<SurroundViewStream> handler =
-                                sp<SurroundViewStream>::make(surroundView3dSession);
-                        surroundView3dSession->startStream(handler);
-                        mIs3dStreamStarted = true;
-                    }
-                },
                 [&]() {
                     if (surroundView3dSession) {
                         const size_t numViews =
@@ -195,7 +204,7 @@ void SurroundViewFuzzer::invoke3dSessionAPI() {
                     }
                 },
                 [&]() {
-                    if (surroundView3dSession) {
+                    if (surroundView3dSession && mIs3dStreamStarted) {
                         Sv3dConfig config;
                         config.width = mFuzzedDataProvider.ConsumeIntegralInRange<uint32_t>(
                                 kMinConfigDimension, kMaxConfigDimension);
@@ -306,14 +315,21 @@ void SurroundViewFuzzer::invoke3dSessionAPI() {
                     }
                 },
                 [&]() {
-                    mSurroundViewService->stop3dSession(
+                    SvResult result = mSurroundViewService->stop3dSession(
                             mFuzzedDataProvider.ConsumeBool() ? surroundView3dSession : nullptr);
+                    if (result == SvResult::OK) {
+                        mIs3dStreamStarted = false;
+                    }
                 },
         });
         surroundView3dFunc();
     }
     if (surroundView3dSession && mIs3dStreamStarted) {
         surroundView3dSession->stopStream();
+    }
+
+    if (surroundView3dSession) {
+        mSurroundViewService->stop3dSession(surroundView3dSession);
     }
 }
 

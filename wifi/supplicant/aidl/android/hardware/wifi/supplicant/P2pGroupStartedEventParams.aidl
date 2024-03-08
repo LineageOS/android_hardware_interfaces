@@ -16,6 +16,7 @@
 
 package android.hardware.wifi.supplicant;
 
+import android.hardware.wifi.common.OuiKeyedData;
 import android.hardware.wifi.supplicant.P2pClientEapolIpAddressInfo;
 
 /**
@@ -63,4 +64,10 @@ parcelable P2pGroupStartedEventParams {
      * The value is undefined if isP2pClientEapolIpAddressInfoPresent is false.
      */
     P2pClientEapolIpAddressInfo p2pClientIpInfo;
+
+    /**
+     * Optional vendor-specific parameters. Null value indicates
+     * that no vendor data is provided.
+     */
+    @nullable OuiKeyedData[] vendorData;
 }

@@ -57,6 +57,18 @@ constexpr uint64_t kOpHandleSentinel = 0xFFFFFFFFFFFFFFFF;
 const string FEATURE_KEYSTORE_APP_ATTEST_KEY = "android.hardware.keystore.app_attest_key";
 const string FEATURE_STRONGBOX_KEYSTORE = "android.hardware.strongbox_keystore";
 
+// RAII class to ensure that a keyblob is deleted regardless of how a test exits.
+class KeyBlobDeleter {
+  public:
+    KeyBlobDeleter(const shared_ptr<IKeyMintDevice>& keymint, const vector<uint8_t>& key_blob)
+        : keymint_(keymint), key_blob_(key_blob) {}
+    ~KeyBlobDeleter();
+
+  private:
+    shared_ptr<IKeyMintDevice> keymint_;
+    vector<uint8_t> key_blob_;
+};
+
 class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
   public:
     struct KeyData {
@@ -70,6 +82,8 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
     // Directory to store/retrieve keyblobs, using subdirectories named for the
     // KeyMint instance in question (e.g. "./default/", "./strongbox/").
     static std::string keyblob_dir;
+    // To specify if users expect an upgrade on the keyBlobs.
+    static std::optional<bool> expect_upgrade;
 
     void SetUp() override;
     void TearDown() override {
@@ -81,7 +95,7 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
 
     void InitializeKeyMint(std::shared_ptr<IKeyMintDevice> keyMint);
     IKeyMintDevice& keyMint() { return *keymint_; }
-    int32_t AidlVersion();
+    int32_t AidlVersion() const;
     uint32_t os_version() { return os_version_; }
     uint32_t os_patch_level() { return os_patch_level_; }
     uint32_t vendor_patch_level() { return vendor_patch_level_; }
@@ -91,8 +105,6 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
     bool isSecondImeiIdAttestationRequired();
 
     bool Curve25519Supported();
-
-    ErrorCode GetReturnErrorCode(const Status& result);
 
     ErrorCode GenerateKey(const AuthorizationSet& key_desc, vector<uint8_t>* key_blob,
                           vector<KeyCharacteristics>* key_characteristics) {
@@ -157,7 +169,6 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
 
     ErrorCode DestroyAttestationIds();
 
-    void CheckedDeleteKey(vector<uint8_t>* key_blob, bool keep_key_blob = false);
     void CheckedDeleteKey();
 
     ErrorCode Begin(KeyPurpose purpose, const vector<uint8_t>& key_blob,
@@ -362,6 +373,15 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
     bool shouldSkipAttestKeyTest(void) const;
     void skipAttestKeyTest(void) const;
 
+    void assert_mgf_digests_present_or_not_in_key_characteristics(
+            const vector<KeyCharacteristics>& key_characteristics,
+            std::vector<android::hardware::security::keymint::Digest>& expected_mgf_digests,
+            bool is_mgf_digest_expected) const;
+
+    void assert_mgf_digests_present_or_not_in_key_characteristics(
+            std::vector<android::hardware::security::keymint::Digest>& expected_mgf_digests,
+            bool is_mgf_digest_expected) const;
+
   protected:
     std::shared_ptr<IKeyMintDevice> keymint_;
     uint32_t os_version_;
@@ -430,12 +450,37 @@ AuthorizationSet SwEnforcedAuthorizations(const vector<KeyCharacteristics>& key_
 ::testing::AssertionResult ChainSignaturesAreValid(const vector<Certificate>& chain,
                                                    bool strict_issuer_check = true);
 
+ErrorCode GetReturnErrorCode(const Status& result);
+
 #define INSTANTIATE_KEYMINT_AIDL_TEST(name)                                          \
     INSTANTIATE_TEST_SUITE_P(PerInstance, name,                                      \
                              testing::ValuesIn(KeyMintAidlTestBase::build_params()), \
                              ::android::PrintInstanceNameToString);                  \
     GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(name);
 
+// Use `ro.product.<property>_for_attestation` property for attestation if it is present else
+// fallback to use `ro.product.vendor.<property>` if it is present else fallback to
+// `ro.product.<property>`. Similar logic can be seen in Java method `getVendorDeviceIdProperty`
+// in frameworks/base/core/java/android/os/Build.java.
+template <Tag tag>
+void add_attestation_id(AuthorizationSetBuilder* attestation_id_tags,
+                        TypedTag<TagType::BYTES, tag> tag_type, const char* prop) {
+    ::android::String8 prop_name =
+            ::android::String8::format("ro.product.%s_for_attestation", prop);
+    std::string prop_value = ::android::base::GetProperty(prop_name.c_str(), /* default= */ "");
+    if (!prop_value.empty()) {
+        add_tag_from_prop(attestation_id_tags, tag_type, prop_name.c_str());
+    } else {
+        prop_name = ::android::String8::format("ro.product.vendor.%s", prop);
+        prop_value = ::android::base::GetProperty(prop_name.c_str(), /* default= */ "");
+        if (!prop_value.empty()) {
+            add_tag_from_prop(attestation_id_tags, tag_type, prop_name.c_str());
+        } else {
+            prop_name = ::android::String8::format("ro.product.%s", prop);
+            add_tag_from_prop(attestation_id_tags, tag_type, prop_name.c_str());
+        }
+    }
+}
 }  // namespace test
 
 }  // namespace aidl::android::hardware::security::keymint

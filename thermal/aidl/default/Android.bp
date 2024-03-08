@@ -24,26 +24,50 @@ package {
 cc_binary {
     name: "android.hardware.thermal-service.example",
     relative_install_path: "hw",
-    init_rc: [":android.hardware.thermal.example.rc"],
-    vintf_fragments: [":android.hardware.thermal.example.xml"],
     vendor: true,
-    shared_libs: [
+    stl: "c++_static",
+    static_libs: [
+        "android.hardware.thermal-V2-ndk",
         "libbase",
+    ],
+    shared_libs: [
         "libbinder_ndk",
-        "android.hardware.thermal-V1-ndk",
+        "liblog",
     ],
     srcs: [
         "main.cpp",
         "Thermal.cpp",
     ],
+    installable: false,
 }
 
-filegroup {
+prebuilt_etc {
     name: "android.hardware.thermal.example.xml",
-    srcs: ["thermal-example.xml"],
+    src: "thermal-example.xml",
+    sub_dir: "vintf",
+    installable: false,
 }
 
-filegroup {
+prebuilt_etc {
     name: "android.hardware.thermal.example.rc",
-    srcs: ["thermal-example.rc"],
+    src: "thermal-example.rc",
+    installable: false,
+}
+
+apex {
+    name: "com.android.hardware.thermal",
+    manifest: "apex_manifest.json",
+    file_contexts: "apex_file_contexts",
+    key: "com.android.hardware.key",
+    certificate: ":com.android.hardware.certificate",
+    updatable: false,
+    vendor: true,
+
+    binaries: [
+        "android.hardware.thermal-service.example",
+    ],
+    prebuilts: [
+        "android.hardware.thermal.example.xml",
+        "android.hardware.thermal.example.rc",
+    ],
 }

@@ -38,9 +38,11 @@ cc_binary {
     ],
 }
 
-filegroup {
+prebuilt_etc {
     name: "android.hardware.power.stats.xml",
-    srcs: ["power.stats-default.xml"],
+    src: "power.stats-default.xml",
+    sub_dir: "vintf",
+    installable: false,
 }
 
 filegroup {

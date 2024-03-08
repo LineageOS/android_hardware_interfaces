@@ -17,10 +17,14 @@
 #include <algorithm>
 #include <chrono>
 
+#define LOG_TAG "VtsHalAudio.ModuleConfig"
+#include <android-base/logging.h>
+
 #include <Utils.h>
 #include <aidl/android/media/audio/common/AudioInputFlags.h>
 #include <aidl/android/media/audio/common/AudioIoFlags.h>
 #include <aidl/android/media/audio/common/AudioOutputFlags.h>
+#include <error/expected_utils.h>
 
 #include "ModuleConfig.h"
 
@@ -66,20 +70,7 @@ std::optional<AudioOffloadInfo> ModuleConfig::generateOffloadInfoIfNeeded(
     return {};
 }
 
-std::vector<aidl::android::media::audio::common::AudioPort>
-ModuleConfig::getAudioPortsForDeviceTypes(const std::vector<AudioDeviceType>& deviceTypes,
-                                          const std::string& connection) {
-    return getAudioPortsForDeviceTypes(mPorts, deviceTypes, connection);
-}
-
 // static
-std::vector<aidl::android::media::audio::common::AudioPort> ModuleConfig::getBuiltInMicPorts(
-        const std::vector<aidl::android::media::audio::common::AudioPort>& ports) {
-    return getAudioPortsForDeviceTypes(
-            ports, std::vector<AudioDeviceType>{AudioDeviceType::IN_MICROPHONE,
-                                                AudioDeviceType::IN_MICROPHONE_BACK});
-}
-
 std::vector<aidl::android::media::audio::common::AudioPort>
 ModuleConfig::getAudioPortsForDeviceTypes(
         const std::vector<aidl::android::media::audio::common::AudioPort>& ports,
@@ -97,6 +88,14 @@ ModuleConfig::getAudioPortsForDeviceTypes(
         }
     }
     return result;
+}
+
+// static
+std::vector<aidl::android::media::audio::common::AudioPort> ModuleConfig::getBuiltInMicPorts(
+        const std::vector<aidl::android::media::audio::common::AudioPort>& ports) {
+    return getAudioPortsForDeviceTypes(
+            ports, std::vector<AudioDeviceType>{AudioDeviceType::IN_MICROPHONE,
+                                                AudioDeviceType::IN_MICROPHONE_BACK});
 }
 
 template <typename T>
@@ -118,10 +117,7 @@ ModuleConfig::ModuleConfig(IModule* module) {
             } else {
                 mAttachedSinkDevicePorts.insert(port.id);
             }
-        } else if (devicePort.device.type.connection != AudioDeviceDescription::CONNECTION_VIRTUAL
-                   // The "virtual" connection is used for remote submix which is a dynamic
-                   // device but it can be connected and used w/o external hardware.
-                   && port.profiles.empty()) {
+        } else {
             mExternalDevicePorts.insert(port.id);
         }
     }
@@ -138,6 +134,12 @@ std::vector<AudioPort> ModuleConfig::getAttachedDevicePorts() const {
                mAttachedSourceDevicePorts.count(port.id) != 0;
     });
     return result;
+}
+
+std::vector<aidl::android::media::audio::common::AudioPort>
+ModuleConfig::getAudioPortsForDeviceTypes(const std::vector<AudioDeviceType>& deviceTypes,
+                                          const std::string& connection) const {
+    return getAudioPortsForDeviceTypes(mPorts, deviceTypes, connection);
 }
 
 std::vector<AudioPort> ModuleConfig::getConnectedExternalDevicePorts() const {
@@ -228,6 +230,16 @@ std::vector<AudioPort> ModuleConfig::getMmapInMixPorts(bool connectedOnly, bool 
     });
 }
 
+std::vector<AudioPort> ModuleConfig::getRemoteSubmixPorts(bool isInput, bool singlePort) const {
+    AudioDeviceType deviceType = isInput ? AudioDeviceType::IN_SUBMIX : AudioDeviceType::OUT_SUBMIX;
+    auto ports = getAudioPortsForDeviceTypes(std::vector<AudioDeviceType>{deviceType},
+                                             AudioDeviceDescription::CONNECTION_VIRTUAL);
+    if (singlePort) {
+        if (!ports.empty()) ports.resize(1);
+    }
+    return ports;
+}
+
 std::vector<AudioPort> ModuleConfig::getConnectedDevicesPortsForMixPort(
         bool isInput, const AudioPortConfig& mixPortConfig) const {
     const auto mixPortIt = findById<AudioPort>(mPorts, mixPortConfig.portId);
@@ -278,6 +290,32 @@ std::optional<AudioPort> ModuleConfig::getSourceMixPortForConnectedDevice() cons
         }
     }
     return {};
+}
+
+std::vector<AudioPort> ModuleConfig::getRoutableDevicePortsForMixPort(const AudioPort& port,
+                                                                      bool connectedOnly) const {
+    std::set<int32_t> portIds = findRoutablePortIds(port.id);
+    const bool isInput = port.flags.getTag() == AudioIoFlags::input;
+    std::set<int32_t> devicePortIds;
+    if (connectedOnly) {
+        devicePortIds = isInput ? getConnectedSourceDevicePorts() : getConnectedSinkDevicePorts();
+    } else {
+        devicePortIds = portIds;
+    }
+    std::vector<AudioPort> result;
+    std::copy_if(mPorts.begin(), mPorts.end(), std::back_inserter(result), [&](const auto& port) {
+        return port.ext.getTag() == AudioPortExt::Tag::device && portIds.count(port.id) > 0 &&
+               devicePortIds.count(port.id) > 0;
+    });
+    return result;
+}
+
+std::vector<AudioPort> ModuleConfig::getRoutableMixPortsForDevicePort(const AudioPort& port,
+                                                                      bool connectedOnly) const {
+    std::set<int32_t> portIds = findRoutablePortIds(port.id);
+    const bool isInput = port.flags.getTag() == AudioIoFlags::input;
+    return findMixPorts(isInput, connectedOnly, false /*singlePort*/,
+                        [&portIds](const AudioPort& p) { return portIds.count(p.id) > 0; });
 }
 
 std::optional<ModuleConfig::SrcSinkPair> ModuleConfig::getNonRoutableSrcSinkPair(
@@ -453,6 +491,20 @@ std::vector<AudioPort> ModuleConfig::findMixPorts(
     return result;
 }
 
+std::set<int32_t> ModuleConfig::findRoutablePortIds(int32_t portId) const {
+    std::set<int32_t> portIds;
+    for (const auto& route : mRoutes) {
+        if (portId == route.sinkPortId) {
+            portIds.insert(route.sourcePortIds.begin(), route.sourcePortIds.end());
+        } else if (auto it = std::find(route.sourcePortIds.begin(), route.sourcePortIds.end(),
+                                       portId);
+                   it != route.sourcePortIds.end()) {
+            portIds.insert(route.sinkPortId);
+        }
+    }
+    return portIds;
+}
+
 std::vector<AudioPortConfig> ModuleConfig::generateAudioMixPortConfigs(
         const std::vector<AudioPort>& ports, bool isInput, bool singleProfile) const {
     std::vector<AudioPortConfig> result;
@@ -499,18 +551,13 @@ std::vector<AudioPortConfig> ModuleConfig::generateAudioDevicePortConfigs(
     return result;
 }
 
-const ndk::ScopedAStatus& ModuleConfig::onExternalDeviceConnected(IModule* module,
-                                                                  const AudioPort& port) {
-    // Update ports and routes
-    mStatus = module->getAudioPorts(&mPorts);
-    if (!mStatus.isOk()) return mStatus;
-    mStatus = module->getAudioRoutes(&mRoutes);
-    if (!mStatus.isOk()) return mStatus;
+ndk::ScopedAStatus ModuleConfig::onExternalDeviceConnected(IModule* module, const AudioPort& port) {
+    RETURN_STATUS_IF_ERROR(module->getAudioPorts(&mPorts));
+    RETURN_STATUS_IF_ERROR(module->getAudioRoutes(&mRoutes));
 
     // Validate port is present in module
     if (std::find(mPorts.begin(), mPorts.end(), port) == mPorts.end()) {
-        mStatus = ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
-        return mStatus;
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
 
     if (port.flags.getTag() == aidl::android::media::audio::common::AudioIoFlags::Tag::input) {
@@ -518,23 +565,20 @@ const ndk::ScopedAStatus& ModuleConfig::onExternalDeviceConnected(IModule* modul
     } else {
         mConnectedExternalSinkDevicePorts.insert(port.id);
     }
-    return mStatus;
+    return ndk::ScopedAStatus::ok();
 }
 
-const ndk::ScopedAStatus& ModuleConfig::onExternalDeviceDisconnected(IModule* module,
-                                                                     const AudioPort& port) {
-    // Update ports and routes
-    mStatus = module->getAudioPorts(&mPorts);
-    if (!mStatus.isOk()) return mStatus;
-    mStatus = module->getAudioRoutes(&mRoutes);
-    if (!mStatus.isOk()) return mStatus;
+ndk::ScopedAStatus ModuleConfig::onExternalDeviceDisconnected(IModule* module,
+                                                              const AudioPort& port) {
+    RETURN_STATUS_IF_ERROR(module->getAudioPorts(&mPorts));
+    RETURN_STATUS_IF_ERROR(module->getAudioRoutes(&mRoutes));
 
     if (port.flags.getTag() == aidl::android::media::audio::common::AudioIoFlags::Tag::input) {
         mConnectedExternalSourceDevicePorts.erase(port.id);
     } else {
         mConnectedExternalSinkDevicePorts.erase(port.id);
     }
-    return mStatus;
+    return ndk::ScopedAStatus::ok();
 }
 
 bool ModuleConfig::isMmapSupported() const {

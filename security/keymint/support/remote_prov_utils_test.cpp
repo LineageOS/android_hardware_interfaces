@@ -182,10 +182,11 @@ TEST(RemoteProvUtilsTest, GetProdEekChain) {
 }
 
 TEST(RemoteProvUtilsTest, JsonEncodeCsr) {
+    const std::string kSerialNoProp = "ro.serialno";
     cppbor::Array array;
     array.add(1);
 
-    auto [json, error] = jsonEncodeCsrWithBuild(std::string("test"), array);
+    auto [json, error] = jsonEncodeCsrWithBuild(std::string("test"), array, kSerialNoProp);
 
     ASSERT_TRUE(error.empty()) << error;
 

@@ -16,21 +16,51 @@
 
 #include <cstdlib>
 #include <ctime>
-#include <sstream>
 #include <utility>
 #include <vector>
 
+#define LOG_TAG "AHAL_Main"
 #include <android-base/logging.h>
 #include <android-base/properties.h>
 #include <android/binder_ibinder_platform.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
 
+#include "core-impl/AudioPolicyConfigXmlConverter.h"
+#include "core-impl/ChildInterface.h"
 #include "core-impl/Config.h"
 #include "core-impl/Module.h"
 
+using aidl::android::hardware::audio::core::ChildInterface;
 using aidl::android::hardware::audio::core::Config;
 using aidl::android::hardware::audio::core::Module;
+using aidl::android::hardware::audio::core::internal::AudioPolicyConfigXmlConverter;
+
+namespace {
+
+ChildInterface<Module> createModule(const std::string& name,
+                                    std::unique_ptr<Module::Configuration>&& config) {
+    ChildInterface<Module> result;
+    {
+        auto moduleType = Module::typeFromString(name);
+        if (!moduleType.has_value()) {
+            LOG(ERROR) << __func__ << ": module type \"" << name << "\" is not supported";
+            return result;
+        }
+        auto module = Module::createInstance(*moduleType, std::move(config));
+        if (module == nullptr) return result;
+        result = std::move(module);
+    }
+    const std::string moduleFqn = std::string().append(Module::descriptor).append("/").append(name);
+    binder_status_t status = AServiceManager_addService(result.getBinder(), moduleFqn.c_str());
+    if (status != STATUS_OK) {
+        LOG(ERROR) << __func__ << ": failed to register service for \"" << moduleFqn << "\"";
+        return ChildInterface<Module>();
+    }
+    return result;
+};
+
+}  // namespace
 
 int main() {
     // Random values are used in the implementation.
@@ -45,29 +75,27 @@ int main() {
     // Guaranteed log for b/210919187 and logd_integration_test
     LOG(INFO) << "Init for Audio AIDL HAL";
 
+    AudioPolicyConfigXmlConverter audioPolicyConverter{
+            ::android::audio_get_audio_policy_config_file()};
+
     // Make the default config service
-    auto config = ndk::SharedRefBase::make<Config>();
-    const std::string configName = std::string() + Config::descriptor + "/default";
+    auto config = ndk::SharedRefBase::make<Config>(audioPolicyConverter);
+    const std::string configFqn = std::string().append(Config::descriptor).append("/default");
     binder_status_t status =
-            AServiceManager_addService(config->asBinder().get(), configName.c_str());
-    CHECK_EQ(STATUS_OK, status);
+            AServiceManager_addService(config->asBinder().get(), configFqn.c_str());
+    if (status != STATUS_OK) {
+        LOG(ERROR) << "failed to register service for \"" << configFqn << "\"";
+    }
 
     // Make modules
-    auto createModule = [](Module::Type type) {
-        auto module = Module::createInstance(type);
-        ndk::SpAIBinder moduleBinder = module->asBinder();
-        std::stringstream moduleName;
-        moduleName << Module::descriptor << "/" << type;
-        AIBinder_setMinSchedulerPolicy(moduleBinder.get(), SCHED_NORMAL, ANDROID_PRIORITY_AUDIO);
-        binder_status_t status =
-                AServiceManager_addService(moduleBinder.get(), moduleName.str().c_str());
-        CHECK_EQ(STATUS_OK, status);
-        return std::make_pair(module, moduleBinder);
-    };
-    auto modules = {createModule(Module::Type::DEFAULT), createModule(Module::Type::R_SUBMIX),
-                    createModule(Module::Type::USB), createModule(Module::Type::STUB),
-                    createModule(Module::Type::BLUETOOTH)};
-    (void)modules;
+    std::vector<ChildInterface<Module>> moduleInstances;
+    auto configs(audioPolicyConverter.releaseModuleConfigs());
+    for (std::pair<std::string, std::unique_ptr<Module::Configuration>>& configPair : *configs) {
+        std::string name = configPair.first;
+        if (auto instance = createModule(name, std::move(configPair.second)); instance) {
+            moduleInstances.push_back(std::move(instance));
+        }
+    }
 
     ABinderProcess_joinThreadPool();
     return EXIT_FAILURE;  // should not reach

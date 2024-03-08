@@ -53,6 +53,9 @@ interface ISupplicantStaIfaceCallback {
   oneway void onExtRadioWorkStart(in int id);
   oneway void onExtRadioWorkTimeout(in int id);
   oneway void onHs20DeauthImminentNotice(in byte[] bssid, in int reasonCode, in int reAuthDelayInSec, in String url);
+  /**
+   * @deprecated No longer in use.
+   */
   oneway void onHs20IconQueryDone(in byte[] bssid, in String fileName, in byte[] data);
   oneway void onHs20SubscriptionRemediation(in byte[] bssid, in android.hardware.wifi.supplicant.OsuMethod osuMethod, in String url);
   oneway void onHs20TermsAndConditionsAcceptanceRequestedNotification(in byte[] bssid, in String url);

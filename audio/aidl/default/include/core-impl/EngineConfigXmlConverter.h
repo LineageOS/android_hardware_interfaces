@@ -19,10 +19,9 @@
 #include <string>
 #include <unordered_map>
 
-#include <utils/Errors.h>
-
 #include <android_audio_policy_engine_configuration.h>
 #include <android_audio_policy_engine_configuration_enums.h>
+#include <media/AidlConversionUtil.h>
 
 #include "core-impl/XmlConverter.h"
 
@@ -49,29 +48,24 @@ class EngineConfigXmlConverter {
     }
     void init();
     void initProductStrategyMap();
-    ::aidl::android::media::audio::common::AudioAttributes convertAudioAttributesToAidl(
+    ConversionResult<::aidl::android::media::audio::common::AudioAttributes>
+    convertAudioAttributesToAidl(
             const ::android::audio::policy::engine::configuration::AttributesType&
                     xsdcAudioAttributes);
-    ::aidl::android::media::audio::common::AudioHalAttributesGroup convertAttributesGroupToAidl(
+    ConversionResult<::aidl::android::media::audio::common::AudioHalAttributesGroup>
+    convertAttributesGroupToAidl(
             const ::android::audio::policy::engine::configuration::AttributesGroup&
                     xsdcAttributesGroup);
-    ::aidl::android::media::audio::common::AudioHalCapCriterion convertCapCriterionToAidl(
-            const ::android::audio::policy::engine::configuration::CriterionType& xsdcCriterion);
-    ::aidl::android::media::audio::common::AudioHalCapCriterionType convertCapCriterionTypeToAidl(
-            const ::android::audio::policy::engine::configuration::CriterionTypeType&
-                    xsdcCriterionType);
-    std::string convertCriterionTypeValueToAidl(
-            const ::android::audio::policy::engine::configuration::ValueType&
-                    xsdcCriterionTypeValue);
-    ::aidl::android::media::audio::common::AudioHalVolumeCurve::CurvePoint convertCurvePointToAidl(
-            const std::string& xsdcCurvePoint);
-    ::aidl::android::media::audio::common::AudioHalProductStrategy convertProductStrategyToAidl(
-            const ::android::audio::policy::engine::configuration::ProductStrategies::
-                    ProductStrategy& xsdcProductStrategy);
-    int convertProductStrategyNameToAidl(const std::string& xsdcProductStrategyName);
-    ::aidl::android::media::audio::common::AudioHalVolumeCurve convertVolumeCurveToAidl(
+    ConversionResult<::aidl::android::media::audio::common::AudioHalProductStrategy>
+    convertProductStrategyToAidl(const ::android::audio::policy::engine::configuration::
+                                         ProductStrategies::ProductStrategy& xsdcProductStrategy);
+    ConversionResult<int> convertProductStrategyNameToAidl(
+            const std::string& xsdcProductStrategyName);
+    ConversionResult<::aidl::android::media::audio::common::AudioHalVolumeCurve>
+    convertVolumeCurveToAidl(
             const ::android::audio::policy::engine::configuration::Volume& xsdcVolumeCurve);
-    ::aidl::android::media::audio::common::AudioHalVolumeGroup convertVolumeGroupToAidl(
+    ConversionResult<::aidl::android::media::audio::common::AudioHalVolumeGroup>
+    convertVolumeGroupToAidl(
             const ::android::audio::policy::engine::configuration::VolumeGroupsType::VolumeGroup&
                     xsdcVolumeGroup);
 

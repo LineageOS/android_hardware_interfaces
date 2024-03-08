@@ -37,12 +37,12 @@ parcelable DisplayRequest {
   long display;
   int mask;
   android.hardware.graphics.composer3.DisplayRequest.LayerRequest[] layerRequests;
-  const int FLIP_CLIENT_TARGET = (1 << 0);
-  const int WRITE_CLIENT_TARGET_TO_OUTPUT = (1 << 1);
+  const int FLIP_CLIENT_TARGET = (1 << 0) /* 1 */;
+  const int WRITE_CLIENT_TARGET_TO_OUTPUT = (1 << 1) /* 2 */;
   @VintfStability
   parcelable LayerRequest {
     long layer;
     int mask;
-    const int CLEAR_CLIENT_TARGET = (1 << 0);
+    const int CLEAR_CLIENT_TARGET = (1 << 0) /* 1 */;
   }
 }

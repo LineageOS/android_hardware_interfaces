@@ -29,7 +29,7 @@ cc_library_static {
     shared_libs: [
         "libbase",
         "libbinder_ndk",
-        "android.hardware.contexthub-V2-ndk",
+        "android.hardware.contexthub-V3-ndk",
     ],
     export_include_dirs: ["include"],
     srcs: [
@@ -50,10 +50,41 @@ cc_binary {
     shared_libs: [
         "libbase",
         "libbinder_ndk",
-        "android.hardware.contexthub-V2-ndk",
+        "android.hardware.contexthub-V3-ndk",
     ],
     static_libs: [
         "libcontexthubexampleimpl",
     ],
     srcs: ["main.cpp"],
+}
+
+prebuilt_etc {
+    name: "android.hardware.contexthub-service.example.rc",
+    src: "android.hardware.contexthub-service.example.rc",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "contexthub-default.xml",
+    src: "contexthub-default.xml",
+    sub_dir: "vintf",
+    installable: false,
+}
+
+apex {
+    name: "com.android.hardware.contexthub",
+    vendor: true,
+    manifest: "apex_manifest.json",
+    file_contexts: "apex_file_contexts",
+    key: "com.android.hardware.key",
+    certificate: ":com.android.hardware.certificate",
+    updatable: false,
+
+    binaries: [
+        "android.hardware.contexthub-service.example",
+    ],
+    prebuilts: [
+        "android.hardware.contexthub-service.example.rc",
+        "contexthub-default.xml",
+    ],
 }

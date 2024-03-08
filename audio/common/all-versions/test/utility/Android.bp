@@ -62,6 +62,5 @@ cc_test {
         "libxml2",
         "liblog",
     ],
-    static_libs: ["libgtest"],
     test_suites: ["general-tests"],
 }

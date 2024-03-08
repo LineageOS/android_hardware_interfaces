@@ -20,6 +20,7 @@
 
 #include <aidl/android/hardware/health/IHealthInfoCallback.h>
 #include <android-base/macros.h>
+#include <android-base/result.h>
 #include <android/binder_auto_utils.h>
 
 #include <health-impl/Health.h>
@@ -34,8 +35,8 @@ class LinkedCallback {
     // service->death_reciepient() should be from CreateDeathRecipient().
     // Not using a strong reference to |service| to avoid circular reference. The lifetime
     // of |service| must be longer than this LinkedCallback object.
-    static std::unique_ptr<LinkedCallback> Make(std::shared_ptr<Health> service,
-                                                std::shared_ptr<IHealthInfoCallback> callback);
+    static ::android::base::Result<std::unique_ptr<LinkedCallback>> Make(
+            std::shared_ptr<Health> service, std::shared_ptr<IHealthInfoCallback> callback);
 
     // Automatically unlinkToDeath upon destruction. So, it is always safe to reinterpret_cast
     // the cookie back to the LinkedCallback object.

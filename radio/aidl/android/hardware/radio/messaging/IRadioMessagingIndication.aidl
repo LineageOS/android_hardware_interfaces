@@ -21,6 +21,7 @@ import android.hardware.radio.messaging.CdmaSmsMessage;
 
 /**
  * Interface declaring unsolicited radio indications for messaging APIs.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioMessagingIndication {

@@ -45,4 +45,5 @@ parcelable DisplayCommand {
   boolean acceptDisplayChanges;
   boolean presentDisplay;
   boolean presentOrValidateDisplay;
+  int frameIntervalNs;
 }

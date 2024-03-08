@@ -36,6 +36,7 @@
 #include <memory>
 #include <mutex>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace android {
@@ -90,20 +91,29 @@ class FakeVehicleHardware : public IVehicleHardware {
     void registerOnPropertySetErrorEvent(
             std::unique_ptr<const PropertySetErrorCallback> callback) override;
 
-    // Update the sample rate for the [propId, areaId] pair.
-    aidl::android::hardware::automotive::vehicle::StatusCode updateSampleRate(
-            int32_t propId, int32_t areaId, float sampleRate) override;
+    // Subscribe to a new [propId, areaId] or change the update rate.
+    aidl::android::hardware::automotive::vehicle::StatusCode subscribe(
+            aidl::android::hardware::automotive::vehicle::SubscribeOptions options) override;
+
+    // Unsubscribe to a [propId, areaId].
+    aidl::android::hardware::automotive::vehicle::StatusCode unsubscribe(int32_t propId,
+                                                                         int32_t areaId) override;
 
   protected:
     // mValuePool is also used in mServerSidePropStore.
     const std::shared_ptr<VehiclePropValuePool> mValuePool;
     const std::shared_ptr<VehiclePropertyStore> mServerSidePropStore;
 
+    const std::string mDefaultConfigDir;
+    const std::string mOverrideConfigDir;
+
     ValueResultType getValue(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
 
     VhalResult<void> setValue(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
+
+    bool UseOverrideConfigDir();
 
   private:
     // Expose private methods to unit test.
@@ -132,6 +142,16 @@ class FakeVehicleHardware : public IVehicleHardware {
         void handleRequestsOnce();
     };
 
+    struct RefreshInfo {
+        VehiclePropertyStore::EventMode eventMode;
+        int64_t intervalInNanos;
+    };
+
+    struct ActionForInterval {
+        std::unordered_set<PropIdAreaId, PropIdAreaIdHash> propIdAreaIdsToRefresh;
+        std::shared_ptr<RecurrentTimer::Callback> recurrentAction;
+    };
+
     const std::unique_ptr<obd2frame::FakeObd2Frame> mFakeObd2Frame;
     const std::unique_ptr<FakeUserHal> mFakeUserHal;
     // RecurrentTimer is thread-safe.
@@ -144,10 +164,12 @@ class FakeVehicleHardware : public IVehicleHardware {
     std::unique_ptr<const PropertySetErrorCallback> mOnPropertySetErrorCallback;
 
     std::mutex mLock;
-    std::unordered_map<PropIdAreaId, std::shared_ptr<RecurrentTimer::Callback>, PropIdAreaIdHash>
-            mRecurrentActions GUARDED_BY(mLock);
+    std::unordered_map<PropIdAreaId, RefreshInfo, PropIdAreaIdHash> mRefreshInfoByPropIdAreaId
+            GUARDED_BY(mLock);
+    std::unordered_map<int64_t, ActionForInterval> mActionByIntervalInNanos GUARDED_BY(mLock);
     std::unordered_map<PropIdAreaId, VehiclePropValuePool::RecyclableType, PropIdAreaIdHash>
             mSavedProps GUARDED_BY(mLock);
+    std::unordered_set<PropIdAreaId, PropIdAreaIdHash> mSubOnChangePropIdAreaIds GUARDED_BY(mLock);
     // PendingRequestHandler is thread-safe.
     mutable PendingRequestHandler<GetValuesCallback,
                                   aidl::android::hardware::automotive::vehicle::GetValueRequest>
@@ -156,8 +178,9 @@ class FakeVehicleHardware : public IVehicleHardware {
                                   aidl::android::hardware::automotive::vehicle::SetValueRequest>
             mPendingSetValueRequests;
 
-    const std::string mDefaultConfigDir;
-    const std::string mOverrideConfigDir;
+    // Set of HVAC properties dependent on HVAC_POWER_ON
+    std::unordered_set<int32_t> hvacPowerDependentProps;
+
     const bool mForceOverride;
     bool mAddExtraTestVendorConfigs;
 
@@ -169,7 +192,12 @@ class FakeVehicleHardware : public IVehicleHardware {
     void storePropInitialValue(const ConfigDeclaration& config);
     // The callback that would be called when a vehicle property value change happens.
     void onValueChangeCallback(
-            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
+            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value)
+            EXCLUDES(mLock);
+    // The callback that would be called when multiple vehicle property value changes happen.
+    void onValuesChangeCallback(
+            std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue> values)
+            EXCLUDES(mLock);
     // Load the config files in format '*.json' from the directory and parse the config files
     // into a map from property ID to ConfigDeclarations.
     void loadPropConfigsFromDir(const std::string& dirPath,
@@ -189,10 +217,13 @@ class FakeVehicleHardware : public IVehicleHardware {
     VhalResult<void> maybeSetSpecialValue(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value,
             bool* isSpecialValue);
+    VhalResult<bool> isCruiseControlTypeStandard() const;
     ValueResultType maybeGetSpecialValue(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value,
             bool* isSpecialValue) const;
     VhalResult<void> setApPowerStateReport(
+            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
+    VhalResult<void> setApPowerStateReqShutdown(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
     VehiclePropValuePool::RecyclableType createApPowerStateReq(
             aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReq state);
@@ -206,6 +237,9 @@ class FakeVehicleHardware : public IVehicleHardware {
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
     bool isHvacPropAndHvacNotAvailable(int32_t propId, int32_t areaId) const;
     VhalResult<void> isAdasPropertyAvailable(int32_t adasStatePropertyId) const;
+    VhalResult<void> synchronizeHvacTemp(int32_t hvacDualOnAreaId,
+                                         std::optional<float> newTempC) const;
+    std::optional<int32_t> getSyncedAreaIdIfHvacDualOn(int32_t hvacTemperatureSetAreaId) const;
 
     std::unordered_map<int32_t, ConfigDeclaration> loadConfigDeclarations();
 
@@ -247,10 +281,20 @@ class FakeVehicleHardware : public IVehicleHardware {
             const aidl::android::hardware::automotive::vehicle::SetValueRequest& request);
 
     std::string genFakeDataCommand(const std::vector<std::string>& options);
-    void sendHvacPropertiesCurrentValues(int32_t areaId);
+    void sendHvacPropertiesCurrentValues(int32_t areaId, int32_t hvacPowerOnVal);
     void sendAdasPropertiesState(int32_t propertyId, int32_t state);
     void generateVendorConfigs(
             std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropConfig>&) const;
+
+    aidl::android::hardware::automotive::vehicle::StatusCode subscribePropIdAreaIdLocked(
+            int32_t propId, int32_t areaId, float sampleRateHz, bool enableVariableUpdateRate,
+            const aidl::android::hardware::automotive::vehicle::VehiclePropConfig&
+                    vehiclePropConfig) REQUIRES(mLock);
+
+    void registerRefreshLocked(PropIdAreaId propIdAreaId, VehiclePropertyStore::EventMode eventMode,
+                               float sampleRateHz) REQUIRES(mLock);
+    void unregisterRefreshLocked(PropIdAreaId propIdAreaId) REQUIRES(mLock);
+    void refreshTimeStampForInterval(int64_t intervalInNanos) EXCLUDES(mLock);
 
     static aidl::android::hardware::automotive::vehicle::VehiclePropValue createHwInputKeyProp(
             aidl::android::hardware::automotive::vehicle::VehicleHwKeyInputAction action,
@@ -265,6 +309,10 @@ class FakeVehicleHardware : public IVehicleHardware {
 
     static std::string genFakeDataHelp();
     static std::string parseErrMsg(std::string fieldName, std::string value, std::string type);
+    static bool isVariableUpdateRateSupported(
+            const aidl::android::hardware::automotive::vehicle::VehiclePropConfig&
+                    vehiclePropConfig,
+            int32_t areaId);
 };
 
 }  // namespace fake

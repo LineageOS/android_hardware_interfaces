@@ -18,6 +18,7 @@ package android.hardware.radio.sim;
 
 /**
  * Carrier specific Information sent by the carrier, which will be used to encrypt IMSI and IMPI.
+ * @hide
  */
 @VintfStability
 @JavaDerive(toString=true)

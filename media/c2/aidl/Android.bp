@@ -1,0 +1,52 @@
+// This is the expected build file, but it may not be right in all cases
+
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+aidl_interface {
+    name: "android.hardware.media.c2",
+    min_sdk_version: "30",
+    vendor_available: true,
+    double_loadable: true,
+    srcs: ["android/hardware/media/c2/*.aidl"],
+    headers: [
+        "HardwareBuffer_aidl",
+    ],
+    imports: [
+        "android.hardware.common-V2",
+        "android.hardware.media.bufferpool2-V1",
+    ],
+    stability: "vintf",
+    backend: {
+        cpp: {
+            enabled: false,
+        },
+        java: {
+            enabled: false,
+        },
+        ndk: {
+            enabled: true,
+            apex_available: [
+                "//apex_available:platform",
+                "com.android.media.swcodec",
+                "test_com.android.media.swcodec",
+            ],
+            additional_shared_libraries: [
+                "libnativewindow",
+            ],
+        },
+        rust: {
+            min_sdk_version: "31",
+            enabled: true,
+            additional_rustlibs: [
+                "libnativewindow_rs",
+            ],
+        },
+    },
+}

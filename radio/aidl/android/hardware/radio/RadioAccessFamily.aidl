@@ -18,6 +18,7 @@ package android.hardware.radio;
 
 import android.hardware.radio.RadioTechnology;
 
+/** @hide */
 @VintfStability
 @Backing(type="int")
 @JavaDerive(toString=true)

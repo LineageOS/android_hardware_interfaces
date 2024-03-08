@@ -46,7 +46,7 @@ class StreamRemoteSubmix : public StreamCommonImpl {
     ndk::ScopedAStatus prepareToClose() override;
 
   private:
-    size_t getPipeSizeInFrames();
+    long getDelayInUsForFrameCount(size_t frameCount);
     size_t getStreamPipeSizeInFrames();
     ::android::status_t outWrite(void* buffer, size_t frameCount, size_t* actualFrameCount);
     ::android::status_t inRead(void* buffer, size_t frameCount, size_t* actualFrameCount);
@@ -71,6 +71,10 @@ class StreamRemoteSubmix : public StreamCommonImpl {
     static constexpr int kMaxReadFailureAttempts = 3;
     // 5ms between two read attempts when pipe is empty
     static constexpr int kReadAttemptSleepUs = 5000;
+
+    long mStartTimeNs = 0;
+    long mFramesSinceStart = 0;
+    int mReadErrorCount = 0;
 };
 
 class StreamInRemoteSubmix final : public StreamIn, public StreamSwitcher {

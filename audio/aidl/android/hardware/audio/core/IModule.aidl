@@ -206,8 +206,10 @@ interface IModule {
      * after successful connection of an external device.
      *
      * Handling of a disconnect is done in a reverse order:
-     *  1. Reset port configuration using the 'resetAudioPortConfig' method.
-     *  2. Release the connected device port by calling the 'disconnectExternalDevice'
+     *  1. Notify the HAL module to prepare for device disconnection using
+     *     'prepareToDisconnectExternalDevice' method.
+     *  2. Reset port configuration using the 'resetAudioPortConfig' method.
+     *  3. Release the connected device port by calling the 'disconnectExternalDevice'
      *     method. This also removes the audio routes associated with this
      *     device port.
      *
@@ -234,11 +236,15 @@ interface IModule {
      * instance previously instantiated using the 'connectExternalDevice'
      * method.
      *
-     * The framework will call this method before closing streams and resetting
-     * patches. This call can be used by the HAL module to prepare itself to
-     * device disconnection. If the HAL module indicates an error after the first
-     * call, the framework will call this method once again after closing associated
-     * streams and patches.
+     * On AIDL HAL v1, the framework will call this method before closing streams
+     * and resetting patches. This call can be used by the HAL module to prepare
+     * itself to device disconnection. If the HAL module indicates an error after
+     * the first call, the framework will call this method once again after closing
+     * associated streams and patches.
+     *
+     * On AIDL HAL v2 and later, the framework will call 'prepareToDisconnectExternalDevice'
+     * method to notify the HAL module to prepare itself for device disconnection. The
+     * framework will only call this method after closing associated streams and patches.
      *
      * @throws EX_ILLEGAL_ARGUMENT In the following cases:
      *                             - If the port can not be found by the ID.
@@ -912,4 +918,20 @@ interface IModule {
      * @throw EX_UNSUPPORTED_OPERATION If the module does not support aaudio MMAP.
      */
     int getAAudioHardwareBurstMinUsec();
+
+    /**
+     * Notify the HAL module to prepare for disconnecting an external device.
+     *
+     * This method is used to inform the HAL module that 'disconnectExternalDevice' will be
+     * called soon. The HAL module can rely on this method to abort active data operations
+     * early. The 'portId' must be of a connected device Port instance previously instantiated
+     * using 'connectExternalDevice' method. 'disconnectExternalDevice' method will be called
+     * soon after this method with the same 'portId'.
+     *
+     * @param portId The ID of the audio port that is about to disconnect
+     * @throws EX_ILLEGAL_ARGUMENT In the following cases:
+     *                             - If the port can not be found by the ID.
+     *                             - If this is not a connected device port.
+     */
+    void prepareToDisconnectExternalDevice(int portId);
 }

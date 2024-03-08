@@ -1,0 +1,33 @@
+;
+; Copyright (C) 2023 The Android Open Source Project
+;
+; Licensed under the Apache License, Version 2.0 (the "License");
+; you may not use this file except in compliance with the License.
+; You may obtain a copy of the License at
+;
+;      http://www.apache.org/licenses/LICENSE-2.0
+;
+; Unless required by applicable law or agreed to in writing, software
+; distributed under the License is distributed on an "AS IS" BASIS,
+; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+; See the License for the specific language governing permissions and
+; limitations under the License.
+;
+SessionIdSignature = [ ; COSE_Sign1 (untagged) [RFC9052 s4.2]
+    protected: bstr .cbor SessionIdSignatureProtected,
+    unprotected: {},
+    payload: nil,       ; session ID payload to be transported separately
+    signature: bstr     ; PureEd25519(privateKey, SessionIdSignatureSigStruct) /
+                        ; ECDSA(privateKey, SessionIdSignatureSigStruct)
+]
+
+SessionIdSignatureProtected = {
+    1 : AlgorithmEdDSA / AlgorithmES256,
+}
+
+SessionIdSignatureSigStruct = [ ; Sig_structure for SessionIdSignature [ RFC9052 s4.4]
+    context: "Signature1",
+    protected: bstr SessionIdSignatureProtected,
+    external_aad: bstr .size 0,
+    payload: bstr,       ; session ID payload provided separately
+]

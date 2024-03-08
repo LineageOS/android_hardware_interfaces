@@ -19,6 +19,7 @@ package android.hardware.radio.network;
 import android.hardware.radio.network.ClosedSubscriberGroupInfo;
 import android.hardware.radio.network.OperatorInfo;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable CellIdentityTdscdma {

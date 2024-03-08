@@ -32,12 +32,21 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.sim;
+/* @hide */
 @JavaDerive(toString=true) @VintfStability
 parcelable CarrierRestrictions {
+  /**
+   * @deprecated use @List<CarrierInfo> allowedCarrierInfoList
+   */
   android.hardware.radio.sim.Carrier[] allowedCarriers;
+  /**
+   * @deprecated use @List<CarrierInfo> excludedCarrierInfoList
+   */
   android.hardware.radio.sim.Carrier[] excludedCarriers;
   boolean allowedCarriersPrioritized;
   android.hardware.radio.sim.CarrierRestrictions.CarrierRestrictionStatus status;
+  android.hardware.radio.sim.CarrierInfo[] allowedCarrierInfoList = {};
+  android.hardware.radio.sim.CarrierInfo[] excludedCarrierInfoList = {};
   @Backing(type="int") @VintfStability
   enum CarrierRestrictionStatus {
     UNKNOWN = 0,

@@ -19,6 +19,7 @@ package android.hardware.radio;
 import android.hardware.radio.RadioError;
 import android.hardware.radio.RadioResponseType;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable RadioResponseInfoModem {

@@ -27,7 +27,39 @@ cc_defaults {
     name: "android.hardware.boot-service_common",
     relative_install_path: "hw",
     defaults: ["libboot_control_defaults"],
+    srcs: [
+        "main.cpp",
+        "BootControl.cpp",
+    ],
+}
+
+cc_binary {
+    name: "android.hardware.boot-service.default",
+    defaults: ["android.hardware.boot-service_common"],
+    vendor: true,
+
+    stl: "c++_static",
+    shared_libs: [
+        "libbinder_ndk",
+        "liblog",
+    ],
+    static_libs: [
+        "android.hardware.boot@1.1",
+        "android.hardware.boot-V1-ndk",
+        "libbase",
+        "libboot_control",
+    ],
+
+    installable: false, // installed in APEX
+}
+
+cc_binary {
+    name: "android.hardware.boot-service.default_recovery",
+    defaults: ["android.hardware.boot-service_common"],
+    init_rc: ["android.hardware.boot-service.default_recovery.rc"],
     vintf_fragments: ["android.hardware.boot-service.default.xml"],
+    recovery: true,
+
     shared_libs: [
         "libbase",
         "libbinder_ndk",
@@ -37,19 +69,35 @@ cc_defaults {
     static_libs: [
         "libboot_control",
     ],
-    srcs: ["main.cpp", "BootControl.cpp"],
 }
 
-cc_binary {
-    name: "android.hardware.boot-service.default",
-    defaults: ["android.hardware.boot-service_common"],
-    init_rc: ["android.hardware.boot-service.default.rc"],
+prebuilt_etc {
+    name: "android.hardware.boot-service.default.rc",
+    src: "android.hardware.boot-service.default.rc",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "android.hardware.boot-service.default.xml",
+    src: "android.hardware.boot-service.default.xml",
+    sub_dir: "vintf",
+    installable: false,
+}
+
+apex {
+    name: "com.android.hardware.boot",
     vendor: true,
-}
+    manifest: "apex_manifest.json",
+    file_contexts: "apex_file_contexts",
+    key: "com.android.hardware.key",
+    certificate: ":com.android.hardware.certificate",
+    updatable: false,
 
-cc_binary {
-    name: "android.hardware.boot-service.default_recovery",
-    defaults: ["android.hardware.boot-service_common"],
-    init_rc: ["android.hardware.boot-service.default_recovery.rc"],
-    recovery: true,
+    binaries: [
+        "android.hardware.boot-service.default",
+    ],
+    prebuilts: [
+        "android.hardware.boot-service.default.rc",
+        "android.hardware.boot-service.default.xml",
+    ],
 }

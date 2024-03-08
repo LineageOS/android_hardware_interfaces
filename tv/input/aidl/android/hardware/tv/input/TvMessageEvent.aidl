@@ -25,4 +25,5 @@ parcelable TvMessageEvent {
 
     int streamId;
     TvMessage[] messages;
+    int deviceId;
 }

@@ -83,7 +83,7 @@ StreamAlsa::StreamAlsa(StreamContext* context, const Metadata& metadata, int rea
             proxy = alsa::openProxyForAttachedDevice(
                     device, const_cast<struct pcm_config*>(&mConfig.value()), mBufferSizeFrames);
         }
-        if (!proxy) {
+        if (proxy.get() == nullptr) {
             return ::android::NO_INIT;
         }
         alsaDeviceProxies.push_back(std::move(proxy));
@@ -119,7 +119,7 @@ StreamAlsa::StreamAlsa(StreamContext* context, const Metadata& metadata, int rea
 
 ::android::status_t StreamAlsa::refinePosition(StreamDescriptor::Position* position) {
     if (mAlsaDeviceProxies.empty()) {
-        LOG(FATAL) << __func__ << ": no opened devices";
+        LOG(WARNING) << __func__ << ": no opened devices";
         return ::android::NO_INIT;
     }
     // Since the proxy can only count transferred frames since its creation,

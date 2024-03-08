@@ -116,7 +116,6 @@ class CanFuzzer {
     hidl_vec<hidl_string> getBusNames();
     void getSupportedInterfaceTypes();
     void invokeBus();
-    void invokeController();
     void invokeUpInterface();
     void invokeDownInterface();
     FuzzedDataProvider* mFuzzedDataProvider = nullptr;

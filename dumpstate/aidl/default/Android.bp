@@ -44,3 +44,41 @@ cc_binary {
         "-DLOG_TAG=\"android.hardware.dumpstate-service.example\"",
     ],
 }
+
+prebuilt_etc {
+    name: "dumpstate-default.xml",
+    src: "dumpstate-default.xml",
+    sub_dir: "vintf",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "dumpstate-default.rc",
+    src: ":gen-dumpstate-default.rc-for-apex",
+    installable: false,
+}
+
+genrule {
+    name: "gen-dumpstate-default.rc-for-apex",
+    srcs: ["dumpstate-default.rc"],
+    out: ["dumpstate-default-apex.rc"],
+    cmd: "sed -E 's/\\/vendor\\/bin\\/hw/\\/apex\\/com.android.hardware.dumpstate\\/bin\\/hw/' $(in) > $(out)",
+}
+
+apex {
+    name: "com.android.hardware.dumpstate",
+    vendor: true,
+    manifest: "apex_manifest.json",
+    file_contexts: "apex_file_contexts",
+    key: "com.android.hardware.key",
+    certificate: ":com.android.hardware.certificate",
+    updatable: false,
+
+    binaries: [
+        "android.hardware.dumpstate-service.example",
+    ],
+    prebuilts: [
+        "dumpstate-default.rc",
+        "dumpstate-default.xml",
+    ],
+}

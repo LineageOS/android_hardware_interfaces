@@ -19,30 +19,42 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <optional>
 #include <set>
 
+#include <Utils.h>
 #include <aidl/android/hardware/audio/core/BnModule.h>
 
 #include "core-impl/ChildInterface.h"
-#include "core-impl/Configuration.h"
 #include "core-impl/Stream.h"
 
 namespace aidl::android::hardware::audio::core {
 
 class Module : public BnModule {
   public:
-    // This value is used for all AudioPatches and reported by all streams.
-    static constexpr int32_t kLatencyMs = 10;
+    struct Configuration {
+        std::vector<::aidl::android::media::audio::common::AudioPort> ports;
+        std::vector<::aidl::android::media::audio::common::AudioPortConfig> portConfigs;
+        std::vector<::aidl::android::media::audio::common::AudioPortConfig> initialConfigs;
+        // Port id -> List of profiles to use when the device port state is set to 'connected'
+        // in connection simulation mode.
+        std::map<int32_t, std::vector<::aidl::android::media::audio::common::AudioProfile>>
+                connectedProfiles;
+        std::vector<AudioRoute> routes;
+        std::vector<AudioPatch> patches;
+        int32_t nextPortId = 1;
+        int32_t nextPatchId = 1;
+    };
     enum Type : int { DEFAULT, R_SUBMIX, STUB, USB, BLUETOOTH };
-    enum BtInterface : int { BTCONF, BTA2DP, BTLE };
 
-    static std::shared_ptr<Module> createInstance(Type type);
+    static std::shared_ptr<Module> createInstance(Type type) {
+        return createInstance(type, std::make_unique<Configuration>());
+    }
+    static std::shared_ptr<Module> createInstance(Type type,
+                                                  std::unique_ptr<Configuration>&& config);
+    static std::optional<Type> typeFromString(const std::string& type);
 
-    explicit Module(Type type) : mType(type) {}
-
-    typedef std::tuple<std::weak_ptr<IBluetooth>, std::weak_ptr<IBluetoothA2dp>,
-                       std::weak_ptr<IBluetoothLe>>
-            BtProfileHandles;
+    Module(Type type, std::unique_ptr<Configuration>&& config);
 
   protected:
     // The vendor extension done via inheritance can override interface methods and augment
@@ -58,6 +70,7 @@ class Module : public BnModule {
             const ::aidl::android::media::audio::common::AudioPort& in_templateIdAndAdditionalData,
             ::aidl::android::media::audio::common::AudioPort* _aidl_return) override;
     ndk::ScopedAStatus disconnectExternalDevice(int32_t in_portId) override;
+    ndk::ScopedAStatus prepareToDisconnectExternalDevice(int32_t in_portId) override;
     ndk::ScopedAStatus getAudioPatches(std::vector<AudioPatch>* _aidl_return) override;
     ndk::ScopedAStatus getAudioPort(
             int32_t in_portId,
@@ -127,8 +140,6 @@ class Module : public BnModule {
     ndk::ScopedAStatus getAAudioMixerBurstCount(int32_t* _aidl_return) override;
     ndk::ScopedAStatus getAAudioHardwareBurstMinUsec(int32_t* _aidl_return) override;
 
-    // This value is used for all AudioPatches.
-    static constexpr int32_t kMinimumStreamBufferSizeFrames = 256;
     // The maximum stream buffer size is 1 GiB = 2 ** 30 bytes;
     static constexpr int32_t kMaximumStreamBufferSizeBytes = 1 << 30;
 
@@ -142,13 +153,13 @@ class Module : public BnModule {
     // ids of device ports created at runtime via 'connectExternalDevice'.
     // Also stores a list of ids of mix ports with dynamic profiles that were populated from
     // the connected port. This list can be empty, thus an int->int multimap can't be used.
-    using ConnectedDevicePorts = std::map<int32_t, std::vector<int32_t>>;
+    using ConnectedDevicePorts = std::map<int32_t, std::set<int32_t>>;
     // Maps port ids and port config ids to patch ids.
     // Multimap because both ports and configs can be used by multiple patches.
     using Patches = std::multimap<int32_t, int32_t>;
 
     const Type mType;
-    std::unique_ptr<internal::Configuration> mConfig;
+    std::unique_ptr<Configuration> mConfig;
     ModuleDebug mDebug;
     VendorDebug mVendorDebug;
     ConnectedDevicePorts mConnectedDevicePorts;
@@ -157,7 +168,7 @@ class Module : public BnModule {
     bool mMicMute = false;
     bool mMasterMute = false;
     float mMasterVolume = 1.0f;
-    ChildInterface<sounddose::ISoundDose> mSoundDose;
+    ChildInterface<sounddose::SoundDose> mSoundDose;
     std::optional<bool> mIsMmapSupported;
 
   protected:
@@ -185,11 +196,25 @@ class Module : public BnModule {
             const std::vector<::aidl::android::media::audio::common::AudioPortConfig*>& sinks);
     virtual void onExternalDeviceConnectionChanged(
             const ::aidl::android::media::audio::common::AudioPort& audioPort, bool connected);
+    virtual void onPrepareToDisconnectExternalDevice(
+            const ::aidl::android::media::audio::common::AudioPort& audioPort);
     virtual ndk::ScopedAStatus onMasterMuteChanged(bool mute);
     virtual ndk::ScopedAStatus onMasterVolumeChanged(float volume);
-    virtual std::unique_ptr<internal::Configuration> initializeConfig();
+    virtual std::vector<::aidl::android::media::audio::common::MicrophoneInfo> getMicrophoneInfos();
+    virtual std::unique_ptr<Configuration> initializeConfig();
+    virtual int32_t getNominalLatencyMs(
+            const ::aidl::android::media::audio::common::AudioPortConfig& portConfig);
 
     // Utility and helper functions accessible to subclasses.
+    static int32_t calculateBufferSizeFrames(int32_t latencyMs, int32_t sampleRateHz) {
+        const int32_t rawSizeFrames =
+                aidl::android::hardware::audio::common::frameCountFromDurationMs(latencyMs,
+                                                                                 sampleRateHz);
+        int32_t powerOf2 = 1;
+        while (powerOf2 < rawSizeFrames) powerOf2 <<= 1;
+        return powerOf2;
+    }
+
     ndk::ScopedAStatus bluetoothParametersUpdated();
     void cleanUpPatch(int32_t patchId);
     ndk::ScopedAStatus createStreamContext(
@@ -202,16 +227,19 @@ class Module : public BnModule {
     std::set<int32_t> findConnectedPortConfigIds(int32_t portConfigId);
     ndk::ScopedAStatus findPortIdForNewStream(
             int32_t in_portConfigId, ::aidl::android::media::audio::common::AudioPort** port);
-    virtual BtProfileHandles getBtProfileManagerHandles();
-    internal::Configuration& getConfig();
+    std::vector<AudioRoute*> getAudioRoutesForAudioPortImpl(int32_t portId);
+    Configuration& getConfig();
     const ConnectedDevicePorts& getConnectedDevicePorts() const { return mConnectedDevicePorts; }
     bool getMasterMute() const { return mMasterMute; }
     bool getMasterVolume() const { return mMasterVolume; }
     bool getMicMute() const { return mMicMute; }
     const Patches& getPatches() const { return mPatches; }
+    std::set<int32_t> getRoutableAudioPortIds(int32_t portId,
+                                              std::vector<AudioRoute*>* routes = nullptr);
     const Streams& getStreams() const { return mStreams; }
     Type getType() const { return mType; }
     bool isMmapSupported();
+    void populateConnectedProfiles();
     template <typename C>
     std::set<int32_t> portIdsFromPortConfigIds(C portConfigIds);
     void registerPatch(const AudioPatch& patch);

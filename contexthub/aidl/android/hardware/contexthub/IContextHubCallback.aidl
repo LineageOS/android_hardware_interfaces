@@ -18,6 +18,7 @@ package android.hardware.contexthub;
 
 import android.hardware.contexthub.AsyncEventType;
 import android.hardware.contexthub.ContextHubMessage;
+import android.hardware.contexthub.MessageDeliveryStatus;
 import android.hardware.contexthub.NanSessionRequest;
 import android.hardware.contexthub.NanoappInfo;
 
@@ -89,6 +90,35 @@ interface IContextHubCallback {
      * @param request Request from the HAL indicating the latest NAN session state it would like.
      */
     void handleNanSessionRequest(in NanSessionRequest request);
+
+    /**
+     * This callback is passed by the Contexthub service to the HAL
+     * implementation to allow the HAL to send the response for a reliable message.
+     * The response is the message delivery status of a recently sent message. See
+     * sendMessageDeliveryStatusToHub() for more details.
+     *
+     * @param hostEndPointId The ID of the host endpoint associated with this message delivery
+     *                       status.
+     * @param messageDeliveryStatus The status to be sent.
+     */
+    void handleMessageDeliveryStatus(
+            in char hostEndpointId, in MessageDeliveryStatus messageDeliveryStatus);
+
+    /**
+     * This callback is passed to the HAL implementation to allow the HAL to request a UUID that
+     * uniquely identifies a client.
+     *
+     * @return a byte array representating the UUID
+     */
+    byte[16] getUuid();
+
+    /**
+     * This callback gets the name of a client implementing this IContextHubCallback interface,
+     * which must be a hard-coded string and does not change at runtime.
+     *
+     * <p>The name provides a human-readable way to identify a client for troubleshooting purpose.
+     */
+    String getName();
 
     /**
      * Amount of time, in milliseconds, that a handleNanSessionRequest can be pending before the

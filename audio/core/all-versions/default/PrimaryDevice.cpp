@@ -283,7 +283,7 @@ Return<void> PrimaryDevice::getTtyMode(getTtyMode_cb _hidl_cb) {
         _hidl_cb(retval, TtyMode::OFF);
         return Void();
     }
-    TtyMode mode = convertTtyModeToHIDL(halMode);
+    TtyMode mode = convertTtyModeToHIDL(halMode.c_str());
     if (mode == TtyMode(-1)) {
         ALOGE("HAL returned invalid TTY value: %s", halMode.c_str());
         _hidl_cb(Result::INVALID_STATE, TtyMode::OFF);

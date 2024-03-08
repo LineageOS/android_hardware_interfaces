@@ -20,11 +20,14 @@
 #include <functional>
 #include <unordered_map>
 
+#define LOG_TAG "AHAL_Config"
 #include <aidl/android/media/audio/common/AudioFlag.h>
 #include <aidl/android/media/audio/common/AudioHalEngineConfig.h>
 #include <aidl/android/media/audio/common/AudioProductStrategyType.h>
+#include <android-base/logging.h>
 
 #include "core-impl/EngineConfigXmlConverter.h"
+#include "core-impl/XsdcConversion.h"
 
 using aidl::android::media::audio::common::AudioAttributes;
 using aidl::android::media::audio::common::AudioContentType;
@@ -40,19 +43,12 @@ using aidl::android::media::audio::common::AudioProductStrategyType;
 using aidl::android::media::audio::common::AudioSource;
 using aidl::android::media::audio::common::AudioStreamType;
 using aidl::android::media::audio::common::AudioUsage;
+using ::android::BAD_VALUE;
+using ::android::base::unexpected;
 
-namespace xsd = android::audio::policy::engine::configuration;
+namespace eng_xsd = android::audio::policy::engine::configuration;
 
 namespace aidl::android::hardware::audio::core::internal {
-
-/**
- * Valid curve points take the form "<index>,<attenuationMb>", where the index
- * must be in the range [0,100]. kInvalidCurvePointIndex is used to indicate
- * that a point was formatted incorrectly (e.g. if a vendor accidentally typed a
- * '.' instead of a ',' in their XML)-- using such a curve point will result in
- * failed VTS tests.
- */
-static const int8_t kInvalidCurvePointIndex = -1;
 
 void EngineConfigXmlConverter::initProductStrategyMap() {
 #define STRATEGY_ENTRY(name) {"STRATEGY_" #name, static_cast<int>(AudioProductStrategyType::name)}
@@ -68,7 +64,7 @@ void EngineConfigXmlConverter::initProductStrategyMap() {
 #undef STRATEGY_ENTRY
 }
 
-int EngineConfigXmlConverter::convertProductStrategyNameToAidl(
+ConversionResult<int> EngineConfigXmlConverter::convertProductStrategyNameToAidl(
         const std::string& xsdcProductStrategyName) {
     const auto [it, success] = mProductStrategyMap.insert(
             std::make_pair(xsdcProductStrategyName, mNextVendorStrategy));
@@ -85,12 +81,12 @@ bool isDefaultAudioAttributes(const AudioAttributes& attributes) {
             (attributes.tags.empty()));
 }
 
-AudioAttributes EngineConfigXmlConverter::convertAudioAttributesToAidl(
-        const xsd::AttributesType& xsdcAudioAttributes) {
+ConversionResult<AudioAttributes> EngineConfigXmlConverter::convertAudioAttributesToAidl(
+        const eng_xsd::AttributesType& xsdcAudioAttributes) {
     if (xsdcAudioAttributes.hasAttributesRef()) {
         if (mAttributesReferenceMap.empty()) {
             mAttributesReferenceMap =
-                    generateReferenceMap<xsd::AttributesRef, xsd::AttributesRefType>(
+                    generateReferenceMap<eng_xsd::AttributesRef, eng_xsd::AttributesRefType>(
                             getXsdcConfig()->getAttributesRef());
         }
         return convertAudioAttributesToAidl(
@@ -111,16 +107,16 @@ AudioAttributes EngineConfigXmlConverter::convertAudioAttributesToAidl(
                 static_cast<AudioSource>(xsdcAudioAttributes.getFirstSource()->getValue());
     }
     if (xsdcAudioAttributes.hasFlags()) {
-        std::vector<xsd::FlagType> xsdcFlagTypeVec =
+        std::vector<eng_xsd::FlagType> xsdcFlagTypeVec =
                 xsdcAudioAttributes.getFirstFlags()->getValue();
-        for (const xsd::FlagType& xsdcFlagType : xsdcFlagTypeVec) {
-            if (xsdcFlagType != xsd::FlagType::AUDIO_FLAG_NONE) {
+        for (const eng_xsd::FlagType& xsdcFlagType : xsdcFlagTypeVec) {
+            if (xsdcFlagType != eng_xsd::FlagType::AUDIO_FLAG_NONE) {
                 aidlAudioAttributes.flags |= 1 << (static_cast<int>(xsdcFlagType) - 1);
             }
         }
     }
     if (xsdcAudioAttributes.hasBundle()) {
-        const xsd::BundleType* xsdcBundle = xsdcAudioAttributes.getFirstBundle();
+        const eng_xsd::BundleType* xsdcBundle = xsdcAudioAttributes.getFirstBundle();
         aidlAudioAttributes.tags[0] = xsdcBundle->getKey() + "=" + xsdcBundle->getValue();
     }
     if (isDefaultAudioAttributes(aidlAudioAttributes)) {
@@ -129,53 +125,54 @@ AudioAttributes EngineConfigXmlConverter::convertAudioAttributesToAidl(
     return aidlAudioAttributes;
 }
 
-AudioHalAttributesGroup EngineConfigXmlConverter::convertAttributesGroupToAidl(
-        const xsd::AttributesGroup& xsdcAttributesGroup) {
+ConversionResult<AudioHalAttributesGroup> EngineConfigXmlConverter::convertAttributesGroupToAidl(
+        const eng_xsd::AttributesGroup& xsdcAttributesGroup) {
     AudioHalAttributesGroup aidlAttributesGroup;
     static const int kStreamTypeEnumOffset =
-            static_cast<int>(xsd::Stream::AUDIO_STREAM_VOICE_CALL) -
+            static_cast<int>(eng_xsd::Stream::AUDIO_STREAM_VOICE_CALL) -
             static_cast<int>(AudioStreamType::VOICE_CALL);
     aidlAttributesGroup.streamType = static_cast<AudioStreamType>(
             static_cast<int>(xsdcAttributesGroup.getStreamType()) - kStreamTypeEnumOffset);
     aidlAttributesGroup.volumeGroupName = xsdcAttributesGroup.getVolumeGroup();
     if (xsdcAttributesGroup.hasAttributes_optional()) {
         aidlAttributesGroup.attributes =
-                convertCollectionToAidlUnchecked<xsd::AttributesType, AudioAttributes>(
+                VALUE_OR_FATAL((convertCollectionToAidl<eng_xsd::AttributesType, AudioAttributes>(
                         xsdcAttributesGroup.getAttributes_optional(),
                         std::bind(&EngineConfigXmlConverter::convertAudioAttributesToAidl, this,
-                                  std::placeholders::_1));
+                                  std::placeholders::_1))));
     } else if (xsdcAttributesGroup.hasContentType_optional() ||
                xsdcAttributesGroup.hasUsage_optional() ||
                xsdcAttributesGroup.hasSource_optional() ||
                xsdcAttributesGroup.hasFlags_optional() ||
                xsdcAttributesGroup.hasBundle_optional()) {
-        aidlAttributesGroup.attributes.push_back(convertAudioAttributesToAidl(xsd::AttributesType(
-                xsdcAttributesGroup.getContentType_optional(),
-                xsdcAttributesGroup.getUsage_optional(), xsdcAttributesGroup.getSource_optional(),
-                xsdcAttributesGroup.getFlags_optional(), xsdcAttributesGroup.getBundle_optional(),
-                std::nullopt)));
+        aidlAttributesGroup.attributes.push_back(VALUE_OR_FATAL(convertAudioAttributesToAidl(
+                eng_xsd::AttributesType(xsdcAttributesGroup.getContentType_optional(),
+                                        xsdcAttributesGroup.getUsage_optional(),
+                                        xsdcAttributesGroup.getSource_optional(),
+                                        xsdcAttributesGroup.getFlags_optional(),
+                                        xsdcAttributesGroup.getBundle_optional(), std::nullopt))));
 
     } else {
-        // do nothing;
-        // TODO: check if this is valid or if we should treat as an error.
-        // Currently, attributes are not mandatory in schema, but an AttributesGroup
-        // without attributes does not make much sense.
+        LOG(ERROR) << __func__ << " Review Audio Policy config: no audio attributes provided for "
+                   << aidlAttributesGroup.toString();
+        return unexpected(BAD_VALUE);
     }
     return aidlAttributesGroup;
 }
 
-AudioHalProductStrategy EngineConfigXmlConverter::convertProductStrategyToAidl(
-        const xsd::ProductStrategies::ProductStrategy& xsdcProductStrategy) {
+ConversionResult<AudioHalProductStrategy> EngineConfigXmlConverter::convertProductStrategyToAidl(
+        const eng_xsd::ProductStrategies::ProductStrategy& xsdcProductStrategy) {
     AudioHalProductStrategy aidlProductStrategy;
 
-    aidlProductStrategy.id = convertProductStrategyNameToAidl(xsdcProductStrategy.getName());
+    aidlProductStrategy.id =
+            VALUE_OR_FATAL(convertProductStrategyNameToAidl(xsdcProductStrategy.getName()));
 
     if (xsdcProductStrategy.hasAttributesGroup()) {
-        aidlProductStrategy.attributesGroups =
-                convertCollectionToAidlUnchecked<xsd::AttributesGroup, AudioHalAttributesGroup>(
+        aidlProductStrategy.attributesGroups = VALUE_OR_FATAL(
+                (convertCollectionToAidl<eng_xsd::AttributesGroup, AudioHalAttributesGroup>(
                         xsdcProductStrategy.getAttributesGroup(),
                         std::bind(&EngineConfigXmlConverter::convertAttributesGroupToAidl, this,
-                                  std::placeholders::_1));
+                                  std::placeholders::_1))));
     }
     if ((mDefaultProductStrategyId != std::nullopt) && (mDefaultProductStrategyId.value() == -1)) {
         mDefaultProductStrategyId = aidlProductStrategy.id;
@@ -183,80 +180,40 @@ AudioHalProductStrategy EngineConfigXmlConverter::convertProductStrategyToAidl(
     return aidlProductStrategy;
 }
 
-AudioHalVolumeCurve::CurvePoint EngineConfigXmlConverter::convertCurvePointToAidl(
-        const std::string& xsdcCurvePoint) {
-    AudioHalVolumeCurve::CurvePoint aidlCurvePoint{};
-    if (sscanf(xsdcCurvePoint.c_str(), "%" SCNd8 ",%d", &aidlCurvePoint.index,
-               &aidlCurvePoint.attenuationMb) != 2) {
-        aidlCurvePoint.index = kInvalidCurvePointIndex;
-    }
-    return aidlCurvePoint;
-}
-
-AudioHalVolumeCurve EngineConfigXmlConverter::convertVolumeCurveToAidl(
-        const xsd::Volume& xsdcVolumeCurve) {
+ConversionResult<AudioHalVolumeCurve> EngineConfigXmlConverter::convertVolumeCurveToAidl(
+        const eng_xsd::Volume& xsdcVolumeCurve) {
     AudioHalVolumeCurve aidlVolumeCurve;
     aidlVolumeCurve.deviceCategory =
             static_cast<AudioHalVolumeCurve::DeviceCategory>(xsdcVolumeCurve.getDeviceCategory());
     if (xsdcVolumeCurve.hasRef()) {
         if (mVolumesReferenceMap.empty()) {
-            mVolumesReferenceMap = generateReferenceMap<xsd::VolumesType, xsd::VolumeRef>(
+            mVolumesReferenceMap = generateReferenceMap<eng_xsd::VolumesType, eng_xsd::VolumeRef>(
                     getXsdcConfig()->getVolumes());
         }
-        aidlVolumeCurve.curvePoints =
-                convertCollectionToAidlUnchecked<std::string, AudioHalVolumeCurve::CurvePoint>(
+        aidlVolumeCurve.curvePoints = VALUE_OR_FATAL(
+                (convertCollectionToAidl<std::string, AudioHalVolumeCurve::CurvePoint>(
                         mVolumesReferenceMap.at(xsdcVolumeCurve.getRef()).getPoint(),
-                        std::bind(&EngineConfigXmlConverter::convertCurvePointToAidl, this,
-                                  std::placeholders::_1));
+                        &convertCurvePointToAidl)));
     } else {
-        aidlVolumeCurve.curvePoints =
-                convertCollectionToAidlUnchecked<std::string, AudioHalVolumeCurve::CurvePoint>(
-                        xsdcVolumeCurve.getPoint(),
-                        std::bind(&EngineConfigXmlConverter::convertCurvePointToAidl, this,
-                                  std::placeholders::_1));
+        aidlVolumeCurve.curvePoints = VALUE_OR_FATAL(
+                (convertCollectionToAidl<std::string, AudioHalVolumeCurve::CurvePoint>(
+                        xsdcVolumeCurve.getPoint(), &convertCurvePointToAidl)));
     }
     return aidlVolumeCurve;
 }
 
-AudioHalVolumeGroup EngineConfigXmlConverter::convertVolumeGroupToAidl(
-        const xsd::VolumeGroupsType::VolumeGroup& xsdcVolumeGroup) {
+ConversionResult<AudioHalVolumeGroup> EngineConfigXmlConverter::convertVolumeGroupToAidl(
+        const eng_xsd::VolumeGroupsType::VolumeGroup& xsdcVolumeGroup) {
     AudioHalVolumeGroup aidlVolumeGroup;
     aidlVolumeGroup.name = xsdcVolumeGroup.getName();
     aidlVolumeGroup.minIndex = xsdcVolumeGroup.getIndexMin();
     aidlVolumeGroup.maxIndex = xsdcVolumeGroup.getIndexMax();
     aidlVolumeGroup.volumeCurves =
-            convertCollectionToAidlUnchecked<xsd::Volume, AudioHalVolumeCurve>(
+            VALUE_OR_FATAL((convertCollectionToAidl<eng_xsd::Volume, AudioHalVolumeCurve>(
                     xsdcVolumeGroup.getVolume(),
                     std::bind(&EngineConfigXmlConverter::convertVolumeCurveToAidl, this,
-                              std::placeholders::_1));
+                              std::placeholders::_1))));
     return aidlVolumeGroup;
-}
-
-AudioHalCapCriterion EngineConfigXmlConverter::convertCapCriterionToAidl(
-        const xsd::CriterionType& xsdcCriterion) {
-    AudioHalCapCriterion aidlCapCriterion;
-    aidlCapCriterion.name = xsdcCriterion.getName();
-    aidlCapCriterion.criterionTypeName = xsdcCriterion.getType();
-    aidlCapCriterion.defaultLiteralValue = xsdcCriterion.get_default();
-    return aidlCapCriterion;
-}
-
-std::string EngineConfigXmlConverter::convertCriterionTypeValueToAidl(
-        const xsd::ValueType& xsdcCriterionTypeValue) {
-    return xsdcCriterionTypeValue.getLiteral();
-}
-
-AudioHalCapCriterionType EngineConfigXmlConverter::convertCapCriterionTypeToAidl(
-        const xsd::CriterionTypeType& xsdcCriterionType) {
-    AudioHalCapCriterionType aidlCapCriterionType;
-    aidlCapCriterionType.name = xsdcCriterionType.getName();
-    aidlCapCriterionType.isInclusive = !(static_cast<bool>(xsdcCriterionType.getType()));
-    aidlCapCriterionType.values =
-            convertWrappedCollectionToAidlUnchecked<xsd::ValuesType, xsd::ValueType, std::string>(
-                    xsdcCriterionType.getValues(), &xsd::ValuesType::getValue,
-                    std::bind(&EngineConfigXmlConverter::convertCriterionTypeValueToAidl, this,
-                              std::placeholders::_1));
-    return aidlCapCriterionType;
 }
 
 AudioHalEngineConfig& EngineConfigXmlConverter::getAidlEngineConfig() {
@@ -266,39 +223,42 @@ AudioHalEngineConfig& EngineConfigXmlConverter::getAidlEngineConfig() {
 void EngineConfigXmlConverter::init() {
     initProductStrategyMap();
     if (getXsdcConfig()->hasProductStrategies()) {
-        mAidlEngineConfig.productStrategies =
-                convertWrappedCollectionToAidlUnchecked<xsd::ProductStrategies,
-                                                        xsd::ProductStrategies::ProductStrategy,
-                                                        AudioHalProductStrategy>(
+        mAidlEngineConfig.productStrategies = VALUE_OR_FATAL(
+                (convertWrappedCollectionToAidl<eng_xsd::ProductStrategies,
+                                                eng_xsd::ProductStrategies::ProductStrategy,
+                                                AudioHalProductStrategy>(
                         getXsdcConfig()->getProductStrategies(),
-                        &xsd::ProductStrategies::getProductStrategy,
+                        &eng_xsd::ProductStrategies::getProductStrategy,
                         std::bind(&EngineConfigXmlConverter::convertProductStrategyToAidl, this,
-                                  std::placeholders::_1));
+                                  std::placeholders::_1))));
         if (mDefaultProductStrategyId) {
             mAidlEngineConfig.defaultProductStrategyId = mDefaultProductStrategyId.value();
         }
     }
     if (getXsdcConfig()->hasVolumeGroups()) {
-        mAidlEngineConfig.volumeGroups = convertWrappedCollectionToAidlUnchecked<
-                xsd::VolumeGroupsType, xsd::VolumeGroupsType::VolumeGroup, AudioHalVolumeGroup>(
-                getXsdcConfig()->getVolumeGroups(), &xsd::VolumeGroupsType::getVolumeGroup,
-                std::bind(&EngineConfigXmlConverter::convertVolumeGroupToAidl, this,
-                          std::placeholders::_1));
+        mAidlEngineConfig.volumeGroups = VALUE_OR_FATAL(
+                (convertWrappedCollectionToAidl<eng_xsd::VolumeGroupsType,
+                                                eng_xsd::VolumeGroupsType::VolumeGroup,
+                                                AudioHalVolumeGroup>(
+                        getXsdcConfig()->getVolumeGroups(),
+                        &eng_xsd::VolumeGroupsType::getVolumeGroup,
+                        std::bind(&EngineConfigXmlConverter::convertVolumeGroupToAidl, this,
+                                  std::placeholders::_1))));
     }
     if (getXsdcConfig()->hasCriteria() && getXsdcConfig()->hasCriterion_types()) {
         AudioHalEngineConfig::CapSpecificConfig capSpecificConfig;
-        capSpecificConfig.criteria =
-                convertWrappedCollectionToAidlUnchecked<xsd::CriteriaType, xsd::CriterionType,
-                                                        AudioHalCapCriterion>(
-                        getXsdcConfig()->getCriteria(), &xsd::CriteriaType::getCriterion,
-                        std::bind(&EngineConfigXmlConverter::convertCapCriterionToAidl, this,
-                                  std::placeholders::_1));
-        capSpecificConfig.criterionTypes = convertWrappedCollectionToAidlUnchecked<
-                xsd::CriterionTypesType, xsd::CriterionTypeType, AudioHalCapCriterionType>(
-                getXsdcConfig()->getCriterion_types(), &xsd::CriterionTypesType::getCriterion_type,
-                std::bind(&EngineConfigXmlConverter::convertCapCriterionTypeToAidl, this,
-                          std::placeholders::_1));
-        mAidlEngineConfig.capSpecificConfig = capSpecificConfig;
+        capSpecificConfig.criteria = VALUE_OR_FATAL(
+                (convertWrappedCollectionToAidl<eng_xsd::CriteriaType, eng_xsd::CriterionType,
+                                                AudioHalCapCriterion>(
+                        getXsdcConfig()->getCriteria(), &eng_xsd::CriteriaType::getCriterion,
+                        &convertCapCriterionToAidl)));
+        capSpecificConfig.criterionTypes =
+                VALUE_OR_FATAL((convertWrappedCollectionToAidl<eng_xsd::CriterionTypesType,
+                                                               eng_xsd::CriterionTypeType,
+                                                               AudioHalCapCriterionType>(
+                        getXsdcConfig()->getCriterion_types(),
+                        &eng_xsd::CriterionTypesType::getCriterion_type,
+                        &convertCapCriterionTypeToAidl)));
     }
 }
 }  // namespace aidl::android::hardware::audio::core::internal

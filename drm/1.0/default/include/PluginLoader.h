@@ -18,6 +18,8 @@
 #define PLUGIN_LOADER_H_
 
 #include "SharedLibrary.h"
+
+#include <android-base/strings.h>
 #include <utils/Log.h>
 #include <utils/String8.h>
 #include <utils/Vector.h>
@@ -39,16 +41,16 @@ class PluginLoader {
          */
         String8 pluginDir(dir);
 
-        DIR* pDir = opendir(pluginDir.string());
+        DIR* pDir = opendir(pluginDir.c_str());
         if (pDir == NULL) {
-            ALOGE("Failed to find plugin directory %s", pluginDir.string());
+            ALOGE("Failed to find plugin directory %s", pluginDir.c_str());
         } else {
             struct dirent* pEntry;
             while ((pEntry = readdir(pDir))) {
                 String8 file(pEntry->d_name);
-                if (file.getPathExtension() == ".so") {
+                if (base::EndsWith(file.c_str(), ".so")) {
                     String8 path = pluginDir + "/" + pEntry->d_name;
-                    T *plugin = loadOne(path, entry);
+                    T* plugin = loadOne(path.c_str(), entry);
                     if (plugin) {
                         factories.push(plugin);
                     }

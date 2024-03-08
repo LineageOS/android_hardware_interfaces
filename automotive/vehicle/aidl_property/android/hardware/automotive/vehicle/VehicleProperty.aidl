@@ -169,7 +169,7 @@ enum VehicleProperty {
      *  int32Values[4] = wheel base
      *  int32Values[5] = track width front
      *  int32Values[6] = track width rear
-     *  int32Values[7] = curb to curb turning radius
+     *  int32Values[7] = curb to curb turning diameter
      *
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
@@ -345,6 +345,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     FUEL_DOOR_OPEN = 0x0308 + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
@@ -383,6 +384,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     EV_CHARGE_PORT_OPEN = 0x030A + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
@@ -419,10 +421,24 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit:METER
      */
     RANGE_REMAINING = 0x0308 + 0x10000000 + 0x01000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT
+    /**
+     * EV battery average temperature
+     *
+     * Exposes the temperature of the battery in an EV. If multiple batteries exist in the EV, or
+     * multiple temperature sensors exist, this property should be set to the mean or a meaningful
+     * weighted average that best represents the overall temperature of the battery system.
+     *
+     * @change_mode VehiclePropertyChangeMode.CONTINUOUS
+     * @access VehiclePropertyAccess.READ
+     * @unit VehicleUnit:CELSIUS
+     */
+    EV_BATTERY_AVERAGE_TEMPERATURE =
+            0x030E + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.FLOAT,
     /**
      * Tire pressure
      *
@@ -476,9 +492,26 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     ENGINE_IDLE_AUTO_STOP_ENABLED =
             0x0320 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+    /**
+     * Impact detected.
+     *
+     * Bit flag property to relay information on whether an impact has occurred on a particular side
+     * of the vehicle as described through the ImpactSensorLocation enum. As a bit flag property,
+     * this property can be set to multiple ORed together values of the enum when necessary.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all bit flags of ImpactSensorLocation are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum ImpactSensorLocation
+     */
+    IMPACT_DETECTED =
+            0x0330 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
     /**
      * Currently selected gear
      *
@@ -560,6 +593,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     EV_BRAKE_REGENERATION_LEVEL =
             0x040C + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
@@ -648,10 +682,50 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      * @data_enum EvStoppingMode
      */
     EV_STOPPING_MODE =
             0x040D + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+    /**
+     * Enable or disable Electronic Stability Control (ESC).
+     *
+     * Set true to enable ESC and false to disable ESC. When ESC is enabled, a system in the vehicle
+     * should be controlling the tires during instances with high risk of skidding to actively
+     * prevent the same from happening.
+     *
+     * In general, ELECTRONIC_STABILITY_CONTROL_ENABLED should always return true or false. If the
+     * feature is not available due to some temporary state, such as the vehicle speed being too
+     * high, that information must be conveyed through the ErrorState values in the
+     * ELECTRONIC_STABILITY_CONTROL_STATE property.
+     *
+     * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
+     * implement it as VehiclePropertyAccess.READ only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
+     */
+    ELECTRONIC_STABILITY_CONTROL_ENABLED =
+            0x040E + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+    /**
+     * Electronic Stability Control (ESC) state.
+     *
+     * Returns the current state of ESC. This property must always return a valid state defined in
+     * ElectronicStabilityControlState or ErrorState. It must not surface errors through StatusCode
+     * and must use the supported error states instead.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both ElectronicStabilityControlState (including OTHER, which is not
+     * recommended) and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum ElectronicStabilityControlState
+     * @data_enum ErrorState
+     */
+    ELECTRONIC_STABILITY_CONTROL_STATE =
+            0x040F + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
     /**
      * HVAC Properties
      *
@@ -696,8 +770,9 @@ enum VehicleProperty {
      *     and passenger side, an alternative mapping would be:
      *      - ROW_1_LEFT
      *      - ROW_1_RIGHT
-     *
-     *
+     */
+
+    /**
      * Fan speed setting
      *
      * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
@@ -713,6 +788,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     HVAC_FAN_SPEED = 0x0500 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -724,6 +800,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      * @data_enum VehicleHvacFanDirection
      */
     HVAC_FAN_DIRECTION = 0x0501 + 0x10000000 + 0x05000000
@@ -763,6 +840,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit:CELSIUS
      */
     HVAC_TEMPERATURE_SET = 0x0503 + 0x10000000 + 0x05000000
@@ -775,6 +853,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     HVAC_DEFROSTER = 0x0504 + 0x10000000 + 0x03000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:WINDOW,VehiclePropertyType:BOOLEAN
@@ -786,6 +865,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      * @config_flags Supported areaIds
      */
     HVAC_AC_ON = 0x0505 + 0x10000000 + 0x05000000
@@ -803,6 +883,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     HVAC_MAX_AC_ON = 0x0506 + 0x10000000 + 0x05000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:BOOLEAN
@@ -825,6 +906,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     HVAC_MAX_DEFROST_ON = 0x0507 + 0x10000000 + 0x05000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:BOOLEAN
@@ -841,6 +923,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     HVAC_RECIRC_ON = 0x0508 + 0x10000000 + 0x05000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:BOOLEAN
@@ -879,6 +962,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     HVAC_DUAL_ON = 0x0509 + 0x10000000 + 0x05000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:BOOLEAN
@@ -900,6 +984,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     HVAC_AUTO_ON = 0x050A + 0x10000000 + 0x05000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:BOOLEAN
@@ -921,6 +1006,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     HVAC_SEAT_TEMPERATURE = 0x050B + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -943,6 +1029,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     HVAC_SIDE_MIRROR_HEAT = 0x050C + 0x10000000 + 0x04000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:MIRROR,VehiclePropertyType:INT32
@@ -965,6 +1052,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     HVAC_STEERING_WHEEL_HEAT = 0x050D + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -989,6 +1077,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      * @data_enum VehicleUnit
      */
     HVAC_TEMPERATURE_DISPLAY_UNITS = 0x050E + 0x10000000 + 0x01000000
@@ -1043,6 +1132,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     HVAC_POWER_ON = 0x0510 + 0x10000000 + 0x05000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:BOOLEAN
@@ -1077,6 +1167,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     HVAC_AUTO_RECIRC_ON = 0x0512 + 0x10000000 + 0x05000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:BOOLEAN
@@ -1101,6 +1192,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     HVAC_SEAT_VENTILATION = 0x0513 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1112,6 +1204,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     HVAC_ELECTRIC_DEFROSTER_ON = 0x0514 + 0x10000000 + 0x03000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:WINDOW,VehiclePropertyType:BOOLEAN
@@ -1175,6 +1268,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      * @data_enum VehicleUnit
      */
     DISTANCE_DISPLAY_UNITS = 0x0600 + 0x10000000 + 0x01000000
@@ -1198,6 +1292,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      * @data_enum VehicleUnit
      */
     FUEL_VOLUME_DISPLAY_UNITS = 0x0601 + 0x10000000 + 0x01000000
@@ -1222,6 +1317,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      * @data_enum VehicleUnit
      */
     TIRE_PRESSURE_DISPLAY_UNITS = 0x0602 + 0x10000000 + 0x01000000
@@ -1246,6 +1342,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      * @data_enum VehicleUnit
      */
     EV_BATTERY_DISPLAY_UNITS = 0x0603 + 0x10000000 + 0x01000000
@@ -1262,6 +1359,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     FUEL_CONSUMPTION_UNITS_DISTANCE_OVER_VOLUME = 0x0604 + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
@@ -1284,6 +1382,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     VEHICLE_SPEED_DISPLAY_UNITS = 0x0605 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -1475,6 +1574,22 @@ enum VehicleProperty {
     PER_DISPLAY_BRIGHTNESS = 0x0A04 + 0x10000000 + 0x01000000
             + 0x00410000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
     /**
+     * Valet mode enabled
+     *
+     * This property allows the user to enable/disable valet mode in their vehicle. Valet mode is
+     * a privacy and security setting that prevents an untrusted driver to access more private areas
+     * in the vehicle, such as the glove box or the trunk(s).
+     *
+     * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
+     * implement it as VehiclePropertyAccess.READ only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
+     */
+    VALET_MODE_ENABLED =
+            0x0A05 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+    /**
      * Property to feed H/W input events to android
      *
      * int32Values[0] : action defined by VehicleHwKeyInputAction
@@ -1633,6 +1748,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     DOOR_POS = 0x0B00 + 0x10000000 + 0x06000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:DOOR,VehiclePropertyType:INT32
@@ -1657,6 +1773,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     DOOR_MOVE = 0x0B01 + 0x10000000 + 0x06000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:DOOR,VehiclePropertyType:INT32
@@ -1670,6 +1787,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     DOOR_LOCK = 0x0B02 + 0x10000000 + 0x06000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:DOOR,VehiclePropertyType:BOOLEAN
@@ -1685,6 +1803,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     DOOR_CHILD_LOCK_ENABLED =
             0x0B03 + VehiclePropertyGroup.SYSTEM + VehicleArea.DOOR + VehiclePropertyType.BOOLEAN,
@@ -1710,6 +1829,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     MIRROR_Z_POS = 0x0B40 + 0x10000000 + 0x04000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:MIRROR,VehiclePropertyType:INT32
@@ -1735,6 +1855,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     MIRROR_Z_MOVE = 0x0B41 + 0x10000000 + 0x04000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:MIRROR,VehiclePropertyType:INT32
@@ -1760,6 +1881,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     MIRROR_Y_POS = 0x0B42 + 0x10000000 + 0x04000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:MIRROR,VehiclePropertyType:INT32
@@ -1784,6 +1906,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     MIRROR_Y_MOVE = 0x0B43 + 0x10000000 + 0x04000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:MIRROR,VehiclePropertyType:INT32
@@ -1797,6 +1920,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     MIRROR_LOCK = 0x0B44 + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
@@ -1810,6 +1934,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     MIRROR_FOLD = 0x0B45 + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
@@ -1826,6 +1951,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
 
     MIRROR_AUTO_FOLD_ENABLED =
@@ -1843,6 +1969,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
 
     MIRROR_AUTO_TILT_ENABLED =
@@ -1891,6 +2018,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_BELT_BUCKLED = 0x0B82 + 0x10000000 + 0x05000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:BOOLEAN
@@ -1915,6 +2043,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_BELT_HEIGHT_POS = 0x0B83 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1942,6 +2071,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_BELT_HEIGHT_MOVE = 0x0B84 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1966,6 +2096,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_FORE_AFT_POS = 0x0B85 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1992,6 +2123,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_FORE_AFT_MOVE = 0x0B86 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -2018,6 +2150,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_BACKREST_ANGLE_1_POS = 0x0B87 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -2044,6 +2177,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_BACKREST_ANGLE_1_MOVE = 0x0B88 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -2072,6 +2206,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_BACKREST_ANGLE_2_POS = 0x0B89 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -2098,6 +2233,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_BACKREST_ANGLE_2_MOVE = 0x0B8A + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -2120,6 +2256,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_HEIGHT_POS = 0x0B8B + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -2144,6 +2281,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_HEIGHT_MOVE = 0x0B8C + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -2171,6 +2309,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_DEPTH_POS = 0x0B8D + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -2196,6 +2335,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_DEPTH_MOVE = 0x0B8E + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -2222,6 +2362,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_TILT_POS = 0x0B8F + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -2248,6 +2389,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_TILT_MOVE = 0x0B90 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -2272,6 +2414,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_LUMBAR_FORE_AFT_POS = 0x0B91 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -2299,6 +2442,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_LUMBAR_FORE_AFT_MOVE = 0x0B92 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -2323,6 +2467,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_LUMBAR_SIDE_SUPPORT_POS = 0x0B93 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -2350,6 +2495,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_LUMBAR_SIDE_SUPPORT_MOVE = 0x0B94 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -2369,6 +2515,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_HEADREST_HEIGHT_POS = 0x0B95 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -2395,6 +2542,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_HEADREST_HEIGHT_POS_V2 =
             0x0BA4 + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.INT32,
@@ -2423,6 +2571,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_HEADREST_HEIGHT_MOVE = 0x0B96 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -2445,6 +2594,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_HEADREST_ANGLE_POS = 0x0B97 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -2472,6 +2622,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_HEADREST_ANGLE_MOVE = 0x0B98 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -2494,6 +2645,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_HEADREST_FORE_AFT_POS = 0x0B99 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -2521,6 +2673,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_HEADREST_FORE_AFT_MOVE = 0x0B9A + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -2565,6 +2718,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightSwitch
      */
     SEAT_FOOTWELL_LIGHTS_SWITCH =
@@ -2581,6 +2735,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_EASY_ACCESS_ENABLED =
             0x0B9D + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.BOOLEAN,
@@ -2600,9 +2755,32 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_AIRBAG_ENABLED =
             0x0B9E + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.BOOLEAN,
+    /**
+     * Seat airbags deployed
+     *
+     * Bit flag property to relay information on which airbags have been deployed in the vehicle at
+     * each seat, vs which ones are currently still armed. If SEAT_AIRBAG_ENABLED is set to false at
+     * a particular areaId, this property should return status code UNAVAILABLE at that areaId.
+     *
+     * Enums apply to each seat, not the global vehicle. For example, VehicleAirbagsLocation#CURTAIN
+     * at the driver seat areaId represents whether the driver side curtain airbag has been
+     * deployed. Multiple bit flags can be set to indicate that multiple different airbags have been
+     * deployed for the seat.
+     *
+     * For each seat area ID, the VehicleAreaConfig#supportedEnumValues array must be defined unless
+     * all states of VehicleAirbagLocation are supported (including OTHER, which is not
+     * recommended).
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum VehicleAirbagLocation
+     */
+    SEAT_AIRBAGS_DEPLOYED =
+            0x0BA5 + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.INT32,
     /**
      * Represents property for seat’s hipside (bottom cushion’s side) support position.
      *
@@ -2624,6 +2802,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_CUSHION_SIDE_SUPPORT_POS =
             0x0B9F + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.INT32,
@@ -2651,6 +2830,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_CUSHION_SIDE_SUPPORT_MOVE =
             0x0BA0 + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.INT32,
@@ -2673,6 +2853,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_LUMBAR_VERTICAL_POS =
             0x0BA1 + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.INT32,
@@ -2698,6 +2879,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_LUMBAR_VERTICAL_MOVE =
             0x0BA2 + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.INT32,
@@ -2723,9 +2905,28 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     SEAT_WALK_IN_POS =
             0x0BA3 + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.INT32,
+    /**
+     * Seat belt pretensioner deployed.
+     *
+     * Property to relay information on whether the seat belt pretensioner has been deployed for a
+     * particular seat due to a collision. This is different from the regular seat belt tightening
+     * system that continuously adds tension to the seat belts so that they fit snugly around the
+     * person sitting in the seat, nor is it the seat belt retractor system that locks the seat belt
+     * in place during sudden brakes or when the user jerks the seat belt.
+     *
+     * If this property is dependant on the state of other properties, and those properties are
+     * currently in the state that doesn't support this property, this should return
+     * StatusCode#NOT_AVAILABLE
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     */
+    SEAT_BELT_PRETENSIONER_DEPLOYED =
+            0x0BA6 + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.BOOLEAN,
     /**
      * Seat Occupancy
      *
@@ -2770,6 +2971,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     WINDOW_POS = 0x0BC0 + 0x10000000 + 0x03000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:WINDOW,VehiclePropertyType:INT32
@@ -2811,6 +3013,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     WINDOW_MOVE = 0x0BC1 + 0x10000000 + 0x03000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:WINDOW,VehiclePropertyType:INT32
@@ -2824,6 +3027,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     WINDOW_LOCK = 0x0BC4 + 0x10000000 + 0x03000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:WINDOW,VehiclePropertyType:BOOLEAN
@@ -2889,6 +3093,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      * @data_enum WindshieldWipersSwitch
      */
     WINDSHIELD_WIPERS_SWITCH =
@@ -2915,6 +3120,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     STEERING_WHEEL_DEPTH_POS =
             0x0BE0 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
@@ -2940,6 +3146,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     STEERING_WHEEL_DEPTH_MOVE =
             0x0BE1 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
@@ -2962,6 +3169,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     STEERING_WHEEL_HEIGHT_POS =
             0x0BE2 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
@@ -2987,6 +3195,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     STEERING_WHEEL_HEIGHT_MOVE =
             0x0BE3 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
@@ -3001,6 +3210,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     STEERING_WHEEL_THEFT_LOCK_ENABLED =
             0x0BE4 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
@@ -3014,6 +3224,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     STEERING_WHEEL_LOCKED =
             0x0BE5 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
@@ -3028,6 +3239,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     STEERING_WHEEL_EASY_ACCESS_ENABLED =
             0x0BE6 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
@@ -3054,6 +3266,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     GLOVE_BOX_DOOR_POS =
             0x0BF0 + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.INT32,
@@ -3072,6 +3285,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     GLOVE_BOX_LOCKED =
             0x0BF1 + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.BOOLEAN,
@@ -3113,6 +3327,151 @@ enum VehicleProperty {
      */
     LOCATION_CHARACTERIZATION =
             0x0C10 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
+    /**
+     * Static data for the position of each ultrasonic sensor installed on the vehicle.
+     *
+     * Each individual sensor is identified by its unique VehicleAreaConfig#areaId and returns the
+     * sensor's position formatted as [x, y, z] where:
+     *
+     *     int32Values[0] = x, the position of the sensor along the x-axis relative to the origin of
+     *                      the Android Automotive sensor coordinate frame in millimeters
+     *     int32Values[1] = y, the position of the sensor along the y-axis relative to the origin of
+     *                      the Android Automotive sensor coordinate frame in millimeters.
+     *     int32Values[2] = z, the position of the sensor along the z-axis relative to the origin of
+     *                      the Android Automotive sensor coordinate frame in millimeters.
+     *
+     * If the data is aggregated by another ECU, then OEMs have the option of reporting the same
+     * reading across all included sensors or reporting a virtual representation of all the included
+     * sensors as if they were one sensor.
+     *
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
+     */
+    ULTRASONICS_SENSOR_POSITION = 0x0C20 + VehiclePropertyGroup.SYSTEM + VehicleArea.VENDOR
+            + VehiclePropertyType.INT32_VEC,
+
+    /**
+     * Static data for the orientation of each ultrasonic sensor installed on the vehicle.
+     *
+     * Each individual sensor is identified by its VehicleAreaConfig#areaId and returns the sensor's
+     * orientation formatted as [qw, qx, qy, qz] where:
+     *
+     *     int32Values[0] = qw, the quaternion coefficient w within the quaterinion (w + xi + yj +
+     *                      zk) describing the rotation of the sensor relative to the Android
+     *                      Automotive sensor coordinate frame.
+     *     int32Values[1] = qx, the quaternion coefficient x within the quaterinion (w + xi + yj +
+     *                      zk) describing the rotation of the sensor relative to the Android
+     *                      Automotive sensor coordinate frame.
+     *     int32Values[2] = qy, the quaternion coefficient y within the quaterinion (w + xi + yj +
+     *                      zk) describing the rotation of the sensor relative to the Android
+     *                      Automotive sensor coordinate frame.
+     *     int32Values[3] = qz, the quaternion coefficient z within the quaterinion (w + xi + yj +
+     *                      zk) describing the rotation of the sensor relative to the Android
+     *                      Automotive sensor coordinate frame.
+     *
+     * This assumes each sensor uses the same axes conventions as Android Automotive.
+     *
+     * If the data is aggregated by another ECU, then OEMs have the option of reporting the same
+     * reading across all included sensors or reporting a virtual representation of all the included
+     * sensors as if they were one sensor.
+     *
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
+     */
+    ULTRASONICS_SENSOR_ORIENTATION = 0x0C21 + VehiclePropertyGroup.SYSTEM + VehicleArea.VENDOR
+            + VehiclePropertyType.INT32_VEC,
+
+    /**
+     * Static data for the field of view of each ultrasonic sensor in degrees.
+     *
+     * Each individual sensor is identified by its VehicleAreaConfig#areaId and returns the sensor's
+     * field of view formatted as [horizontal, vertical] where:
+     *
+     *     int32Values[0] = horizontal, the horizontal field of view for the specified ultrasonic
+     *                      sensor in degrees.
+     *     int32Values[1] = vertical, the vertical field of view for the associated specified
+     *                      ultrasonic sensor in degrees.
+     *
+     * This assumes each sensor uses the same axes conventions as Android Automotive.
+     *
+     * If the data is aggregated by another ECU, then OEMs have the option of reporting the same
+     * reading across all included sensors or reporting a virtual representation of all the included
+     * sensors as if they were one sensor.
+     *
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
+     */
+    ULTRASONICS_SENSOR_FIELD_OF_VIEW = 0x0C22 + VehiclePropertyGroup.SYSTEM + VehicleArea.VENDOR
+            + VehiclePropertyType.INT32_VEC,
+
+    /**
+     * Static data for the detection range of each ultrasonic sensor in millimeters.
+     *
+     * Each individual sensor is identified by its VehicleAreaConfig#areaId and returns the sensor's
+     * detection range formatted as [minimum, maximum] where:
+     *
+     *     int32Values[0] = minimum, the minimum range detectable by the ultrasonic sensor in
+     *                      millimeters.
+     *     int32Values[1] = maximum, the maximum range detectable by the ultrasonic sensor in
+     *                      millimeters.
+     *
+     * If the data is aggregated by another ECU, then OEMs have the option of reporting the same
+     * reading across all included sensors or reporting a virtual representation of all the included
+     * sensors as if they were one sensor.
+     *
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
+     */
+    ULTRASONICS_SENSOR_DETECTION_RANGE = 0x0C23 + VehiclePropertyGroup.SYSTEM + VehicleArea.VENDOR
+            + VehiclePropertyType.INT32_VEC,
+
+    /**
+     * Static data for the supported ranges of each ultrasonic sensor in millimeters.
+     *
+     * For ultrasonic sensors that only support readings within a specific range. For example, if
+     * an ultrasonic sensor detects an object at 700mm, but can only report that an object has been
+     * detected between 500mm and 1000mm.
+     *
+     * Each individual sensor is identified by its VehicleAreaConfig#areaId and returns the sensor's
+     * supported ranges formatted as [range_min_1, range_max_1, range_min_2, range_max_2, ...]
+     * where:
+     *
+     *     int32Values[0] = range_min_1, the minimum of one supported range by the specified sensor
+     *                      in millimeters, inclusive.
+     *     int32Values[1] = range_max_1, the maximum of one supported range by the specified sensor
+     *                      in millimeters, inclusive.
+     *     int32Values[2] = range_min_2, the minimum of another supported range by the specified
+     *                      sensor in millimeters, inclusive.
+     *     int32Values[3] = range_max_2, the maximum of another supported range by the specified
+                            sensor in millimeters, inclusive.
+     *
+     * Example:
+     *     - Ultrasonic sensor supports the following ranges:
+     *           - 150mm to 499mm
+     *           - 500mm to 999mm
+     *           - 1000mm to 1500mm
+     *     - The associated supported ranges should be formatted as:
+     *           - int32Values[0] = 150
+     *           - int32Values[1] = 499
+     *           - int32Values[2] = 500
+     *           - int32Values[3] = 999
+     *           - int32Values[4] = 1000
+     *           - int32Values[5] = 1500
+     *
+     * If this property is not defined, all the values within the ULTRASONICS_SENSOR_DETECTION_RANGE
+     * for the specified sensor are assumed to be supported.
+     *
+     * If the data is aggregated by another ECU, then OEMs have the option of reporting the same
+     * reading across all included sensors or reporting a virtual representation of all the included
+     * sensors as if they were one sensor.
+     *
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
+     */
+    ULTRASONICS_SENSOR_SUPPORTED_RANGES = 0x0C24 + VehiclePropertyGroup.SYSTEM + VehicleArea.VENDOR
+            + VehiclePropertyType.INT32_VEC,
+
     /**
      * OBD2 Live Sensor Data
      *
@@ -3291,6 +3650,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightSwitch
      */
     HEADLIGHTS_SWITCH = 0x0E10 + 0x10000000 + 0x01000000
@@ -3305,6 +3665,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightSwitch
      */
     HIGH_BEAM_LIGHTS_SWITCH = 0x0E11 + 0x10000000 + 0x01000000
@@ -3335,6 +3696,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightSwitch
      */
     FOG_LIGHTS_SWITCH = 0x0E12 + 0x10000000 + 0x01000000
@@ -3349,6 +3711,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightSwitch
      */
     HAZARD_LIGHTS_SWITCH = 0x0E13 + 0x10000000 + 0x01000000
@@ -3377,6 +3740,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightSwitch
      */
     CABIN_LIGHTS_SWITCH = 0x0F02 + 0x10000000 + 0x01000000
@@ -3405,6 +3769,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightSwitch
      */
     READING_LIGHTS_SWITCH = 0x0F04 + 0x10000000 + 0x05000000
@@ -3450,6 +3815,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightSwitch
      */
     STEERING_WHEEL_LIGHTS_SWITCH =
@@ -4119,6 +4485,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightSwitch
      */
     FRONT_FOG_LIGHTS_SWITCH = 0x0F3C + 0x10000000 + 0x01000000
@@ -4150,6 +4517,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightSwitch
      */
     REAR_FOG_LIGHTS_SWITCH = 0x0F3E + 0x10000000 + 0x01000000
@@ -4166,6 +4534,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit:AMPERE
      */
     EV_CHARGE_CURRENT_DRAW_LIMIT = 0x0F3F + 0x10000000 + 0x01000000
@@ -4187,6 +4556,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     EV_CHARGE_PERCENT_LIMIT = 0x0F40 + 0x10000000 + 0x01000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT
@@ -4214,6 +4584,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     EV_CHARGE_SWITCH = 0x0F42 + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
@@ -4375,11 +4746,48 @@ enum VehicleProperty {
      * powers on the vehicle. VEHICLE_IN_USE is set to true. After a driving session, user powers
      * off the vehicle, VEHICLE_IN_USE is set to false.
      *
+     * <p>This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
+     * implement it as VehiclePropertyAccess.READ only.
+     *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     VEHICLE_IN_USE =
             0x0F4A + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /**
+     * Sends the heartbeat signal to ClusterOS.
+     *
+     * int64[0]: epochTimeNs
+     * int64[1]: the visibility of ClusterUI, 0 - invisible, 1 - visible
+     * bytes: the app specific metadata, this can be empty when ClusterHomeService use the heartbeat
+     *     to deliver the change of the visibility.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.WRITE
+     */
+    CLUSTER_HEARTBEAT =
+            0x0F4B + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.MIXED,
+
+    /**
+     * Current state of vehicle autonomy.
+     *
+     * Defines the level of autonomy currently engaged in the vehicle from the J3016_202104 revision
+     * of the SAE standard levels 0-5, with 0 representing no autonomy and 5 representing full
+     * driving automation. These levels should be used in accordance with the standards defined in
+     * https://www.sae.org/standards/content/j3016_202104/ and
+     * https://www.sae.org/blog/sae-j3016-update
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of VehicleAutonomousState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum VehicleAutonomousState
+     */
+    VEHICLE_DRIVING_AUTOMATION_CURRENT_LEVEL =
+            0x0F4C + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
 
     /***********************************************************************************************
      * Start of ADAS Properties
@@ -4403,6 +4811,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     AUTOMATIC_EMERGENCY_BRAKING_ENABLED =
             0x1000 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
@@ -4445,6 +4854,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     FORWARD_COLLISION_WARNING_ENABLED =
             0x1002 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
@@ -4484,6 +4894,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     BLIND_SPOT_WARNING_ENABLED =
             0x1004 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
@@ -4524,6 +4935,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     LANE_DEPARTURE_WARNING_ENABLED =
             0x1006 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
@@ -4568,6 +4980,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     LANE_KEEP_ASSIST_ENABLED =
             0x1008 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
@@ -4616,6 +5029,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     LANE_CENTERING_ASSIST_ENABLED =
             0x100A + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
@@ -4625,11 +5039,11 @@ enum VehicleProperty {
      *
      * Commands to activate and suspend LCA.
      *
-     * When the command ACTIVATE from LaneCenteringAssistCommmand is sent,
+     * When the command ACTIVATE from LaneCenteringAssistCommand is sent,
      * LANE_CENTERING_ASSIST_STATE must be set to LaneCenteringAssistState#ACTIVATION_REQUESTED.
      * When the ACTIVATE command succeeds, LANE_CENTERING_ASSIST_STATE must be set to
      * LaneCenteringAssistState#ACTIVATED. When the command DEACTIVATE from
-     * LaneCenteringAssistCommmand succeeds, LANE_CENTERING_ASSIST_STATE must be set to
+     * LaneCenteringAssistCommand succeeds, LANE_CENTERING_ASSIST_STATE must be set to
      * LaneCenteringAssistState#ENABLED.
      *
      * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues must be defined unless
@@ -4645,7 +5059,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.WRITE
-     * @data_enum LaneCenteringAssistCommmand
+     * @data_enum LaneCenteringAssistCommand
      */
     LANE_CENTERING_ASSIST_COMMAND =
             0x100B + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
@@ -4690,6 +5104,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     EMERGENCY_LANE_KEEP_ASSIST_ENABLED =
             0x100D + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
@@ -4733,6 +5148,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     CRUISE_CONTROL_ENABLED =
             0x100F + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
@@ -4758,6 +5174,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      * @data_enum CruiseControlType
      * @data_enum ErrorState
      */
@@ -4855,6 +5272,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit:MILLI_SECS
      */
     ADAPTIVE_CRUISE_CONTROL_TARGET_TIME_GAP =
@@ -4906,6 +5324,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      */
     HANDS_ON_DETECTION_ENABLED =
             0x1016 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
@@ -4955,6 +5374,277 @@ enum VehicleProperty {
      */
     HANDS_ON_DETECTION_WARNING =
             0x1018 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
+    /**
+     * Enable or disable driver drowsiness and attention monitoring.
+     *
+     * Set true to enable driver drowsiness and attention monitoring and false to disable driver
+     * drowsiness and attention monitoring. When driver drowsiness and attention monitoring is
+     * enabled, a system inside the vehicle should be monitoring the drowsiness and attention level
+     * of the driver and warn the driver if needed.
+     *
+     * In general, DRIVER_DROWSINESS_ATTENTION_SYSTEM_ENABLED should always return true or false.
+     * If the feature is not available due to some temporary state, that information must be
+     * conveyed through the ErrorState values in the DRIVER_DROWSINESS_ATTENTION_STATE property.
+     *
+     * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
+     * implement it as VehiclePropertyAccess.READ only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
+     */
+    DRIVER_DROWSINESS_ATTENTION_SYSTEM_ENABLED =
+            0x1019 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /**
+     * Driver drowsiness and attention level state.
+     *
+     * Returns the current detected state of driver drowiness and attention level based on the
+     * Karolinska Sleepiness scale. If alternative measurement methods are used, the value should be
+     * translated to the Karolinska Sleepiness Scale equivalent.
+     *
+     * Generally, this property should return a valid state defined in the
+     * DriverDrowsinessAttentionState or ErrorState. For example, if the feature is not available
+     * due to some temporary state, that information should be conveyed through ErrorState.
+     *
+     * If the vehicle is sending a warning to the user because the driver is too drowsy, the warning
+     * should be surfaced through {@link #DRIVER_DROWSINESS_ATTENTION_WARNING}.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both DriverDrowsinessAttentionState (including OTHER, which is not
+     * recommended) and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum DriverDrowsinessAttentionState
+     * @data_enum ErrorState
+     */
+    DRIVER_DROWSINESS_ATTENTION_STATE =
+            0x101A + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
+    /**
+     * Enable or disable driver drowsiness and attention warnings.
+     *
+     * Set true to enable driver drowsiness and attention warnings and false to disable driver
+     * drowsiness and attention warnings.
+     *
+     * When driver drowsiness and attention warnings are enabled, the driver drowsiness and
+     * attention monitoring system inside the vehicle should warn the driver when it detects the
+     * driver is drowsy or not attentive.
+     *
+     * In general, DRIVER_DROWSINESS_ATTENTION_WARNING_ENABLED should always return true or false.
+     * If the feature is not available due to some temporary state, that information must be
+     * conveyed through the ErrorState values in the DRIVER_DROWSINESS_ATTENTION_WARNING property.
+     *
+     * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
+     * implement it as VehiclePropertyAccess.READ only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
+     */
+    DRIVER_DROWSINESS_ATTENTION_WARNING_ENABLED =
+            0x101B + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /**
+     * Driver drowsiness and attention warning.
+     *
+     * Returns whether a warning is being sent to the driver for being drowsy or not attentive.
+     *
+     * Generally, this property should return a valid state defined in
+     * DriverDrowsinessAttentionWarning or ErrorState. For example, if the feature is not available
+     * due to some temporary state, that information should be conveyed through an ErrorState.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both DriverDrowsinessAttentionWarning (including OTHER, which is not
+     * recommended) and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum DriverDrowsinessAttentionWarning
+     * @data_enum ErrorState
+     */
+    DRIVER_DROWSINESS_ATTENTION_WARNING =
+            0x101C + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
+    /**
+     * Enable or disable driver distraction monitoring.
+     *
+     * Set true to enable driver distraction monitoring and false to disable driver
+     * distraction monitoring. When driver distraction monitoring is enabled, a system
+     * inside the vehicle should be monitoring the distraction level of the driver and
+     * warn the driver if needed.
+     *
+     * In general, DRIVER_DISTRACTION_SYSTEM_ENABLED should always return true or false. If the
+     * feature is not available due to some temporary state, that information must be conveyed
+     * through the ErrorState values in the DRIVER_DISTRACTION_STATE property.
+     *
+     * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
+     * implement it as VehiclePropertyAccess.READ only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
+     */
+    DRIVER_DISTRACTION_SYSTEM_ENABLED =
+            0x101D + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /**
+     * Driver distraction state.
+     *
+     * Returns the current detected driver distraction state.
+     *
+     * Generally, this property should return a valid state defined in the DriverDistractionState or
+     * ErrorState. For example, if the feature is not available due to some temporary state, that
+     * information should be conveyed through ErrorState.
+     *
+     * If the vehicle is sending a warning to the user because the driver is too distracted, the
+     * warning should be surfaced through {@link #DRIVER_DISTRACTION_WARNING}.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both DriverDistractionState (including OTHER, which is not
+     * recommended) and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum DriverDistractionState
+     * @data_enum ErrorState
+     */
+    DRIVER_DISTRACTION_STATE =
+            0x101E + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
+    /**
+     * Enable or disable driver distraction warnings.
+     *
+     * Set true to enable driver distraction warnings and false to disable driver distraction
+     * warnings.
+     *
+     * When driver distraction warnings are enabled, the driver distraction monitoring system inside
+     * the vehicle should warn the driver when it detects the driver is distracted.
+     *
+     * In general, DRIVER_DISTRACTION_WARNING_ENABLED should always return true or false. If the
+     * feature is not available due to some temporary state, that information must be conveyed
+     * through the ErrorState values in the DRIVER_DISTRACTION_WARNING property.
+     *
+     * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
+     * implement it as VehiclePropertyAccess.READ only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
+     */
+    DRIVER_DISTRACTION_WARNING_ENABLED =
+            0x101F + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /**
+     * Driver distraction warning.
+     *
+     * Returns whether a warning is being sent to the driver for being distracted.
+     *
+     * Generally, this property should return a valid state defined in DriverDistractionWarning or
+     * ErrorState. For example, if the feature is not available due to some temporary state, that
+     * information should be conveyed through an ErrorState.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both DriverDistractionWarning (including OTHER, which is not
+     * recommended) and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum DriverDistractionWarning
+     * @data_enum ErrorState
+     */
+    DRIVER_DISTRACTION_WARNING =
+            0x1020 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
+    /**
+     * Enable or disable Low Speed Collision Warning.
+     *
+     * Set true to enable low speed collision warning and false to disable low speed collision
+     * warning. When low speed collision warning is enabled, the ADAS system in the vehicle should
+     * warn the driver of potential collisions at low speeds. This property is different from the
+     * pre-existing FORWARD_COLLISION_WARNING_ENABLED, which should apply to higher speed
+     * applications only. If the vehicle doesn't have a separate collision detection system for low
+     * speed environments, this property should not be implemented.
+     *
+     * In general, LOW_SPEED_COLLISION_WARNING_ENABLED should always return true or false. If the
+     * feature is not available due to some temporary state, such as the vehicle speed being too
+     * high, that information must be conveyed through the ErrorState values in the
+     * LOW_SPEED_COLLISION_WARNING_STATE property.
+     *
+     * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
+     * implement it as VehiclePropertyAccess.READ only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
+     */
+    LOW_SPEED_COLLISION_WARNING_ENABLED =
+            0x1021 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /**
+     * Low Speed Collision Warning state.
+     *
+     * Returns the current state of Low Speed Collision Warning. This property must always return a
+     * valid state defined in LowSpeedCollisionWarningState or ErrorState. It must not surface
+     * errors through StatusCode and must use the supported error states instead. This property is
+     * different from the pre-existing FORWARD_COLLISION_WARNING_STATE, which should apply to higher
+     * speed applications only. If the vehicle doesn't have a separate collision detection system
+     * for low speed environments, this property should not be implemented.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both LowSpeedCollisionWarningState (including OTHER, which is not
+     * recommended) and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum LowSpeedCollisionWarningState
+     * @data_enum ErrorState
+     */
+    LOW_SPEED_COLLISION_WARNING_STATE =
+            0x1022 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
+    /**
+     * Enable or disable Cross Traffic Monitoring.
+     *
+     * Set true to enable Cross Traffic Monitoring and false to disable Cross Traffic Monitoring.
+     * When Cross Traffic Monitoring is enabled, the ADAS system in the vehicle should be turned on
+     * and monitoring for potential sideways collisions.
+     *
+     * In general, CROSS_TRAFFIC_MONITORING_ENABLED should always return true or false. If the
+     * feature is not available due to some temporary state, such as the vehicle speed being too
+     * high, that information must be conveyed through the ErrorState values in the
+     * CROSS_TRAFFIC_MONITORING_STATE property.
+     *
+     * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
+     * implement it as VehiclePropertyAccess.READ only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
+     */
+    CROSS_TRAFFIC_MONITORING_ENABLED =
+            0x1023 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /**
+     * Cross Traffic Monitoring warning state.
+     *
+     * Returns the current state of Cross Traffic Monitoring Warning. This property must always
+     * return a valid state defined in CrossTrafficMonitoringWarningState or ErrorState. It must not
+     * surface errors through StatusCode and must use the supported error states instead.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both CrossTrafficMonitoringWarningState (including OTHER, which is not
+     * recommended) and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum CrossTrafficMonitoringWarningState
+     * @data_enum ErrorState
+     */
+    CROSS_TRAFFIC_MONITORING_WARNING_STATE =
+            0x1024 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
 
     /***************************************************************************
      * End of ADAS Properties

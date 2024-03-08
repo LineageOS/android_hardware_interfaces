@@ -34,7 +34,9 @@
 package android.hardware.uwb.fira_android;
 @Backing(type="byte") @VintfStability
 enum UwbVendorGidAndroidOids {
-  ANDROID_GET_POWER_STATS = 0,
-  ANDROID_SET_COUNTRY_CODE = 1,
-  ANDROID_RANGE_DIAGNOSTICS = 2,
+  ANDROID_GET_POWER_STATS = 0x0,
+  ANDROID_SET_COUNTRY_CODE = 0x1,
+  ANDROID_RANGE_DIAGNOSTICS = 0x2,
+  RADAR_SET_APP_CONFIG = 0x11,
+  RADAR_GET_APP_CONFIG = 0x12,
 }

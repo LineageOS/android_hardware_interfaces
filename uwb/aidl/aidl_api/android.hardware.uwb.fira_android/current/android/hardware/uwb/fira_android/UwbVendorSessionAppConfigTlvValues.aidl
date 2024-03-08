@@ -34,5 +34,5 @@
 package android.hardware.uwb.fira_android;
 @Backing(type="int") @VintfStability
 enum UwbVendorSessionAppConfigTlvValues {
-  AOA_RESULT_REQ_ANTENNA_INTERLEAVING = 240,
+  AOA_RESULT_REQ_ANTENNA_INTERLEAVING = 0xF0,
 }

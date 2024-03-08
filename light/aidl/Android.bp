@@ -18,6 +18,9 @@ aidl_interface {
         java: {
             sdk_version: "module_current",
         },
+        rust: {
+            enabled: true,
+        },
     },
     versions_with_info: [
         {

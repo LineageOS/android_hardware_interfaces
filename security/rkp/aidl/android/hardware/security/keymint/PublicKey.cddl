@@ -1,0 +1,13 @@
+; NOTE: -70000 is deprecated for v3 HAL implementations.
+; NOTE: Integer encoding is different for Ed25519 and P256 keys:
+;       - Ed25519 is LE: https://www.rfc-editor.org/rfc/rfc8032#section-3.1
+;       - P256 is BE: https://www.secg.org/sec1-v2.pdf#page=19 (section 2.3.7)
+PublicKey = {               ; COSE_Key [RFC9052 s7]
+    1 : 2,                  ; Key type : EC2
+    3 : -7,                 ; Algorithm : ES256
+    -1 : 1,                 ; Curve : P256
+    -2 : bstr,              ; X coordinate, big-endian
+    -3 : bstr,              ; Y coordinate, big-endian
+    ? -70000 : nil          ; Presence indicates this is a test key. If set, K_mac is
+                            ; all zeros.
+}
