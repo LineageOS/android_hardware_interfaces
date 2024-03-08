@@ -116,6 +116,7 @@ package audio.policy.configuration.V6_0 {
     enum_constant public static final audio.policy.configuration.V6_0.AudioFormat AUDIO_FORMAT_APTX_HD;
     enum_constant public static final audio.policy.configuration.V6_0.AudioFormat AUDIO_FORMAT_APTX_TWSP;
     enum_constant public static final audio.policy.configuration.V6_0.AudioFormat AUDIO_FORMAT_CELT;
+    enum_constant public static final audio.policy.configuration.V6_0.AudioFormat AUDIO_FORMAT_DEFAULT;
     enum_constant public static final audio.policy.configuration.V6_0.AudioFormat AUDIO_FORMAT_DOLBY_TRUEHD;
     enum_constant public static final audio.policy.configuration.V6_0.AudioFormat AUDIO_FORMAT_DSD;
     enum_constant public static final audio.policy.configuration.V6_0.AudioFormat AUDIO_FORMAT_DTS;
