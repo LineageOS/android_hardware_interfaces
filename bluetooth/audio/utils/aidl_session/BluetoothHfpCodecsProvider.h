@@ -22,6 +22,7 @@
 
 #include "aidl/android/hardware/bluetooth/audio/CodecInfo.h"
 #include "aidl_android_hardware_bluetooth_audio_hfp_setting.h"
+#include "aidl_android_hardware_bluetooth_audio_hfp_setting_enums.h"
 
 namespace aidl {
 namespace android {
