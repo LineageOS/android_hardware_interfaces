@@ -31,7 +31,11 @@ using aidl_return_util::validateAndCall;
 WifiStaIface::WifiStaIface(const std::string& ifname,
                            const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
                            const std::weak_ptr<iface_util::WifiIfaceUtil> iface_util)
-    : ifname_(ifname), legacy_hal_(legacy_hal), iface_util_(iface_util), is_valid_(true) {
+    : ifname_(ifname),
+      legacy_hal_(legacy_hal),
+      iface_util_(iface_util),
+      is_valid_(true),
+      is_twt_registered_(false) {
     // Turn on DFS channel usage for STA iface.
     legacy_hal::wifi_error legacy_status = legacy_hal_.lock()->setDfsFlag(ifname_, true);
     if (legacy_status != legacy_hal::WIFI_SUCCESS) {
@@ -266,11 +270,150 @@ std::pair<std::string, ndk::ScopedAStatus> WifiStaIface::getNameInternal() {
     return {ifname_, ndk::ScopedAStatus::ok()};
 }
 
+ndk::ScopedAStatus WifiStaIface::registerTwtEventCallbackInternal() {
+    std::weak_ptr<WifiStaIface> weak_ptr_this = weak_ptr_this_;
+
+    // onTwtFailure callback
+    const auto& on_twt_failure = [weak_ptr_this](legacy_hal::wifi_request_id id,
+                                                 legacy_hal::wifi_twt_error_code error_code) {
+        const auto shared_ptr_this = weak_ptr_this.lock();
+        IWifiStaIfaceEventCallback::TwtErrorCode aidl_error_code =
+                aidl_struct_util::convertLegacyHalTwtErrorCodeToAidl(error_code);
+        if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+            LOG(ERROR) << "Callback invoked on an invalid object";
+            return;
+        }
+        for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
+            if (!callback->onTwtFailure(id, aidl_error_code).isOk()) {
+                LOG(ERROR) << "Failed to invoke onTwtFailure callback";
+            }
+        }
+    };
+    // onTwtSessionCreate callback
+    const auto& on_twt_session_create = [weak_ptr_this](legacy_hal::wifi_request_id id,
+                                                        legacy_hal::wifi_twt_session twt_session) {
+        const auto shared_ptr_this = weak_ptr_this.lock();
+        TwtSession aidl_twt_session;
+        if (!aidl_struct_util::convertLegacyHalTwtSessionToAidl(twt_session, &aidl_twt_session)) {
+            LOG(ERROR) << "convertLegacyHalTwtSessionToAidl failed";
+            return;
+        }
+
+        if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+            LOG(ERROR) << "Callback invoked on an invalid object";
+            return;
+        }
+        for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
+            if (!callback->onTwtSessionCreate(id, aidl_twt_session).isOk()) {
+                LOG(ERROR) << "Failed to invoke onTwtSessionCreate callback";
+            }
+        }
+    };
+    // onTwtSessionUpdate callback
+    const auto& on_twt_session_update = [weak_ptr_this](legacy_hal::wifi_request_id id,
+                                                        legacy_hal::wifi_twt_session twt_session) {
+        const auto shared_ptr_this = weak_ptr_this.lock();
+        TwtSession aidl_twt_session;
+        if (!aidl_struct_util::convertLegacyHalTwtSessionToAidl(twt_session, &aidl_twt_session)) {
+            LOG(ERROR) << "convertLegacyHalTwtSessionToAidl failed";
+            return;
+        }
+
+        if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+            LOG(ERROR) << "Callback invoked on an invalid object";
+            return;
+        }
+        for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
+            if (!callback->onTwtSessionUpdate(id, aidl_twt_session).isOk()) {
+                LOG(ERROR) << "Failed to invoke onTwtSessionUpdate callback";
+            }
+        }
+    };
+    // onTwtSessionTeardown callback
+    const auto& on_twt_session_teardown =
+            [weak_ptr_this](legacy_hal::wifi_request_id id, int session_id,
+                            legacy_hal::wifi_twt_teardown_reason_code reason_code) {
+                const auto shared_ptr_this = weak_ptr_this.lock();
+                IWifiStaIfaceEventCallback::TwtTeardownReasonCode aidl_reason_code =
+                        aidl_struct_util::convertLegacyHalTwtReasonCodeToAidl(reason_code);
+                if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+                    LOG(ERROR) << "Callback invoked on an invalid object";
+                    return;
+                }
+                for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
+                    if (!callback->onTwtSessionTeardown(id, session_id, aidl_reason_code).isOk()) {
+                        LOG(ERROR) << "Failed to invoke onTwtSessionTeardown callback";
+                    }
+                }
+            };
+    // onTwtSessionStats callback
+    const auto& on_twt_session_stats = [weak_ptr_this](legacy_hal::wifi_request_id id,
+                                                       int session_id,
+                                                       legacy_hal::wifi_twt_session_stats stats) {
+        const auto shared_ptr_this = weak_ptr_this.lock();
+        TwtSessionStats aidl_session_stats;
+        if (!aidl_struct_util::convertLegacyHalTwtSessionStatsToAidl(stats, &aidl_session_stats)) {
+            LOG(ERROR) << "convertLegacyHalTwtSessionStatsToAidl failed";
+            return;
+        }
+        if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+            LOG(ERROR) << "Callback invoked on an invalid object";
+            return;
+        }
+        for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
+            if (!callback->onTwtSessionStats(id, session_id, aidl_session_stats).isOk()) {
+                LOG(ERROR) << "Failed to invoke onTwtSessionStats callback";
+            }
+        }
+    };
+    // onTwtSessionSuspend callback
+    const auto& on_twt_session_suspend = [weak_ptr_this](legacy_hal::wifi_request_id id,
+                                                         int session_id) {
+        const auto shared_ptr_this = weak_ptr_this.lock();
+        if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+            LOG(ERROR) << "Callback invoked on an invalid object";
+            return;
+        }
+        for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
+            if (!callback->onTwtSessionSuspend(id, session_id).isOk()) {
+                LOG(ERROR) << "Failed to invoke onTwtSessionSuspend callback";
+            }
+        }
+    };
+    // onTwtSessionResume callback
+    const auto& on_twt_session_resume = [weak_ptr_this](legacy_hal::wifi_request_id id,
+                                                        int session_id) {
+        const auto shared_ptr_this = weak_ptr_this.lock();
+        if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+            LOG(ERROR) << "Callback invoked on an invalid object";
+            return;
+        }
+        for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
+            if (!callback->onTwtSessionResume(id, session_id).isOk()) {
+                LOG(ERROR) << "Failed to invoke onTwtSessionResume callback";
+            }
+        }
+    };
+
+    legacy_hal::wifi_error legacy_status = legacy_hal_.lock()->twtRegisterEvents(
+            ifname_, on_twt_failure, on_twt_session_create, on_twt_session_update,
+            on_twt_session_teardown, on_twt_session_stats, on_twt_session_suspend,
+            on_twt_session_resume);
+
+    if (legacy_status == legacy_hal::WIFI_ERROR_NOT_SUPPORTED) {
+        LOG(INFO) << "twtRegisterEvents is not supported" << legacy_status;
+    } else if (legacy_status != legacy_hal::WIFI_SUCCESS) {
+        LOG(ERROR) << "twtRegisterEvents failed - %d" << legacy_status;
+    }
+    return createWifiStatusFromLegacyError(legacy_status);
+}
+
 ndk::ScopedAStatus WifiStaIface::registerEventCallbackInternal(
         const std::shared_ptr<IWifiStaIfaceEventCallback>& callback) {
     if (!event_cb_handler_.addCallback(callback)) {
         return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN);
     }
+    is_twt_registered_ = registerTwtEventCallbackInternal().isOk();
     return ndk::ScopedAStatus::ok();
 }
 
@@ -617,138 +760,16 @@ std::pair<TwtCapabilities, ndk::ScopedAStatus> WifiStaIface::twtGetCapabilitiesI
 
 ndk::ScopedAStatus WifiStaIface::twtSessionSetupInternal(int32_t cmdId,
                                                          const TwtRequest& aidlTwtRequest) {
+    if (!is_twt_registered_) {
+        LOG(INFO) << "twtSessionSetup is not supported as twtRegisterEvents failed";
+        return createWifiStatus(WifiStatusCode::ERROR_NOT_SUPPORTED);
+    }
     legacy_hal::wifi_twt_request legacyHalTwtRequest;
     if (!aidl_struct_util::convertAidlTwtRequestToLegacy(aidlTwtRequest, &legacyHalTwtRequest)) {
         return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
     }
-    std::weak_ptr<WifiStaIface> weak_ptr_this = weak_ptr_this_;
-
-    // onTwtFailure callback
-    const auto& on_twt_failure = [weak_ptr_this](legacy_hal::wifi_request_id id,
-                                                 legacy_hal::wifi_twt_error_code error_code) {
-        const auto shared_ptr_this = weak_ptr_this.lock();
-        IWifiStaIfaceEventCallback::TwtErrorCode aidl_error_code =
-                aidl_struct_util::convertLegacyHalTwtErrorCodeToAidl(error_code);
-        if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
-            LOG(ERROR) << "Callback invoked on an invalid object";
-            return;
-        }
-        for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
-            if (!callback->onTwtFailure(id, aidl_error_code).isOk()) {
-                LOG(ERROR) << "Failed to invoke onTwtFailure callback";
-            }
-        }
-    };
-    // onTwtSessionCreate callback
-    const auto& on_twt_session_create = [weak_ptr_this](legacy_hal::wifi_request_id id,
-                                                        legacy_hal::wifi_twt_session twt_session) {
-        const auto shared_ptr_this = weak_ptr_this.lock();
-        TwtSession aidl_twt_session;
-        if (!aidl_struct_util::convertLegacyHalTwtSessionToAidl(twt_session, &aidl_twt_session)) {
-            LOG(ERROR) << "convertLegacyHalTwtSessionToAidl failed";
-            return;
-        }
-
-        if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
-            LOG(ERROR) << "Callback invoked on an invalid object";
-            return;
-        }
-        for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
-            if (!callback->onTwtSessionCreate(id, aidl_twt_session).isOk()) {
-                LOG(ERROR) << "Failed to invoke onTwtSessionCreate callback";
-            }
-        }
-    };
-    // onTwtSessionUpdate callback
-    const auto& on_twt_session_update = [weak_ptr_this](legacy_hal::wifi_request_id id,
-                                                        legacy_hal::wifi_twt_session twt_session) {
-        const auto shared_ptr_this = weak_ptr_this.lock();
-        TwtSession aidl_twt_session;
-        if (!aidl_struct_util::convertLegacyHalTwtSessionToAidl(twt_session, &aidl_twt_session)) {
-            LOG(ERROR) << "convertLegacyHalTwtSessionToAidl failed";
-            return;
-        }
-
-        if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
-            LOG(ERROR) << "Callback invoked on an invalid object";
-            return;
-        }
-        for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
-            if (!callback->onTwtSessionUpdate(id, aidl_twt_session).isOk()) {
-                LOG(ERROR) << "Failed to invoke onTwtSessionUpdate callback";
-            }
-        }
-    };
-    // onTwtSessionTeardown callback
-    const auto& on_twt_session_teardown =
-            [weak_ptr_this](legacy_hal::wifi_request_id id, int session_id,
-                            legacy_hal::wifi_twt_teardown_reason_code reason_code) {
-                const auto shared_ptr_this = weak_ptr_this.lock();
-                IWifiStaIfaceEventCallback::TwtTeardownReasonCode aidl_reason_code =
-                        aidl_struct_util::convertLegacyHalTwtReasonCodeToAidl(reason_code);
-                if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
-                    LOG(ERROR) << "Callback invoked on an invalid object";
-                    return;
-                }
-                for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
-                    if (!callback->onTwtSessionTeardown(id, session_id, aidl_reason_code).isOk()) {
-                        LOG(ERROR) << "Failed to invoke onTwtSessionTeardown callback";
-                    }
-                }
-            };
-    // onTwtSessionStats callback
-    const auto& on_twt_session_stats = [weak_ptr_this](legacy_hal::wifi_request_id id,
-                                                       int session_id,
-                                                       legacy_hal::wifi_twt_session_stats stats) {
-        const auto shared_ptr_this = weak_ptr_this.lock();
-        TwtSessionStats aidl_session_stats;
-        if (!aidl_struct_util::convertLegacyHalTwtSessionStatsToAidl(stats, &aidl_session_stats)) {
-            LOG(ERROR) << "convertLegacyHalTwtSessionStatsToAidl failed";
-            return;
-        }
-        if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
-            LOG(ERROR) << "Callback invoked on an invalid object";
-            return;
-        }
-        for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
-            if (!callback->onTwtSessionStats(id, session_id, aidl_session_stats).isOk()) {
-                LOG(ERROR) << "Failed to invoke onTwtSessionStats callback";
-            }
-        }
-    };
-    // onTwtSessionSuspend callback
-    const auto& on_twt_session_suspend = [weak_ptr_this](legacy_hal::wifi_request_id id,
-                                                         int session_id) {
-        const auto shared_ptr_this = weak_ptr_this.lock();
-        if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
-            LOG(ERROR) << "Callback invoked on an invalid object";
-            return;
-        }
-        for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
-            if (!callback->onTwtSessionSuspend(id, session_id).isOk()) {
-                LOG(ERROR) << "Failed to invoke onTwtSessionSuspend callback";
-            }
-        }
-    };
-    // onTwtSessionResume callback
-    const auto& on_twt_session_resume = [weak_ptr_this](legacy_hal::wifi_request_id id,
-                                                        int session_id) {
-        const auto shared_ptr_this = weak_ptr_this.lock();
-        if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
-            LOG(ERROR) << "Callback invoked on an invalid object";
-            return;
-        }
-        for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
-            if (!callback->onTwtSessionResume(id, session_id).isOk()) {
-                LOG(ERROR) << "Failed to invoke onTwtSessionResume callback";
-            }
-        }
-    };
-
-    legacy_hal::wifi_error legacy_status = legacy_hal_.lock()->twtSessionSetup(
-            ifname_, cmdId, legacyHalTwtRequest, on_twt_failure, on_twt_session_create,
-            on_twt_session_update, on_twt_session_teardown, on_twt_session_stats,
-            on_twt_session_suspend, on_twt_session_resume);
+    legacy_hal::wifi_error legacy_status =
+            legacy_hal_.lock()->twtSessionSetup(ifname_, cmdId, legacyHalTwtRequest);
     return createWifiStatusFromLegacyError(legacy_status);
 }
 
