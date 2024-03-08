@@ -32,6 +32,7 @@
 #include <aidl/android/hardware/bluetooth/audio/SbcChannelMode.h>
 #include <android-base/logging.h>
 
+#include "BluetoothHfpCodecsProvider.h"
 #include "BluetoothLeAudioAseConfigurationSettingProvider.h"
 #include "BluetoothLeAudioCodecsProvider.h"
 
@@ -100,6 +101,7 @@ const std::vector<CodecCapabilities> kDefaultOffloadA2dpCodecCapabilities = {
 std::vector<LeAudioCodecCapabilitiesSetting> kDefaultOffloadLeAudioCapabilities;
 std::unordered_map<SessionType, std::vector<CodecInfo>>
     kDefaultOffloadLeAudioCodecInfoMap;
+std::vector<CodecInfo> kDefaultOffloadHfpCodecInfo;
 
 template <class T>
 bool BluetoothAudioCodecs::ContainedInVector(
@@ -437,6 +439,17 @@ std::vector<CodecInfo> BluetoothAudioCodecs::GetLeAudioOffloadCodecInfo(
   if (codec_info_map_iter == kDefaultOffloadLeAudioCodecInfoMap.end())
     return std::vector<CodecInfo>();
   return codec_info_map_iter->second;
+}
+
+std::vector<CodecInfo> BluetoothAudioCodecs::GetHfpOffloadCodecInfo() {
+  if (kDefaultOffloadHfpCodecInfo.empty()) {
+    auto hfp_offload_setting =
+        BluetoothHfpCodecsProvider::ParseFromHfpOffloadSettingFile();
+    // Load file into list
+    kDefaultOffloadHfpCodecInfo =
+        BluetoothHfpCodecsProvider::GetHfpAudioCodecInfo(hfp_offload_setting);
+  }
+  return kDefaultOffloadHfpCodecInfo;
 }
 
 std::vector<LeAudioAseConfigurationSetting>

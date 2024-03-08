@@ -1,0 +1,51 @@
+<!-- HFP Offload Codec Capability Schema -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="hfpOffloadSetting">
+    <xs:complexType>
+      <xs:element ref="pathConfiguration" minOccurs="1" maxOccurs="unbounded"/>
+      <xs:element ref="transportConfiguration" minOccurs="1" maxOccurs="unbounded"/>
+      <xs:element ref="configuration" minOccurs="1" maxOccurs="unbounded"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="pathConfiguration">
+    <xs:complexType>
+      <xs:attribute name="name" type="xs:string"/>
+      <xs:attribute name="bandwidth" type="xs:unsignedInt"/>
+      <xs:attribute name="codec" type="codecType"/>
+      <xs:attribute name="codedDataSize" type="xs:unsignedShort"/>
+      <xs:attribute name="pcmDataFormat" type="xs:unsignedByte"/>
+      <xs:attribute name="pcmPayloadMsbPosition" type="xs:unsignedByte"/>
+      <xs:attribute name="dataPath" type="xs:unsignedByte"/>
+      <xs:attribute name="transportUnitSize" type="xs:unsignedByte"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="transportConfiguration">
+    <xs:complexType>
+      <xs:attribute name="name" type="xs:string"/>
+      <xs:attribute name="bandwidth" type="xs:unsignedInt"/>
+      <xs:attribute name="codec" type="codecType"/>
+      <xs:attribute name="codedFrameSize" type="xs:unsignedShort"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="configuration">
+    <xs:complexType>
+      <xs:attribute name="name" type="xs:string"/>
+      <xs:attribute name="codec" type="codecType"/>
+      <xs:attribute name="maxLatencyMs" type="xs:unsignedShort"/>
+      <xs:attribute name="packetTypes" type="xs:unsignedShort"/>
+      <xs:attribute name="retransmissionEffort" type="xs:unsignedByte"/>
+      <xs:attribute name="useControllerCodec" type="xs:boolean"/>
+      <xs:attribute name="inputPathConfiguration" type="xs:string"/>
+      <xs:attribute name="outputPathConfiguration" type="xs:string"/>
+      <xs:attribute name="inputTransportConfiguration" type="xs:string"/>
+      <xs:attribute name="outputTransportConfiguration" type="xs:string"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:simpleType name="codecType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="LC3"/>
+      <xs:enumeration value="CVSD"/>
+      <xs:enumeration value="MSBC"/>
+    </xs:restriction>
+  </xs:simpleType>
+</xs:schema>
