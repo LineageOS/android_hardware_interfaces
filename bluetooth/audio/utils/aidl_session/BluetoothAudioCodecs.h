@@ -57,6 +57,8 @@ class BluetoothAudioCodecs {
   static std::vector<LeAudioAseConfigurationSetting>
   GetLeAudioAseConfigurationSettings();
 
+  static std::vector<CodecInfo> GetHfpOffloadCodecInfo();
+
  private:
   template <typename T>
   struct identity {

@@ -1944,6 +1944,7 @@ class BluetoothAudioProviderHfpHardwareAidl
         BluetoothAudioHalVersion::VERSION_AIDL_V4) {
       GTEST_SKIP();
     }
+    GetProviderInfoHelper(SessionType::HFP_HARDWARE_OFFLOAD_DATAPATH);
     OpenProviderHelper(SessionType::HFP_HARDWARE_OFFLOAD_DATAPATH);
     // Can open or empty capability
     ASSERT_TRUE(temp_provider_capabilities_.empty() ||
