@@ -302,6 +302,7 @@
          TODO: generate from hidl to avoid manual sync. -->
     <xs:simpleType name="audioFormat">
         <xs:restriction base="xs:string">
+            <xs:enumeration value="AUDIO_FORMAT_DEFAULT" />
             <xs:enumeration value="AUDIO_FORMAT_PCM_16_BIT" />
             <xs:enumeration value="AUDIO_FORMAT_PCM_8_BIT"/>
             <xs:enumeration value="AUDIO_FORMAT_PCM_32_BIT"/>
