@@ -174,7 +174,7 @@ enum IdentifierType {
      * - 13 bit: Fractional bits of longitude
      * - 8 bit: Integer bits of longitude
      * - 1 bit: 0 for east and 1 for west for longitude
-     * - 1 bit: 0, representing latitude
+     * - 1 bit: 0, representing longitude
      * - 5 bit: pad of zeros separating longitude and latitude
      * - 4 bit: Bits 4:7 of altitude
      * - 13 bit: Fractional bits of latitude
