@@ -780,16 +780,15 @@ class WifiLegacyHal {
 
     // TWT functions
     std::pair<wifi_twt_capabilities, wifi_error> twtGetCapabilities(const std::string& ifaceName);
-    wifi_error twtRegisterEvents(
-            const std::string& ifaceName, const on_twt_failure& on_twt_failure_user_callback,
-            const on_twt_session_create& on_twt_session_create_user_callback,
-            const on_twt_session_update& on_twt_session_update_user_callback,
-            const on_twt_session_teardown& on_twt_session_teardown_user_callback,
-            const on_twt_session_stats& on_twt_session_stats_user_callback,
-            const on_twt_session_suspend& on_twt_session_suspend_user_callback,
-            const on_twt_session_resume& on_twt_session_resume_user_callback);
     wifi_error twtSessionSetup(const std::string& ifaceName, uint32_t cmdId,
-                               const wifi_twt_request& request);
+                               const wifi_twt_request& request,
+                               const on_twt_failure& on_twt_failure_user_callback,
+                               const on_twt_session_create& on_twt_session_create_user_callback,
+                               const on_twt_session_update& on_twt_session_update_user_callback,
+                               const on_twt_session_teardown& on_twt_session_teardown_user_callback,
+                               const on_twt_session_stats& on_twt_session_stats_user_callback,
+                               const on_twt_session_suspend& on_twt_session_suspend_user_callback,
+                               const on_twt_session_resume& on_twt_session_resume_user_callback);
     wifi_error twtSessionUpdate(const std::string& ifaceName, uint32_t cmdId, uint32_t sessionId,
                                 const wifi_twt_request& request);
     wifi_error twtSessionSuspend(const std::string& ifaceName, uint32_t cmdId, uint32_t sessionId);
@@ -798,7 +797,7 @@ class WifiLegacyHal {
     wifi_error twtSessionGetStats(const std::string& ifaceName, uint32_t cmdId, uint32_t sessionId);
 
     // Note: Following TWT functions are deprecated
-    // Deprecated by twtRegisterEvegnts
+    // Deprecated
     wifi_error twtRegisterHandler(const std::string& iface_name,
                                   const TwtCallbackHandlers& handler);
     // Deprecated by twtGetCapabilities

@@ -1867,8 +1867,9 @@ std::pair<wifi_twt_capabilities, wifi_error> WifiLegacyHal::twtGetCapabilities(
     return {capabs, status};
 }
 
-wifi_error WifiLegacyHal::twtRegisterEvents(
-        const std::string& ifaceName, const on_twt_failure& on_twt_failure_user_callback,
+wifi_error WifiLegacyHal::twtSessionSetup(
+        const std::string& ifaceName, uint32_t cmdId, const wifi_twt_request& request,
+        const on_twt_failure& on_twt_failure_user_callback,
         const on_twt_session_create& on_twt_session_create_user_callback,
         const on_twt_session_update& on_twt_session_update_user_callback,
         const on_twt_session_teardown& on_twt_session_teardown_user_callback,
@@ -1920,16 +1921,11 @@ wifi_error WifiLegacyHal::twtRegisterEvents(
         on_twt_session_resume_user_callback(id, session_id);
     };
 
-    return global_func_table_.wifi_twt_register_events(
-            getIfaceHandle(ifaceName),
+    return global_func_table_.wifi_twt_session_setup(
+            cmdId, getIfaceHandle(ifaceName), request,
             {onAsyncTwtError, onAsyncTwtSessionCreate, onAsyncTwtSessionUpdate,
              onAsyncTwtSessionTeardown, onAsyncTwtSessionStats, onAsyncTwtSessionSuspend,
              onAsyncTwtSessionResume});
-}
-
-wifi_error WifiLegacyHal::twtSessionSetup(const std::string& ifaceName, uint32_t cmdId,
-                                          const wifi_twt_request& request) {
-    return global_func_table_.wifi_twt_session_setup(cmdId, getIfaceHandle(ifaceName), request);
 }
 
 wifi_error WifiLegacyHal::twtSessionUpdate(const std::string& ifaceName, uint32_t cmdId,
