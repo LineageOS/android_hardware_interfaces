@@ -62,7 +62,7 @@ enum SecurityAlgorithm {
     // IMS and SIP layer security (See 3GPP TS 33.203)
     // No IPsec config
     SIP_NO_IPSEC_CONFIG = 66,
-    IMS_NULL = 67,
+    IMS_NULL = 67, // Deprecated. Use SIP_NO_IPSEC_CONFIG and SIP_NULL instead.
 
     // Has IPsec config
     SIP_NULL = 68,

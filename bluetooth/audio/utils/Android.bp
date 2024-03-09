@@ -42,6 +42,7 @@ cc_library_shared {
         "aidl_session/BluetoothAudioSession.cpp",
         "aidl_session/HidlToAidlMiddleware.cpp",
         "aidl_session/BluetoothLeAudioCodecsProvider.cpp",
+        "aidl_session/BluetoothHfpCodecsProvider.cpp",
         "aidl_session/BluetoothLeAudioAseConfigurationSettingProvider.cpp",
     ],
     export_include_dirs: ["aidl_session/"],
@@ -68,9 +69,13 @@ cc_library_shared {
     static_libs: [
         "btaudiohal_flags_c_lib",
     ],
-    generated_sources: ["le_audio_codec_capabilities"],
+    generated_sources: [
+        "le_audio_codec_capabilities",
+        "hfp_codec_capabilities",
+    ],
     generated_headers: [
         "le_audio_codec_capabilities",
+        "hfp_codec_capabilities",
         "AIDLLeAudioSetConfigSchemas_h",
     ],
     required: [
@@ -78,6 +83,7 @@ cc_library_shared {
         "aidl_audio_set_configurations_json",
         "aidl_audio_set_scenarios_bfbs",
         "aidl_audio_set_scenarios_json",
+        "hfp_codec_capabilities_xml",
     ],
 }
 
@@ -106,12 +112,49 @@ cc_test {
     generated_headers: ["le_audio_codec_capabilities"],
 }
 
+cc_test {
+    name: "BluetoothHfpCodecsProviderTest",
+    defaults: [
+        "latest_android_hardware_audio_common_ndk_static",
+        "latest_android_hardware_bluetooth_audio_ndk_static",
+        "latest_android_media_audio_common_types_ndk_static",
+    ],
+    srcs: [
+        "aidl_session/BluetoothHfpCodecsProvider.cpp",
+        "aidl_session/BluetoothHfpCodecsProviderTest.cpp",
+    ],
+    header_libs: [
+        "libxsdc-utils",
+    ],
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "libxml2",
+    ],
+    test_suites: [
+        "general-tests",
+    ],
+    test_options: {
+        unit_test: false,
+    },
+    generated_sources: ["hfp_codec_capabilities"],
+    generated_headers: ["hfp_codec_capabilities"],
+}
+
 xsd_config {
     name: "le_audio_codec_capabilities",
     srcs: ["le_audio_codec_capabilities/le_audio_codec_capabilities.xsd"],
     package_name: "aidl.android.hardware.bluetooth.audio.setting",
     api_dir: "le_audio_codec_capabilities/schema",
     root_elements: ["leAudioOffloadSetting"],
+}
+
+xsd_config {
+    name: "hfp_codec_capabilities",
+    srcs: ["hfp_codec_capabilities/hfp_codec_capabilities.xsd"],
+    package_name: "aidl.android.hardware.bluetooth.audio.hfp.setting",
+    api_dir: "hfp_codec_capabilities/schema",
+    root_elements: ["hfpOffloadSetting"],
 }
 
 genrule {
@@ -173,6 +216,14 @@ prebuilt_etc {
     src: "le_audio_configuration_set/audio_set_scenarios.json",
     filename: "aidl_audio_set_scenarios.json",
     sub_dir: "aidl/le_audio",
+    vendor: true,
+}
+
+prebuilt_etc {
+    name: "hfp_codec_capabilities_xml",
+    src: "hfp_codec_capabilities/hfp_codec_capabilities.xml",
+    filename: "hfp_codec_capabilities.xml",
+    sub_dir: "aidl/hfp",
     vendor: true,
 }
 
