@@ -151,6 +151,9 @@ cc_test {
     name: "VtsHalVirtualizerTargetTest",
     defaults: ["VtsHalAudioEffectTargetTestDefaults"],
     srcs: ["VtsHalVirtualizerTargetTest.cpp"],
+    shared_libs: [
+        "libaudioutils",
+    ],
 }
 
 cc_test {
