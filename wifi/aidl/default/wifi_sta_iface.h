@@ -103,6 +103,7 @@ class WifiStaIface : public BnWifiStaIface {
   private:
     // Corresponding worker functions for the AIDL methods.
     std::pair<std::string, ndk::ScopedAStatus> getNameInternal();
+    ndk::ScopedAStatus registerTwtEventCallbackInternal();
     ndk::ScopedAStatus registerEventCallbackInternal(
             const std::shared_ptr<IWifiStaIfaceEventCallback>& callback);
     std::pair<int32_t, ndk::ScopedAStatus> getFeatureSetInternal();
@@ -157,6 +158,7 @@ class WifiStaIface : public BnWifiStaIface {
     std::weak_ptr<WifiStaIface> weak_ptr_this_;
     bool is_valid_;
     aidl_callback_util::AidlCallbackHandler<IWifiStaIfaceEventCallback> event_cb_handler_;
+    bool is_twt_registered_;
 
     DISALLOW_COPY_AND_ASSIGN(WifiStaIface);
 };
