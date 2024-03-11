@@ -13,9 +13,6 @@ package {
 hidl_interface {
     name: "android.hardware.media.bufferpool@2.0",
     root: "android.hardware",
-    vndk: {
-        enabled: true,
-    },
     srcs: [
         "types.hal",
         "IAccessor.hal",

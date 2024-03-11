@@ -13,10 +13,6 @@ package {
 hidl_interface {
     name: "android.hardware.graphics.mapper@2.0",
     root: "android.hardware",
-    vndk: {
-        enabled: true,
-        support_system_process: true,
-    },
     srcs: [
         "types.hal",
         "IMapper.hal",

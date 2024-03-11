@@ -34,9 +34,6 @@ aidl_interface {
             enabled: false,
         },
         ndk: {
-            vndk: {
-                enabled: true,
-            },
         },
     },
     frozen: true,
