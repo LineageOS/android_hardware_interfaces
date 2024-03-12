@@ -12,9 +12,6 @@ package {
 hidl_interface {
     name: "android.hardware.configstore@1.0",
     root: "android.hardware",
-    vndk: {
-        enabled: true,
-    },
     srcs: [
         "types.hal",
         "ISurfaceFlingerConfigs.hal",

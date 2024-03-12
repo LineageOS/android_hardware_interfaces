@@ -11,10 +11,7 @@ package {
 aidl_interface {
     name: "android.hardware.graphics.allocator",
     vendor_available: true,
-    vndk: {
-        enabled: true,
-        support_system_process: true,
-    },
+    double_loadable: true,
     vndk_use_version: "2",
     srcs: ["android/hardware/graphics/allocator/*.aidl"],
     imports: [
@@ -34,9 +31,6 @@ aidl_interface {
                 "//apex_available:platform",
                 "com.android.media.swcodec",
             ],
-            vndk: {
-                enabled: true,
-            },
             min_sdk_version: "29",
         },
     },

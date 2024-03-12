@@ -12,10 +12,7 @@ aidl_interface {
     name: "android.hardware.graphics.common",
     host_supported: true,
     vendor_available: true,
-    vndk: {
-        enabled: true,
-        support_system_process: true,
-    },
+    double_loadable: true,
     vndk_use_version: "5",
     srcs: [
         "android/hardware/graphics/common/*.aidl",
