@@ -75,7 +75,7 @@ static constexpr uint8_t kMinLeResolvingListForBt5 = 8;
 static constexpr size_t kNumHciCommandsBandwidth = 100;
 static constexpr size_t kNumScoPacketsBandwidth = 100;
 static constexpr size_t kNumAclPacketsBandwidth = 100;
-static constexpr std::chrono::milliseconds kWaitForInitTimeout(2000);
+static constexpr std::chrono::milliseconds kWaitForInitTimeout(1000);
 static constexpr std::chrono::milliseconds kWaitForHciEventTimeout(2000);
 static constexpr std::chrono::milliseconds kWaitForScoDataTimeout(1000);
 static constexpr std::chrono::milliseconds kWaitForAclDataTimeout(1000);
@@ -150,6 +150,9 @@ class ThroughputLogger {
 
 // The main test class for Bluetooth HAL.
 class BluetoothAidlTest : public ::testing::TestWithParam<std::string> {
+  std::chrono::time_point<std::chrono::system_clock>
+      time_after_initialize_complete;
+
  public:
   void SetUp() override {
     // currently test passthrough mode only
@@ -180,12 +183,16 @@ class BluetoothAidlTest : public ::testing::TestWithParam<std::string> {
     event_cb_count = 0;
     acl_cb_count = 0;
     sco_cb_count = 0;
+    std::chrono::time_point<std::chrono::system_clock>
+        timeout_after_initialize =
+            std::chrono::system_clock::now() + kWaitForInitTimeout;
 
     ASSERT_TRUE(hci->initialize(hci_cb).isOk());
     auto future = initialized_promise.get_future();
     auto timeout_status = future.wait_for(kWaitForInitTimeout);
     ASSERT_EQ(timeout_status, std::future_status::ready);
     ASSERT_TRUE(future.get());
+    ASSERT_GE(timeout_after_initialize, time_after_initialize_complete);
   }
 
   void TearDown() override {
@@ -237,6 +244,10 @@ class BluetoothAidlTest : public ::testing::TestWithParam<std::string> {
     ~BluetoothHciCallbacks() override = default;
 
     ndk::ScopedAStatus initializationComplete(Status status) override {
+      if (status == Status::SUCCESS) {
+        parent_.time_after_initialize_complete =
+            std::chrono::system_clock::now();
+      }
       parent_.initialized_promise.set_value(status == Status::SUCCESS);
       ALOGV("%s (status = %d)", __func__, static_cast<int>(status));
       return ScopedAStatus::ok();
