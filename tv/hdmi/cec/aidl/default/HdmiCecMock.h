@@ -55,6 +55,7 @@ struct HdmiCecMock : public BnHdmiCec {
     ::ndk::ScopedAStatus enableCec(bool value) override;
     ::ndk::ScopedAStatus enableSystemCecControl(bool value) override;
     void printCecMsgBuf(const char* msg_buf, int len);
+    void closeCallback();
 
   private:
     static void* __threadLoop(void* data);
@@ -62,9 +63,8 @@ struct HdmiCecMock : public BnHdmiCec {
     int readMessageFromFifo(unsigned char* buf, int msgCount);
     int sendMessageToFifo(const CecMessage& message);
     void handleCecMessage(unsigned char* msgBuf, int length);
-
-  private:
     static void serviceDied(void* cookie);
+
     std::shared_ptr<IHdmiCecCallback> mCallback;
 
     // Variables for the virtual cec hal impl
