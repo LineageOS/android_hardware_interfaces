@@ -47,7 +47,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.lang.reflect.Field;
+import java.text.Collator;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -321,7 +323,6 @@ public final class EmuMetadataGenerator {
             ValueField field = new ValueField(name, propertyId);
 
             List<JavadocBlockTag> blockTags = doc.getBlockTags();
-            List<Integer> dataEnums = new ArrayList<>();
             for (int j = 0; j < blockTags.size(); j++) {
                 String commentTagName = blockTags.get(j).getTagName();
                 String commentTagContent = blockTags.get(j).getContent().toText();
@@ -343,6 +344,16 @@ public final class EmuMetadataGenerator {
                     parsedArgs.inputDir, parsedArgs.pkgDir, parsedArgs.pkgName, dataEnumType);
             enumTypes.add(dataEnum);
         }
+
+        // Sort the enum types based on their packageName, name.
+        // Make sure VehicleProperty is always at the first.
+        Collections.sort(enumTypes.subList(1, enumTypes.size()), (Enum enum1, Enum enum2) -> {
+            var collator = Collator.getInstance();
+            if (enum1.packageName.equals(enum2.packageName)) {
+                return collator.compare(enum1.name, enum2.name);
+            }
+            return collator.compare(enum1.packageName, enum2.packageName);
+        });
 
         // Output enumTypes as JSON to output.
         JSONArray jsonEnums = new JSONArray();
