@@ -35,8 +35,7 @@ namespace implementation {
 void HdmiCecMock::serviceDied(void* cookie) {
     ALOGE("HdmiCecMock died");
     auto hdmiCecMock = static_cast<HdmiCecMock*>(cookie);
-    hdmiCecMock->mCecThreadRun = false;
-    pthread_join(hdmiCecMock->mThreadId, NULL);
+    hdmiCecMock->closeCallback();
 }
 
 ScopedAStatus HdmiCecMock::addLogicalAddress(CecLogicalAddress addr, Result* _aidl_return) {
@@ -86,10 +85,10 @@ ScopedAStatus HdmiCecMock::sendMessage(const CecMessage& message, SendMessageRes
 }
 
 ScopedAStatus HdmiCecMock::setCallback(const std::shared_ptr<IHdmiCecCallback>& callback) {
-    // If callback is null, mCallback is also set to null so we do not call the old callback.
-    mCallback = callback;
+    closeCallback();
 
     if (callback != nullptr) {
+        mCallback = callback;
         mDeathRecipient =
                 ndk::ScopedAIBinder_DeathRecipient(AIBinder_DeathRecipient_new(serviceDied));
         AIBinder_linkToDeath(callback->asBinder().get(), mDeathRecipient.get(), this /* cookie */);
@@ -104,8 +103,8 @@ ScopedAStatus HdmiCecMock::setCallback(const std::shared_ptr<IHdmiCecCallback>& 
 
 ScopedAStatus HdmiCecMock::setLanguage(const std::string& language) {
     if (language.size() != 3) {
-        LOG(ERROR) << "Wrong language code: expected 3 letters, but it was " << language.size()
-                   << ".";
+        ALOGE("[halimp_aidl] Wrong language code: expected 3 letters, but it was %zu",
+              language.size());
         return ScopedAStatus::ok();
     }
     // TODO Validate if language is a valid language code
@@ -169,7 +168,7 @@ int HdmiCecMock::sendMessageToFifo(const CecMessage& message) {
     // Open the output pipe for writing outgoing cec message
     mOutputFile = open(CEC_MSG_OUT_FIFO, O_WRONLY | O_CLOEXEC);
     if (mOutputFile < 0) {
-        ALOGD("[halimp_aidl] file open failed for writing");
+        ALOGE("[halimp_aidl] file open failed for writing");
         return -1;
     }
 
@@ -258,17 +257,24 @@ void HdmiCecMock::threadLoop() {
 }
 
 HdmiCecMock::HdmiCecMock() {
-    ALOGE("[halimp_aidl] Opening a virtual CEC HAL for testing and virtual machine.");
+    ALOGD("[halimp_aidl] Opening a virtual CEC HAL for testing and virtual machine.");
     mCallback = nullptr;
     mDeathRecipient = ndk::ScopedAIBinder_DeathRecipient(nullptr);
 }
 
+void HdmiCecMock::closeCallback() {
+    if (mCallback != nullptr) {
+        ALOGD("[halimp_aidl] HdmiCecMock close the current callback.");
+        mCallback = nullptr;
+        mDeathRecipient = ndk::ScopedAIBinder_DeathRecipient(nullptr);
+        mCecThreadRun = false;
+        pthread_join(mThreadId, NULL);
+    }
+}
+
 HdmiCecMock::~HdmiCecMock() {
-    ALOGE("[halimp_aidl] HdmiCecMock shutting down.");
-    mCallback = nullptr;
-    mDeathRecipient = ndk::ScopedAIBinder_DeathRecipient(nullptr);
-    mCecThreadRun = false;
-    pthread_join(mThreadId, NULL);
+    ALOGD("[halimp_aidl] HdmiCecMock shutting down.");
+    closeCallback();
 }
 
 }  // namespace implementation
