@@ -86,7 +86,7 @@ pub fn build_ta() -> kmr_ta::KeyMintTa {
     ));
     let dev = Implementation {
         keys,
-        sign_info: Box::new(sign_info),
+        sign_info: Some(Box::new(sign_info)),
         // HAL populates attestation IDs from properties.
         attest_ids: None,
         sdd_mgr: None,
