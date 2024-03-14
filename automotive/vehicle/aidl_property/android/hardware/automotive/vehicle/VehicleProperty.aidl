@@ -1557,6 +1557,11 @@ enum VehicleProperty {
     /**
      * Outside temperature
      *
+     * This property must communicate the temperature reading of the environment outside the
+     * vehicle. If there are multiple sensors for measuring the outside temperature, this property
+     * should be populated with the mean or a meaningful weighted average of the readings that will
+     * best represent the temperature of the outside environment.
+     *
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit.CELSIUS
