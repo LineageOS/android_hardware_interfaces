@@ -21,6 +21,7 @@ import android.hardware.automotive.vehicle.VehiclePropValue;
 
 @VintfStability
 @JavaDerive(equals=true, toString=true)
+@RustDerive(Clone=true)
 parcelable GetValueResult {
     // The ID for the request this response is for.
     long requestId;

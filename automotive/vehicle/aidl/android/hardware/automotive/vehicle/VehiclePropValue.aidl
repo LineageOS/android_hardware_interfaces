@@ -26,6 +26,7 @@ import android.hardware.automotive.vehicle.VehiclePropertyStatus;
  */
 @VintfStability
 @JavaDerive(equals=true, toString=true)
+@RustDerive(Clone=true)
 parcelable VehiclePropValue {
     /** Time is elapsed nanoseconds since boot */
     long timestamp;
