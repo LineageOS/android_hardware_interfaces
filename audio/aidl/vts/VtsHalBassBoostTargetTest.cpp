@@ -166,6 +166,7 @@ class BassBoostDataTest : public ::testing::TestWithParam<BassBoostDataTestParam
     }
 
     void SetUp() override {
+        SKIP_TEST_IF_DATA_UNSUPPORTED(mDescriptor.common.flags);
         ASSERT_NO_FATAL_FAILURE(SetUpBassBoost(mChannelLayout));
         if (int32_t version;
             mEffect->getInterfaceVersion(&version).isOk() && version < kMinDataTestHalVersion) {
@@ -173,7 +174,10 @@ class BassBoostDataTest : public ::testing::TestWithParam<BassBoostDataTestParam
         }
     }
 
-    void TearDown() override { TearDownBassBoost(); }
+    void TearDown() override {
+        SKIP_TEST_IF_DATA_UNSUPPORTED(mDescriptor.common.flags);
+        TearDownBassBoost();
+    }
 
     // Find FFT bin indices for testFrequencies and get bin center frequencies
     void roundToFreqCenteredToFftBin(std::vector<int>& testFrequencies,

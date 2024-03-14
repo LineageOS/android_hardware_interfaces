@@ -156,6 +156,7 @@ class LoudnessEnhancerDataTest : public ::testing::TestWithParam<LoudnessEnhance
     }
 
     void SetUp() override {
+        SKIP_TEST_IF_DATA_UNSUPPORTED(mDescriptor.common.flags);
         SetUpLoudnessEnhancer();
 
         // Creating AidlMessageQueues
@@ -164,7 +165,10 @@ class LoudnessEnhancerDataTest : public ::testing::TestWithParam<LoudnessEnhance
         mOutputMQ = std::make_unique<EffectHelper::DataMQ>(mOpenEffectReturn.outputDataMQ);
     }
 
-    void TearDown() override { TearDownLoudnessEnhancer(); }
+    void TearDown() override {
+        SKIP_TEST_IF_DATA_UNSUPPORTED(mDescriptor.common.flags);
+        TearDownLoudnessEnhancer();
+    }
 
     // Fill inputBuffer with random values between -kMaxAudioSample to kMaxAudioSample
     void generateInputBuffer() {
