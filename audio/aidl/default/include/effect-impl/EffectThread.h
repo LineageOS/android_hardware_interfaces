@@ -31,11 +31,9 @@ namespace aidl::android::hardware::audio::effect {
 
 class EffectThread {
   public:
-    // default priority is same as HIDL: ANDROID_PRIORITY_URGENT_AUDIO
-    EffectThread();
     virtual ~EffectThread();
 
-    // called by effect implementation.
+    // called by effect implementation
     RetCode createThread(const std::string& name, int priority = ANDROID_PRIORITY_URGENT_AUDIO);
     RetCode destroyThread();
     RetCode startThread();
