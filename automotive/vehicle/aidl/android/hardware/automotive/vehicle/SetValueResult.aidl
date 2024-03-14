@@ -20,6 +20,7 @@ import android.hardware.automotive.vehicle.StatusCode;
 
 @VintfStability
 @JavaDerive(equals=true, toString=true)
+@RustDerive(Clone=true)
 parcelable SetValueResult {
     // The ID for the request this response is for.
     long requestId;
