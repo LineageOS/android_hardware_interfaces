@@ -56,10 +56,7 @@ using android::hardware::audio::common::testing::detail::TestExecutionTracer;
 /// Effect factory testing.
 class EffectFactoryTest : public testing::TestWithParam<std::string> {
   public:
-    void SetUp() override {
-        mFactoryHelper = std::make_unique<EffectFactoryHelper>(GetParam());
-        connectAndGetFactory();
-    }
+    void SetUp() override { connectAndGetFactory(); }
 
     void TearDown() override {
         for (auto& effect : mEffects) {
@@ -68,13 +65,14 @@ class EffectFactoryTest : public testing::TestWithParam<std::string> {
         }
     }
 
-    std::unique_ptr<EffectFactoryHelper> mFactoryHelper;
+    const std::string kServiceName = GetParam();
     std::shared_ptr<IFactory> mEffectFactory;
     std::vector<std::shared_ptr<IEffect>> mEffects;
     const Descriptor::Identity kNullId = {.uuid = getEffectUuidNull()};
     const Descriptor::Identity kZeroId = {.uuid = getEffectUuidZero()};
     const Descriptor kNullDesc = {.common.id = kNullId};
     const Descriptor kZeroDesc = {.common.id = kZeroId};
+    AudioHalBinderServiceUtil mBinderUtil;
 
     template <typename Functor>
     void ForEachId(const std::vector<Descriptor::Identity> ids, Functor functor) {
@@ -117,8 +115,11 @@ class EffectFactoryTest : public testing::TestWithParam<std::string> {
         }
     }
     void connectAndGetFactory() {
-        ASSERT_NO_FATAL_FAILURE(mFactoryHelper->ConnectToFactoryService());
-        mEffectFactory = mFactoryHelper->GetFactory();
+        mEffectFactory = IFactory::fromBinder(mBinderUtil.connectToService(kServiceName));
+        ASSERT_NE(mEffectFactory, nullptr);
+    }
+    void restartAndGetFactory() {
+        mEffectFactory = IFactory::fromBinder(mBinderUtil.restartService());
         ASSERT_NE(mEffectFactory, nullptr);
     }
 };
@@ -128,7 +129,8 @@ TEST_P(EffectFactoryTest, SetupAndTearDown) {
 }
 
 TEST_P(EffectFactoryTest, CanBeRestarted) {
-    ASSERT_NO_FATAL_FAILURE(mFactoryHelper->RestartFactoryService());
+    ASSERT_NE(mEffectFactory, nullptr);
+    restartAndGetFactory();
 }
 
 /**
@@ -250,8 +252,7 @@ TEST_P(EffectFactoryTest, CreateDestroyWithRestart) {
     EXPECT_NE(descs.size(), 0UL);
     creatAndDestroyDescs(descs);
 
-    mFactoryHelper->RestartFactoryService();
-
+    restartAndGetFactory();
     connectAndGetFactory();
     creatAndDestroyDescs(descs);
 }
@@ -263,8 +264,7 @@ TEST_P(EffectFactoryTest, EffectInvalidAfterRestart) {
     EXPECT_NE(descs.size(), 0UL);
     std::vector<std::shared_ptr<IEffect>> effects = createWithDescs(descs);
 
-    ASSERT_NO_FATAL_FAILURE(mFactoryHelper->RestartFactoryService());
-
+    restartAndGetFactory();
     connectAndGetFactory();
     destroyEffects(effects, EX_ILLEGAL_ARGUMENT);
 }
