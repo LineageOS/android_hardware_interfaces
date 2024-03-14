@@ -230,6 +230,7 @@ impl IUwbChipAsyncServer for UwbChip {
                 // Read the payload bytes.
                 read_exact(reader.get_mut(), &mut buffer[UWB_HEADER_SIZE..]).unwrap();
 
+                log::debug!(" <-- {:?}", buffer);
                 client_callbacks.onUciMessage(&buffer).unwrap();
             }
         });
@@ -284,10 +285,13 @@ impl IUwbChipAsyncServer for UwbChip {
         log::debug!("sendUciMessage");
 
         if let State::Opened { ref mut serial, .. } = &mut *self.state.lock().await {
-            serial
+            log::debug!(" --> {:?}", data);
+            let result = serial
                 .write(data)
                 .map(|written| written as i32)
-                .map_err(|_| binder::StatusCode::UNKNOWN_ERROR.into())
+                .map_err(|_| binder::StatusCode::UNKNOWN_ERROR.into());
+            log::debug!(" status: {:?}", result);
+            result
         } else {
             Err(binder::ExceptionCode::ILLEGAL_STATE.into())
         }
