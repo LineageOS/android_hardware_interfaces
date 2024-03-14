@@ -45,3 +45,45 @@ cc_test {
         "vts",
     ],
 }
+
+cc_test {
+    name: "VtsNfcBehaviorChangesTest",
+    defaults: [
+        "VtsHalTargetTestDefaults",
+        "use_libaidlvintf_gtest_helper_static",
+    ],
+    srcs: [
+        "VtsNfcBehaviorChangesTest.cpp",
+        "CondVar.cpp",
+    ],
+    include_dirs: [
+        "system/nfc/src/gki/common",
+        "system/nfc/src/gki/ulinux",
+        "system/nfc/src/include",
+        "system/nfc/src/nfa/include",
+        "system/nfc/src/nfc/include",
+        "system/nfc/utils/include",
+    ],
+    shared_libs: [
+        "libbinder",
+        "libbinder_ndk",
+        "libnativehelper",
+        "libstatssocket",
+    ],
+    static_libs: [
+        "android.hardware.nfc-V1-ndk",
+        "android.hardware.nfc@1.0",
+        "android.hardware.nfc@1.1",
+        "android.hardware.nfc@1.2",
+        "android_nfc_flags_aconfig_c_lib",
+        "libnfc-nci",
+        "libnfc-nci_flags",
+        "libnfcutils",
+        "libstatslog_nfc",
+        "server_configurable_flags",
+    ],
+    require_root: true,
+    test_suites: [
+        "vts",
+    ],
+}
