@@ -65,7 +65,7 @@ class EffectFactoryTest : public testing::TestWithParam<std::string> {
         }
     }
 
-    std::string kServiceName = GetParam();
+    const std::string kServiceName = GetParam();
     std::shared_ptr<IFactory> mEffectFactory;
     std::vector<std::shared_ptr<IEffect>> mEffects;
     const Descriptor::Identity kNullId = {.uuid = getEffectUuidNull()};
@@ -118,6 +118,10 @@ class EffectFactoryTest : public testing::TestWithParam<std::string> {
         mEffectFactory = IFactory::fromBinder(mBinderUtil.connectToService(kServiceName));
         ASSERT_NE(mEffectFactory, nullptr);
     }
+    void restartAndGetFactory() {
+        mEffectFactory = IFactory::fromBinder(mBinderUtil.restartService());
+        ASSERT_NE(mEffectFactory, nullptr);
+    }
 };
 
 TEST_P(EffectFactoryTest, SetupAndTearDown) {
@@ -126,8 +130,7 @@ TEST_P(EffectFactoryTest, SetupAndTearDown) {
 
 TEST_P(EffectFactoryTest, CanBeRestarted) {
     ASSERT_NE(mEffectFactory, nullptr);
-    mEffectFactory = IFactory::fromBinder(mBinderUtil.restartService());
-    ASSERT_NE(mEffectFactory, nullptr);
+    restartAndGetFactory();
 }
 
 /**
@@ -249,9 +252,7 @@ TEST_P(EffectFactoryTest, CreateDestroyWithRestart) {
     EXPECT_NE(descs.size(), 0UL);
     creatAndDestroyDescs(descs);
 
-    mEffectFactory = IFactory::fromBinder(mBinderUtil.restartService());
-    ASSERT_NE(mEffectFactory, nullptr);
-
+    restartAndGetFactory();
     connectAndGetFactory();
     creatAndDestroyDescs(descs);
 }
@@ -263,9 +264,7 @@ TEST_P(EffectFactoryTest, EffectInvalidAfterRestart) {
     EXPECT_NE(descs.size(), 0UL);
     std::vector<std::shared_ptr<IEffect>> effects = createWithDescs(descs);
 
-    mEffectFactory = IFactory::fromBinder(mBinderUtil.restartService());
-    ASSERT_NE(mEffectFactory, nullptr);
-
+    restartAndGetFactory();
     connectAndGetFactory();
     destroyEffects(effects, EX_ILLEGAL_ARGUMENT);
 }
