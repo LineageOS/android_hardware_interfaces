@@ -43,12 +43,12 @@ Factory::Factory(const std::string& file) : mConfig(EffectConfig(file)) {
 
 Factory::~Factory() {
     if (auto count = mEffectMap.size()) {
-        LOG(ERROR) << __func__ << " remaining " << count
-                   << " effect instances not destroyed indicating resource leak!";
+        LOG(WARNING) << __func__ << " remaining " << count
+                     << " effect instances not destroyed indicating resource leak!";
         for (const auto& it : mEffectMap) {
             if (auto spEffect = it.first.lock()) {
-                LOG(ERROR) << __func__ << " erase remaining instance UUID "
-                           << ::android::audio::utils::toString(it.second.first);
+                LOG(WARNING) << __func__ << " erase remaining instance UUID "
+                             << ::android::audio::utils::toString(it.second.first);
                 destroyEffectImpl_l(spEffect);
             }
         }
@@ -139,7 +139,7 @@ ndk::ScopedAStatus Factory::createEffect(const AudioUuid& in_impl_uuid,
         std::shared_ptr<IEffect> effectSp;
         RETURN_IF_BINDER_EXCEPTION(libInterface->createEffectFunc(&in_impl_uuid, &effectSp));
         if (!effectSp) {
-            LOG(ERROR) << __func__ << ": library created null instance without return error!";
+            LOG(WARNING) << __func__ << ": library created null instance without return error!";
             return ndk::ScopedAStatus::fromExceptionCode(EX_TRANSACTION_FAILED);
         }
         *_aidl_return = effectSp;
@@ -147,7 +147,6 @@ ndk::ScopedAStatus Factory::createEffect(const AudioUuid& in_impl_uuid,
         AIBinder_setMinSchedulerPolicy(effectBinder.get(), SCHED_NORMAL, ANDROID_PRIORITY_AUDIO);
         mEffectMap[std::weak_ptr<IEffect>(effectSp)] =
                 std::make_pair(in_impl_uuid, std::move(effectBinder));
-        LOG(DEBUG) << __func__ << ": instance " << effectSp.get() << " created successfully";
         return ndk::ScopedAStatus::ok();
     } else {
         LOG(ERROR) << __func__ << ": library doesn't exist";
@@ -192,7 +191,6 @@ void Factory::cleanupEffectMap_l() {
 }
 
 ndk::ScopedAStatus Factory::destroyEffect(const std::shared_ptr<IEffect>& in_handle) {
-    LOG(DEBUG) << __func__ << ": instance " << in_handle.get();
     std::lock_guard lg(mMutex);
     ndk::ScopedAStatus status = destroyEffectImpl_l(in_handle);
     // always do the cleanup
@@ -215,8 +213,8 @@ bool Factory::openEffectLibrary(const AudioUuid& impl,
         return false;
     }
 
-    LOG(INFO) << __func__ << " dlopen lib:" << path
-              << "\nimpl:" << ::android::audio::utils::toString(impl) << "\nhandle:" << libHandle;
+    LOG(DEBUG) << __func__ << " dlopen lib: " << path
+               << "\nimpl:" << ::android::audio::utils::toString(impl) << "\nhandle:" << libHandle;
     auto interface = new effect_dl_interface_s{nullptr, nullptr, nullptr};
     mEffectLibMap.insert(
             {impl,
@@ -235,11 +233,12 @@ void Factory::createIdentityWithConfig(
         id.type = typeUuid;
         id.uuid = configLib.uuid;
         id.proxy = proxyUuid;
-        LOG(DEBUG) << __func__ << " loading lib " << path->second << ": typeUuid "
-                   << ::android::audio::utils::toString(id.type) << "\nimplUuid "
-                   << ::android::audio::utils::toString(id.uuid) << " proxyUuid "
-                   << (proxyUuid.has_value() ? ::android::audio::utils::toString(proxyUuid.value())
-                                             : "null");
+        LOG(WARNING) << __func__ << " loading lib " << path->second << ": typeUuid "
+                     << ::android::audio::utils::toString(id.type) << "\nimplUuid "
+                     << ::android::audio::utils::toString(id.uuid) << " proxyUuid "
+                     << (proxyUuid.has_value()
+                                 ? ::android::audio::utils::toString(proxyUuid.value())
+                                 : "null");
         if (openEffectLibrary(id.uuid, path->second)) {
             mIdentitySet.insert(std::move(id));
         }
@@ -263,8 +262,8 @@ void Factory::loadEffectLibs() {
                 createIdentityWithConfig(configLib, type, proxyUuid);
             }
         } else {
-            LOG(ERROR) << __func__ << ": can not find type UUID for effect " << configEffects.first
-                       << " skipping!";
+            LOG(WARNING) << __func__ << ": can not find type UUID for effect "
+                         << configEffects.first << " skipping!";
         }
     }
 }
