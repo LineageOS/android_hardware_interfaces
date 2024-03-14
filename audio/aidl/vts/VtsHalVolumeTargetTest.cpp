@@ -163,8 +163,14 @@ class VolumeDataTest : public ::testing::TestWithParam<VolumeDataTestParam>,
     // Convert Decibel value to Percentage
     int percentageDb(float level) { return std::round((1 - (pow(10, level / 20))) * 100); }
 
-    void SetUp() override { ASSERT_NO_FATAL_FAILURE(SetUpVolumeControl()); }
-    void TearDown() override { TearDownVolumeControl(); }
+    void SetUp() override {
+        SKIP_TEST_IF_DATA_UNSUPPORTED(mDescriptor.common.flags);
+        ASSERT_NO_FATAL_FAILURE(SetUpVolumeControl());
+    }
+    void TearDown() override {
+        SKIP_TEST_IF_DATA_UNSUPPORTED(mDescriptor.common.flags);
+        TearDownVolumeControl();
+    }
 
     static constexpr int kMaxAudioSample = 1;
     static constexpr int kTransitionDuration = 300;
