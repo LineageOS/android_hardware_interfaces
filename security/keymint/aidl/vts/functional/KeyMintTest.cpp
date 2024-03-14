@@ -5222,6 +5222,149 @@ TEST_P(ImportWrappedKeyTest, WrongDigest) {
                                        .Padding(PaddingMode::RSA_OAEP)));
 }
 
+auto wrapped_rsa_key = hex2str(
+        "308206230201000482010060f81b63ae53aa4be2e91b0b7cbdabd108125836139e5b991f3e3c9a98eca6cb7188"
+        "fba1c1232605747ed118975870c886e583a0ff766fc32b789a17029955caaff39a9c6c439be168e24b51046683"
+        "ce16110e0df115ccabbadcbe7ea9118b9589e4cccf240b6f0a506dfee57e19738c3cabb7dbf63b43e1b9ab058b"
+        "41b9480f2797210ef2bfbecb82526ac60ac006ebe0a053e825ad996d0ce8a98dc1ebf6ad889e491e03e9ddcc05"
+        "63f31921b55a54c61aa7f846d814dfe548f2c7939940bc6cf20489733203732df924b2b2a5aa9b54d31e7e42b9"
+        "e6cf107182edd33cb8e41db88167a79a264bbf883e69300ac82aac8de9dca0a13900150111efead81b74040c78"
+        "01d20b1547cfef40de45da30350201013030a1083106020102020103a203020101a30402020800a40531030201"
+        "01a5053103020104a6053103020103bf8377020500048204c126cd1642e83dea941151d872de12b8aaa835446e"
+        "94d2c1ea99c030225c5cad125dabe2341d9aba63e4df7fefc51e8e6f623ffae2aab9927113562b674b3cc2d7fc"
+        "fc34f199151a56ab114e792e6a21bd3b31fbf0d93050b9f90fb8e6cad3a067a4033848c4380184990f19a141d9"
+        "527177fdc13d802c33d222206c36404518285fe7e631aaeb6072c22c351c8c9db06e0b24e11aecef305f6abefb"
+        "4f31111534f7c55da8cf0d33882edbb43765304d1d45545c5207a858ea8d4369393bf1c54624df03da86c0ed47"
+        "b9ce1297149622069d51d2512f656ad0d421e6ff746ce8f79920df6a204c31732414a2f7eb24f8c2950348187a"
+        "4ba20b88a72355a4ec2b383be9f9b5b9ad564aa4c81de47dd95d77a8156ed0901d005a26f523b2a82c2d25d64d"
+        "f7660a6d3a720a6ba1eafe71da9fed0265d37a475193525620e705a543a928827accad93aba90556da859808be"
+        "dc2a8105af252e883892f41679d0600ddefb84415145bc28a2d9b0c60cea1ed3876486950ae0532cc1e953b0b5"
+        "81314c74250550741b24e4221ebb2804428caa2f08356a7de853ccfc5b18c2179147a883fa5763dd54f0d45388"
+        "c72f1bea19675d14014a725e125cdfac98d1701d9562be9d75362ea238b93244f46306cee4d77cbb8cbe7bf22d"
+        "fe677bbb103c00a204e49a0731660a2b23ee73ec7297a17822d4c4468e271029f8f1e8995f1a37cdc38324ead3"
+        "2474e6ee3ff671803d8a98a870324364d408c4d966d3cf0b9bbcbdbdff34a3e9666705362bc78beb96df4b8964"
+        "d141022250f62d1433cba5d1f510859eff688e46ce65dea00f5ebcfe7a79081ef1f0f5584dba14b79bc5a5f309"
+        "a1e48fe2bd9e94fcd9793d9b3632ccc51f18f7453e897e33b729abd2d34be324acbc22dfbf1d089aa93a178f79"
+        "23344140a468ac120b2f0055c284576b968e1d5148c6879b207b6cdb4eb513bccca619ae12ef156a9df03d6d8c"
+        "2c1c2ea7109dbcb61e5a74b36d0a7529f38b9ea742a956376da823251a6126693e2e1dab55b643c4e9783db835"
+        "f64d91069a2de1cda55539da52cadeeba2d3278da9005d89b4de4c5571600823f53d9cab1b55f65a560479d9ee"
+        "edeb361ab80ccedd0a067ddf5de639d115ffb3acf07fbba1cba6daa524b99db0b785273f7b6c15c4237ce1dce8"
+        "1b81622f35f116b638c75f0e0b26ba6bd9c5caee60c8b4f9198052b25e8c101638598946cb02c14db0a21b46c6"
+        "61ea123b2a2b5a51eb059715ce26940c977715a32e288b713013d66d0dae398d546abcd8c80966190b77732a7c"
+        "e2b8fc83e0cd83f69adef2b24b69fba19c546362087c08c8dab941a8573a084be3407d45a318c9a299f69d79f6"
+        "fae0859d6f08ee7708cf6041cccd815c3515f792aefc23a624e8e58bd9c6fe2f8f1ca6dcf04c6fdfa23eb3ff74"
+        "c5e5c7388f9faa32c86b6cd7438774e6cf06cb23a32cddb04c30f7d11e221db306c7937796e70a4dcfb7415c04"
+        "7823b965bedeaea196dc30fe648c52f3c1bcee62b19d4cccdb740ca35c3f3daad998c99dc117fffb7d150d500f"
+        "812b60ebec8b2067b13938250d078768e77f898fcdfc5f3554b6eda9df3b42bef38bb4d67cb63b7ede01e93b4d"
+        "c7768b52aa8ad8fb7fb288a529b84671f1ff9e44bb7c8f05d99806b65eb8e90b530fef3817f9fc4c921d0d46af"
+        "11aee8252407adc6c54589e9f6e6c1e25fc7510cfe499ea20465610410bf575efdbeb5af763920c3b4cdc8401"
+        "2");
+
+auto wrapped_ec_key = hex2str(
+        "308201dd020100048201000bb910602f88b1419ada400c8ab7602cf2fdbb4ef5e36881255fd5f85d49c4110c52"
+        "c75eab5e27a1732c1afa17bfe2cd393dea0a78a77ee08759e984411d1c7f0dbdcb6b77e05556694534be4434d8"
+        "596a7152aec71481522c85f0cc4635df2875d58dc29a78317b2aedd3586055e6e2227616f6a8ac4b9db5a2ad0e"
+        "10f5c4b43374bd6c9f57f79a103e64084414cfab3d3e0b7c2f26eb00a62105b7d1c7f41b7292fd6fce9395f39c"
+        "e0b6da0b5bf0d29d8952b958bd29b47c5ebd20d53ade370f463e35a166c04af71e3d5ce550019d3d20a5544896"
+        "65d169875d0e6a52348b7ec39b674f818e9b60dfa284d7ae4188471d05b9b2d9a5f750f5a00af999c568040c31"
+        "4144bde8ada6279d32e61530270201013022a1083106020102020103a203020103a30402020100a50531030201"
+        "04bf837702050004818a96e0f8be5a263616b506371d3c2ff3a3c2bcffc3ce067b242af66e30d5cd975b9546eb"
+        "32216d4f083f08fde246ab05fd7e930a0f05701067b44840c01a6722e1b2408be5b6acd0b39a0329cb2f357515"
+        "876433b193382c0b18aed9ed244dcbef5d61d98ca480f99a6cf2a00efda22eb8750db1725e30f64770ac6862ac"
+        "44cfd08a2c55812b512a0b92f704105c80b6a23cf339b2b10c677613510b1b");
+
+auto wrapping_key_for_asym_keys = hex2str(
+        "308204bd020100300d06092a864886f70d0101010500048204a7308204a30201000282010100a7f521fe024ebc"
+        "659db8e7a32b41dba27c5d446cb3d064d594b811d4856c3a583d155b0ff9300df3745738c32c4c4cd15adb6090"
+        "72ca870364bb7f3485784fde12e598b486c91950b9c45016bcb73c3842747c871be02dfc5f0e4b96d1ff5c8a09"
+        "7ae77b27e46dc60f1f574d1bb5e97487c1c3f9b493509e07318e1a0f0e9fdae401f4a62a5dd54daa09bf88ef42"
+        "9923f6f6f55d239908f227676d0f0b618238728dc4babd2a1f7d15fa9827346a1a160ab9427461533006fdf34d"
+        "4efec9aeefcea80b3a7d4ee4a4550055f0030700c5d20abcc32ce74d90ffabf83e02a759ce9074809936564f3d"
+        "3039af9c5e8a6afd9aa5459ab35c3eb851f10b3ae88ba91f0203010001028201001885515124451a7c3b6aa366"
+        "cf09ee66ea81335c2b6461544d42125854a258624988b4a2c05ea3aac77174780a1f9997770c502cc6958ae093"
+        "f44bbdff3e716a9a97aa93b099eb783da6cb8a8642ba27fc8bc522748f66275239640fc0d8e749bfd891b3093f"
+        "f046da2e593088bb263a3d17ace4e7d81a0cf83fe3df2a139882bff509523a3f886922200168ddd8fb7b4c9f26"
+        "62ff941c37937cebbbfeba24dd78d5ccd42025cb0276fa5661965f529274520bbb9faf36c501cafb48e5e47ae0"
+        "6980334fa36b6c62e2da733a8c7f01067de17e38d32d4a0721a6d184405bceaebb39ed3838633e6fbe43ac8b23"
+        "337bfe33cdf0b67ac3938ddccc37d775ad150102818100d538885135037730fad28e987d7562c1ef8ca58f95f7"
+        "ed81cb165ca63e15e810552eb9d487c9b9cde563fb29d1de22a60d54a856385719a4028cf386bcdc88e858d963"
+        "6d644cea25e0ee54ad1237983d9a06a66ea2f764eb540a4992ba2291ea96d20dfbd98bf5b313322cda4eb6710d"
+        "020139e085beb8e52a3e69bd05c71c7b02818100c9a7c89b11fcf8d99eb41995b5641472ef972e5aaa1f1446d7"
+        "ea57a9979e8e64f72ef1cde358649b71be7f21dc19dab52814f9a521d8620bd994a9bb621a8182a250066a0728"
+        "f0b16ab93a106ed79bc19cd519e83196157a8c6f82b5144a285b9384415394905fe18863b0988b27e77c969a81"
+        "c34a074e8fef5908fdf3c51ead02818019d5e8c6963ade45640f01523ed96b66fe64b766e7900c0a4f165d9193"
+        "324a55384d1a1d437ad0f5bed6d78720b3ded4ea069903217e844fd833460acc75986d36ded86a57ddedfd3afd"
+        "05eb96aa7fdaeeffe148c49c5f711854cac769a068b7d92088ab3c97f5e485eded7b62503ef0898ea679ab1b0a"
+        "0252950f70e4f35463028181008ff4c027bb8aad17a5cd0a2aaea83854e8a73347340525d38115e0e8c7bd4007"
+        "e1d1d87ad35e69cbf2423cbdae43a2b70a5b16f0849dd53882663758f6aad763ab7d97669f9fe15bb6456ea706"
+        "89d2be3fb87d5b1df2f77859c2cd3b79b58ae3fd0640206b813981667d4c3749b7fdf01a0f48ad622e9f2def7e"
+        "cf0583bd67ad0281805bd8f20cc82cb5e08dc2e7eea977d4180a5ef4c558e01255b8475feb9084475e20328c93"
+        "5a2247a775c941d64372d01abb27c95ee7d4336b6cbce190808b2f7a8d314d785336397dd6edc0c778f563d37e"
+        "0057b13695600b92fececc3edb067f69b374f9b9c343220a8b927deb6104768edc72b87751e0a3fb1585e679c9"
+        "8564");
+
+TEST_P(ImportWrappedKeyTest, RsaKey) {
+    int vsr_api_level = get_vsr_api_level();
+    if (vsr_api_level < __ANDROID_API_V__) {
+        /*
+         * The Keymaster v4 spec introduced `importWrappedKey()` and did not restrict it to
+         * just symmetric keys.  However, the import of asymmetric wrapped keys was not tested
+         * at the time, so we can only be strict about checking this for implementations claiming
+         * support for VSR API level 35 and above.
+         */
+        GTEST_SKIP() << "Applies only to VSR API level 35, this device is: " << vsr_api_level;
+    }
+
+    auto wrapping_key_desc = AuthorizationSetBuilder()
+                                     .RsaEncryptionKey(2048, 65537)
+                                     .Digest(Digest::SHA_2_256)
+                                     .Padding(PaddingMode::RSA_OAEP)
+                                     .Authorization(TAG_PURPOSE, KeyPurpose::WRAP_KEY)
+                                     .SetDefaultValidity();
+
+    ASSERT_EQ(ErrorCode::OK, ImportWrappedKey(wrapped_rsa_key, wrapping_key_for_asym_keys,
+                                              wrapping_key_desc, zero_masking_key,
+                                              AuthorizationSetBuilder()
+                                                      .Digest(Digest::SHA_2_256)
+                                                      .Padding(PaddingMode::RSA_OAEP)));
+
+    string message = "Hello World!";
+    auto params = AuthorizationSetBuilder().Digest(Digest::SHA_2_256).Padding(PaddingMode::RSA_PSS);
+    string signature = SignMessage(message, params);
+    LocalVerifyMessage(message, signature, params);
+}
+
+TEST_P(ImportWrappedKeyTest, EcKey) {
+    int vsr_api_level = get_vsr_api_level();
+    if (vsr_api_level < __ANDROID_API_V__) {
+        /*
+         * The Keymaster v4 spec introduced `importWrappedKey()` and did not restrict it to
+         * just symmetric keys.  However, the import of asymmetric wrapped keys was not tested
+         * at the time, so we can only be strict about checking this for implementations claiming
+         * support for VSR API level 35 and above.
+         */
+        GTEST_SKIP() << "Applies only to VSR API level 35, this device is: " << vsr_api_level;
+    }
+
+    auto wrapping_key_desc = AuthorizationSetBuilder()
+                                     .RsaEncryptionKey(2048, 65537)
+                                     .Digest(Digest::SHA_2_256)
+                                     .Padding(PaddingMode::RSA_OAEP)
+                                     .Authorization(TAG_PURPOSE, KeyPurpose::WRAP_KEY)
+                                     .SetDefaultValidity();
+
+    ASSERT_EQ(ErrorCode::OK, ImportWrappedKey(wrapped_ec_key, wrapping_key_for_asym_keys,
+                                              wrapping_key_desc, zero_masking_key,
+                                              AuthorizationSetBuilder()
+                                                      .Digest(Digest::SHA_2_256)
+                                                      .Padding(PaddingMode::RSA_OAEP)));
+
+    string message = "Hello World!";
+    auto params = AuthorizationSetBuilder().Digest(Digest::SHA_2_256);
+    string signature = SignMessage(message, params);
+    LocalVerifyMessage(message, signature, params);
+}
+
 INSTANTIATE_KEYMINT_AIDL_TEST(ImportWrappedKeyTest);
 
 typedef KeyMintAidlTestBase EncryptionOperationsTest;
