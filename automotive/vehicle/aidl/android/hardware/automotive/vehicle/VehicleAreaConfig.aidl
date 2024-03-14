@@ -20,6 +20,7 @@ import android.hardware.automotive.vehicle.VehiclePropertyAccess;
 
 @VintfStability
 @JavaDerive(equals=true, toString=true)
+@RustDerive(Clone=true)
 parcelable VehicleAreaConfig {
     /**
      * Area id is always 0 for VehicleArea#GLOBAL properties.
