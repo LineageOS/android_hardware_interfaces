@@ -87,6 +87,11 @@ enum VehicleProperty {
     /**
      * Fuel capacity of the vehicle in milliliters
      *
+     * This property must communicate the maximum amount of the fuel that can be stored in the
+     * vehicle in milliliters. This property does not apply to electric vehicles. That is, if
+     * INFO_FUEL_TYPE only contains FuelType::FUEL_TYPE_ELECTRIC, this property must not be
+     * implemented. For EVs, implement INFO_EV_BATTERY_CAPACITY.
+     *
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit.MILLILITER
