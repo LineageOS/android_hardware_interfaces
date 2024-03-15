@@ -115,12 +115,13 @@ enum VehicleProperty {
     INFO_FUEL_TYPE = 0x0105 + 0x10000000 + 0x01000000
             + 0x00410000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
     /**
-     * Nominal battery capacity for EV or hybrid vehicle
+     * Nominal usable battery capacity for EV or hybrid vehicle
      *
-     * Returns the nominal battery capacity, if EV or hybrid. This is the battery capacity when the
-     * vehicle is new. This value might be different from EV_CURRENT_BATTERY_CAPACITY because
-     * EV_CURRENT_BATTERY_CAPACITY returns the real-time battery capacity taking into account
-     * factors such as battery aging and temperature dependency.
+     * Returns the nominal battery capacity, if EV or hybrid. This is the total usable battery
+     * capacity when the vehicle is new. This value might be different from
+     * EV_CURRENT_BATTERY_CAPACITY because EV_CURRENT_BATTERY_CAPACITY returns the real-time usable
+     * battery capacity taking into account factors such as battery aging and temperature
+     * dependency.
      *
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
@@ -404,12 +405,13 @@ enum VehicleProperty {
     EV_BATTERY_LEVEL = 0x0309 + 0x10000000 + 0x01000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT
     /**
-     * Current battery capacity for EV or hybrid vehicle
+     * Current usable battery capacity for EV or hybrid vehicle
      *
      * Returns the actual value of battery capacity, if EV or hybrid. This property captures the
-     * real-time battery capacity taking into account factors such as battery aging and temperature
-     * dependency. Therefore, this value might be different from INFO_EV_BATTERY_CAPACITY because
-     * INFO_EV_BATTERY_CAPACITY returns the nominal battery capacity from when the vehicle was new.
+     * real-time usable battery capacity taking into account factors such as battery aging and
+     * temperature dependency. Therefore, this value might be different from
+     * INFO_EV_BATTERY_CAPACITY because INFO_EV_BATTERY_CAPACITY returns the nominal battery
+     * capacity from when the vehicle was new.
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
