@@ -102,7 +102,7 @@ enum VehicleProperty {
      *   An FHEV (Fully Hybrid Electric Vehicle) must not include FuelType::FUEL_TYPE_ELECTRIC in
      *   INFO_FUEL_TYPE's INT32_VEC value. So INFO_FUEL_TYPE can be populated as such:
      *     int32Values = { FuelType::FUEL_TYPE_UNLEADED }
-     *   On the other hand, a PHEV (Partially Hybrid Electric Vehicle) is plug in rechargeable, and
+     *   On the other hand, a PHEV (Plug-in Hybrid Electric Vehicle) is plug in rechargeable, and
      *   hence should include FuelType::FUEL_TYPE_ELECTRIC in INFO_FUEL_TYPE's INT32_VEC value. So
      *   INFO_FUEL_TYPE can be populated as such:
      *     int32Values = { FuelType::FUEL_TYPE_UNLEADED, FuelType::FUEL_TYPE_ELECTRIC }
