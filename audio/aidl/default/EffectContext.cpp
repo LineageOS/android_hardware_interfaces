@@ -157,7 +157,6 @@ Parameter::VolumeStereo EffectContext::getVolumeStereo() {
 }
 
 RetCode EffectContext::setCommon(const Parameter::Common& common) {
-    LOG(VERBOSE) << __func__ << common.toString();
     auto& input = common.input;
     auto& output = common.output;
 
@@ -186,7 +185,6 @@ RetCode EffectContext::setCommon(const Parameter::Common& common) {
 }
 
 Parameter::Common EffectContext::getCommon() {
-    LOG(VERBOSE) << __func__ << mCommon.toString();
     return mCommon;
 }
 
@@ -241,7 +239,7 @@ RetCode EffectContext::notifyDataMqUpdate() {
         LOG(ERROR) << __func__ << ": wake failure with ret " << ret;
         return RetCode::ERROR_EVENT_FLAG_ERROR;
     }
-    LOG(DEBUG) << __func__ << " : signal client for reopen";
+    LOG(VERBOSE) << __func__ << " : signal client for reopen";
     return RetCode::SUCCESS;
 }
 }  // namespace aidl::android::hardware::audio::effect
