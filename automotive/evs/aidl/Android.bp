@@ -42,9 +42,6 @@ aidl_interface {
             enabled: false,
         },
         ndk: {
-            vndk: {
-                enabled: false,
-            },
             min_sdk_version: "29",
         },
     },
