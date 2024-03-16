@@ -27,9 +27,6 @@ cc_library {
     name: "android.hardware.confirmationui-support-lib",
     vendor_available: true,
     host_supported: true,
-    vndk: {
-        enabled: true,
-    },
     srcs: [
         "src/cbor.cpp",
         "src/confirmationui_utils.cpp",

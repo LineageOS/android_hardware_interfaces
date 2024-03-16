@@ -35,7 +35,6 @@ extern "C" binder_exception_t destroyEffect(const std::shared_ptr<IEffect>& inst
                    << " in state: " << toString(state) << ", status: " << status.getDescription();
         return EX_ILLEGAL_STATE;
     }
-    LOG(DEBUG) << __func__ << " instance " << instanceSp.get() << " destroyed";
     return EX_NONE;
 }
 
@@ -91,7 +90,7 @@ ndk::ScopedAStatus EffectImpl::close() {
     }
 
     RETURN_IF(notifyEventFlag(kEventFlagNotEmpty) != RetCode::SUCCESS, EX_ILLEGAL_STATE,
-              "notifyEventFlagFailed");
+              "notifyEventFlagNotEmptyFailed");
     // stop the worker thread, ignore the return code
     RETURN_IF(destroyThread() != RetCode::SUCCESS, EX_UNSUPPORTED_OPERATION,
               "FailedToDestroyWorker");
@@ -231,8 +230,6 @@ ndk::ScopedAStatus EffectImpl::getState(State* state) NO_THREAD_SAFETY_ANALYSIS 
 ndk::ScopedAStatus EffectImpl::command(CommandId command) {
     std::lock_guard lg(mImplMutex);
     RETURN_IF(mState == State::INIT, EX_ILLEGAL_STATE, "instanceNotOpen");
-    LOG(DEBUG) << getEffectName() << __func__ << ": receive command: " << toString(command)
-               << " at state " << toString(mState);
 
     switch (command) {
         case CommandId::START:
@@ -240,7 +237,7 @@ ndk::ScopedAStatus EffectImpl::command(CommandId command) {
             RETURN_IF_ASTATUS_NOT_OK(commandImpl(command), "commandImplFailed");
             mState = State::PROCESSING;
             RETURN_IF(notifyEventFlag(kEventFlagNotEmpty) != RetCode::SUCCESS, EX_ILLEGAL_STATE,
-                      "notifyEventFlagFailed");
+                      "notifyEventFlagNotEmptyFailed");
             startThread();
             break;
         case CommandId::STOP:
@@ -248,7 +245,7 @@ ndk::ScopedAStatus EffectImpl::command(CommandId command) {
             RETURN_OK_IF(mState == State::IDLE);
             mState = State::IDLE;
             RETURN_IF(notifyEventFlag(kEventFlagNotEmpty) != RetCode::SUCCESS, EX_ILLEGAL_STATE,
-                      "notifyEventFlagFailed");
+                      "notifyEventFlagNotEmptyFailed");
             stopThread();
             RETURN_IF_ASTATUS_NOT_OK(commandImpl(command), "commandImplFailed");
             break;
@@ -257,7 +254,7 @@ ndk::ScopedAStatus EffectImpl::command(CommandId command) {
             return ndk::ScopedAStatus::fromExceptionCodeWithMessage(EX_ILLEGAL_ARGUMENT,
                                                                     "CommandIdNotSupported");
     }
-    LOG(DEBUG) << getEffectName() << __func__ << " transfer to state: " << toString(mState);
+    LOG(VERBOSE) << getEffectName() << __func__ << " transfer to state: " << toString(mState);
     return ndk::ScopedAStatus::ok();
 }
 
@@ -294,6 +291,7 @@ RetCode EffectImpl::notifyEventFlag(uint32_t flag) {
         LOG(ERROR) << getEffectName() << __func__ << ": wake failure with ret " << ret;
         return RetCode::ERROR_EVENT_FLAG_ERROR;
     }
+    LOG(VERBOSE) << getEffectName() << __func__ << ": " << std::hex << mEventFlag;
     return RetCode::SUCCESS;
 }
 
@@ -306,7 +304,7 @@ IEffect::Status EffectImpl::status(binder_status_t status, size_t consumed, size
 }
 
 void EffectImpl::process() {
-    ATRACE_CALL();
+    ATRACE_NAME(getEffectName().c_str());
     /**
      * wait for the EventFlag without lock, it's ok because the mEfGroup pointer will not change
      * in the life cycle of workerThread (threadLoop).
@@ -344,8 +342,6 @@ void EffectImpl::process() {
             IEffect::Status status = effectProcessImpl(buffer, buffer, processSamples);
             outputMQ->write(buffer, status.fmqProduced);
             statusMQ->writeBlocking(&status, 1);
-            LOG(VERBOSE) << getEffectName() << __func__ << ": done processing, effect consumed "
-                         << status.fmqConsumed << " produced " << status.fmqProduced;
         }
     }
 }
@@ -355,7 +351,6 @@ IEffect::Status EffectImpl::effectProcessImpl(float* in, float* out, int samples
     for (int i = 0; i < samples; i++) {
         *out++ = *in++;
     }
-    LOG(VERBOSE) << getEffectName() << __func__ << " done processing " << samples << " samples";
     return {STATUS_OK, samples, samples};
 }
 

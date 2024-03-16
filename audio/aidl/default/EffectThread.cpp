@@ -27,13 +27,8 @@
 
 namespace aidl::android::hardware::audio::effect {
 
-EffectThread::EffectThread() {
-    LOG(DEBUG) << __func__;
-}
-
 EffectThread::~EffectThread() {
     destroyThread();
-    LOG(DEBUG) << __func__ << " done";
 }
 
 RetCode EffectThread::createThread(const std::string& name, int priority) {
@@ -51,7 +46,7 @@ RetCode EffectThread::createThread(const std::string& name, int priority) {
     }
 
     mThread = std::thread(&EffectThread::threadLoop, this);
-    LOG(DEBUG) << mName << __func__ << " priority " << mPriority << " done";
+    LOG(VERBOSE) << mName << __func__ << " priority " << mPriority << " done";
     return RetCode::SUCCESS;
 }
 
@@ -66,7 +61,7 @@ RetCode EffectThread::destroyThread() {
         mThread.join();
     }
 
-    LOG(DEBUG) << mName << __func__;
+    LOG(VERBOSE) << mName << __func__;
     return RetCode::SUCCESS;
 }
 
@@ -77,7 +72,7 @@ RetCode EffectThread::startThread() {
         mCv.notify_one();
     }
 
-    LOG(DEBUG) << mName << __func__;
+    LOG(VERBOSE) << mName << __func__;
     return RetCode::SUCCESS;
 }
 
@@ -88,7 +83,7 @@ RetCode EffectThread::stopThread() {
         mCv.notify_one();
     }
 
-    LOG(DEBUG) << mName << __func__;
+    LOG(VERBOSE) << mName << __func__;
     return RetCode::SUCCESS;
 }
 
@@ -101,7 +96,7 @@ void EffectThread::threadLoop() {
             ::android::base::ScopedLockAssertion lock_assertion(mThreadMutex);
             mCv.wait(l, [&]() REQUIRES(mThreadMutex) { return mExit || !mStop; });
             if (mExit) {
-                LOG(INFO) << __func__ << " EXIT!";
+                LOG(VERBOSE) << mName << " threadLoop EXIT!";
                 return;
             }
         }

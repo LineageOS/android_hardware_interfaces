@@ -11,10 +11,7 @@ aidl_interface {
     name: "android.hardware.common.fmq",
     host_supported: true,
     vendor_available: true,
-    vndk: {
-        enabled: true,
-        support_system_process: true,
-    },
+    double_loadable: true,
     srcs: [
         "android/hardware/common/fmq/*.aidl",
     ],
