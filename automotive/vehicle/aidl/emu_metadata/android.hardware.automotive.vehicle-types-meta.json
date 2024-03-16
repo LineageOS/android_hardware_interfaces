@@ -11,12 +11,12 @@
             {
                 "name": "Manufacturer of vehicle",
                 "value": 286261505,
-                "description": "Manufacturer of vehicle"
+                "description": "Manufacturer of vehicle\nThis property must communicate the vehicle's public brand name."
             },
             {
                 "name": "Model of vehicle",
                 "value": 286261506,
-                "description": "Model of vehicle"
+                "description": "Model of vehicle\nThis property must communicate the vehicle's public model name."
             },
             {
                 "name": "INFO_MODEL_YEAR",
