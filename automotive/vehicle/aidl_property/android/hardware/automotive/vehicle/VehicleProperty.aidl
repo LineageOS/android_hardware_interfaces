@@ -260,6 +260,10 @@ enum VehicleProperty {
      *
      * Angle is in degrees.  Left is negative.
      *
+     * This property is independent of the angle of the steering wheel. This property must
+     * communicate the angle of the front wheels with respect to the vehicle, not the angle of the
+     * steering wheel.
+     *
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit.DEGREES
@@ -271,6 +275,10 @@ enum VehicleProperty {
      * Rear bicycle model steering angle for vehicle
      *
      * Angle is in degrees.  Left is negative.
+     *
+     * This property is independent of the angle of the steering wheel. This property must
+     * communicate the angle of the rear wheels with respect to the vehicle, not the angle of the
+     * steering wheel.
      *
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
