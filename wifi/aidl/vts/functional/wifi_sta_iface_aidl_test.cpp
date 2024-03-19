@@ -180,9 +180,9 @@ TEST_P(WifiStaIfaceAidlTest, CheckApfIsSupported) {
         EXPECT_TRUE(isFeatureSupported(IWifiStaIface::FeatureSetMask::APF));
         StaApfPacketFilterCapabilities apf_caps = {};
         EXPECT_TRUE(wifi_sta_iface_->getApfPacketFilterCapabilities(&apf_caps).isOk());
-        // The APF version must be 4 and the usable memory must be at least
+        // The APF version must be 4 or higher and the usable memory must be at least
         // 1024 bytes.
-        EXPECT_EQ(apf_caps.version, 4);
+        EXPECT_GE(apf_caps.version, 4);
         EXPECT_GE(apf_caps.maxLength, 1024);
     }
 }
