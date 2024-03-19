@@ -180,8 +180,12 @@ class FMQAidl : public PowerAidl {
         ASSERT_NE(mEventFlag, nullptr);
     }
     virtual void TearDown() {
-        mSession->close();
-        ASSERT_TRUE(power->closeSessionChannel(getpid(), getuid()).isOk());
+        if (mSession) {
+            mSession->close();
+            if (mChannel->isValid()) {
+                ASSERT_TRUE(power->closeSessionChannel(getpid(), getuid()).isOk());
+            }
+        }
     }
 
   protected:
