@@ -1393,7 +1393,7 @@
         ]
     },
     {
-        "name": "LaneDepartureWarningState",
+        "name": "AutomaticEmergencyBrakingState",
         "package": "android.hardware.automotive.vehicle",
         "values": [
             {
@@ -1401,21 +1401,21 @@
                 "value": 0
             },
             {
-                "name": "NO_WARNING",
+                "name": "ENABLED",
                 "value": 1
             },
             {
-                "name": "WARNING_LEFT",
+                "name": "ACTIVATED",
                 "value": 2
             },
             {
-                "name": "WARNING_RIGHT",
+                "name": "USER_OVERRIDE",
                 "value": 3
             }
         ]
     },
     {
-        "name": "HandsOnDetectionWarning",
+        "name": "BlindSpotWarningState",
         "package": "android.hardware.automotive.vehicle",
         "values": [
             {
@@ -1429,6 +1429,194 @@
             {
                 "name": "WARNING",
                 "value": 2
+            }
+        ]
+    },
+    {
+        "name": "CameraServiceState",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "UNAVAILABLE",
+                "value": 0
+            },
+            {
+                "name": "INACTIVE",
+                "value": 1
+            },
+            {
+                "name": "REQUESTED",
+                "value": 2
+            },
+            {
+                "name": "ACTIVE",
+                "value": 3
+            }
+        ]
+    },
+    {
+        "name": "CrossTrafficMonitoringWarningState",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "OTHER",
+                "value": 0
+            },
+            {
+                "name": "NO_WARNING",
+                "value": 1
+            },
+            {
+                "name": "WARNING_FRONT_LEFT",
+                "value": 2
+            },
+            {
+                "name": "WARNING_FRONT_RIGHT",
+                "value": 3
+            },
+            {
+                "name": "WARNING_FRONT_BOTH",
+                "value": 4
+            },
+            {
+                "name": "WARNING_REAR_LEFT",
+                "value": 5
+            },
+            {
+                "name": "WARNING_REAR_RIGHT",
+                "value": 6
+            },
+            {
+                "name": "WARNING_REAR_BOTH",
+                "value": 7
+            }
+        ]
+    },
+    {
+        "name": "CruiseControlCommand",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "ACTIVATE",
+                "value": 1
+            },
+            {
+                "name": "SUSPEND",
+                "value": 2
+            },
+            {
+                "name": "INCREASE_TARGET_SPEED",
+                "value": 3
+            },
+            {
+                "name": "DECREASE_TARGET_SPEED",
+                "value": 4
+            },
+            {
+                "name": "INCREASE_TARGET_TIME_GAP",
+                "value": 5
+            },
+            {
+                "name": "DECREASE_TARGET_TIME_GAP",
+                "value": 6
+            }
+        ]
+    },
+    {
+        "name": "CruiseControlState",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "OTHER",
+                "value": 0
+            },
+            {
+                "name": "ENABLED",
+                "value": 1
+            },
+            {
+                "name": "ACTIVATED",
+                "value": 2
+            },
+            {
+                "name": "USER_OVERRIDE",
+                "value": 3
+            },
+            {
+                "name": "SUSPENDED",
+                "value": 4
+            },
+            {
+                "name": "FORCED_DEACTIVATION_WARNING",
+                "value": 5
+            }
+        ]
+    },
+    {
+        "name": "CruiseControlType",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "OTHER",
+                "value": 0
+            },
+            {
+                "name": "STANDARD",
+                "value": 1
+            },
+            {
+                "name": "ADAPTIVE",
+                "value": 2
+            },
+            {
+                "name": "PREDICTIVE",
+                "value": 3
+            }
+        ]
+    },
+    {
+        "name": "CustomInputType",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "CUSTOM_EVENT_F1",
+                "value": 1001
+            },
+            {
+                "name": "CUSTOM_EVENT_F2",
+                "value": 1002
+            },
+            {
+                "name": "CUSTOM_EVENT_F3",
+                "value": 1003
+            },
+            {
+                "name": "CUSTOM_EVENT_F4",
+                "value": 1004
+            },
+            {
+                "name": "CUSTOM_EVENT_F5",
+                "value": 1005
+            },
+            {
+                "name": "CUSTOM_EVENT_F6",
+                "value": 1006
+            },
+            {
+                "name": "CUSTOM_EVENT_F7",
+                "value": 1007
+            },
+            {
+                "name": "CUSTOM_EVENT_F8",
+                "value": 1008
+            },
+            {
+                "name": "CUSTOM_EVENT_F9",
+                "value": 1009
+            },
+            {
+                "name": "CUSTOM_EVENT_F10",
+                "value": 1010
             }
         ]
     },
@@ -1451,34 +1639,312 @@
         ]
     },
     {
-        "name": "VehicleTurnSignal",
+        "name": "DriverDistractionWarning",
         "package": "android.hardware.automotive.vehicle",
         "values": [
             {
-                "name": "NONE",
+                "name": "OTHER",
                 "value": 0
             },
             {
-                "name": "RIGHT",
+                "name": "NO_WARNING",
                 "value": 1
             },
             {
-                "name": "LEFT",
+                "name": "WARNING",
                 "value": 2
             }
         ]
     },
     {
-        "name": "RotaryInputType",
+        "name": "DriverDrowsinessAttentionState",
         "package": "android.hardware.automotive.vehicle",
         "values": [
             {
-                "name": "ROTARY_INPUT_TYPE_SYSTEM_NAVIGATION",
+                "name": "OTHER",
                 "value": 0
             },
             {
-                "name": "ROTARY_INPUT_TYPE_AUDIO_VOLUME",
+                "name": "KSS_RATING_1_EXTREMELY_ALERT",
                 "value": 1
+            },
+            {
+                "name": "KSS_RATING_2_VERY_ALERT",
+                "value": 2
+            },
+            {
+                "name": "KSS_RATING_3_ALERT",
+                "value": 3
+            },
+            {
+                "name": "KSS_RATING_4_RATHER_ALERT",
+                "value": 4
+            },
+            {
+                "name": "KSS_RATING_5_NEITHER_ALERT_NOR_SLEEPY",
+                "value": 5
+            },
+            {
+                "name": "KSS_RATING_6_SOME_SLEEPINESS",
+                "value": 6
+            },
+            {
+                "name": "KSS_RATING_7_SLEEPY_NO_EFFORT",
+                "value": 7
+            },
+            {
+                "name": "KSS_RATING_8_SLEEPY_SOME_EFFORT",
+                "value": 8
+            },
+            {
+                "name": "KSS_RATING_9_VERY_SLEEPY",
+                "value": 9
+            }
+        ]
+    },
+    {
+        "name": "DriverDrowsinessAttentionWarning",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "OTHER",
+                "value": 0
+            },
+            {
+                "name": "NO_WARNING",
+                "value": 1
+            },
+            {
+                "name": "WARNING",
+                "value": 2
+            }
+        ]
+    },
+    {
+        "name": "ElectronicStabilityControlState",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "OTHER",
+                "value": 0
+            },
+            {
+                "name": "ENABLED",
+                "value": 1
+            },
+            {
+                "name": "ACTIVATED",
+                "value": 2
+            }
+        ]
+    },
+    {
+        "name": "ElectronicTollCollectionCardStatus",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "UNKNOWN",
+                "value": 0
+            },
+            {
+                "name": "ELECTRONIC_TOLL_COLLECTION_CARD_VALID",
+                "value": 1
+            },
+            {
+                "name": "ELECTRONIC_TOLL_COLLECTION_CARD_INVALID",
+                "value": 2
+            },
+            {
+                "name": "ELECTRONIC_TOLL_COLLECTION_CARD_NOT_INSERTED",
+                "value": 3
+            }
+        ]
+    },
+    {
+        "name": "ElectronicTollCollectionCardType",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "UNKNOWN",
+                "value": 0
+            },
+            {
+                "name": "JP_ELECTRONIC_TOLL_COLLECTION_CARD",
+                "value": 1
+            },
+            {
+                "name": "JP_ELECTRONIC_TOLL_COLLECTION_CARD_V2",
+                "value": 2
+            }
+        ]
+    },
+    {
+        "name": "EmergencyLaneKeepAssistState",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "OTHER",
+                "value": 0
+            },
+            {
+                "name": "ENABLED",
+                "value": 1
+            },
+            {
+                "name": "WARNING_LEFT",
+                "value": 2
+            },
+            {
+                "name": "WARNING_RIGHT",
+                "value": 3
+            },
+            {
+                "name": "ACTIVATED_STEER_LEFT",
+                "value": 4
+            },
+            {
+                "name": "ACTIVATED_STEER_RIGHT",
+                "value": 5
+            },
+            {
+                "name": "USER_OVERRIDE",
+                "value": 6
+            }
+        ]
+    },
+    {
+        "name": "ErrorState",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "OTHER_ERROR_STATE",
+                "value": -1
+            },
+            {
+                "name": "NOT_AVAILABLE_DISABLED",
+                "value": -2
+            },
+            {
+                "name": "NOT_AVAILABLE_SPEED_LOW",
+                "value": -3
+            },
+            {
+                "name": "NOT_AVAILABLE_SPEED_HIGH",
+                "value": -4
+            },
+            {
+                "name": "NOT_AVAILABLE_POOR_VISIBILITY",
+                "value": -5
+            },
+            {
+                "name": "NOT_AVAILABLE_SAFETY",
+                "value": -6
+            }
+        ]
+    },
+    {
+        "name": "EvChargeState",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "UNKNOWN",
+                "value": 0
+            },
+            {
+                "name": "CHARGING",
+                "value": 1
+            },
+            {
+                "name": "FULLY_CHARGED",
+                "value": 2
+            },
+            {
+                "name": "NOT_CHARGING",
+                "value": 3
+            },
+            {
+                "name": "ERROR",
+                "value": 4
+            }
+        ]
+    },
+    {
+        "name": "EvConnectorType",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "UNKNOWN",
+                "value": 0
+            },
+            {
+                "name": "IEC_TYPE_1_AC",
+                "value": 1
+            },
+            {
+                "name": "IEC_TYPE_2_AC",
+                "value": 2
+            },
+            {
+                "name": "IEC_TYPE_3_AC",
+                "value": 3
+            },
+            {
+                "name": "IEC_TYPE_4_DC",
+                "value": 4
+            },
+            {
+                "name": "IEC_TYPE_1_CCS_DC",
+                "value": 5
+            },
+            {
+                "name": "IEC_TYPE_2_CCS_DC",
+                "value": 6
+            },
+            {
+                "name": "TESLA_ROADSTER",
+                "value": 7
+            },
+            {
+                "name": "TESLA_HPWC",
+                "value": 8
+            },
+            {
+                "name": "TESLA_SUPERCHARGER",
+                "value": 9
+            },
+            {
+                "name": "GBT_AC",
+                "value": 10
+            },
+            {
+                "name": "GBT_DC",
+                "value": 11
+            },
+            {
+                "name": "OTHER",
+                "value": 101
+            }
+        ]
+    },
+    {
+        "name": "EvRegenerativeBrakingState",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "UNKNOWN",
+                "value": 0
+            },
+            {
+                "name": "DISABLED",
+                "value": 1
+            },
+            {
+                "name": "PARTIALLY_ENABLED",
+                "value": 2
+            },
+            {
+                "name": "FULLY_ENABLED",
+                "value": 3
             }
         ]
     },
@@ -1505,19 +1971,19 @@
         ]
     },
     {
-        "name": "VehicleLightState",
+        "name": "ForwardCollisionWarningState",
         "package": "android.hardware.automotive.vehicle",
         "values": [
             {
-                "name": "OFF",
+                "name": "OTHER",
                 "value": 0
             },
             {
-                "name": "ON",
+                "name": "NO_WARNING",
                 "value": 1
             },
             {
-                "name": "DAYTIME_RUNNING",
+                "name": "WARNING",
                 "value": 2
             }
         ]
@@ -1581,37 +2047,223 @@
         ]
     },
     {
-        "name": "VehicleIgnitionState",
+        "name": "GsrComplianceRequirementType",
         "package": "android.hardware.automotive.vehicle",
         "values": [
             {
-                "name": "UNDEFINED",
+                "name": "GSR_COMPLIANCE_NOT_REQUIRED",
                 "value": 0
             },
             {
-                "name": "LOCK",
+                "name": "GSR_COMPLIANCE_REQUIRED_V1",
+                "value": 1
+            }
+        ]
+    },
+    {
+        "name": "HandsOnDetectionDriverState",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "OTHER",
+                "value": 0
+            },
+            {
+                "name": "HANDS_ON",
                 "value": 1
             },
             {
-                "name": "OFF",
+                "name": "HANDS_OFF",
+                "value": 2
+            }
+        ]
+    },
+    {
+        "name": "HandsOnDetectionWarning",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "OTHER",
+                "value": 0
+            },
+            {
+                "name": "NO_WARNING",
+                "value": 1
+            },
+            {
+                "name": "WARNING",
+                "value": 2
+            }
+        ]
+    },
+    {
+        "name": "ImpactSensorLocation",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "OTHER",
+                "value": 1
+            },
+            {
+                "name": "FRONT",
                 "value": 2
             },
             {
-                "name": "ACC",
-                "value": 3
-            },
-            {
-                "name": "ON",
+                "name": "FRONT_LEFT_DOOR_SIDE",
                 "value": 4
             },
             {
-                "name": "START",
+                "name": "FRONT_RIGHT_DOOR_SIDE",
+                "value": 8
+            },
+            {
+                "name": "REAR_LEFT_DOOR_SIDE",
+                "value": 16
+            },
+            {
+                "name": "REAR_RIGHT_DOOR_SIDE",
+                "value": 32
+            },
+            {
+                "name": "REAR",
+                "value": 64
+            }
+        ]
+    },
+    {
+        "name": "LaneCenteringAssistCommand",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "ACTIVATE",
+                "value": 1
+            },
+            {
+                "name": "DEACTIVATE",
+                "value": 2
+            }
+        ]
+    },
+    {
+        "name": "LaneCenteringAssistState",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "OTHER",
+                "value": 0
+            },
+            {
+                "name": "ENABLED",
+                "value": 1
+            },
+            {
+                "name": "ACTIVATION_REQUESTED",
+                "value": 2
+            },
+            {
+                "name": "ACTIVATED",
+                "value": 3
+            },
+            {
+                "name": "USER_OVERRIDE",
+                "value": 4
+            },
+            {
+                "name": "FORCED_DEACTIVATION_WARNING",
                 "value": 5
             }
         ]
     },
     {
-        "name": "EvConnectorType",
+        "name": "LaneDepartureWarningState",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "OTHER",
+                "value": 0
+            },
+            {
+                "name": "NO_WARNING",
+                "value": 1
+            },
+            {
+                "name": "WARNING_LEFT",
+                "value": 2
+            },
+            {
+                "name": "WARNING_RIGHT",
+                "value": 3
+            }
+        ]
+    },
+    {
+        "name": "LaneKeepAssistState",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "OTHER",
+                "value": 0
+            },
+            {
+                "name": "ENABLED",
+                "value": 1
+            },
+            {
+                "name": "ACTIVATED_STEER_LEFT",
+                "value": 2
+            },
+            {
+                "name": "ACTIVATED_STEER_RIGHT",
+                "value": 3
+            },
+            {
+                "name": "USER_OVERRIDE",
+                "value": 4
+            }
+        ]
+    },
+    {
+        "name": "LowSpeedAutomaticEmergencyBrakingState",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "OTHER",
+                "value": 0
+            },
+            {
+                "name": "ENABLED",
+                "value": 1
+            },
+            {
+                "name": "ACTIVATED",
+                "value": 2
+            },
+            {
+                "name": "USER_OVERRIDE",
+                "value": 3
+            }
+        ]
+    },
+    {
+        "name": "LowSpeedCollisionWarningState",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "OTHER",
+                "value": 0
+            },
+            {
+                "name": "NO_WARNING",
+                "value": 1
+            },
+            {
+                "name": "WARNING",
+                "value": 2
+            }
+        ]
+    },
+    {
+        "name": "PortLocationType",
         "package": "android.hardware.automotive.vehicle",
         "values": [
             {
@@ -1619,52 +2271,42 @@
                 "value": 0
             },
             {
-                "name": "IEC_TYPE_1_AC",
+                "name": "FRONT_LEFT",
                 "value": 1
             },
             {
-                "name": "IEC_TYPE_2_AC",
+                "name": "FRONT_RIGHT",
                 "value": 2
             },
             {
-                "name": "IEC_TYPE_3_AC",
+                "name": "REAR_RIGHT",
                 "value": 3
             },
             {
-                "name": "IEC_TYPE_4_DC",
+                "name": "REAR_LEFT",
                 "value": 4
             },
             {
-                "name": "IEC_TYPE_1_CCS_DC",
+                "name": "FRONT",
                 "value": 5
             },
             {
-                "name": "IEC_TYPE_2_CCS_DC",
+                "name": "REAR",
                 "value": 6
+            }
+        ]
+    },
+    {
+        "name": "RotaryInputType",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "ROTARY_INPUT_TYPE_SYSTEM_NAVIGATION",
+                "value": 0
             },
             {
-                "name": "TESLA_ROADSTER",
-                "value": 7
-            },
-            {
-                "name": "TESLA_HPWC",
-                "value": 8
-            },
-            {
-                "name": "TESLA_SUPERCHARGER",
-                "value": 9
-            },
-            {
-                "name": "GBT_AC",
-                "value": 10
-            },
-            {
-                "name": "GBT_DC",
-                "value": 11
-            },
-            {
-                "name": "OTHER",
-                "value": 101
+                "name": "ROTARY_INPUT_TYPE_AUDIO_VOLUME",
+                "value": 1
             }
         ]
     },
@@ -1691,66 +2333,66 @@
         ]
     },
     {
-        "name": "DriverDrowsinessAttentionState",
+        "name": "VehicleAirbagLocation",
         "package": "android.hardware.automotive.vehicle",
         "values": [
             {
                 "name": "OTHER",
-                "value": 0
-            },
-            {
-                "name": "KSS_RATING_1_EXTREMELY_ALERT",
                 "value": 1
             },
             {
-                "name": "KSS_RATING_2_VERY_ALERT",
+                "name": "FRONT",
                 "value": 2
             },
             {
-                "name": "KSS_RATING_3_ALERT",
-                "value": 3
-            },
-            {
-                "name": "KSS_RATING_4_RATHER_ALERT",
+                "name": "KNEE",
                 "value": 4
             },
             {
-                "name": "KSS_RATING_5_NEITHER_ALERT_NOR_SLEEPY",
-                "value": 5
-            },
-            {
-                "name": "KSS_RATING_6_SOME_SLEEPINESS",
-                "value": 6
-            },
-            {
-                "name": "KSS_RATING_7_SLEEPY_NO_EFFORT",
-                "value": 7
-            },
-            {
-                "name": "KSS_RATING_8_SLEEPY_SOME_EFFORT",
+                "name": "LEFT_SIDE",
                 "value": 8
             },
             {
-                "name": "KSS_RATING_9_VERY_SLEEPY",
-                "value": 9
+                "name": "RIGHT_SIDE",
+                "value": 16
+            },
+            {
+                "name": "CURTAIN",
+                "value": 32
             }
         ]
     },
     {
-        "name": "DriverDistractionWarning",
+        "name": "VehicleApPowerStateShutdownParam",
         "package": "android.hardware.automotive.vehicle",
         "values": [
             {
-                "name": "OTHER",
-                "value": 0
-            },
-            {
-                "name": "NO_WARNING",
+                "name": "SHUTDOWN_IMMEDIATELY",
                 "value": 1
             },
             {
-                "name": "WARNING",
+                "name": "CAN_SLEEP",
                 "value": 2
+            },
+            {
+                "name": "SHUTDOWN_ONLY",
+                "value": 3
+            },
+            {
+                "name": "SLEEP_IMMEDIATELY",
+                "value": 4
+            },
+            {
+                "name": "HIBERNATE_IMMEDIATELY",
+                "value": 5
+            },
+            {
+                "name": "CAN_HIBERNATE",
+                "value": 6
+            },
+            {
+                "name": "EMERGENCY_SHUTDOWN",
+                "value": 7
             }
         ]
     },
@@ -1801,6 +2443,176 @@
         ]
     },
     {
+        "name": "VehicleAutonomousState",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "LEVEL_0",
+                "value": 0
+            },
+            {
+                "name": "LEVEL_1",
+                "value": 1
+            },
+            {
+                "name": "LEVEL_2",
+                "value": 2
+            },
+            {
+                "name": "LEVEL_3",
+                "value": 3
+            },
+            {
+                "name": "LEVEL_4",
+                "value": 4
+            },
+            {
+                "name": "LEVEL_5",
+                "value": 5
+            }
+        ]
+    },
+    {
+        "name": "VehicleGear",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "GEAR_UNKNOWN",
+                "value": 0
+            },
+            {
+                "name": "GEAR_NEUTRAL",
+                "value": 1
+            },
+            {
+                "name": "GEAR_REVERSE",
+                "value": 2
+            },
+            {
+                "name": "GEAR_PARK",
+                "value": 4
+            },
+            {
+                "name": "GEAR_DRIVE",
+                "value": 8
+            },
+            {
+                "name": "GEAR_1",
+                "value": 16
+            },
+            {
+                "name": "GEAR_2",
+                "value": 32
+            },
+            {
+                "name": "GEAR_3",
+                "value": 64
+            },
+            {
+                "name": "GEAR_4",
+                "value": 128
+            },
+            {
+                "name": "GEAR_5",
+                "value": 256
+            },
+            {
+                "name": "GEAR_6",
+                "value": 512
+            },
+            {
+                "name": "GEAR_7",
+                "value": 1024
+            },
+            {
+                "name": "GEAR_8",
+                "value": 2048
+            },
+            {
+                "name": "GEAR_9",
+                "value": 4096
+            }
+        ]
+    },
+    {
+        "name": "VehicleHvacFanDirection",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "UNKNOWN",
+                "value": 0
+            },
+            {
+                "name": "FACE",
+                "value": 1
+            },
+            {
+                "name": "FLOOR",
+                "value": 2
+            },
+            {
+                "name": "FACE_AND_FLOOR",
+                "value": 3
+            },
+            {
+                "name": "DEFROST",
+                "value": 4
+            },
+            {
+                "name": "DEFROST_AND_FLOOR",
+                "value": 6
+            }
+        ]
+    },
+    {
+        "name": "VehicleIgnitionState",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "UNDEFINED",
+                "value": 0
+            },
+            {
+                "name": "LOCK",
+                "value": 1
+            },
+            {
+                "name": "OFF",
+                "value": 2
+            },
+            {
+                "name": "ACC",
+                "value": 3
+            },
+            {
+                "name": "ON",
+                "value": 4
+            },
+            {
+                "name": "START",
+                "value": 5
+            }
+        ]
+    },
+    {
+        "name": "VehicleLightState",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "OFF",
+                "value": 0
+            },
+            {
+                "name": "ON",
+                "value": 1
+            },
+            {
+                "name": "DAYTIME_RUNNING",
+                "value": 2
+            }
+        ]
+    },
+    {
         "name": "VehicleLightSwitch",
         "package": "android.hardware.automotive.vehicle",
         "values": [
@@ -1819,260 +2631,6 @@
             {
                 "name": "AUTOMATIC",
                 "value": 256
-            }
-        ]
-    },
-    {
-        "name": "WindshieldWipersSwitch",
-        "package": "android.hardware.automotive.vehicle",
-        "values": [
-            {
-                "name": "OTHER",
-                "value": 0
-            },
-            {
-                "name": "OFF",
-                "value": 1
-            },
-            {
-                "name": "MIST",
-                "value": 2
-            },
-            {
-                "name": "INTERMITTENT_LEVEL_1",
-                "value": 3
-            },
-            {
-                "name": "INTERMITTENT_LEVEL_2",
-                "value": 4
-            },
-            {
-                "name": "INTERMITTENT_LEVEL_3",
-                "value": 5
-            },
-            {
-                "name": "INTERMITTENT_LEVEL_4",
-                "value": 6
-            },
-            {
-                "name": "INTERMITTENT_LEVEL_5",
-                "value": 7
-            },
-            {
-                "name": "CONTINUOUS_LEVEL_1",
-                "value": 8
-            },
-            {
-                "name": "CONTINUOUS_LEVEL_2",
-                "value": 9
-            },
-            {
-                "name": "CONTINUOUS_LEVEL_3",
-                "value": 10
-            },
-            {
-                "name": "CONTINUOUS_LEVEL_4",
-                "value": 11
-            },
-            {
-                "name": "CONTINUOUS_LEVEL_5",
-                "value": 12
-            },
-            {
-                "name": "AUTO",
-                "value": 13
-            },
-            {
-                "name": "SERVICE",
-                "value": 14
-            }
-        ]
-    },
-    {
-        "name": "CrossTrafficMonitoringWarningState",
-        "package": "android.hardware.automotive.vehicle",
-        "values": [
-            {
-                "name": "OTHER",
-                "value": 0
-            },
-            {
-                "name": "NO_WARNING",
-                "value": 1
-            },
-            {
-                "name": "WARNING_FRONT_LEFT",
-                "value": 2
-            },
-            {
-                "name": "WARNING_FRONT_RIGHT",
-                "value": 3
-            },
-            {
-                "name": "WARNING_FRONT_BOTH",
-                "value": 4
-            },
-            {
-                "name": "WARNING_REAR_LEFT",
-                "value": 5
-            },
-            {
-                "name": "WARNING_REAR_RIGHT",
-                "value": 6
-            },
-            {
-                "name": "WARNING_REAR_BOTH",
-                "value": 7
-            }
-        ]
-    },
-    {
-        "name": "LaneCenteringAssistCommand",
-        "package": "android.hardware.automotive.vehicle",
-        "values": [
-            {
-                "name": "ACTIVATE",
-                "value": 1
-            },
-            {
-                "name": "DEACTIVATE",
-                "value": 2
-            }
-        ]
-    },
-    {
-        "name": "VehicleSeatOccupancyState",
-        "package": "android.hardware.automotive.vehicle",
-        "values": [
-            {
-                "name": "UNKNOWN",
-                "value": 0
-            },
-            {
-                "name": "VACANT",
-                "value": 1
-            },
-            {
-                "name": "OCCUPIED",
-                "value": 2
-            }
-        ]
-    },
-    {
-        "name": "ErrorState",
-        "package": "android.hardware.automotive.vehicle",
-        "values": [
-            {
-                "name": "OTHER_ERROR_STATE",
-                "value": -1
-            },
-            {
-                "name": "NOT_AVAILABLE_DISABLED",
-                "value": -2
-            },
-            {
-                "name": "NOT_AVAILABLE_SPEED_LOW",
-                "value": -3
-            },
-            {
-                "name": "NOT_AVAILABLE_SPEED_HIGH",
-                "value": -4
-            },
-            {
-                "name": "NOT_AVAILABLE_POOR_VISIBILITY",
-                "value": -5
-            },
-            {
-                "name": "NOT_AVAILABLE_SAFETY",
-                "value": -6
-            }
-        ]
-    },
-    {
-        "name": "BlindSpotWarningState",
-        "package": "android.hardware.automotive.vehicle",
-        "values": [
-            {
-                "name": "OTHER",
-                "value": 0
-            },
-            {
-                "name": "NO_WARNING",
-                "value": 1
-            },
-            {
-                "name": "WARNING",
-                "value": 2
-            }
-        ]
-    },
-    {
-        "name": "WindshieldWipersState",
-        "package": "android.hardware.automotive.vehicle",
-        "values": [
-            {
-                "name": "OTHER",
-                "value": 0
-            },
-            {
-                "name": "OFF",
-                "value": 1
-            },
-            {
-                "name": "ON",
-                "value": 2
-            },
-            {
-                "name": "SERVICE",
-                "value": 3
-            }
-        ]
-    },
-    {
-        "name": "VehicleAirbagLocation",
-        "package": "android.hardware.automotive.vehicle",
-        "values": [
-            {
-                "name": "OTHER",
-                "value": 1
-            },
-            {
-                "name": "FRONT",
-                "value": 2
-            },
-            {
-                "name": "KNEE",
-                "value": 4
-            },
-            {
-                "name": "LEFT_SIDE",
-                "value": 8
-            },
-            {
-                "name": "RIGHT_SIDE",
-                "value": 16
-            },
-            {
-                "name": "CURTAIN",
-                "value": 32
-            }
-        ]
-    },
-    {
-        "name": "DriverDrowsinessAttentionWarning",
-        "package": "android.hardware.automotive.vehicle",
-        "values": [
-            {
-                "name": "OTHER",
-                "value": 0
-            },
-            {
-                "name": "NO_WARNING",
-                "value": 1
-            },
-            {
-                "name": "WARNING",
-                "value": 2
             }
         ]
     },
@@ -2103,19 +2661,37 @@
         ]
     },
     {
-        "name": "ForwardCollisionWarningState",
+        "name": "VehicleSeatOccupancyState",
         "package": "android.hardware.automotive.vehicle",
         "values": [
             {
-                "name": "OTHER",
+                "name": "UNKNOWN",
                 "value": 0
             },
             {
-                "name": "NO_WARNING",
+                "name": "VACANT",
                 "value": 1
             },
             {
-                "name": "WARNING",
+                "name": "OCCUPIED",
+                "value": 2
+            }
+        ]
+    },
+    {
+        "name": "VehicleTurnSignal",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "NONE",
+                "value": 0
+            },
+            {
+                "name": "RIGHT",
+                "value": 1
+            },
+            {
+                "name": "LEFT",
                 "value": 2
             }
         ]
@@ -2263,37 +2839,7 @@
         ]
     },
     {
-        "name": "VehicleHvacFanDirection",
-        "package": "android.hardware.automotive.vehicle",
-        "values": [
-            {
-                "name": "UNKNOWN",
-                "value": 0
-            },
-            {
-                "name": "FACE",
-                "value": 1
-            },
-            {
-                "name": "FLOOR",
-                "value": 2
-            },
-            {
-                "name": "FACE_AND_FLOOR",
-                "value": 3
-            },
-            {
-                "name": "DEFROST",
-                "value": 4
-            },
-            {
-                "name": "DEFROST_AND_FLOOR",
-                "value": 6
-            }
-        ]
-    },
-    {
-        "name": "LowSpeedCollisionWarningState",
+        "name": "WindshieldWipersState",
         "package": "android.hardware.automotive.vehicle",
         "values": [
             {
@@ -2301,628 +2847,82 @@
                 "value": 0
             },
             {
-                "name": "NO_WARNING",
+                "name": "OFF",
                 "value": 1
             },
             {
-                "name": "WARNING",
+                "name": "ON",
                 "value": 2
+            },
+            {
+                "name": "SERVICE",
+                "value": 3
             }
         ]
     },
     {
-        "name": "CruiseControlCommand",
+        "name": "WindshieldWipersSwitch",
         "package": "android.hardware.automotive.vehicle",
         "values": [
             {
-                "name": "ACTIVATE",
+                "name": "OTHER",
+                "value": 0
+            },
+            {
+                "name": "OFF",
                 "value": 1
             },
             {
-                "name": "SUSPEND",
+                "name": "MIST",
                 "value": 2
             },
             {
-                "name": "INCREASE_TARGET_SPEED",
+                "name": "INTERMITTENT_LEVEL_1",
                 "value": 3
             },
             {
-                "name": "DECREASE_TARGET_SPEED",
+                "name": "INTERMITTENT_LEVEL_2",
                 "value": 4
             },
             {
-                "name": "INCREASE_TARGET_TIME_GAP",
+                "name": "INTERMITTENT_LEVEL_3",
                 "value": 5
             },
             {
-                "name": "DECREASE_TARGET_TIME_GAP",
-                "value": 6
-            }
-        ]
-    },
-    {
-        "name": "ElectronicStabilityControlState",
-        "package": "android.hardware.automotive.vehicle",
-        "values": [
-            {
-                "name": "OTHER",
-                "value": 0
-            },
-            {
-                "name": "ENABLED",
-                "value": 1
-            },
-            {
-                "name": "ACTIVATED",
-                "value": 2
-            }
-        ]
-    },
-    {
-        "name": "EvRegenerativeBrakingState",
-        "package": "android.hardware.automotive.vehicle",
-        "values": [
-            {
-                "name": "UNKNOWN",
-                "value": 0
-            },
-            {
-                "name": "DISABLED",
-                "value": 1
-            },
-            {
-                "name": "PARTIALLY_ENABLED",
-                "value": 2
-            },
-            {
-                "name": "FULLY_ENABLED",
-                "value": 3
-            }
-        ]
-    },
-    {
-        "name": "LowSpeedAutomaticEmergencyBrakingState",
-        "package": "android.hardware.automotive.vehicle",
-        "values": [
-            {
-                "name": "OTHER",
-                "value": 0
-            },
-            {
-                "name": "ENABLED",
-                "value": 1
-            },
-            {
-                "name": "ACTIVATED",
-                "value": 2
-            },
-            {
-                "name": "USER_OVERRIDE",
-                "value": 3
-            }
-        ]
-    },
-    {
-        "name": "LaneCenteringAssistState",
-        "package": "android.hardware.automotive.vehicle",
-        "values": [
-            {
-                "name": "OTHER",
-                "value": 0
-            },
-            {
-                "name": "ENABLED",
-                "value": 1
-            },
-            {
-                "name": "ACTIVATION_REQUESTED",
-                "value": 2
-            },
-            {
-                "name": "ACTIVATED",
-                "value": 3
-            },
-            {
-                "name": "USER_OVERRIDE",
-                "value": 4
-            },
-            {
-                "name": "FORCED_DEACTIVATION_WARNING",
-                "value": 5
-            }
-        ]
-    },
-    {
-        "name": "VehicleGear",
-        "package": "android.hardware.automotive.vehicle",
-        "values": [
-            {
-                "name": "GEAR_UNKNOWN",
-                "value": 0
-            },
-            {
-                "name": "GEAR_NEUTRAL",
-                "value": 1
-            },
-            {
-                "name": "GEAR_REVERSE",
-                "value": 2
-            },
-            {
-                "name": "GEAR_PARK",
-                "value": 4
-            },
-            {
-                "name": "GEAR_DRIVE",
-                "value": 8
-            },
-            {
-                "name": "GEAR_1",
-                "value": 16
-            },
-            {
-                "name": "GEAR_2",
-                "value": 32
-            },
-            {
-                "name": "GEAR_3",
-                "value": 64
-            },
-            {
-                "name": "GEAR_4",
-                "value": 128
-            },
-            {
-                "name": "GEAR_5",
-                "value": 256
-            },
-            {
-                "name": "GEAR_6",
-                "value": 512
-            },
-            {
-                "name": "GEAR_7",
-                "value": 1024
-            },
-            {
-                "name": "GEAR_8",
-                "value": 2048
-            },
-            {
-                "name": "GEAR_9",
-                "value": 4096
-            }
-        ]
-    },
-    {
-        "name": "ElectronicTollCollectionCardType",
-        "package": "android.hardware.automotive.vehicle",
-        "values": [
-            {
-                "name": "UNKNOWN",
-                "value": 0
-            },
-            {
-                "name": "JP_ELECTRONIC_TOLL_COLLECTION_CARD",
-                "value": 1
-            },
-            {
-                "name": "JP_ELECTRONIC_TOLL_COLLECTION_CARD_V2",
-                "value": 2
-            }
-        ]
-    },
-    {
-        "name": "VehicleApPowerStateShutdownParam",
-        "package": "android.hardware.automotive.vehicle",
-        "values": [
-            {
-                "name": "SHUTDOWN_IMMEDIATELY",
-                "value": 1
-            },
-            {
-                "name": "CAN_SLEEP",
-                "value": 2
-            },
-            {
-                "name": "SHUTDOWN_ONLY",
-                "value": 3
-            },
-            {
-                "name": "SLEEP_IMMEDIATELY",
-                "value": 4
-            },
-            {
-                "name": "HIBERNATE_IMMEDIATELY",
-                "value": 5
-            },
-            {
-                "name": "CAN_HIBERNATE",
+                "name": "INTERMITTENT_LEVEL_4",
                 "value": 6
             },
             {
-                "name": "EMERGENCY_SHUTDOWN",
+                "name": "INTERMITTENT_LEVEL_5",
                 "value": 7
-            }
-        ]
-    },
-    {
-        "name": "AutomaticEmergencyBrakingState",
-        "package": "android.hardware.automotive.vehicle",
-        "values": [
-            {
-                "name": "OTHER",
-                "value": 0
             },
             {
-                "name": "ENABLED",
-                "value": 1
-            },
-            {
-                "name": "ACTIVATED",
-                "value": 2
-            },
-            {
-                "name": "USER_OVERRIDE",
-                "value": 3
-            }
-        ]
-    },
-    {
-        "name": "ImpactSensorLocation",
-        "package": "android.hardware.automotive.vehicle",
-        "values": [
-            {
-                "name": "OTHER",
-                "value": 1
-            },
-            {
-                "name": "FRONT",
-                "value": 2
-            },
-            {
-                "name": "FRONT_LEFT_DOOR_SIDE",
-                "value": 4
-            },
-            {
-                "name": "FRONT_RIGHT_DOOR_SIDE",
+                "name": "CONTINUOUS_LEVEL_1",
                 "value": 8
             },
             {
-                "name": "REAR_LEFT_DOOR_SIDE",
-                "value": 16
+                "name": "CONTINUOUS_LEVEL_2",
+                "value": 9
             },
             {
-                "name": "REAR_RIGHT_DOOR_SIDE",
-                "value": 32
+                "name": "CONTINUOUS_LEVEL_3",
+                "value": 10
             },
             {
-                "name": "REAR",
-                "value": 64
-            }
-        ]
-    },
-    {
-        "name": "CruiseControlType",
-        "package": "android.hardware.automotive.vehicle",
-        "values": [
-            {
-                "name": "OTHER",
-                "value": 0
+                "name": "CONTINUOUS_LEVEL_4",
+                "value": 11
             },
             {
-                "name": "STANDARD",
-                "value": 1
+                "name": "CONTINUOUS_LEVEL_5",
+                "value": 12
             },
             {
-                "name": "ADAPTIVE",
-                "value": 2
+                "name": "AUTO",
+                "value": 13
             },
             {
-                "name": "PREDICTIVE",
-                "value": 3
-            }
-        ]
-    },
-    {
-        "name": "LaneKeepAssistState",
-        "package": "android.hardware.automotive.vehicle",
-        "values": [
-            {
-                "name": "OTHER",
-                "value": 0
-            },
-            {
-                "name": "ENABLED",
-                "value": 1
-            },
-            {
-                "name": "ACTIVATED_STEER_LEFT",
-                "value": 2
-            },
-            {
-                "name": "ACTIVATED_STEER_RIGHT",
-                "value": 3
-            },
-            {
-                "name": "USER_OVERRIDE",
-                "value": 4
-            }
-        ]
-    },
-    {
-        "name": "CustomInputType",
-        "package": "android.hardware.automotive.vehicle",
-        "values": [
-            {
-                "name": "CUSTOM_EVENT_F1",
-                "value": 1001
-            },
-            {
-                "name": "CUSTOM_EVENT_F2",
-                "value": 1002
-            },
-            {
-                "name": "CUSTOM_EVENT_F3",
-                "value": 1003
-            },
-            {
-                "name": "CUSTOM_EVENT_F4",
-                "value": 1004
-            },
-            {
-                "name": "CUSTOM_EVENT_F5",
-                "value": 1005
-            },
-            {
-                "name": "CUSTOM_EVENT_F6",
-                "value": 1006
-            },
-            {
-                "name": "CUSTOM_EVENT_F7",
-                "value": 1007
-            },
-            {
-                "name": "CUSTOM_EVENT_F8",
-                "value": 1008
-            },
-            {
-                "name": "CUSTOM_EVENT_F9",
-                "value": 1009
-            },
-            {
-                "name": "CUSTOM_EVENT_F10",
-                "value": 1010
-            }
-        ]
-    },
-    {
-        "name": "ElectronicTollCollectionCardStatus",
-        "package": "android.hardware.automotive.vehicle",
-        "values": [
-            {
-                "name": "UNKNOWN",
-                "value": 0
-            },
-            {
-                "name": "ELECTRONIC_TOLL_COLLECTION_CARD_VALID",
-                "value": 1
-            },
-            {
-                "name": "ELECTRONIC_TOLL_COLLECTION_CARD_INVALID",
-                "value": 2
-            },
-            {
-                "name": "ELECTRONIC_TOLL_COLLECTION_CARD_NOT_INSERTED",
-                "value": 3
-            }
-        ]
-    },
-    {
-        "name": "HandsOnDetectionDriverState",
-        "package": "android.hardware.automotive.vehicle",
-        "values": [
-            {
-                "name": "OTHER",
-                "value": 0
-            },
-            {
-                "name": "HANDS_ON",
-                "value": 1
-            },
-            {
-                "name": "HANDS_OFF",
-                "value": 2
-            }
-        ]
-    },
-    {
-        "name": "EmergencyLaneKeepAssistState",
-        "package": "android.hardware.automotive.vehicle",
-        "values": [
-            {
-                "name": "OTHER",
-                "value": 0
-            },
-            {
-                "name": "ENABLED",
-                "value": 1
-            },
-            {
-                "name": "WARNING_LEFT",
-                "value": 2
-            },
-            {
-                "name": "WARNING_RIGHT",
-                "value": 3
-            },
-            {
-                "name": "ACTIVATED_STEER_LEFT",
-                "value": 4
-            },
-            {
-                "name": "ACTIVATED_STEER_RIGHT",
-                "value": 5
-            },
-            {
-                "name": "USER_OVERRIDE",
-                "value": 6
-            }
-        ]
-    },
-    {
-        "name": "VehicleAutonomousState",
-        "package": "android.hardware.automotive.vehicle",
-        "values": [
-            {
-                "name": "LEVEL_0",
-                "value": 0
-            },
-            {
-                "name": "LEVEL_1",
-                "value": 1
-            },
-            {
-                "name": "LEVEL_2",
-                "value": 2
-            },
-            {
-                "name": "LEVEL_3",
-                "value": 3
-            },
-            {
-                "name": "LEVEL_4",
-                "value": 4
-            },
-            {
-                "name": "LEVEL_5",
-                "value": 5
-            }
-        ]
-    },
-    {
-        "name": "EvChargeState",
-        "package": "android.hardware.automotive.vehicle",
-        "values": [
-            {
-                "name": "UNKNOWN",
-                "value": 0
-            },
-            {
-                "name": "CHARGING",
-                "value": 1
-            },
-            {
-                "name": "FULLY_CHARGED",
-                "value": 2
-            },
-            {
-                "name": "NOT_CHARGING",
-                "value": 3
-            },
-            {
-                "name": "ERROR",
-                "value": 4
-            }
-        ]
-    },
-    {
-        "name": "CameraServiceState",
-        "package": "android.hardware.automotive.vehicle",
-        "values": [
-            {
-                "name": "UNAVAILABLE",
-                "value": 0
-            },
-            {
-                "name": "INACTIVE",
-                "value": 1
-            },
-            {
-                "name": "REQUESTED",
-                "value": 2
-            },
-            {
-                "name": "ACTIVE",
-                "value": 3
-            }
-        ]
-    },
-    {
-        "name": "GsrComplianceRequirementType",
-        "package": "android.hardware.automotive.vehicle",
-        "values": [
-            {
-                "name": "GSR_COMPLIANCE_NOT_REQUIRED",
-                "value": 0
-            },
-            {
-                "name": "GSR_COMPLIANCE_REQUIRED_V1",
-                "value": 1
-            }
-        ]
-    },
-    {
-        "name": "PortLocationType",
-        "package": "android.hardware.automotive.vehicle",
-        "values": [
-            {
-                "name": "UNKNOWN",
-                "value": 0
-            },
-            {
-                "name": "FRONT_LEFT",
-                "value": 1
-            },
-            {
-                "name": "FRONT_RIGHT",
-                "value": 2
-            },
-            {
-                "name": "REAR_RIGHT",
-                "value": 3
-            },
-            {
-                "name": "REAR_LEFT",
-                "value": 4
-            },
-            {
-                "name": "FRONT",
-                "value": 5
-            },
-            {
-                "name": "REAR",
-                "value": 6
-            }
-        ]
-    },
-    {
-        "name": "CruiseControlState",
-        "package": "android.hardware.automotive.vehicle",
-        "values": [
-            {
-                "name": "OTHER",
-                "value": 0
-            },
-            {
-                "name": "ENABLED",
-                "value": 1
-            },
-            {
-                "name": "ACTIVATED",
-                "value": 2
-            },
-            {
-                "name": "USER_OVERRIDE",
-                "value": 3
-            },
-            {
-                "name": "SUSPENDED",
-                "value": 4
-            },
-            {
-                "name": "FORCED_DEACTIVATION_WARNING",
-                "value": 5
+                "name": "SERVICE",
+                "value": 14
             }
         ]
     }
