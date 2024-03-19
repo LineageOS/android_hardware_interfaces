@@ -50,9 +50,10 @@ class TestRenderEngine;
 
 class TestLayer {
   public:
-    TestLayer(const std::shared_ptr<VtsComposerClient>& client, int64_t display)
+    TestLayer(const std::shared_ptr<VtsComposerClient>& client, int64_t display,
+              ComposerClientWriter& writer)
         : mDisplay(display) {
-        const auto& [status, layer] = client->createLayer(display, kBufferSlotCount);
+        const auto& [status, layer] = client->createLayer(display, kBufferSlotCount, &writer);
         EXPECT_TRUE(status.isOk());
         mLayer = layer;
     }
@@ -108,8 +109,9 @@ class TestLayer {
 
 class TestColorLayer : public TestLayer {
   public:
-    TestColorLayer(const std::shared_ptr<VtsComposerClient>& client, int64_t display)
-        : TestLayer{client, display} {}
+    TestColorLayer(const std::shared_ptr<VtsComposerClient>& client, int64_t display,
+                   ComposerClientWriter& writer)
+        : TestLayer{client, display, writer} {}
 
     void write(ComposerClientWriter& writer) override;
 
@@ -125,7 +127,7 @@ class TestBufferLayer : public TestLayer {
   public:
     TestBufferLayer(const std::shared_ptr<VtsComposerClient>& client,
                     TestRenderEngine& renderEngine, int64_t display, uint32_t width,
-                    uint32_t height, common::PixelFormat format,
+                    uint32_t height, common::PixelFormat format, ComposerClientWriter& writer,
                     Composition composition = Composition::DEVICE);
 
     void write(ComposerClientWriter& writer) override;
