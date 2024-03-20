@@ -87,7 +87,7 @@ enum AIMapper_Error : int32_t {
  *
  * Vendor-provided metadata should be prefixed with a "vendor.mycompanyname.*" namespace. It is
  * recommended that the metadata follows the pattern of StandardMetadaType.aidl. That is, an
- * aidl-defined enum with @VendorStability on it and the naming then matching that type such
+ * aidl-defined enum with @VintfStability on it and the naming then matching that type such
  * as "vendor.mycompanyname.graphics.common.MetadataType" with the value field then set to the
  * aidl's enum value.
  *
