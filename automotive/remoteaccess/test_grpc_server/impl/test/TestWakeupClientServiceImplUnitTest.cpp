@@ -41,7 +41,6 @@ const std::vector<uint8_t> kTestData = {0xde, 0xad, 0xbe, 0xef};
 constexpr int32_t kTestCount = 1234;
 constexpr int64_t kTestStartTimeInEpochSeconds = 2345;
 constexpr int64_t kTestPeriodicInSeconds = 123;
-const std::string kTestGrpcAddr = "localhost:50051";
 
 class MyTestWakeupClientServiceImpl final : public ServiceImpl {
   public:
@@ -53,27 +52,38 @@ class MyTestWakeupClientServiceImpl final : public ServiceImpl {
 class TestWakeupClientServiceImplUnitTest : public ::testing::Test {
   public:
     virtual void SetUp() override {
-        mServerThread = std::thread([this] {
+        int selectedPort = 0;
+        mServerThread = std::thread([this, &selectedPort] {
             mService = std::make_unique<MyTestWakeupClientServiceImpl>();
             ServerBuilder builder;
-            builder.AddListeningPort(kTestGrpcAddr, grpc::InsecureServerCredentials());
+            builder.AddListeningPort("localhost:0", grpc::InsecureServerCredentials(),
+                                     &selectedPort);
             WakeupClientServiceImpl wakeupClientService(mService.get());
             builder.RegisterService(&wakeupClientService);
             mServer = builder.BuildAndStart();
+            mServerStarted = true;
             {
                 std::unique_lock<std::mutex> lock(mLock);
                 mServerStartCv.notify_one();
             }
-            mServer->Wait();
+            if (mServer != nullptr) {
+                mServer->Wait();
+            }
         });
         {
             std::unique_lock<std::mutex> lock(mLock);
-            mServerStartCv.wait(lock, [this] {
+            bool serverStarted = mServerStartCv.wait_for(lock, std::chrono::seconds(10), [this] {
                 ScopedLockAssertion lockAssertion(mLock);
-                return mServer != nullptr;
+                return mServerStarted.load();
             });
+            ASSERT_TRUE(serverStarted) << "Failed to wait for mServerStarted to be set within 10s";
         }
-        mChannel = grpc::CreateChannel(kTestGrpcAddr, grpc::InsecureChannelCredentials());
+        if (mServer == nullptr) {
+            GTEST_SKIP() << "Failed to start the test grpc server";
+        }
+        std::string address = "localhost:" + std::to_string(selectedPort);
+        std::cout << "Test grpc server started at: " << address << std::endl;
+        mChannel = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
         mStub = WakeupClient::NewStub(mChannel);
     }
 
@@ -147,6 +157,7 @@ class TestWakeupClientServiceImplUnitTest : public ::testing::Test {
     std::thread mServerThread;
     std::unique_ptr<MyTestWakeupClientServiceImpl> mService;
     std::unique_ptr<Server> mServer;
+    std::atomic<bool> mServerStarted = false;
     std::shared_ptr<Channel> mChannel;
     std::unique_ptr<WakeupClient::Stub> mStub;
     std::vector<GetRemoteTasksResponse> mRemoteTaskResponses;
