@@ -33,6 +33,14 @@ VtsComposerClient::VtsComposerClient(const std::string& name) {
         mComposer = IComposer::fromBinder(binder);
         ALOGE_IF(mComposer == nullptr, "Failed to acquire the composer from the binder");
     }
+
+    const auto& [status, capabilities] = getCapabilities();
+    EXPECT_TRUE(status.isOk());
+    if (std::any_of(capabilities.begin(), capabilities.end(), [&](const Capability& cap) {
+            return cap == Capability::LAYER_LIFECYCLE_BATCH_COMMAND;
+        })) {
+        mSupportsBatchedCreateLayer = true;
+    }
 }
 
 ScopedAStatus VtsComposerClient::createClient() {
@@ -54,8 +62,8 @@ ScopedAStatus VtsComposerClient::createClient() {
     return mComposerClient->registerCallback(mComposerCallback);
 }
 
-bool VtsComposerClient::tearDown() {
-    return verifyComposerCallbackParams() && destroyAllLayers();
+bool VtsComposerClient::tearDown(ComposerClientWriter* writer) {
+    return verifyComposerCallbackParams() && destroyAllLayers(writer);
 }
 
 std::pair<ScopedAStatus, int32_t> VtsComposerClient::getInterfaceVersion() const {
@@ -86,7 +94,16 @@ ScopedAStatus VtsComposerClient::destroyVirtualDisplay(int64_t display) {
 }
 
 std::pair<ScopedAStatus, int64_t> VtsComposerClient::createLayer(int64_t display,
-                                                                 int32_t bufferSlotCount) {
+                                                                 int32_t bufferSlotCount,
+                                                                 ComposerClientWriter* writer) {
+    if (mSupportsBatchedCreateLayer) {
+        int64_t layer = mNextLayerHandle++;
+        writer->setLayerLifecycleBatchCommandType(display, layer,
+                                                  LayerLifecycleBatchCommandType::CREATE);
+        writer->setNewBufferSlotCount(display, layer, bufferSlotCount);
+        return {addLayerToDisplayResources(display, layer), layer};
+    }
+
     int64_t outLayer;
     auto status = mComposerClient->createLayer(display, bufferSlotCount, &outLayer);
 
@@ -96,14 +113,20 @@ std::pair<ScopedAStatus, int64_t> VtsComposerClient::createLayer(int64_t display
     return {addLayerToDisplayResources(display, outLayer), outLayer};
 }
 
-ScopedAStatus VtsComposerClient::destroyLayer(int64_t display, int64_t layer) {
-    auto status = mComposerClient->destroyLayer(display, layer);
-
-    if (!status.isOk()) {
-        return status;
+ScopedAStatus VtsComposerClient::destroyLayer(int64_t display, int64_t layer,
+                                              ComposerClientWriter* writer) {
+    if (mSupportsBatchedCreateLayer) {
+        writer->setLayerLifecycleBatchCommandType(display, layer,
+                                                  LayerLifecycleBatchCommandType::DESTROY);
+    } else {
+        auto status = mComposerClient->destroyLayer(display, layer);
+        if (!status.isOk()) {
+            return status;
+        }
     }
+
     removeLayerFromDisplayResources(display, layer);
-    return status;
+    return ScopedAStatus::ok();
 }
 
 std::pair<ScopedAStatus, int32_t> VtsComposerClient::getActiveConfig(int64_t display) {
@@ -632,7 +655,7 @@ bool VtsComposerClient::getDisplayConfigurationSupported() const {
     return interfaceVersion >= 3;
 }
 
-bool VtsComposerClient::destroyAllLayers() {
+bool VtsComposerClient::destroyAllLayers(ComposerClientWriter* writer) {
     std::unordered_map<int64_t, DisplayResource> physicalDisplays;
     while (!mDisplayResources.empty()) {
         const auto& it = mDisplayResources.begin();
@@ -640,7 +663,7 @@ bool VtsComposerClient::destroyAllLayers() {
 
         while (!resource.layers.empty()) {
             auto layer = *resource.layers.begin();
-            const auto status = destroyLayer(display, layer);
+            const auto status = destroyLayer(display, layer, writer);
             if (!status.isOk()) {
                 ALOGE("Unable to destroy all the layers, failed at layer %" PRId64 " with error %s",
                       layer, status.getDescription().c_str());
