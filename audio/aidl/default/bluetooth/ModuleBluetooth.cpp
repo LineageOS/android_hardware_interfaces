@@ -224,31 +224,19 @@ ndk::ScopedAStatus ModuleBluetooth::populateConnectedDevicePort(AudioPort* audio
     const auto& devicePort = audioPort->ext.get<AudioPortExt::device>();
     const auto& description = devicePort.device.type;
     // This method must return an error when the device can not be connected.
-    if (description.connection == AudioDeviceDescription::CONNECTION_BT_A2DP) {
-        bool isA2dpEnabled = false;
-        if (!!mBluetoothA2dp) {
-            RETURN_STATUS_IF_ERROR((*mBluetoothA2dp).isEnabled(&isA2dpEnabled));
-        }
-        LOG(DEBUG) << __func__ << ": isA2dpEnabled: " << isA2dpEnabled;
-        if (!isA2dpEnabled) return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
-    } else if (description.connection == AudioDeviceDescription::CONNECTION_BT_LE) {
-        bool isLeEnabled = false;
-        if (!!mBluetoothLe) {
-            RETURN_STATUS_IF_ERROR((*mBluetoothLe).isEnabled(&isLeEnabled));
-        }
-        LOG(DEBUG) << __func__ << ": isLeEnabled: " << isLeEnabled;
-        if (!isLeEnabled) return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
-    } else if (description.connection == AudioDeviceDescription::CONNECTION_WIRELESS &&
-               description.type == AudioDeviceType::OUT_HEARING_AID) {
-        // Hearing aids can use a number of profiles, no single switch exists.
-    } else {
+    // Since A2DP/LE status events are sent asynchronously, it is more reliable
+    // to attempt connecting to the BT stack rather than judge by the A2DP/LE status.
+    if (description.connection != AudioDeviceDescription::CONNECTION_BT_A2DP &&
+        description.connection != AudioDeviceDescription::CONNECTION_BT_LE &&
+        !(description.connection == AudioDeviceDescription::CONNECTION_WIRELESS &&
+          description.type == AudioDeviceType::OUT_HEARING_AID)) {
         LOG(ERROR) << __func__ << ": unsupported device type: " << audioPort->toString();
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
     CachedProxy proxy;
     RETURN_STATUS_IF_ERROR(createProxy(*audioPort, nextPortId, proxy));
-    // Since the device is already connected and configured by the BT stack, provide
-    // the current configuration instead of all possible profiles.
+    // If the device is actually connected, it is configured by the BT stack.
+    // Provide the current configuration instead of all possible profiles.
     const auto& pcmConfig = proxy.pcmConfig;
     audioPort->profiles.clear();
     audioPort->profiles.push_back(
