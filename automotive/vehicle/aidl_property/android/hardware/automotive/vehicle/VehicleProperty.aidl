@@ -4901,6 +4901,10 @@ enum VehicleProperty {
      *
      * Returns the current charging state of the car.
      *
+     * If the vehicle has a target charge percentage other than 100, this property must return
+     * EvChargeState::STATE_FULLY_CHARGED when the battery charge level has reached the target
+     * level. See EV_CHARGE_PERCENT_LIMIT for more context.
+     *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
      * @data_enum EvChargeState

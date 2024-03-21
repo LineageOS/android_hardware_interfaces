@@ -1277,7 +1277,7 @@
                     "EvChargeState"
                 ],
                 "data_enum": "EvChargeState",
-                "description": "Charging state of the car\nReturns the current charging state of the car."
+                "description": "Charging state of the car\nReturns the current charging state of the car.\nIf the vehicle has a target charge percentage other than 100, this property must return EvChargeState::STATE_FULLY_CHARGED when the battery charge level has reached the target level. See EV_CHARGE_PERCENT_LIMIT for more context."
             },
             {
                 "name": "EV_CHARGE_SWITCH",
