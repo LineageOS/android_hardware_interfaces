@@ -84,6 +84,33 @@ class Config {
     virtual Config::Data* getConfigData(int* size) = 0;
     bool setParam(const std::string& name, const std::string& value);
 
+    void sourcedFromAidl() { mSource = ConfigSourceType::SOURCE_AIDL; }
+    std::string toString(const ConfigValue& v) const {
+        std::ostringstream os;
+        if (std::holds_alternative<OptInt32>(v)) {
+            OptInt32 ov = std::get<OptInt32>(v);
+            if (ov.has_value()) os << ov.value();
+        } else if (std::holds_alternative<OptInt64>(v)) {
+            OptInt64 ov = std::get<OptInt64>(v);
+            if (ov.has_value()) os << ov.value();
+        } else if (std::holds_alternative<OptBool>(v)) {
+            OptBool ov = std::get<OptBool>(v);
+            if (ov.has_value()) os << ov.value();
+            os << std::get<OptBool>(v).value();
+        } else if (std::holds_alternative<OptIntVec>(v)) {
+            for (auto x : std::get<OptIntVec>(v))
+                if (x.has_value()) os << x.value() << " ";
+        }
+        return os.str();
+    }
+    std::string toString() const {
+        std::ostringstream os;
+        for (auto const& [k, v] : mMap) {
+            os << k << ":" << toString(v.value) << std::endl;
+        }
+        return os.str();
+    }
+
     ConfigValue parseBool(const std::string& value);
     ConfigValue parseString(const std::string& name);
     ConfigValue parseInt32(const std::string& value);

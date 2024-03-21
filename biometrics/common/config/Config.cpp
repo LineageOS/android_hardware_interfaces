@@ -34,7 +34,7 @@ ConfigValue Config::parseBool(const std::string& value) {
     else if (value == "false")
         res.emplace(false);
     else
-        LOG(ERROR) << "ERROR: invalid bool " << value;
+        LOG(FATAL) << "ERROR: invalid bool " << value;
     return res;
 }
 
@@ -48,7 +48,11 @@ ConfigValue Config::parseInt32(const std::string& value) {
     OptInt32 res;
     if (!value.empty()) {
         std::int32_t val;
-        if (ParseInt(value, &val)) res.emplace(val);
+        if (ParseInt(value, &val)) {
+            res.emplace(val);
+        } else {
+            LOG(FATAL) << "ERROR: Could not parse " << value << " as Int32";
+        }
     }
     return res;
 }
@@ -59,6 +63,8 @@ ConfigValue Config::parseInt64(const std::string& value) {
         std::int64_t val = std::strtoull(value.c_str(), nullptr, 10);
         if (val != 0LL or (val == 0LL && value == "0")) {
             res.emplace(val);
+        } else {
+            LOG(FATAL) << "ERROR: Could not parse " << value << " as Int64";
         }
     }
     return res;
@@ -87,7 +93,7 @@ void Config::init() {
 bool Config::setParam(const std::string& name, const std::string& value) {
     auto it = mMap.find(name);
     if (it == mMap.end()) {
-        LOG(ERROR) << "ERROR: setParam unknown config name " << name;
+        LOG(FATAL) << "ERROR: setParam unknown config name " << name;
         return false;
     }
     LOG(INFO) << "setParam name=" << name << "=" << value;
@@ -102,7 +108,7 @@ bool Config::setParam(const std::string& name, const std::string& value) {
 ConfigValue Config::getInternal(const std::string& name) {
     ConfigValue res;
 
-    auto data = mMap[name];
+    auto& data = mMap[name];
     switch (mSource) {
         case ConfigSourceType::SOURCE_SYSPROP:
             res = data.getter();
@@ -111,10 +117,10 @@ ConfigValue Config::getInternal(const std::string& name) {
             res = data.value;
             break;
         case ConfigSourceType::SOURCE_FILE:
-            LOG(WARNING) << "Unsupported";
+            UNIMPLEMENTED(ERROR) << " File-based config is not supported yet";
             break;
         default:
-            LOG(ERROR) << " wrong srouce type " << (int)mSource;
+            LOG(FATAL) << "Wrong srouce type " << (int)mSource;
             break;
     }
 
@@ -127,7 +133,7 @@ ConfigValue Config::getDefault(const std::string& name) {
 
 bool Config::setInternal(const std::string& name, const ConfigValue& val) {
     bool res = false;
-    auto data = mMap[name];
+    auto& data = mMap[name];
 
     switch (mSource) {
         case ConfigSourceType::SOURCE_SYSPROP:
@@ -138,10 +144,10 @@ bool Config::setInternal(const std::string& name, const ConfigValue& val) {
             res = true;
             break;
         case ConfigSourceType::SOURCE_FILE:
-            LOG(WARNING) << "Unsupported";
+            UNIMPLEMENTED(ERROR) << " File-based config is not supported yet";
             break;
         default:
-            LOG(ERROR) << " wrong srouce type " << (int)mSource;
+            LOG(FATAL) << "Wrong srouce type " << (int)mSource;
             break;
     }
 
