@@ -171,7 +171,7 @@ void Fingerprint::resetConfigToDefault() {
 }
 
 void Fingerprint::clearConfigSysprop() {
-    LOG(INFO) << __func__ << ": clear all systprop configuration";
+    LOG(INFO) << __func__ << ": clear all sysprop configuration";
 #define RESET_CONFIG_O(__NAME__) \
     if (FingerprintHalProperties::__NAME__()) FingerprintHalProperties::__NAME__(std::nullopt)
 #define RESET_CONFIG_V(__NAME__)                       \
@@ -207,6 +207,21 @@ void Fingerprint::clearConfigSysprop() {
     RESET_CONFIG_O(lockout_timed_threshold);
     RESET_CONFIG_O(lockout_timed_duration);
     RESET_CONFIG_O(lockout_permanent_threshold);
+}
+
+const char* Fingerprint::type2String(FingerprintSensorType type) {
+    switch (type) {
+        case FingerprintSensorType::REAR:
+            return "rear";
+        case FingerprintSensorType::POWER_BUTTON:
+            return "side";
+        case FingerprintSensorType::UNDER_DISPLAY_OPTICAL:
+            return "udfps";
+        case FingerprintSensorType::UNDER_DISPLAY_ULTRASONIC:
+            return "udfps";
+        default:
+            return "unknown";
+    }
 }
 
 }  // namespace aidl::android::hardware::biometrics::fingerprint

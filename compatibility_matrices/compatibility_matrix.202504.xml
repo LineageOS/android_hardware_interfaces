@@ -116,7 +116,7 @@
     </hal>
     <hal format="aidl" updatable-via-apex="true">
         <name>android.hardware.biometrics.fingerprint</name>
-        <version>3-4</version>
+        <version>3-5</version>
         <interface>
             <name>IFingerprint</name>
             <instance>default</instance>

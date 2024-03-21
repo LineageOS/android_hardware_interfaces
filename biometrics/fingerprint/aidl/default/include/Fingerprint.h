@@ -40,6 +40,7 @@ class Fingerprint : public BnFingerprint {
                                      std::shared_ptr<ISession>* out) override;
     binder_status_t dump(int fd, const char** args, uint32_t numArgs);
     binder_status_t handleShellCommand(int in, int out, int err, const char** argv, uint32_t argc);
+    bool connected() { return mEngine != nullptr; }
 
     static FingerprintConfig& cfg() {
         static FingerprintConfig* cfg = nullptr;
@@ -49,9 +50,10 @@ class Fingerprint : public BnFingerprint {
         }
         return *cfg;
     }
+    void resetConfigToDefault();
+    static const char* type2String(FingerprintSensorType type);
 
   private:
-    void resetConfigToDefault();
     void onHelp(int);
     void onSimFingerDown();
     void clearConfigSysprop();
