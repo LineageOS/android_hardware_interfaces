@@ -118,6 +118,10 @@ static bool isTv() {
          testing::deviceSupportsFeature("android.hardware.type.television");
 }
 
+static bool isHandheld() {
+  return testing::deviceSupportsFeature("android.hardware.type.handheld");
+}
+
 class ThroughputLogger {
  public:
   explicit ThroughputLogger(std::string task)
@@ -1037,6 +1041,47 @@ TEST_P(BluetoothAidlTest, Vsr_Bluetooth5Requirements) {
             num_resolving_list_view.GetStatus());
   auto num_resolving_list = num_resolving_list_view.GetResolvingListSize();
   ASSERT_GE(num_resolving_list, kMinLeResolvingListForBt5);
+}
+
+/**
+ * Requirements
+ *
+ * VSR-5.3.14-007 MUST support Bluetooth 4.2 and Bluetooth LE Data Length Extension.
+ * VSR-5.3.14-008 MUST support Bluetooth Low Energy (BLE).
+ */
+TEST_P(BluetoothAidlTest, Vsr_Bluetooth4_2Requirements) {
+  // test only applies to handheld devices
+  if (!isHandheld()) {
+    return;
+  }
+
+  std::vector<uint8_t> version_event;
+  send_and_wait_for_cmd_complete(ReadLocalVersionInformationBuilder::Create(),
+                                 version_event);
+  auto version_view = ReadLocalVersionInformationCompleteView::Create(
+      CommandCompleteView::Create(EventView::Create(PacketView<true>(
+          std::make_shared<std::vector<uint8_t>>(version_event)))));
+  ASSERT_TRUE(version_view.IsValid());
+  ASSERT_EQ(::bluetooth::hci::ErrorCode::SUCCESS, version_view.GetStatus());
+  auto version = version_view.GetLocalVersionInformation();
+  // Starting with Android 15, Fails when HCI version is lower than 4.2.
+  ASSERT_GE(static_cast<int>(version.hci_version_),
+    static_cast<int>(::bluetooth::hci::HciVersion::V_4_2));
+  ASSERT_GE(static_cast<int>(version.lmp_version_),
+    static_cast<int>(::bluetooth::hci::LmpVersion::V_4_2));
+
+  std::vector<uint8_t> le_features_event;
+  send_and_wait_for_cmd_complete(LeReadLocalSupportedFeaturesBuilder::Create(),
+                                 le_features_event);
+  auto le_features_view = LeReadLocalSupportedFeaturesCompleteView::Create(
+      CommandCompleteView::Create(EventView::Create(PacketView<true>(
+          std::make_shared<std::vector<uint8_t>>(le_features_event)))));
+  ASSERT_TRUE(le_features_view.IsValid());
+  ASSERT_EQ(::bluetooth::hci::ErrorCode::SUCCESS, le_features_view.GetStatus());
+  auto le_features = le_features_view.GetLeFeatures();
+  ASSERT_TRUE(le_features &
+              static_cast<uint64_t>(LLFeaturesBits::LE_EXTENDED_ADVERTISING));
+
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(BluetoothAidlTest);
