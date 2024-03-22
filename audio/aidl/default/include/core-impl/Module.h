@@ -213,7 +213,7 @@ class Module : public BnModule {
                                                                                  sampleRateHz);
         // Round up to nearest 16 frames since in the framework this is the size of a mixer burst.
         const int32_t multipleOf16 = (rawSizeFrames + 15) & ~15;
-        if (multipleOf16 <= 512) return multipleOf16;
+        if (sampleRateHz < 44100 || multipleOf16 <= 512) return multipleOf16;
         // Larger buffers should use powers of 2.
         int32_t powerOf2 = 1;
         while (powerOf2 < multipleOf16) powerOf2 <<= 1;
