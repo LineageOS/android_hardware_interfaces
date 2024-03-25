@@ -183,4 +183,7 @@ ErrMsgOr<std::unique_ptr<cppbor::Array>> verifyProductionCsr(
         const cppbor::Array& keysToSign, const std::vector<uint8_t>& csr,
         IRemotelyProvisionedComponent* provisionable, const std::vector<uint8_t>& challenge);
 
+/** Checks whether the CSR has a proper DICE chain. */
+ErrMsgOr<bool> isCsrWithProperDiceChain(const std::vector<uint8_t>& csr);
+
 }  // namespace aidl::android::hardware::security::keymint::remote_prov
