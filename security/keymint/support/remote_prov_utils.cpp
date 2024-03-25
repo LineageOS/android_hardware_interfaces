@@ -1081,4 +1081,40 @@ ErrMsgOr<std::unique_ptr<cppbor::Array>> verifyProductionCsr(
     return verifyCsr(keysToSign, csr, provisionable, challenge, /*isFactory=*/false);
 }
 
+ErrMsgOr<bool> isCsrWithProperDiceChain(const std::vector<uint8_t>& csr) {
+    auto [parsedRequest, _, csrErrMsg] = cppbor::parse(csr);
+    if (!parsedRequest) {
+        return csrErrMsg;
+    }
+    if (!parsedRequest->asArray()) {
+        return "AuthenticatedRequest is not a CBOR array.";
+    }
+    if (parsedRequest->asArray()->size() != 4U) {
+        return "AuthenticatedRequest must contain version, UDS certificates, DICE chain, and "
+               "signed data. However, the parsed AuthenticatedRequest has " +
+               std::to_string(parsedRequest->asArray()->size()) + " entries.";
+    }
+
+    auto version = parsedRequest->asArray()->get(0)->asUint();
+    auto diceCertChain = parsedRequest->asArray()->get(2)->asArray();
+
+    if (!version || version->value() != 1U) {
+        return "AuthenticatedRequest version must be an unsigned integer and must be equal to 1.";
+    }
+    if (!diceCertChain) {
+        return "AuthenticatedRequest DiceCertChain must be an Array.";
+    }
+
+    // DICE chain is [ pubkey, + DiceChainEntry ].
+    auto diceChainKind = getDiceChainKind();
+    if (!diceChainKind) {
+        return diceChainKind.message();
+    }
+
+    auto encodedDiceChain = diceCertChain->encode();
+    auto chain = hwtrust::DiceChain::Verify(encodedDiceChain, *diceChainKind);
+    if (!chain.ok()) return chain.error().message();
+    return chain->IsProper();
+}
+
 }  // namespace aidl::android::hardware::security::keymint::remote_prov
