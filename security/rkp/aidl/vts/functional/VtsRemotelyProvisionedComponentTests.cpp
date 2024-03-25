@@ -55,8 +55,12 @@ constexpr int32_t VERSION_WITH_SUPPORTED_NUM_KEYS_IN_CSR = 3;
 
 constexpr uint8_t MIN_CHALLENGE_SIZE = 0;
 constexpr uint8_t MAX_CHALLENGE_SIZE = 64;
+const string DEFAULT_INSTANCE_NAME =
+        "android.hardware.security.keymint.IRemotelyProvisionedComponent/default";
 const string RKP_VM_INSTANCE_NAME =
         "android.hardware.security.keymint.IRemotelyProvisionedComponent/avf";
+const string KEYMINT_STRONGBOX_INSTANCE_NAME =
+        "android.hardware.security.keymint.IKeyMintDevice/strongbox";
 
 #define INSTANTIATE_REM_PROV_AIDL_TEST(name)                                         \
     GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(name);                             \
@@ -228,6 +232,37 @@ TEST(NonParameterizedTests, eachRpcHasAUniqueId) {
             ASSERT_FALSE(hwInfo.uniqueId);
         }
     }
+}
+
+/**
+ * Verify that the default implementation supports DICE if there is a StrongBox KeyMint instance
+ * on the device.
+ */
+// @VsrTest = 3.10-015
+TEST(NonParameterizedTests, requireDiceOnDefaultInstanceIfStrongboxPresent) {
+    int vsr_api_level = get_vsr_api_level();
+    if (vsr_api_level < 35) {
+        GTEST_SKIP() << "Applies only to VSR API level 35 or newer, this device is: "
+                     << vsr_api_level;
+    }
+
+    if (!AServiceManager_isDeclared(KEYMINT_STRONGBOX_INSTANCE_NAME.c_str())) {
+        GTEST_SKIP() << "Strongbox is not present on this device.";
+    }
+
+    ::ndk::SpAIBinder binder(AServiceManager_waitForService(DEFAULT_INSTANCE_NAME.c_str()));
+    std::shared_ptr<IRemotelyProvisionedComponent> rpc =
+            IRemotelyProvisionedComponent::fromBinder(binder);
+    ASSERT_NE(rpc, nullptr);
+
+    bytevec challenge = randomBytes(64);
+    bytevec csr;
+    auto status = rpc->generateCertificateRequestV2({} /* keysToSign */, challenge, &csr);
+    EXPECT_TRUE(status.isOk()) << status.getDescription();
+
+    auto result = isCsrWithProperDiceChain(csr);
+    ASSERT_TRUE(result) << result.message();
+    ASSERT_TRUE(*result);
 }
 
 using GetHardwareInfoTests = VtsRemotelyProvisionedComponentTests;
