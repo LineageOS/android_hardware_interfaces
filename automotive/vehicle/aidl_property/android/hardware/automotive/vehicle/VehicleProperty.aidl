@@ -59,6 +59,8 @@ enum VehicleProperty {
     /**
      * Manufacturer of vehicle
      *
+     * This property must communicate the vehicle's public brand name.
+     *
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
      * @version 2
@@ -67,6 +69,8 @@ enum VehicleProperty {
             + 0x00100000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:STRING
     /**
      * Model of vehicle
+     *
+     * This property must communicate the vehicle's public model name.
      *
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
