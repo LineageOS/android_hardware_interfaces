@@ -1044,11 +1044,11 @@ TEST_P(BluetoothAidlTest, Vsr_Bluetooth5Requirements) {
 }
 
 /**
- * Requirements
- *
  * VSR-5.3.14-007 MUST support Bluetooth 4.2 and Bluetooth LE Data Length Extension.
  * VSR-5.3.14-008 MUST support Bluetooth Low Energy (BLE).
  */
+// @VsrTest = 5.3.14-007
+// @VsrTest = 5.3.14-008
 TEST_P(BluetoothAidlTest, Vsr_Bluetooth4_2Requirements) {
   // test only applies to handheld devices
   if (!isHandheld()) {
