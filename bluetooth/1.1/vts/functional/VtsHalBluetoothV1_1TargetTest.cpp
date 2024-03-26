@@ -680,11 +680,11 @@ TEST_P(BluetoothHidlTest, HciVersionTest) {
 }
 
 /**
- * Requirements
- *
  * VSR-5.3.14-007 MUST support Bluetooth 4.2 and Bluetooth LE Data Length Extension.
  * VSR-5.3.14-008 MUST support Bluetooth Low Energy (BLE).
  */
+// @VsrTest = 5.3.14-007
+// @VsrTest = 5.3.14-008
 TEST_P(BluetoothHidlTest, Bluetooth4_2) {
   // Bluetooth 4.2+
   hidl_vec<uint8_t> cmd = COMMAND_HCI_READ_LOCAL_VERSION_INFORMATION;
