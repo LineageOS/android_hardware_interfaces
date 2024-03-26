@@ -50,7 +50,7 @@ rust_binary {
     name: "android.hardware.security.keymint-service.nonsecure",
     relative_install_path: "hw",
     vendor: true,
-    init_rc: ["android.hardware.security.keymint-service.rc"],
+    init_rc: ["android.hardware.security.keymint-service.nonsecure.rc"],
     vintf_fragments: [
         "android.hardware.security.keymint-service.xml",
         "android.hardware.security.sharedsecret-service.xml",
