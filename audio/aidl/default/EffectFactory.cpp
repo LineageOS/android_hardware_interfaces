@@ -145,6 +145,7 @@ ndk::ScopedAStatus Factory::createEffect(const AudioUuid& in_impl_uuid,
         *_aidl_return = effectSp;
         ndk::SpAIBinder effectBinder = effectSp->asBinder();
         AIBinder_setMinSchedulerPolicy(effectBinder.get(), SCHED_NORMAL, ANDROID_PRIORITY_AUDIO);
+        AIBinder_setInheritRt(effectBinder.get(), true);
         mEffectMap[std::weak_ptr<IEffect>(effectSp)] =
                 std::make_pair(in_impl_uuid, std::move(effectBinder));
         return ndk::ScopedAStatus::ok();

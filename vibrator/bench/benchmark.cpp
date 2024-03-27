@@ -493,11 +493,6 @@ BENCHMARK_WRAPPER(VibratorBench_Aidl, setAmplitude, {
             return;
         }
     }
-
-    shouldSkipWithError(state, mVibrator->off());
-    if (cb) {
-        cb->waitForComplete();
-    }
 });
 
 BENCHMARK_WRAPPER(VibratorBench_Aidl, setExternalControl, {

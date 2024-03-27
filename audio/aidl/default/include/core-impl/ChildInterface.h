@@ -48,9 +48,9 @@ struct ChildInterface : private std::pair<std::shared_ptr<C>, ndk::SpAIBinder> {
     }
     AIBinder* getBinder() {
         if (this->second.get() == nullptr) {
-            this->second = this->first->asBinder();
-            AIBinder_setMinSchedulerPolicy(this->second.get(), SCHED_NORMAL,
-                                           ANDROID_PRIORITY_AUDIO);
+            const auto binder = this->second = this->first->asBinder();
+            AIBinder_setMinSchedulerPolicy(binder.get(), SCHED_NORMAL, ANDROID_PRIORITY_AUDIO);
+            AIBinder_setInheritRt(binder.get(), true);
         }
         return this->second.get();
     }

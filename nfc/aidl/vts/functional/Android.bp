@@ -83,6 +83,9 @@ cc_test {
         "server_configurable_flags",
     ],
     require_root: true,
+    test_options: {
+        vsr_min_shipping_api_level: 202404, // 2024Q2
+    },
     test_suites: [
         "vts",
     ],
