@@ -216,5 +216,12 @@ int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
     ProcessState::self()->setThreadPoolMaxThreadCount(1);
     ProcessState::self()->startThreadPool();
-    return RUN_ALL_TESTS();
+    // UWB HAL only allows 1 client, make sure framework
+    // does not have UWB HAL open before running
+    std::system("/system/bin/cmd uwb disable-uwb");
+    sleep(3);
+    auto status = RUN_ALL_TESTS();
+    sleep(3);
+    std::system("/system/bin/cmd uwb enable-uwb");
+    return status;
 }
