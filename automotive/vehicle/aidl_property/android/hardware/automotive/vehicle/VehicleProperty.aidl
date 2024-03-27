@@ -142,6 +142,9 @@ enum VehicleProperty {
     /**
      * List of connectors this EV may use
      *
+     * If the vehicle has multiple charging ports, this property must return all possible connector
+     * types that can be used by at least one charging port on the vehicle.
+     *
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @data_enum EvConnectorType
      * @access VehiclePropertyAccess.READ
@@ -440,6 +443,9 @@ enum VehicleProperty {
     /**
      * EV charge port open
      *
+     * If the vehicle has multiple charging ports, this property must return true if any of the
+     * charge ports are open.
+     *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
      *
@@ -452,6 +458,9 @@ enum VehicleProperty {
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
     /**
      * EV charge port connected
+     *
+     * If the vehicle has multiple charging ports, this property must return true if any of the
+     * charge ports are connected.
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
