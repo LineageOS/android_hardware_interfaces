@@ -27,6 +27,7 @@ rust_library {
         "libciborium",
         "libcoset",
         "libdiced_open_dice",
+        "libhex",
         "liblog_rust",
         "libsecretkeeper_client",
     ],
