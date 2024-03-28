@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c271fc77_7c4113b1",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 16185
+      },
+      "writtenOn": "2024-03-28T05:49:42Z",
+      "side": 1,
+      "message": "Fixes tegra t210 devices, doesn\u0027t impact any of my qcom or AML",
+      "revId": "2e84415faa2fde2a9fa08c671ef72c4b06ad0bd6",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
