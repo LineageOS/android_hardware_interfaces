@@ -40,7 +40,7 @@ impl From<String> for HalServiceError {
 }
 
 fn main() {
-    if let Err(e) = inner_main() {
+    if let Err(HalServiceError(e)) = inner_main() {
         panic!("HAL service failed: {:?}", e);
     }
 }
