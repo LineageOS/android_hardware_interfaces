@@ -41,7 +41,7 @@ cc_benchmark {
     ],
     static_libs: [
         "android.hardware.security.secureclock-V1-ndk",
-        "libcppbor_external",
+        "libcppbor",
         "libchrome",
     ],
 }

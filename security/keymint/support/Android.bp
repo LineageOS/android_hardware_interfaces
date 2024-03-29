@@ -72,7 +72,7 @@ cc_library {
     shared_libs: [
         "libbase",
         "libbinder_ndk",
-        "libcppbor_external",
+        "libcppbor",
         "libcppcose_rkp",
         "libcrypto",
         "libkeymaster_portable",
@@ -94,7 +94,7 @@ cc_test {
     ],
     shared_libs: [
         "libbase",
-        "libcppbor_external",
+        "libcppbor",
         "libcppcose_rkp",
         "libcrypto",
         "libjsoncpp",
