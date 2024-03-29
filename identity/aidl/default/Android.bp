@@ -36,7 +36,7 @@ cc_library_static {
     ],
     static_libs: [
         "libbase",
-        "libcppbor_external",
+        "libcppbor",
         "libcppcose_rkp",
         "libutils",
         "libsoft_attestation_cert",
@@ -102,7 +102,7 @@ cc_binary {
     ],
     static_libs: [
         "libbase",
-        "libcppbor_external",
+        "libcppbor",
         "libcppcose_rkp",
         "libutils",
         "libsoft_attestation_cert",
@@ -146,7 +146,7 @@ cc_test {
     ],
     static_libs: [
         "libbase",
-        "libcppbor_external",
+        "libcppbor",
         "libcppcose_rkp",
         "libutils",
         "libsoft_attestation_cert",

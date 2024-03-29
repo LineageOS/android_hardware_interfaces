@@ -30,7 +30,7 @@ cc_binary {
         "android.hardware.security.secureclock-V1-ndk",
         "libbase",
         "libbinder_ndk",
-        "libcppbor_external",
+        "libcppbor",
         "libcrypto",
         "libkeymaster_portable",
         "libkeymint",
