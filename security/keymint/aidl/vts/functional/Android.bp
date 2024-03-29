@@ -45,7 +45,7 @@ cc_defaults {
         "android.hardware.security.secureclock-V1-ndk",
         "libavb_user",
         "libavb",
-        "libcppbor_external",
+        "libcppbor",
         "libcppcose_rkp",
         "libfs_mgr",
         "libjsoncpp",
