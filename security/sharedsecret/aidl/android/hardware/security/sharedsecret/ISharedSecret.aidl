@@ -81,14 +81,9 @@ interface ISharedSecret {
      *           defined in the standard.  The counter is prefixed and length L appended, as shown
      *           in the construction on page 12 of the standard.  The label string is UTF-8 encoded.
      *
-     *     ``K'' is a pre-established shared secret, set up during factory reset.  The mechanism for
-     *           establishing this shared secret is implementation-defined.Any method of securely
-     *           establishing K that ensures that an attacker cannot obtain or derive its value is
-     *           acceptable.
-     *
-     *           CRITICAL SECURITY REQUIREMENT: All keys created by a IKeymintDevice instance must
-     *           be cryptographically bound to the value of K, such that establishing a new K
-     *           permanently destroys them.
+     *     ``K'' is a pre-established shared secret.  The mechanism for establishing this shared
+     *           secret is implementation-defined.  Any method of securely establishing K that
+     *           ensures that an attacker cannot obtain or derive its value is acceptable.
      *
      *     ``||'' represents concatenation.
      *
