@@ -56,6 +56,7 @@
 using namespace android;
 using aidl::android::hardware::audio::common::AudioOffloadMetadata;
 using aidl::android::hardware::audio::common::getChannelCount;
+using aidl::android::hardware::audio::common::isAnyBitPositionFlagSet;
 using aidl::android::hardware::audio::common::isBitPositionFlagSet;
 using aidl::android::hardware::audio::common::isTelephonyDeviceType;
 using aidl::android::hardware::audio::common::isValidAudioMode;
@@ -85,6 +86,7 @@ using aidl::android::media::audio::common::AudioDeviceDescription;
 using aidl::android::media::audio::common::AudioDeviceType;
 using aidl::android::media::audio::common::AudioDualMonoMode;
 using aidl::android::media::audio::common::AudioFormatType;
+using aidl::android::media::audio::common::AudioInputFlags;
 using aidl::android::media::audio::common::AudioIoFlags;
 using aidl::android::media::audio::common::AudioLatencyMode;
 using aidl::android::media::audio::common::AudioMMapPolicy;
@@ -1749,8 +1751,13 @@ TEST_P(AudioCoreModule, TryConnectMissingDevice) {
     for (const auto& port : ports) {
         // Virtual devices may not require external hardware and thus can always be connected.
         if (port.ext.get<AudioPortExt::device>().device.type.connection ==
-            AudioDeviceDescription::CONNECTION_VIRTUAL)
+                    AudioDeviceDescription::CONNECTION_VIRTUAL ||
+            // SCO devices are handled at low level by DSP, may not be able to check actual
+            // connection.
+            port.ext.get<AudioPortExt::device>().device.type.connection ==
+                    AudioDeviceDescription::CONNECTION_BT_SCO) {
             continue;
+        }
         AudioPort portWithData = GenerateUniqueDeviceAddress(port), connectedPort;
         ScopedAStatus status = module->connectExternalDevice(portWithData, &connectedPort);
         EXPECT_STATUS(EX_ILLEGAL_STATE, status) << "static port " << portWithData.toString();
@@ -3780,6 +3787,19 @@ class AudioStreamIo : public AudioCoreModuleBase,
         }
         for (const auto& portConfig : allPortConfigs) {
             SCOPED_TRACE(portConfig.toString());
+            // Certain types of ports can not be used without special preconditions.
+            if ((IOTraits<Stream>::is_input &&
+                 isAnyBitPositionFlagSet(
+                         portConfig.flags.value().template get<AudioIoFlags::Tag::input>(),
+                         {AudioInputFlags::MMAP_NOIRQ, AudioInputFlags::VOIP_TX,
+                          AudioInputFlags::HW_HOTWORD})) ||
+                (!IOTraits<Stream>::is_input &&
+                 isAnyBitPositionFlagSet(
+                         portConfig.flags.value().template get<AudioIoFlags::Tag::output>(),
+                         {AudioOutputFlags::MMAP_NOIRQ, AudioOutputFlags::VOIP_RX,
+                          AudioOutputFlags::COMPRESS_OFFLOAD, AudioOutputFlags::INCALL_MUSIC}))) {
+                continue;
+            }
             const bool isNonBlocking =
                     IOTraits<Stream>::is_input
                             ? false
