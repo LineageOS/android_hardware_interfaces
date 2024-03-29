@@ -28,6 +28,7 @@ cc_test {
     static_libs: [
         "android.hardware.bluetooth-V1-ndk",
         "libbluetooth_hci_pdl",
+        "libbluetooth_log",
     ],
     test_config: "VtsHalBluetoothTargetTest.xml",
     test_suites: [
