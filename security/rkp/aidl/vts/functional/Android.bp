@@ -32,7 +32,7 @@ cc_test {
         "libcrypto",
     ],
     static_libs: [
-        "libcppbor_external",
+        "libcppbor",
         "libgmock_ndk",
         "libkeymint_vts_test_utils",
     ],

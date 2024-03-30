@@ -36,7 +36,7 @@ cc_defaults {
         "libpuresoftkeymasterdevice",
     ],
     static_libs: [
-        "libcppbor_external",
+        "libcppbor",
     ],
 }
 
@@ -70,7 +70,7 @@ cc_test {
     ],
     static_libs: [
         "android.hardware.identity-support-lib",
-        "libcppbor_external",
+        "libcppbor",
         "libgmock",
     ],
     test_suites: ["general-tests"],
