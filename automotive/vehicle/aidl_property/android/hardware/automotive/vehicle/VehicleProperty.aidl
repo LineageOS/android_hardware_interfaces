@@ -668,8 +668,12 @@ enum VehicleProperty {
      * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All values between
      * minInt32Value and maxInt32Value must be supported. The minInt32Value must be 0.
      *
-     * The maxInt32Value indicates the maximum amount of energy regenerated from braking. The
-     * minInt32Value indicates no regenerative braking.
+     * The maxInt32Value indicates the setting for the maximum amount of energy regenerated from
+     * braking. The minInt32Value indicates the setting for no regenerative braking.
+     *
+     * This property is a more granular form of EV_REGENERATIVE_BRAKING_STATE. It allows the user to
+     * set a more specific level of regenerative braking if the states in EvRegenerativeBrakingState
+     * are not granular enough for the OEM.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -4957,10 +4961,13 @@ enum VehicleProperty {
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
 
     /**
-     * Regenerative braking or one-pedal drive state of the car
+     * Regenerative braking or one-pedal drive setting of the car
      *
-     * Returns the current state associated with the regenerative braking
-     * setting in the car
+     * Returns the current setting associated with the regenerative braking setting in the car
+     *
+     * If the OEM requires more setting than those provided in EvRegenerativeBrakingState, the
+     * EV_BRAKE_REGENERATION_LEVEL property can be used instead, which provides a more granular
+     * way of providing the same information.
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ

@@ -246,7 +246,7 @@
             {
                 "name": "EV_BRAKE_REGENERATION_LEVEL",
                 "value": 289408012,
-                "description": "Regenerative braking level of a electronic vehicle\nThe maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All values between minInt32Value and maxInt32Value must be supported. The minInt32Value must be 0.\nThe maxInt32Value indicates the maximum amount of energy regenerated from braking. The minInt32Value indicates no regenerative braking.\nThis property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to implement it as VehiclePropertyAccess.READ only."
+                "description": "Regenerative braking level of a electronic vehicle\nThe maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All values between minInt32Value and maxInt32Value must be supported. The minInt32Value must be 0.\nThe maxInt32Value indicates the setting for the maximum amount of energy regenerated from braking. The minInt32Value indicates the setting for no regenerative braking.\nThis property is a more granular form of EV_REGENERATIVE_BRAKING_STATE. It allows the user to set a more specific level of regenerative braking if the states in EvRegenerativeBrakingState are not granular enough for the OEM.\nThis property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to implement it as VehiclePropertyAccess.READ only."
             },
             {
                 "name": "Warning for fuel low level.",
@@ -1296,7 +1296,7 @@
                     "EvRegenerativeBrakingState"
                 ],
                 "data_enum": "EvRegenerativeBrakingState",
-                "description": "Regenerative braking or one-pedal drive state of the car\nReturns the current state associated with the regenerative braking setting in the car"
+                "description": "Regenerative braking or one-pedal drive setting of the car\nReturns the current setting associated with the regenerative braking setting in the car\nIf the OEM requires more setting than those provided in EvRegenerativeBrakingState, the EV_BRAKE_REGENERATION_LEVEL property can be used instead, which provides a more granular way of providing the same information."
             },
             {
                 "name": "TRAILER_PRESENT",
