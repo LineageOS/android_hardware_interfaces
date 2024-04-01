@@ -266,15 +266,6 @@ class ExternalCameraDeviceSession : public BnCameraDeviceSession, public OutputT
                             const std::vector<SupportedV4L2Format>& supportedFormats,
                             const ExternalCameraConfig& cfg);
 
-    // Validate and import request's output buffers and acquire fence
-    Status importRequestLocked(const CaptureRequest& request,
-                               std::vector<buffer_handle_t*>& allBufPtrs,
-                               std::vector<int>& allFences);
-
-    Status importRequestLockedImpl(const CaptureRequest& request,
-                                   std::vector<buffer_handle_t*>& allBufPtrs,
-                                   std::vector<int>& allFences);
-
     Status importBufferLocked(int32_t streamId, uint64_t bufId, buffer_handle_t buf,
                               /*out*/ buffer_handle_t** outBufPtr);
     static void cleanupInflightFences(std::vector<int>& allFences, size_t numFences);
