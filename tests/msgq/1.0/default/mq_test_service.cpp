@@ -21,13 +21,15 @@
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
 #include <android/hardware/tests/msgq/1.0/ITestMsgQ.h>
+#include <hidl/ServiceManagement.h>
 
 using aidl::android::fmq::test::TestAidlMsgQ;
 
 #include <hidl/LegacySupport.h>
 
-using android::hardware::tests::msgq::V1_0::ITestMsgQ;
 using android::hardware::defaultPassthroughServiceImplementation;
+using android::hardware::isHidlSupported;
+using android::hardware::tests::msgq::V1_0::ITestMsgQ;
 
 int main() {
     android::hardware::details::setTrebleTestingOverride(true);
@@ -39,8 +41,10 @@ int main() {
     LOG(INFO) << "instance: " << instance;
     CHECK(AServiceManager_addService(store->asBinder().get(), instance.c_str()) == STATUS_OK);
 
-    // Register HIDL service
-    CHECK(defaultPassthroughServiceImplementation<ITestMsgQ>() == android::OK);
+    if (isHidlSupported()) {
+        // Register HIDL service
+        CHECK(defaultPassthroughServiceImplementation<ITestMsgQ>() == android::OK);
+    }
     ABinderProcess_joinThreadPool();
 
     return EXIT_FAILURE;  // should not reach
