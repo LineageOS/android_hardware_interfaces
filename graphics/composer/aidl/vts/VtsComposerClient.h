@@ -258,13 +258,13 @@ class VtsDisplay {
 
     struct DisplayConfig {
         DisplayConfig(int32_t vsyncPeriod_, int32_t configGroup_,
-                      std::optional<VrrConfig> vrrConfig_ = {})
+                      std::optional<VrrConfig> vrrConfigOpt_ = {})
             : vsyncPeriod(vsyncPeriod_),
               configGroup(configGroup_),
-              vrrConfig(std::move(vrrConfig_)) {}
+              vrrConfigOpt(std::move(vrrConfigOpt_)) {}
         int32_t vsyncPeriod;
         int32_t configGroup;
-        std::optional<VrrConfig> vrrConfig;
+        std::optional<VrrConfig> vrrConfigOpt;
     };
 
     void addDisplayConfig(int32_t config, DisplayConfig displayConfig) {
@@ -272,6 +272,21 @@ class VtsDisplay {
     }
 
     DisplayConfig getDisplayConfig(int32_t config) { return mDisplayConfigs.find(config)->second; }
+
+    bool isRateSameBetweenConfigs(int config1, int config2) {
+        const auto displayConfig1 = getDisplayConfig(config1);
+        const auto displayConfig2 = getDisplayConfig(config2);
+        const auto vrrConfigOpt1 = displayConfig1.vrrConfigOpt;
+        const auto vrrConfigOpt2 = displayConfig2.vrrConfigOpt;
+
+        if (vrrConfigOpt1 && vrrConfigOpt2 &&
+            vrrConfigOpt1->minFrameIntervalNs == vrrConfigOpt2->minFrameIntervalNs) {
+            return true;
+        } else if (displayConfig1.vsyncPeriod == displayConfig2.vsyncPeriod) {
+            return true;
+        }
+        return false;
+    }
 
     std::unordered_map<int32_t, DisplayConfig> getDisplayConfigs() { return mDisplayConfigs; }
 
