@@ -31,15 +31,8 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.security.see.hwcrypto;
-union CryptoOperation {
-  android.hardware.security.see.hwcrypto.MemoryBufferParameter setMemoryBuffer;
-  android.hardware.security.see.hwcrypto.OperationParameters setOperationParameters;
-  android.hardware.security.see.hwcrypto.PatternParameters setPattern;
-  android.hardware.security.see.hwcrypto.types.OperationData copyData;
-  android.hardware.security.see.hwcrypto.types.OperationData aadInput;
-  android.hardware.security.see.hwcrypto.types.OperationData dataInput;
-  android.hardware.security.see.hwcrypto.types.OperationData dataOutput;
-  @nullable android.hardware.security.see.hwcrypto.types.Void finish;
-  @nullable android.hardware.security.see.hwcrypto.types.Void destroyContext;
+package android.hardware.security.see.hwcrypto.types;
+enum SymmetricOperation {
+  ENCRYPT,
+  DECRYPT,
 }
