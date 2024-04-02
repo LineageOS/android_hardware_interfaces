@@ -44,6 +44,36 @@ parcelable VehiclePropConfig {
      * VehiclePropertyAccess.NONE for a particular area config, the maximal subset rule should apply
      * with this area config included, making the VehiclePropConfig.access =
      * VehiclePropertyAccess.NONE.
+     *
+     * Currently we do not support scenarios where some areaIds are WRITE while others are
+     * READ_WRITE. See the documentation for VehicleAreaConfig.access for more details.
+     *
+     * Examples:
+     *   Suppose we have a property with two areaIds which we will call "LEFT" and "RIGHT". Here
+     *   are some scenarios that can describe what the VehiclePropConfig.access value should be for
+     *   this property.
+     *   1. LEFT is READ and RIGHT is READ_WRITE. VehiclePropConfig.access must be READ as that is
+     *      the maximal common access across all areaIds.
+     *   2. LEFT is READ_WRITE and RIGHT is READ_WRITE. VehiclePropConfig.access must be READ_WRITE
+     *      as that is the maximal common access across all areaIds.
+     *   3. LEFT is WRITE and RIGHT is WRITE. VehiclePropConfig.access must be WRITE as that is the
+     *      maximal common access across all areaIds.
+     *   4. LEFT is READ_WRITE and RIGHT is not set (i.e. defaults to NONE)/is set to NONE, with the
+     *      expectation that RIGHT should be populated with the default access mode of the property.
+     *      VehiclePropConfig.access can be set to READ or READ_WRITE, whatever the OEM feels is the
+     *      appropriate default access for the property.
+     *   5. LEFT is READ and RIGHT is not set (i.e. defaults to NONE)/is set to NONE, with the
+     *      expectation that RIGHT should be populated with the default access mode of the property.
+     *      VehiclePropConfig.access must be set to READ because setting to READ_WRITE breaks the
+     *      rule of having the global access being the maximal subset of the area config accesses.
+     *      If the OEM wants RIGHT to be READ_WRITE in this scenario, the config should be rewritten
+     *      such that LEFT is not set/is set to NONE and RIGHT is set to READ_WRITE with
+     *      VehiclePropConfig.access set to READ.
+     *   6. LEFT is READ_WRITE and RIGHT is set to NONE with the intention of RIGHT to specifically
+     *      have no access. VehiclePropConfig.access must be NONE to support RIGHT maintaining its
+     *      NONE access.
+     *   7. LEFT is READ_WRITE and RIGHT is WRITE. This is unsupported behaviour and the config
+     *      should not be defined this way.
      */
     VehiclePropertyAccess access = VehiclePropertyAccess.NONE;
 

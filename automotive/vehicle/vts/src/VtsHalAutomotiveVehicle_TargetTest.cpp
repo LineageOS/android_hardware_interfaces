@@ -752,9 +752,15 @@ void VtsHalAutomotiveVehicleTargetTest::verifyGlobalAccessIsMaximalAreaAccessSub
         }
     }
 
-    if (readOnlyPresent && !writeOnlyPresent) {
+    if (readOnlyPresent) {
+        ASSERT_FALSE(writeOnlyPresent) << StringPrintf(
+                "Found both READ_ONLY and WRITE_ONLY access modes in area configs, which is not "
+                "supported");
         maximalAreaAccessSubset = toInt(VehiclePropertyAccess::READ);
     } else if (writeOnlyPresent) {
+        ASSERT_FALSE(readWritePresent) << StringPrintf(
+                "Found both WRITE_ONLY and READ_WRITE access modes in area configs, which is not "
+                "supported");
         maximalAreaAccessSubset = toInt(VehiclePropertyAccess::WRITE);
     } else if (readWritePresent) {
         maximalAreaAccessSubset = toInt(VehiclePropertyAccess::READ_WRITE);

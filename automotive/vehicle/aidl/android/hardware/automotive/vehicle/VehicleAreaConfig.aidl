@@ -62,7 +62,9 @@ parcelable VehicleAreaConfig {
      * For example, if a property is defined as READ_WRITE, but the OEM wants to specify certain
      * area Ids as READ-only, the corresponding areaIds should have an access set to READ, while the
      * others must be set to READ_WRITE. We do not support setting specific area Ids to WRITE-only
-     * when the property is READ-WRITE.
+     * when the property is READ-WRITE. If any one area config has access
+     * VehiclePropertyAccess::WRITE, then all VehicleAreaConfig.access values and
+     * VehiclePropConfig.access must be set to WRITE for the property.
      *
      * VehiclePropConfig.access should be equal the maximal subset of the accesses set in
      * VehiclePropConfig.areaConfigs, excluding those with access == VehiclePropertyAccess.NONE. For
@@ -73,6 +75,8 @@ parcelable VehicleAreaConfig {
      * In the scenario where the OEM actually wants to set VehicleAreaConfig.access =
      * VehiclePropertyAccess.NONE, the maximal subset rule should apply with this area config
      * included, making the VehiclePropConfig.access = VehiclePropertyAccess.NONE.
+     *
+     * See VehiclePropConfig.access for more information.
      */
     VehiclePropertyAccess access = VehiclePropertyAccess.NONE;
 
