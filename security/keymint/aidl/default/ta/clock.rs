@@ -16,25 +16,29 @@
 //! Monotonic clock implementation.
 
 use kmr_common::crypto;
-use std::time::Instant;
 
 /// Monotonic clock.
-pub struct StdClock {
-    start: Instant,
-}
+pub struct StdClock;
 
 impl StdClock {
     /// Create new clock instance, holding time since construction.
     pub fn new() -> Self {
-        Self {
-            start: Instant::now(),
-        }
+        Self {}
     }
 }
 
 impl crypto::MonotonicClock for StdClock {
     fn now(&self) -> crypto::MillisecondsSinceEpoch {
-        let duration = self.start.elapsed();
-        crypto::MillisecondsSinceEpoch(duration.as_millis().try_into().unwrap())
+        let mut time = libc::timespec { tv_sec: 0, tv_nsec: 0 };
+        // Use `CLOCK_BOOTTIME` for consistency with the times used by the Cuttlefish
+        // C++ implementation of Gatekeeper.
+        let rc =
+        // Safety: `time` is a valid structure.
+            unsafe { libc::clock_gettime(libc::CLOCK_BOOTTIME, &mut time as *mut libc::timespec) };
+        if rc < 0 {
+            log::warn!("failed to get time!");
+            return crypto::MillisecondsSinceEpoch(0);
+        }
+        crypto::MillisecondsSinceEpoch(((time.tv_sec * 1000) + (time.tv_nsec / 1000 / 1000)).into())
     }
 }
