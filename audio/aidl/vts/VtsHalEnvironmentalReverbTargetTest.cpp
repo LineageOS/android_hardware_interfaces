@@ -249,7 +249,7 @@ INSTANTIATE_TEST_SUITE_P(
 
             std::string name = "Implementor_" + descriptor.common.implementor + "_name_" +
                                descriptor.common.name + "_UUID_" +
-                               descriptor.common.id.uuid.toString() + "_roomHfLevel" + roomHfLevel;
+                               toString(descriptor.common.id.uuid) + "_roomHfLevel" + roomHfLevel;
             std::replace_if(
                     name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');
             return name;
@@ -289,7 +289,7 @@ INSTANTIATE_TEST_SUITE_P(
 
             std::string name = "Implementor_" + descriptor.common.implementor + "_name_" +
                                descriptor.common.name + "_UUID_" +
-                               descriptor.common.id.uuid.toString() + "_decayTime" + decayTime;
+                               toString(descriptor.common.id.uuid) + "_decayTime" + decayTime;
             std::replace_if(
                     name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');
             return name;
@@ -329,8 +329,7 @@ INSTANTIATE_TEST_SUITE_P(
 
             std::string name = "Implementor_" + descriptor.common.implementor + "_name_" +
                                descriptor.common.name + "_UUID_" +
-                               descriptor.common.id.uuid.toString() + "_decayHfRatio" +
-                               decayHfRatio;
+                               toString(descriptor.common.id.uuid) + "_decayHfRatio" + decayHfRatio;
             std::replace_if(
                     name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');
             return name;
@@ -370,7 +369,7 @@ INSTANTIATE_TEST_SUITE_P(
 
             std::string name = "Implementor_" + descriptor.common.implementor + "_name_" +
                                descriptor.common.name + "_UUID_" +
-                               descriptor.common.id.uuid.toString() + "_level" + level;
+                               toString(descriptor.common.id.uuid) + "_level" + level;
             std::replace_if(
                     name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');
             return name;
@@ -410,7 +409,7 @@ INSTANTIATE_TEST_SUITE_P(
 
             std::string name = "Implementor_" + descriptor.common.implementor + "_name_" +
                                descriptor.common.name + "_UUID_" +
-                               descriptor.common.id.uuid.toString() + "_delay" + delay;
+                               toString(descriptor.common.id.uuid) + "_delay" + delay;
             std::replace_if(
                     name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');
             return name;
@@ -450,7 +449,7 @@ INSTANTIATE_TEST_SUITE_P(
 
             std::string name = "Implementor_" + descriptor.common.implementor + "_name_" +
                                descriptor.common.name + "_UUID_" +
-                               descriptor.common.id.uuid.toString() + "_diffusion" + diffusion;
+                               toString(descriptor.common.id.uuid) + "_diffusion" + diffusion;
             std::replace_if(
                     name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');
             return name;
@@ -490,7 +489,7 @@ INSTANTIATE_TEST_SUITE_P(
 
             std::string name = "Implementor_" + descriptor.common.implementor + "_name_" +
                                descriptor.common.name + "_UUID_" +
-                               descriptor.common.id.uuid.toString() + "_density" + density;
+                               toString(descriptor.common.id.uuid) + "_density" + density;
             std::replace_if(
                     name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');
             return name;
@@ -527,7 +526,7 @@ INSTANTIATE_TEST_SUITE_P(
 
             std::string name = "Implementor_" + descriptor.common.implementor + "_name_" +
                                descriptor.common.name + "_UUID_" +
-                               descriptor.common.id.uuid.toString() + "_bypass" + bypass;
+                               toString(descriptor.common.id.uuid) + "_bypass" + bypass;
             std::replace_if(
                     name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');
             return name;
