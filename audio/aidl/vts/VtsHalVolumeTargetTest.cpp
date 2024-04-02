@@ -140,7 +140,9 @@ using VolumeDataTestParam = std::pair<std::shared_ptr<IFactory>, Descriptor>;
 class VolumeDataTest : public ::testing::TestWithParam<VolumeDataTestParam>,
                        public VolumeControlHelper {
   public:
-    VolumeDataTest() {
+    VolumeDataTest()
+        : kVsrApiLevel(
+                  android::base::GetIntProperty("ro.vendor.api_level", __ANDROID_API_FUTURE__)) {
         std::tie(mFactory, mDescriptor) = GetParam();
         mInput.resize(kBufferSize);
         mInputMag.resize(mTestFrequencies.size());
@@ -165,13 +167,17 @@ class VolumeDataTest : public ::testing::TestWithParam<VolumeDataTestParam>,
 
     void SetUp() override {
         SKIP_TEST_IF_DATA_UNSUPPORTED(mDescriptor.common.flags);
+        // Skips test fixture if api_level <= 34 (__ANDROID_API_U__).
+        if (kVsrApiLevel <= __ANDROID_API_U__) GTEST_SKIP();
         ASSERT_NO_FATAL_FAILURE(SetUpVolumeControl());
     }
     void TearDown() override {
         SKIP_TEST_IF_DATA_UNSUPPORTED(mDescriptor.common.flags);
+        if (kVsrApiLevel <= __ANDROID_API_U__) GTEST_SKIP();
         TearDownVolumeControl();
     }
 
+    const int kVsrApiLevel;
     static constexpr int kMaxAudioSample = 1;
     static constexpr int kTransitionDuration = 300;
     static constexpr int kNPointFFT = 32768;
