@@ -31,8 +31,9 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.security.see.hwcrypto;
-union OperationParameters {
-  android.hardware.security.see.hwcrypto.types.SymmetricAuthOperationParameters symmetricAuthCrypto;
-  android.hardware.security.see.hwcrypto.types.SymmetricOperationParameters symmetricCrypto;
+package android.hardware.security.see.hwcrypto.types;
+parcelable SymmetricOperationParameters {
+  android.hardware.security.see.hwcrypto.IOpaqueKey key;
+  android.hardware.security.see.hwcrypto.types.SymmetricOperation direction;
+  android.hardware.security.see.hwcrypto.types.SymmetricCryptoParameters parameters;
 }
