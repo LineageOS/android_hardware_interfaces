@@ -13,22 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.hardware.security.see.hwcrypto;
+package android.hardware.security.see.hwcrypto.types;
 
-import android.hardware.security.see.hwcrypto.types.SymmetricAuthOperationParameters;
-import android.hardware.security.see.hwcrypto.types.SymmetricOperationParameters;
+import android.hardware.security.see.hwcrypto.types.CipherModeParameters;
+import android.hardware.security.see.hwcrypto.types.Void;
 
 /*
- * Type that describes the parameters for the different operations that can be performed.
+ * Type used for the parameters needed to run a non-authenticated AES operation.
  */
-union OperationParameters {
+union AesCipherMode {
     /*
-     * Parameters for authenticated symmetric cryptography (AES GCM).
+     * Cipher Block Chaining mode. Padding will either be none or PKCS#7 depending on the key policy
+     * padding parameter. It contains the nonce for the operation.
      */
-    SymmetricAuthOperationParameters symmetricAuthCrypto;
+    CipherModeParameters cbc;
 
     /*
-     * Parameters for non-authenticated symmetric cryptography (AES/TDES).
+     * Counter mode. Type contains the nonce for the operation.
      */
-    SymmetricOperationParameters symmetricCrypto;
+    CipherModeParameters ctr;
 }
