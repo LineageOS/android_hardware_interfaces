@@ -1,6 +1,2 @@
 # Bug component: 48448
-alisher@google.com
-georgekgchang@google.com
-jackcwyu@google.com
-
-
+include platform/packages/apps/Nfc:/OWNERS
