@@ -70,6 +70,8 @@ typedef ::android::AidlMessageQueue<float,
 static inline std::string getPrefix(Descriptor& descriptor) {
     std::string prefix = "Implementor_" + descriptor.common.implementor + "_name_" +
                          descriptor.common.name + "_UUID_" + toString(descriptor.common.id.uuid);
+    std::replace_if(
+            prefix.begin(), prefix.end(), [](const char c) { return !std::isalnum(c); }, '_');
     return prefix;
 }
 
