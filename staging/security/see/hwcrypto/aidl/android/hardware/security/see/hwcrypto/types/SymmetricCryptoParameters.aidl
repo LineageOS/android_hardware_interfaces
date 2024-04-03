@@ -13,22 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.hardware.security.see.hwcrypto;
+package android.hardware.security.see.hwcrypto.types;
 
-import android.hardware.security.see.hwcrypto.types.SymmetricAuthOperationParameters;
-import android.hardware.security.see.hwcrypto.types.SymmetricOperationParameters;
+import android.hardware.security.see.hwcrypto.types.AesCipherMode;
 
 /*
- * Type that describes the parameters for the different operations that can be performed.
+ * Data needed to perform non-authenticated symmetric cryptographic operations.
  */
-union OperationParameters {
+union SymmetricCryptoParameters {
     /*
-     * Parameters for authenticated symmetric cryptography (AES GCM).
+     * AES (Advanced Encryption Standard) parameters.
      */
-    SymmetricAuthOperationParameters symmetricAuthCrypto;
-
-    /*
-     * Parameters for non-authenticated symmetric cryptography (AES/TDES).
-     */
-    SymmetricOperationParameters symmetricCrypto;
+    AesCipherMode aes;
 }
