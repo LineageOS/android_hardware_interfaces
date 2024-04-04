@@ -3002,14 +3002,10 @@ TEST_P(GraphicsComposerAidlCommandV3Test, CreateBatchedCommand) {
         GTEST_SKIP() << "LAYER_LIFECYCLE_BATCH_COMMAND not supported by the implementation";
         return;
     }
-
     auto& writer = getWriter(getPrimaryDisplayId());
-    int64_t layer = 5;
-    writer.setLayerLifecycleBatchCommandType(getPrimaryDisplayId(), layer,
-                                             LayerLifecycleBatchCommandType::CREATE);
-    writer.setNewBufferSlotCount(getPrimaryDisplayId(), layer, 1);
-    writer.validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
-                           VtsComposerClient::kNoFrameIntervalNs);
+    const auto& [status, layer] =
+            mComposerClient->createLayer(getPrimaryDisplayId(), kBufferSlotCount, &writer);
+    EXPECT_TRUE(status.isOk());
     execute();
     ASSERT_TRUE(mReader.takeErrors().empty());
 }
@@ -3019,15 +3015,13 @@ TEST_P(GraphicsComposerAidlCommandV3Test, CreateBatchedCommand_BadDisplay) {
         GTEST_SKIP() << "LAYER_LIFECYCLE_BATCH_COMMAND not supported by the implementation";
         return;
     }
-
-    auto& writer = getWriter(getPrimaryDisplayId());
+    auto& writer = getWriter(getInvalidDisplayId());
     int64_t layer = 5;
     writer.setLayerLifecycleBatchCommandType(getInvalidDisplayId(), layer,
                                              LayerLifecycleBatchCommandType::CREATE);
-    writer.setNewBufferSlotCount(getPrimaryDisplayId(), layer, 1);
-    writer.validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
-                           VtsComposerClient::kNoFrameIntervalNs);
+    writer.setNewBufferSlotCount(getInvalidDisplayId(), layer, 1);
     execute();
+
     const auto errors = mReader.takeErrors();
     ASSERT_TRUE(errors.size() == 1 && errors[0].errorCode == IComposerClient::EX_BAD_DISPLAY);
 }
@@ -3037,26 +3031,15 @@ TEST_P(GraphicsComposerAidlCommandV3Test, DestroyBatchedCommand) {
         GTEST_SKIP() << "LAYER_LIFECYCLE_BATCH_COMMAND not supported by the implementation";
         return;
     }
-
     auto& writer = getWriter(getPrimaryDisplayId());
-    int64_t layer = 5;
-    writer.setLayerLifecycleBatchCommandType(getPrimaryDisplayId(), layer,
-                                             LayerLifecycleBatchCommandType::CREATE);
-    writer.setNewBufferSlotCount(getPrimaryDisplayId(), layer, 1);
-    writer.validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
-                           VtsComposerClient::kNoFrameIntervalNs);
+    const auto& [status, layer] =
+            mComposerClient->createLayer(getPrimaryDisplayId(), kBufferSlotCount, &writer);
+    EXPECT_TRUE(status.isOk());
     execute();
     ASSERT_TRUE(mReader.takeErrors().empty());
-    writer.setLayerLifecycleBatchCommandType(getPrimaryDisplayId(), layer,
-                                             LayerLifecycleBatchCommandType::DESTROY);
-    layer++;
-    writer.setLayerLifecycleBatchCommandType(getPrimaryDisplayId(), layer,
-                                             LayerLifecycleBatchCommandType::CREATE);
-    writer.setNewBufferSlotCount(getPrimaryDisplayId(), layer, 1);
-
+    EXPECT_TRUE(mComposerClient->destroyLayer(getPrimaryDisplayId(), layer, &writer).isOk());
     execute();
-    const auto errors = mReader.takeErrors();
-    ASSERT_TRUE(errors.size() == 1 && errors[0].errorCode == IComposerClient::EX_BAD_DISPLAY);
+    ASSERT_TRUE(mReader.takeErrors().empty());
 }
 
 TEST_P(GraphicsComposerAidlCommandV3Test, DestroyBatchedCommand_BadDisplay) {
@@ -3064,25 +3047,20 @@ TEST_P(GraphicsComposerAidlCommandV3Test, DestroyBatchedCommand_BadDisplay) {
         GTEST_SKIP() << "LAYER_LIFECYCLE_BATCH_COMMAND not supported by the implementation";
         return;
     }
-
     auto& writer = getWriter(getPrimaryDisplayId());
-    int64_t layer = 5;
-    writer.setLayerLifecycleBatchCommandType(getPrimaryDisplayId(), layer,
-                                             LayerLifecycleBatchCommandType::CREATE);
-    writer.setNewBufferSlotCount(getPrimaryDisplayId(), layer, 1);
-    writer.validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
-                           VtsComposerClient::kNoFrameIntervalNs);
-    execute();
-    ASSERT_TRUE(mReader.takeErrors().empty());
-    writer.setLayerLifecycleBatchCommandType(getInvalidDisplayId(), layer,
-                                             LayerLifecycleBatchCommandType::DESTROY);
-    layer++;
-    writer.setLayerLifecycleBatchCommandType(getInvalidDisplayId(), layer,
-                                             LayerLifecycleBatchCommandType::CREATE);
-    writer.setNewBufferSlotCount(getPrimaryDisplayId(), layer, 1);
+    const auto& [status, layer] =
+            mComposerClient->createLayer(getPrimaryDisplayId(), kBufferSlotCount, &writer);
 
+    EXPECT_TRUE(status.isOk());
     execute();
     ASSERT_TRUE(mReader.takeErrors().empty());
+
+    auto& invalid_writer = getWriter(getInvalidDisplayId());
+    invalid_writer.setLayerLifecycleBatchCommandType(getInvalidDisplayId(), layer,
+                                                     LayerLifecycleBatchCommandType::DESTROY);
+    execute();
+    const auto errors = mReader.takeErrors();
+    ASSERT_TRUE(errors.size() == 1 && errors[0].errorCode == IComposerClient::EX_BAD_DISPLAY);
 }
 
 TEST_P(GraphicsComposerAidlCommandV3Test, NoCreateDestroyBatchedCommandIncorrectLayer) {
