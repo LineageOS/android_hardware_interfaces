@@ -273,16 +273,10 @@ struct TunerTestingConfigAidlReader1_0 {
             vector<FrontendStatusType> types;
             vector<FrontendStatus> statuses;
 
-            types.push_back(FrontendStatusType::DEMOD_LOCK);
             types.push_back(FrontendStatusType::UEC);
-            types.push_back(FrontendStatusType::IS_MISO);
 
             FrontendStatus status;
-            status.set<FrontendStatus::Tag::isDemodLocked>(true);
-            statuses.push_back(status);
-            status.set<FrontendStatus::Tag::uec>(4);
-            statuses.push_back(status);
-            status.set<FrontendStatus::Tag::isMiso>(true);
+            status.set<FrontendStatus::Tag::uec>(0);
             statuses.push_back(status);
 
             auto frontends = *hardwareConfig.getFirstFrontends();
