@@ -46,6 +46,7 @@ cc_binary {
     vintf_fragments: ["android.hardware.cas@1.2-service.xml"],
     defaults: ["cas_service_defaults@1.2"],
     init_rc: ["android.hardware.cas@1.2-service.rc"],
+    overrides: ["com.android.hardware.cas"],
 }
 
 cc_binary {
