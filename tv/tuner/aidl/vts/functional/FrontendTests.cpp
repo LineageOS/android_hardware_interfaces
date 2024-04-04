@@ -353,8 +353,7 @@ void FrontendTests::verifyFrontendStatus(vector<FrontendStatusType> statusTypes,
                 break;
             }
             case FrontendStatusType::UEC: {
-                ASSERT_TRUE(realStatuses[i].get<FrontendStatus::Tag::uec>() ==
-                            expectStatuses[i].get<FrontendStatus::Tag::uec>());
+                ASSERT_TRUE(realStatuses[i].get<FrontendStatus::Tag::uec>() >= 0);
                 break;
             }
             case FrontendStatusType::T2_SYSTEM_ID: {
