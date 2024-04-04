@@ -121,12 +121,10 @@ typedef struct {
 /* RTT configuration v3 (11az support)*/
 typedef struct {
     wifi_rtt_config rtt_config;
-    byte ntb_min_measurement_time_millis; // 11az Non-Trigger-based (non-TB) minimum measurement
-                                          // time in milliseconds
-    byte ntb_max_measurement_time_millis; // 11az Non-Trigger-based (non-TB) maximum measurement
-                                          // time in milliseconds
-    byte tx_ltf_repetition_count;         // Multiple transmissions of HE-LTF symbols in an HE
-                                          // Ranging NDP. A value of 1 indicates no repetition.
+    u64 ntb_min_measurement_time; // 11az Non-Trigger-based (non-TB) minimum measurement time in
+                                  // units of 100 microseconds
+    u64 ntb_max_measurement_time; // 11az Non-Trigger-based (non-TB) maximum measurement time in
+                                  // units of 10 milliseconds
 } wifi_rtt_config_v3;
 
 /* RTT results */
@@ -184,11 +182,19 @@ typedef struct {
 /* RTT results v3 (11az support)*/
 typedef struct {
   wifi_rtt_result_v2 rtt_result;
-  int tx_ltf_repetition_count;         // 11az Transmit LTF repetitions used to get this result.
-  int ntb_min_measurement_time_millis; // Minimum non-trigger based (non-TB) dynamic measurement
-                                       // time in milliseconds assigned by the 11az responder.
-  int ntb_max_measurement_time_millis; // Maximum non-trigger based (non-TB) dynamic measurement
-                                       // time in milliseconds assigned by the 11az responder.
+  byte i2r_tx_ltf_repetition_count;// Multiple transmissions of HE-LTF symbols in an HE (I2R)
+                                   // Ranging NDP. An HE-LTF repetition value of 1 indicates no
+                                   // repetitions.
+  byte r2i_tx_ltf_repetition_count;// Multiple transmissions of HE-LTF symbols in an HE (R2I)
+                                   // Ranging NDP. An HE-LTF repetition value of 1 indicates no
+                                   // repetitions.
+  u64 ntb_min_measurement_time;    // Minimum non-trigger based (non-TB) dynamic measurement time
+                                   // in units of 100 microseconds assigned by the 11az responder.
+  u64 ntb_max_measurement_time;    // Maximum non-trigger based (non-TB) dynamic measurement
+                                   // time in units of 10 milliseconds assigned by the 11az
+                                   // responder.
+  byte num_tx_sts;                 // Number of transmit space-time streams used.
+  byte num_rx_sts;                 // Number of receive space-time streams used.
 } wifi_rtt_result_v3;
 
 
@@ -305,8 +311,6 @@ typedef struct {
     byte az_bw_support;             // bit mask indicates what BW is supported by 11az initiator
     byte ntb_initiator_supported;   // if 11az non-TB initiator is supported
     byte ntb_responder_supported;   // if 11az non-TB responder is supported
-    byte max_tx_ltf_repetition_count;// maximum HE LTF repetitions the 11az initiator is capable of
-                                    // transmitting in the preamble of I2R NDP
 } wifi_rtt_capabilities_v3;
 
 /*  RTT capabilities v3 of the device (11az support) */
