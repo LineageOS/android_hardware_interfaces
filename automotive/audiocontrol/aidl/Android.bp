@@ -93,3 +93,10 @@ cc_defaults {
         latest_android_hardware_automotive_audiocontrol + "-ndk",
     ],
 }
+
+java_defaults {
+    name: "latest_android_hardware_automotive_audiocontrol_java_static",
+    static_libs: [
+        latest_android_hardware_automotive_audiocontrol + "-java",
+    ],
+}
