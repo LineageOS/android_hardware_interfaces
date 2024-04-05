@@ -237,11 +237,20 @@ TEST(BroadcastRadioUtilsTest, GetAllIdsWithAvailableIds) {
     sel.secondaryIds.push_back(
             utils::makeIdentifier(IdentifierType::AMFM_FREQUENCY_KHZ, secondaryFrequencyKHz));
 
-    std::vector<int> allIds = utils::getAllIds(sel, IdentifierType::AMFM_FREQUENCY_KHZ);
+    std::vector<int64_t> allIds = utils::getAllIds(sel, IdentifierType::AMFM_FREQUENCY_KHZ);
 
     ASSERT_EQ(allIds.size(), 2u);
     EXPECT_NE(std::find(allIds.begin(), allIds.end(), kFmFrequencyKHz), allIds.end());
     EXPECT_NE(std::find(allIds.begin(), allIds.end(), secondaryFrequencyKHz), allIds.end());
+}
+
+TEST(BroadcastRadioUtilsTest, GetAllIdsWithIdLongerThan32Bit) {
+    ProgramSelector sel = utils::makeSelectorDab(kDabSidExt, kDabEnsemble, kDabFrequencyKhz);
+
+    std::vector<int64_t> allIds = utils::getAllIds(sel, IdentifierType::DAB_SID_EXT);
+
+    ASSERT_EQ(allIds.size(), 1u);
+    EXPECT_NE(std::find(allIds.begin(), allIds.end(), kDabSidExt), allIds.end());
 }
 
 TEST(BroadcastRadioUtilsTest, GetAllIdsWithIdNotFound) {
