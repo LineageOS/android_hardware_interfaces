@@ -1603,15 +1603,21 @@ class GraphicsComposerAidlCommandTest : public GraphicsComposerAidlTest {
                 EXPECT_TRUE(mComposerClient->setActiveConfig(&display, config1).isOk());
                 sendRefreshFrame(display, nullptr);
 
-                const auto displayConfigGroup1 = display.getDisplayConfig(config1);
-                int32_t vsyncPeriod1 = displayConfigGroup1.vsyncPeriod;
-                int32_t configGroup1 = displayConfigGroup1.configGroup;
+                const auto displayConfig1 = display.getDisplayConfig(config1);
+                int32_t vsyncPeriod1 = displayConfig1.vsyncPeriod;
+                int32_t configGroup1 = displayConfig1.configGroup;
 
-                const auto displayConfigGroup2 = display.getDisplayConfig(config2);
-                int32_t vsyncPeriod2 = displayConfigGroup2.vsyncPeriod;
-                int32_t configGroup2 = displayConfigGroup2.configGroup;
+                const auto displayConfig2 = display.getDisplayConfig(config2);
+                int32_t vsyncPeriod2 = displayConfig2.vsyncPeriod;
+                int32_t configGroup2 = displayConfig2.configGroup;
 
                 if (vsyncPeriod1 == vsyncPeriod2) {
+                    return;  // continue
+                }
+
+                if ((!displayConfig1.vrrConfigOpt && displayConfig2.vrrConfigOpt) ||
+                    (displayConfig1.vrrConfigOpt && !displayConfig2.vrrConfigOpt)) {
+                    // switching between vrr to non-vrr modes
                     return;  // continue
                 }
 
@@ -2738,7 +2744,7 @@ TEST_P(GraphicsComposerAidlCommandV2Test, SetRefreshRateChangedCallbackDebug_Ena
         const auto displayFilter = [&](auto refreshRateChangedDebugData) {
             bool nonVrrRateMatching = true;
             if (std::optional<VrrConfig> vrrConfigOpt =
-                        display.getDisplayConfig(configId).vrrConfig;
+                        display.getDisplayConfig(configId).vrrConfigOpt;
                 getInterfaceVersion() >= 3 && !vrrConfigOpt) {
                 nonVrrRateMatching = refreshRateChangedDebugData.refreshPeriodNanos ==
                                      refreshRateChangedDebugData.vsyncPeriodNanos;
@@ -2836,10 +2842,7 @@ TEST_P(GraphicsComposerAidlCommandV2Test,
                             .isOk());
 
         forEachTwoConfigs(displayId, [&](int32_t config1, int32_t config2) {
-            const int32_t vsyncPeriod1 = display.getDisplayConfig(config1).vsyncPeriod;
-            const int32_t vsyncPeriod2 = display.getDisplayConfig(config2).vsyncPeriod;
-
-            if (vsyncPeriod1 == vsyncPeriod2) {
+            if (display.isRateSameBetweenConfigs(config1, config2)) {
                 return;  // continue
             }
 
@@ -2854,6 +2857,7 @@ TEST_P(GraphicsComposerAidlCommandV2Test,
                 sendRefreshFrame(display, &timeline);
             }
 
+            const int32_t vsyncPeriod2 = display.getDisplayConfig(config2).vsyncPeriod;
             const auto callbackFilter = [displayId,
                                          vsyncPeriod2](auto refreshRateChangedDebugData) {
                 constexpr int kVsyncThreshold = 1000;
