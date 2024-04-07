@@ -455,18 +455,7 @@ TEST_P(AuthTest, TimeoutAuthenticationMultiSid) {
                            .Authorization(TAG_AUTH_TIMEOUT, timeout_secs);
     vector<uint8_t> keyblob;
     vector<KeyCharacteristics> key_characteristics;
-    vector<Certificate> cert_chain;
-    auto result = GenerateKey(builder, std::nullopt, &keyblob, &key_characteristics, &cert_chain);
-    if (SecLevel() == SecurityLevel::STRONGBOX) {
-        if (result == ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED) {
-            result = GenerateKeyWithSelfSignedAttestKey(AuthorizationSetBuilder()
-                                                                .EcdsaKey(EcCurve::P_256)
-                                                                .AttestKey()
-                                                                .SetDefaultValidity(),
-                                                        builder, &keyblob, &key_characteristics,
-                                                        &cert_chain);
-        }
-    }
+    auto result = GenerateKey(builder, &keyblob, &key_characteristics);
     ASSERT_EQ(ErrorCode::OK, result);
 
     // Verify first user to get a HAT that should work.
