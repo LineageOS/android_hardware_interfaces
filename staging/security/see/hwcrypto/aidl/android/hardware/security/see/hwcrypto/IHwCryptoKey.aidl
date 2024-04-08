@@ -54,6 +54,59 @@ interface IHwCryptoKey {
         boolean dicePolicyWasCurrent;
     }
 
+    parcelable ClearKeyPolicy {
+        /*
+         * Indicates the desired key size. It will be used to calculate how many bytes of key
+         * material should be returned.
+         */
+        int keySizeBytes;
+    }
+
+    union DerivedKeyPolicy {
+        /*
+         * Policy for the newly derived opaque key. Defines how the key can be used and its type.
+         */
+        KeyPolicy opaqueKey;
+
+        /*
+         * If used we will derive a clear key and pass it back as an array of bytes on
+         * <code>HwCryptoKeyMaterial::explicitKey</code>.
+         */
+        ClearKeyPolicy clearKey;
+    }
+
+    parcelable DerivedKeyParameters {
+        /*
+         * Key to be used to derive the new key using HKDF.
+         */
+        IOpaqueKey derivationKey;
+
+        /*
+         * Policy for the newly derived key. Depending on its type, either a clear or opaque key
+         * will be derived.
+         */
+        DerivedKeyPolicy keyPolicy;
+
+        /*
+         * An arbitrary set of bytes incorporated into the key derivation. May have
+         * an implementation-specific maximum length, but it is guaranteed to accept
+         * at least 32 bytes.
+         */
+        byte[] context;
+    }
+
+    union DerivedKey {
+        /*
+         * Derived key in clear format.
+         */
+        byte[] explicitKey = {};
+
+        /*
+         * Derived key as a key token to be used only through the HWCrypto service.
+         */
+        IOpaqueKey opaque;
+    }
+
     /*
      * deriveCurrentDicePolicyBoundKey() - Derives a versioned key tied to the caller's current DICE
      *                              policy. It will return this current policy back to the caller
@@ -85,4 +138,17 @@ interface IHwCryptoKey {
      *      <code>HalErrorCode</code> otherwise.
      */
     DiceBoundKeyResult deriveDicePolicyBoundKey(in byte[] dicePolicyForKeyVersion);
+
+    /*
+     * deriveKey() - Derive a new key based on the given key, policy and context.
+     *
+     * @parameters:
+     *      Parameters used for the key derivation. See <code>DerivedKeyParameters</code> on this
+     *      file for more information.
+     *
+     * Return:
+     *      Ok(HwCryptoKeyMaterial) on success, service specific error based on
+     *      <code>HalErrorCode</code> otherwise.
+     */
+    DerivedKey deriveKey(in DerivedKeyParameters parameters);
 }

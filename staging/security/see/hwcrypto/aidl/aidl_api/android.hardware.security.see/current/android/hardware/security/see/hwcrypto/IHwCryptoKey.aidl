@@ -35,6 +35,7 @@ package android.hardware.security.see.hwcrypto;
 interface IHwCryptoKey {
   android.hardware.security.see.hwcrypto.IHwCryptoKey.DiceCurrentBoundKeyResult deriveCurrentDicePolicyBoundKey();
   android.hardware.security.see.hwcrypto.IHwCryptoKey.DiceBoundKeyResult deriveDicePolicyBoundKey(in byte[] dicePolicyForKeyVersion);
+  android.hardware.security.see.hwcrypto.IHwCryptoKey.DerivedKey deriveKey(in android.hardware.security.see.hwcrypto.IHwCryptoKey.DerivedKeyParameters parameters);
   parcelable DiceCurrentBoundKeyResult {
     android.hardware.security.see.hwcrypto.IOpaqueKey diceBoundKey;
     byte[] dicePolicyForKeyVersion;
@@ -42,5 +43,21 @@ interface IHwCryptoKey {
   parcelable DiceBoundKeyResult {
     android.hardware.security.see.hwcrypto.IOpaqueKey diceBoundKey;
     boolean dicePolicyWasCurrent;
+  }
+  parcelable ClearKeyPolicy {
+    int keySizeBytes;
+  }
+  union DerivedKeyPolicy {
+    android.hardware.security.see.hwcrypto.KeyPolicy opaqueKey;
+    android.hardware.security.see.hwcrypto.IHwCryptoKey.ClearKeyPolicy clearKey;
+  }
+  parcelable DerivedKeyParameters {
+    android.hardware.security.see.hwcrypto.IOpaqueKey derivationKey;
+    android.hardware.security.see.hwcrypto.IHwCryptoKey.DerivedKeyPolicy keyPolicy;
+    byte[] context;
+  }
+  union DerivedKey {
+    byte[] explicitKey = {};
+    android.hardware.security.see.hwcrypto.IOpaqueKey opaque;
   }
 }
