@@ -121,7 +121,7 @@ int64_t getId(const ProgramSelector& sel, const IdentifierType& type, int64_t de
 /**
  * Returns all IDs of a given type.
  */
-std::vector<int> getAllIds(const ProgramSelector& sel, const IdentifierType& type);
+std::vector<int64_t> getAllIds(const ProgramSelector& sel, const IdentifierType& type);
 
 /**
  * Checks, if a given selector is supported by the radio module.
