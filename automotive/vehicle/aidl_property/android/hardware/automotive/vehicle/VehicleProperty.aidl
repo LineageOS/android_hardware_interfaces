@@ -170,6 +170,11 @@ enum VehicleProperty {
     /**
      * EV port location
      *
+     * This property must communicate the location of the charging port on the EV using the
+     * PortLocationType enum. If there are multiple ports available on the vehicle, this property
+     * must return the port that allows the fastest charging. To communicate all port locations,
+     * use INFO_MULTI_EV_PORT_LOCATIONS.
+     *
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
      * @data_enum PortLocationType
@@ -214,7 +219,10 @@ enum VehicleProperty {
      * Port locations are defined in PortLocationType.
      * For example, a car has one port in front left and one port in rear left:
      *   int32Values[0] = PortLocationType::FRONT_LEFT
-     *   int32Values[0] = PortLocationType::REAR_LEFT
+     *   int32Values[1] = PortLocationType::REAR_LEFT
+     *
+     * If only one port exists on the vehicle, this property's value should list just one element.
+     * See INFO_EV_PORT_LOCATION for describing just one port location.
      *
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
