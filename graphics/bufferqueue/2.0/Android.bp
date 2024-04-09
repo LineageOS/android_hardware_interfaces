@@ -13,9 +13,6 @@ package {
 hidl_interface {
     name: "android.hardware.graphics.bufferqueue@2.0",
     root: "android.hardware",
-    vndk: {
-        enabled: true,
-    },
     srcs: [
         "types.hal",
         "IGraphicBufferProducer.hal",

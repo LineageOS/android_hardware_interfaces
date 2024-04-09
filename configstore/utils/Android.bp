@@ -26,13 +26,10 @@ package {
 cc_library_shared {
     name: "android.hardware.configstore-utils",
     vendor_available: true,
-    vndk: {
-        enabled: true,
-    },
     double_loadable: true,
     defaults: ["hidl_defaults"],
 
-    srcs: [ "ConfigStoreUtils.cpp" ],
+    srcs: ["ConfigStoreUtils.cpp"],
 
     export_include_dirs: ["include"],
 
@@ -40,12 +37,12 @@ cc_library_shared {
         "android.hardware.configstore@1.0",
         "android.hardware.configstore@1.1",
         "libbase",
-        "libhidlbase"
+        "libhidlbase",
     ],
     export_shared_lib_headers: [
         "android.hardware.configstore@1.0",
         "android.hardware.configstore@1.1",
         "libbase",
-        "libhidlbase"
+        "libhidlbase",
     ],
 }
