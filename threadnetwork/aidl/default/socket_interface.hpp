@@ -22,6 +22,7 @@
 
 #include "lib/spinel/spinel_interface.hpp"
 #include "lib/url/url.hpp"
+#include "logger.hpp"
 
 namespace aidl {
 namespace android {
@@ -32,8 +33,11 @@ namespace threadnetwork {
  * Defines a Socket interface to the Radio Co-processor (RCP)
  *
  */
-class SocketInterface : public ot::Spinel::SpinelInterface {
+class SocketInterface : public ot::Spinel::SpinelInterface,
+                        public ot::Posix::Logger<SocketInterface> {
   public:
+    static const char kLogModuleName[];  ///< Module name used for logging.
+
     /**
      * Initializes the object.
      *
