@@ -73,20 +73,22 @@ TEST_P(DeviceUniqueAttestationTest, RsaNonStrongBoxUnimplemented) {
     vector<KeyCharacteristics> key_characteristics;
 
     // Check RSA implementation
-    auto result = GenerateKey(AuthorizationSetBuilder()
-                                      .Authorization(TAG_NO_AUTH_REQUIRED)
-                                      .RsaSigningKey(2048, 65537)
-                                      .Digest(Digest::SHA_2_256)
-                                      .Padding(PaddingMode::RSA_PKCS1_1_5_SIGN)
-                                      .Authorization(TAG_INCLUDE_UNIQUE_ID)
-                                      .Authorization(TAG_CREATION_DATETIME, 1619621648000)
-                                      .SetDefaultValidity()
-                                      .AttestationChallenge("challenge")
-                                      .AttestationApplicationId("foo")
-                                      .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION),
-                              &key_blob, &key_characteristics);
+    auto result =
+            GenerateKey(AuthorizationSetBuilder()
+                                .Authorization(TAG_NO_AUTH_REQUIRED)
+                                .RsaSigningKey(2048, 65537)
+                                .Digest(Digest::SHA_2_256)
+                                .Padding(PaddingMode::RSA_PKCS1_1_5_SIGN)
+                                .Authorization(TAG_INCLUDE_UNIQUE_ID)
+                                .Authorization(TAG_CREATION_DATETIME, 1619621648000)
+                                .SetDefaultValidity()
+                                .AttestationChallenge("challenge")
+                                .AttestationApplicationId("foo")
+                                .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION),
+                        /*attest_key=*/std::nullopt, &key_blob, &key_characteristics, &cert_chain_);
 
-    ASSERT_TRUE(result == ErrorCode::INVALID_ARGUMENT || result == ErrorCode::UNSUPPORTED_TAG);
+    ASSERT_TRUE(result == ErrorCode::INVALID_ARGUMENT || result == ErrorCode::UNSUPPORTED_TAG)
+            << "Result: " << result;
 }
 
 /*
@@ -104,19 +106,21 @@ TEST_P(DeviceUniqueAttestationTest, EcdsaNonStrongBoxUnimplemented) {
     vector<KeyCharacteristics> key_characteristics;
 
     // Check Ecdsa implementation
-    auto result = GenerateKey(AuthorizationSetBuilder()
-                                      .Authorization(TAG_NO_AUTH_REQUIRED)
-                                      .EcdsaSigningKey(EcCurve::P_256)
-                                      .Digest(Digest::SHA_2_256)
-                                      .Authorization(TAG_INCLUDE_UNIQUE_ID)
-                                      .Authorization(TAG_CREATION_DATETIME, 1619621648000)
-                                      .SetDefaultValidity()
-                                      .AttestationChallenge("challenge")
-                                      .AttestationApplicationId("foo")
-                                      .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION),
-                              &key_blob, &key_characteristics);
+    auto result =
+            GenerateKey(AuthorizationSetBuilder()
+                                .Authorization(TAG_NO_AUTH_REQUIRED)
+                                .EcdsaSigningKey(EcCurve::P_256)
+                                .Digest(Digest::SHA_2_256)
+                                .Authorization(TAG_INCLUDE_UNIQUE_ID)
+                                .Authorization(TAG_CREATION_DATETIME, 1619621648000)
+                                .SetDefaultValidity()
+                                .AttestationChallenge("challenge")
+                                .AttestationApplicationId("foo")
+                                .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION),
+                        /*attest_key=*/std::nullopt, &key_blob, &key_characteristics, &cert_chain_);
 
-    ASSERT_TRUE(result == ErrorCode::INVALID_ARGUMENT || result == ErrorCode::UNSUPPORTED_TAG);
+    ASSERT_TRUE(result == ErrorCode::INVALID_ARGUMENT || result == ErrorCode::UNSUPPORTED_TAG)
+            << "Result: " << result;
 }
 
 /*

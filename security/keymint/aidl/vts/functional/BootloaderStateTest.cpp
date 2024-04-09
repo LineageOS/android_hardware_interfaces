@@ -54,18 +54,6 @@ class BootloaderStateTest : public KeyMintAidlTestBase {
                                            .Digest(Digest::NONE)
                                            .SetDefaultValidity();
         auto result = GenerateKey(keyDesc, &key_blob, &key_characteristics);
-        // If factory provisioned attestation key is not supported by Strongbox,
-        // then create a key with self-signed attestation and use it as the
-        // attestation key instead.
-        if (SecLevel() == SecurityLevel::STRONGBOX &&
-            result == ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED) {
-            result = GenerateKeyWithSelfSignedAttestKey(
-                    AuthorizationSetBuilder()
-                            .EcdsaKey(EcCurve::P_256)
-                            .AttestKey()
-                            .SetDefaultValidity(), /* attest key params */
-                    keyDesc, &key_blob, &key_characteristics);
-        }
         ASSERT_EQ(ErrorCode::OK, result);
 
         // Parse attested AVB values.
