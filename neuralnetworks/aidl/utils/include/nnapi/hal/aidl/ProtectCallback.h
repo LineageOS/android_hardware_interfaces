@@ -37,6 +37,8 @@ namespace aidl::android::hardware::neuralnetworks::utils {
 // Thread safe class
 class DeathMonitor final {
   public:
+    explicit DeathMonitor(uintptr_t cookieKey) : kCookieKey(cookieKey) {}
+
     static void serviceDied(void* cookie);
     void serviceDied();
     // Precondition: `killable` must be non-null.
@@ -44,9 +46,18 @@ class DeathMonitor final {
     // Precondition: `killable` must be non-null.
     void remove(hal::utils::IProtectedCallback* killable) const;
 
+    uintptr_t getCookieKey() const { return kCookieKey; }
+
+    ~DeathMonitor();
+    DeathMonitor(const DeathMonitor&) = delete;
+    DeathMonitor(DeathMonitor&&) noexcept = delete;
+    DeathMonitor& operator=(const DeathMonitor&) = delete;
+    DeathMonitor& operator=(DeathMonitor&&) noexcept = delete;
+
   private:
     mutable std::mutex mMutex;
     mutable std::vector<hal::utils::IProtectedCallback*> mObjects GUARDED_BY(mMutex);
+    const uintptr_t kCookieKey;
 };
 
 class DeathHandler final {
