@@ -853,9 +853,9 @@
                 "description": "Window Move\nThe maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined. All integers between minInt32Value and maxInt32Value must be supported.\nThe maxInt32Value indicates the window is opening in plane\/closing in the out of plane direction at the fastest speed. The minInt32Value indicates the window is closing in plane\/opening in the out of plane direction at the fastest speed.\nLarger absolute values, either positive or negative, indicate a faster movement speed. Once the window reaches the positional limit, the value must reset to 0. If WINDOW_MOVE's value is currently 0, then that means there is no movement currently occurring.\nThis property is not in any particular unit but in a specified range of relative movement speeds.\nFor a window that may open out of plane (i.e. vent mode of sunroof) this parameter will work as follows:\nIf sunroof is open: Max = open the sunroof further, automatically stop when fully open. Min = close the sunroof, automatically stop when sunroof is closed.\nIf vent is open: Max = close the vent, automatically stop when vent is closed. Min = open the vent further, automatically stop when vent is fully open.\nIf sunroof is in the closed position: Max = open the sunroof, automatically stop when sunroof is fully open. Min = open the vent, automatically stop when vent is fully open.\nThis property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to implement it as VehiclePropertyAccess.READ only."
             },
             {
-                "name": "Window Lock",
+                "name": "Window Child Lock",
                 "value": 320867268,
-                "description": "Window Lock\nTrue indicates windows are locked and can't be moved.\nThis property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to implement it as VehiclePropertyAccess.READ only."
+                "description": "Window Child Lock\nTrue indicates the window is child-locked.\nThis property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to implement it as VehiclePropertyAccess.READ only."
             },
             {
                 "name": "WINDSHIELD_WIPERS_PERIOD",

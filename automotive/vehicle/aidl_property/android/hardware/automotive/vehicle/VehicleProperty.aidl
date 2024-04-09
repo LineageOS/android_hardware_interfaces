@@ -3286,9 +3286,9 @@ enum VehicleProperty {
     WINDOW_MOVE = 0x0BC1 + 0x10000000 + 0x03000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:WINDOW,VehiclePropertyType:INT32
     /**
-     * Window Lock
+     * Window Child Lock
      *
-     * True indicates windows are locked and can't be moved.
+     * True indicates the window is child-locked.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
