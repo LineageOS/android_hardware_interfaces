@@ -132,6 +132,7 @@ ConfigValue Config::getDefault(const std::string& name) {
 }
 
 bool Config::setInternal(const std::string& name, const ConfigValue& val) {
+    LOG(INFO) << "Config::set " << name << " to " << toString(val);
     bool res = false;
     auto& data = mMap[name];
 

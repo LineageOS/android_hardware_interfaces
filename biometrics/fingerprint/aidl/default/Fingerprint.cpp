@@ -125,6 +125,8 @@ binder_status_t Fingerprint::dump(int fd, const char** /*args*/, uint32_t numArg
     }
     ::android::base::WriteStringToFd(mEngine->toString(), fd);
 
+    ::android::base::WriteStringToFd(Fingerprint::cfg().toString(), fd);
+
     fsync(fd);
     return STATUS_OK;
 }
