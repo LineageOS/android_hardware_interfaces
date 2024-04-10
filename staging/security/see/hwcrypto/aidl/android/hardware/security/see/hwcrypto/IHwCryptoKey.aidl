@@ -22,6 +22,30 @@ import android.hardware.security.see.hwcrypto.KeyPolicy;
  * Higher level interface to access and generate keys.
  */
 interface IHwCryptoKey {
+    /*
+     * Identifier for the requested device provided key. The currently supported identifiers are:
+     *
+     * DEVICE_BOUND_KEY:
+     *      This is a key unique to the device.
+     * BATCH_KEY:
+     *      This is a shared by a set of devices.
+     */
+    enum DeviceKeyId {
+        DEVICE_BOUND_KEY,
+        BATCH_KEY,
+    }
+    union DiceBoundDerivationKey {
+        /*
+         * Opaque to be used to derive the DICE bound key.
+         */
+        IOpaqueKey opaqueKey;
+
+        /*
+         * Device provided key to be used to derive the DICE bound key.
+         */
+        DeviceKeyId keyId;
+    }
+
     parcelable DiceCurrentBoundKeyResult {
         /*
          * Key cryptographically bound to a DICE policy.
@@ -112,16 +136,23 @@ interface IHwCryptoKey {
      *                              policy. It will return this current policy back to the caller
      *                              along with the generated key.
      *
+     * @derivationKey:
+     *     Key to be used to derive the new key using HKDF.
+     *
      * Return:
      *      Ok(DiceCurrentBoundKeyResult) on success, service specific error based on
      *      <code>HalErrorCode</code> otherwise.
      */
-    DiceCurrentBoundKeyResult deriveCurrentDicePolicyBoundKey();
+    DiceCurrentBoundKeyResult deriveCurrentDicePolicyBoundKey(
+            in DiceBoundDerivationKey derivationKey);
 
     /*
      * deriveDicePolicyBoundKey() - Derive a versioned key by checking the provided DICE policy
      *                              against the caller and then using it as a context for deriving
      *                              the returned key.
+     *
+     * @derivationKey:
+     *     Key to be used to derive the new key using HKDF.
      *
      * @dicePolicyForKeyVersion:
      *     Policy used to derive keys tied to specific versions. Using this parameter
@@ -137,7 +168,8 @@ interface IHwCryptoKey {
      *      Ok(DiceBoundKeyResult) on success, service specific error based on
      *      <code>HalErrorCode</code> otherwise.
      */
-    DiceBoundKeyResult deriveDicePolicyBoundKey(in byte[] dicePolicyForKeyVersion);
+    DiceBoundKeyResult deriveDicePolicyBoundKey(
+            in DiceBoundDerivationKey derivationKey, in byte[] dicePolicyForKeyVersion);
 
     /*
      * deriveKey() - Derive a new key based on the given key, policy and context.
