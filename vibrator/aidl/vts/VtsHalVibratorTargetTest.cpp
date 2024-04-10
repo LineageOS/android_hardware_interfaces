@@ -41,6 +41,8 @@ using android::hardware::vibrator::IVibratorManager;
 using android::hardware::vibrator::PrimitivePwle;
 using std::chrono::high_resolution_clock;
 
+using namespace ::std::chrono_literals;
+
 const std::vector<Effect> kEffects{android::enum_range<Effect>().begin(),
                                    android::enum_range<Effect>().end()};
 const std::vector<EffectStrength> kEffectStrengths{android::enum_range<EffectStrength>().begin(),
@@ -70,6 +72,9 @@ const std::vector<CompositePrimitive> kInvalidPrimitives = {
     static_cast<CompositePrimitive>(static_cast<int32_t>(kCompositePrimitives.front()) - 1),
     static_cast<CompositePrimitive>(static_cast<int32_t>(kCompositePrimitives.back()) + 1),
 };
+
+// Timeout to wait for vibration callback completion.
+static constexpr auto VIBRATION_CALLBACK_TIMEOUT = 100ms;
 
 class CompletionCallback : public BnVibratorCallback {
   public:
@@ -221,7 +226,7 @@ TEST_P(VibratorAidl, OnWithCallback) {
     sp<CompletionCallback> callback =
         new CompletionCallback([&completionPromise] { completionPromise.set_value(); });
     uint32_t durationMs = 250;
-    std::chrono::milliseconds timeout{durationMs * 2};
+    auto timeout = std::chrono::milliseconds(durationMs) + VIBRATION_CALLBACK_TIMEOUT;
     EXPECT_TRUE(vibrator->on(durationMs, callback).isOk());
     EXPECT_EQ(completionFuture.wait_for(timeout), std::future_status::ready);
     EXPECT_TRUE(vibrator->off().isOk());
@@ -288,10 +293,10 @@ TEST_P(VibratorAidl, ValidateEffectWithCallback) {
             if (!status.isOk())
                 continue;
 
-            //TODO(b/187207798): revert back to conservative timeout values once
-            //latencies have been fixed
-            std::chrono::milliseconds timeout{lengthMs * 8};
+            auto timeout = std::chrono::milliseconds(lengthMs) + VIBRATION_CALLBACK_TIMEOUT;
             EXPECT_EQ(completionFuture.wait_for(timeout), std::future_status::ready);
+
+            EXPECT_TRUE(vibrator->off().isOk());
         }
     }
 }
@@ -619,9 +624,7 @@ TEST_P(VibratorAidl, ComposeCallback) {
         EXPECT_EQ(Status::EX_NONE, vibrator->compose(composite, callback).exceptionCode())
                 << toString(primitive);
 
-        // TODO(b/261130361): Investigate why latency from driver and hardware will cause test
-        // to fail when wait duration is ~40ms or less.
-        EXPECT_EQ(completionFuture.wait_for(duration + std::chrono::milliseconds(50)),
+        EXPECT_EQ(completionFuture.wait_for(duration + VIBRATION_CALLBACK_TIMEOUT),
                   std::future_status::ready)
                 << toString(primitive);
         end = high_resolution_clock::now();
@@ -782,9 +785,7 @@ TEST_P(VibratorAidl, ComposeValidPwleWithCallback) {
     int32_t segmentDurationMaxMs;
     vibrator->getPwlePrimitiveDurationMax(&segmentDurationMaxMs);
     uint32_t durationMs = segmentDurationMaxMs * 2 + 100;  // Sum of 2 active and 1 braking below
-    //TODO(b/187207798): revert back to conservative timeout values once
-    //latencies have been fixed
-    std::chrono::milliseconds timeout{durationMs * 4};
+    auto timeout = std::chrono::milliseconds(durationMs) + VIBRATION_CALLBACK_TIMEOUT;
 
     ActivePwle active = composeValidActivePwle(vibrator, capabilities);
 
