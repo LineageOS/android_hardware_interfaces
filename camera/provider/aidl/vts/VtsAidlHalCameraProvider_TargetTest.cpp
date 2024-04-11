@@ -177,6 +177,9 @@ TEST_P(CameraAidlTest, validateManualFlashStrengthControlKeys) {
             const camera_metadata_t* staticMeta =
                     reinterpret_cast<const camera_metadata_t*>(meta.metadata.data());
             verifyManualFlashStrengthControlCharacteristics(staticMeta);
+            ret = mSession->close();
+            mSession = nullptr;
+            ASSERT_TRUE(ret.isOk());
         }
     } else {
         ALOGI("validateManualFlashStrengthControlKeys: Test skipped.\n");

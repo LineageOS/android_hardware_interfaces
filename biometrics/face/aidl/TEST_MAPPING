@@ -1,0 +1,13 @@
+{
+  "postsubmit": [
+    {
+      "name": "android.hardware.biometrics.face.FakeFaceEngineTest"
+    },
+    {
+      "name": "android.hardware.biometrics.face.FakeLockoutTrackerTest"
+    },
+    {
+      "name": "VtsHalBiometricsFaceTargetTest"
+    }
+  ]
+}

@@ -1204,18 +1204,21 @@ void CameraAidlTest::verifyManualFlashStrengthControlCharacteristics(
     int torchDefRetCode = find_camera_metadata_ro_entry(staticMeta,
             ANDROID_FLASH_TORCH_STRENGTH_DEFAULT_LEVEL, &torchDefEntry);
     if (torch_supported) {
+        int expectedEntryCount;
         if(singleMaxRetCode == 0 && singleDefRetCode == 0 && torchMaxRetCode == 0 &&
                 torchDefRetCode == 0) {
             singleMaxLevel = *singleMaxEntry.data.i32;
             singleDefLevel = *singleDefEntry.data.i32;
             torchMaxLevel = *torchMaxEntry.data.i32;
             torchDefLevel = *torchDefEntry.data.i32;
-            ASSERT_TRUE((singleMaxEntry.count == singleDefEntry.count == torchMaxEntry.count
-                    == torchDefEntry.count == 1));
+            expectedEntryCount = 1;
         } else {
-            ASSERT_TRUE((singleMaxEntry.count == singleDefEntry.count == torchMaxEntry.count
-                    == torchDefEntry.count == 0));
+            expectedEntryCount = 0;
         }
+        ASSERT_EQ(singleMaxEntry.count, expectedEntryCount);
+        ASSERT_EQ(singleDefEntry.count, expectedEntryCount);
+        ASSERT_EQ(torchMaxEntry.count, expectedEntryCount);
+        ASSERT_EQ(torchDefEntry.count, expectedEntryCount);
         // if the device supports this feature default levels should be greater than 0
         if (singleMaxLevel > 1) {
             ASSERT_GT(torchMaxLevel, 1);

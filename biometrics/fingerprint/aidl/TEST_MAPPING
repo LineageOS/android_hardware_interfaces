@@ -1,0 +1,22 @@
+{
+  "postsubmit": [
+    {
+      "name": "android.hardware.biometrics.fingerprint.FakeFingerprintEngineTest"
+    },
+    {
+      "name": "android.hardware.biometrics.fingerprint.FakeFingerprintEngineUdfpsTest"
+    },
+    {
+      "name": "android.hardware.biometrics.fingerprint.FakeLockoutTrackerTest"
+    },
+    {
+      "name": "android.hardware.biometrics.fingerprint.SessionTest"
+    },
+    {
+      "name": "android.hardware.biometrics.fingerprint.VirtualHalTest"
+    },
+    {
+      "name": "VtsHalBiometricsFingerprintTargetTest"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "postsubmit": [
+    {
+      "name": "android.hardware.biometrics.common.ConfigTest"
+    },
+    {
+      "name": "android.hardware.biometrics.common.WorkerThreadTest"
+    }
+  ]
+}

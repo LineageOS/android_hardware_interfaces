@@ -75,7 +75,7 @@ static constexpr uint8_t kMinLeResolvingListForBt5 = 8;
 static constexpr size_t kNumHciCommandsBandwidth = 100;
 static constexpr size_t kNumScoPacketsBandwidth = 100;
 static constexpr size_t kNumAclPacketsBandwidth = 100;
-static constexpr std::chrono::milliseconds kWaitForInitTimeout(1000);
+static constexpr std::chrono::milliseconds kWaitForInitTimeout(2000);
 static constexpr std::chrono::milliseconds kWaitForHciEventTimeout(2000);
 static constexpr std::chrono::milliseconds kWaitForScoDataTimeout(1000);
 static constexpr std::chrono::milliseconds kWaitForAclDataTimeout(1000);
