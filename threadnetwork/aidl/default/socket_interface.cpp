@@ -23,6 +23,7 @@
 #include "socket_interface.hpp"
 
 #include <errno.h>
+#include <linux/limits.h>
 #include <openthread/logging.h>
 #include <sys/inotify.h>
 #include <sys/socket.h>
@@ -273,7 +274,7 @@ void SocketInterface::WaitForSocketFileCreated(const char* aPath) {
         }
 
         if (FD_ISSET(inotifyFd, &fds)) {
-            char buffer[sizeof(struct inotify_event)];
+            char buffer[sizeof(struct inotify_event) + NAME_MAX + 1];
             ssize_t bytesRead = read(inotifyFd, buffer, sizeof(buffer));
 
             VerifyOrDie(bytesRead >= 0, OT_EXIT_ERROR_ERRNO);
