@@ -538,6 +538,7 @@
             <name>ISharedSecret</name>
             <instance>default</instance>
             <instance>strongbox</instance>
+            <regex-instance>.*</regex-instance>
         </interface>
     </hal>
     <hal format="aidl">
