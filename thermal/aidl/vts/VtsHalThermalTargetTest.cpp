@@ -25,6 +25,7 @@
 
 #define LOG_TAG "thermal_aidl_hal_test"
 
+#include <VtsCoreUtil.h>
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
 #include <aidl/android/hardware/thermal/BnCoolingDeviceChangedCallback.h>
@@ -69,6 +70,16 @@ static const CoolingDevice kCoolingDevice = {
         .powerMw = 500,
         .timeWindowMs = 7000,
 };
+
+static const std::string FEATURE_WATCH = "android.hardware.type.watch";
+static const std::string FEATURE_TELEVISION = "android.hardware.type.television";
+static const std::string FEATURE_LEANBACK = "android.software.leanback";
+static const std::string FEATURE_AUTOMOTIVE = "android.hardware.type.automotive";
+static const std::string FEATURE_PC = "android.hardware.type.pc";
+static const std::string FEATURE_EMBEDDED = "android.hardware.type.embedded";
+static const std::string kNonHandheldFeatures[] = {FEATURE_AUTOMOTIVE, FEATURE_LEANBACK,
+                                                   FEATURE_PC,         FEATURE_TELEVISION,
+                                                   FEATURE_WATCH,      FEATURE_EMBEDDED};
 
 // Callback class for receiving thermal event notifications from main class
 class ThermalCallback : public BnThermalChangedCallback {
@@ -343,6 +354,11 @@ TEST_P(ThermalAidlTest, SkinTemperatureThresholdsTest) {
     auto apiLevel = ::android::base::GetIntProperty<int32_t>("ro.vendor.api_level", 0);
     if (apiLevel < 35) {
         GTEST_SKIP() << "Skipping test as the vendor level is below 35: " << apiLevel;
+    }
+    for (const auto& feature : kNonHandheldFeatures) {
+        if (::testing::deviceSupportsFeature(feature.c_str())) {
+            GTEST_SKIP() << "Skipping test as the device has feature: " << feature;
+        }
     }
     std::vector<Temperature> temperatures;
     ::ndk::ScopedAStatus status =
