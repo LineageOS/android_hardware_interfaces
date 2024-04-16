@@ -413,7 +413,7 @@ TEST_P(SupplicantStaIfaceAidlTest, SetSuspendModeEnabled) {
  * SetCountryCode
  */
 TEST_P(SupplicantStaIfaceAidlTest, SetCountryCode) {
-    const std::vector<uint8_t> countryCode = {'M', 'X'};
+    const std::vector<uint8_t> countryCode = {'U', 'S'};
     EXPECT_TRUE(sta_iface_->setCountryCode(countryCode).isOk());
 }
 

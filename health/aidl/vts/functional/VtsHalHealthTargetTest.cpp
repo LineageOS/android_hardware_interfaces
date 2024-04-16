@@ -312,7 +312,8 @@ MATCHER_P(IsValidHealthData, version, "") {
     return true;
 }
 
-/*
+/* @VsrTest = 3.2.015
+ *
  * Tests the values returned by getBatteryHealthData() from interface IHealth.
  */
 TEST_P(HealthAidl, getBatteryHealthData) {
