@@ -47,17 +47,28 @@ cc_library_static {
     ],
 }
 
+cc_library_static {
+    name: "android.hardware.broadcastradio@common-utils-aidl-lib-latest",
+    defaults: [
+        "BroadcastRadioUtilsDefaults",
+        "latest_android_hardware_broadcastradio_ndk_static",
+    ],
+    srcs: [
+        "src/UtilsV2.cpp",
+    ],
+}
+
 cc_test {
     name: "broadcastradio_utils_aidl_test",
     defaults: [
         "BroadcastRadioUtilsDefaults",
+        "latest_android_hardware_broadcastradio_ndk_static",
     ],
     srcs: [
         "test/*.cpp",
     ],
     static_libs: [
-        "android.hardware.broadcastradio@common-utils-aidl-lib-V2",
-        "android.hardware.broadcastradio-V2-ndk",
+        "android.hardware.broadcastradio@common-utils-aidl-lib-latest",
     ],
     test_suites: ["general-tests"],
 }

@@ -20,14 +20,17 @@ package {
     // all of the 'license_kinds' from "hardware_interfaces_license"
     // to get the below license kinds:
     //   SPDX-license-identifier-Apache-2.0
+    default_team: "trendy_team_aaos_framework",
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
 cc_defaults {
     name: "BroadcastRadioHalDefaults",
+    defaults: [
+        "latest_android_hardware_broadcastradio_ndk_static",
+    ],
     static_libs: [
-        "android.hardware.broadcastradio-V2-ndk",
-        "android.hardware.broadcastradio@common-utils-aidl-lib-V2",
+        "android.hardware.broadcastradio@common-utils-aidl-lib-latest",
         "android.hardware.broadcastradio@common-utils-lib",
     ],
     shared_libs: [
@@ -79,12 +82,12 @@ cc_fuzz {
     // TODO(b/307611931): avoid fuzzing on vendor until hermiticity issue is fixed
     // vendor: true,
     defaults: [
+        "latest_android_hardware_broadcastradio_ndk_static",
         "BroadcastRadioHalDefaults",
         "service_fuzzer_defaults",
     ],
     static_libs: [
         "DefaultBroadcastRadioHal",
-        "android.hardware.broadcastradio-V2-ndk",
     ],
     srcs: [
         "fuzzer.cpp",
