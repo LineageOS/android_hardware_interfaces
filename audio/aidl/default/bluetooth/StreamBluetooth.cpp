@@ -93,17 +93,18 @@ StreamBluetooth::StreamBluetooth(StreamContext* context, const Metadata& metadat
 ::android::status_t StreamBluetooth::transfer(void* buffer, size_t frameCount,
                                               size_t* actualFrameCount, int32_t* latencyMs) {
     std::lock_guard guard(mLock);
+    *actualFrameCount = 0;
+    *latencyMs = StreamDescriptor::LATENCY_UNKNOWN;
     if (mBtDeviceProxy == nullptr || mBtDeviceProxy->getState() == BluetoothStreamState::DISABLED) {
-        *actualFrameCount = 0;
-        *latencyMs = StreamDescriptor::LATENCY_UNKNOWN;
+        // The BT session is turned down, silently ignore write.
         return ::android::OK;
     }
-    *actualFrameCount = 0;
-    *latencyMs = 0;
     if (!mBtDeviceProxy->start()) {
-        LOG(ERROR) << __func__ << ": state= " << mBtDeviceProxy->getState() << " failed to start";
-        return -EIO;
+        LOG(WARNING) << __func__ << ": state= " << mBtDeviceProxy->getState()
+                     << " failed to start, will retry";
+        return ::android::OK;
     }
+    *latencyMs = 0;
     const size_t bytesToTransfer = frameCount * mFrameSizeBytes;
     const size_t bytesTransferred = mIsInput ? mBtDeviceProxy->readData(buffer, bytesToTransfer)
                                              : mBtDeviceProxy->writeData(buffer, bytesToTransfer);
