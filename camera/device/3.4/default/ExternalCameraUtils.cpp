@@ -108,9 +108,38 @@ int AllocatedFrame::allocate(YCbCrLayout* out) {
         return -EINVAL;
     }
 
-    uint32_t dataSize = mWidth * mHeight * 3 / 2; // YUV420
-    if (mData.size() != dataSize) {
-        mData.resize(dataSize);
+    // This frame might be sent to jpeglib to be encoded. Since AllocatedFrame only contains YUV420,
+    // jpeglib expects height and width of Y component to be an integral multiple of 2*DCTSIZE,
+    // and heights and widths of Cb and Cr components to be an integral multiple of DCTSIZE. If the
+    // image size does not meet this requirement, libjpeg expects its input to be padded to meet the
+    // constraints. This padding is removed from the final encoded image so the content in the
+    // padding doesn't matter. What matters is that the memory is accessible to jpeglib at the time
+    // of encoding.
+    // For example, if the image size is 1500x844 and DCTSIZE is 8, jpeglib expects a YUV 420
+    // frame with components of following sizes:
+    //   Y:      1504x848 because 1504 and 848 are the next smallest multiples of 2*8
+    //   Cb/Cr:  752x424 which are the next smallest multiples of 8
+
+    // jpeglib takes an array of row pointers which makes vertical padding trivial when setting up
+    // the pointers. Padding horizontally is a bit more complicated. AllocatedFrame holds the data
+    // in a flattened buffer, which means memory accesses past a row will flow into the next logical
+    // row. For any row of a component, we can consider the first few bytes of the next row as
+    // padding for the current one. This is true for Y and Cb components and all but last row of the
+    // Cr component. Reading past the last row of Cr component will lead to undefined behavior as
+    // libjpeg attempts to read memory past the allocated buffer. To prevent undefined behavior,
+    // the buffer allocated here is padded such that libjpeg never accesses unallocated memory when
+    // reading the last row. Effectively, we only need to ensure that the last row of Cr component
+    // has width that is an integral multiple of DCTSIZE.
+
+    size_t dataSize = mWidth * mHeight * 3 / 2;  // YUV420
+
+    size_t cbWidth = mWidth / 2;
+    size_t requiredCbWidth = DCTSIZE * ((cbWidth + DCTSIZE - 1) / DCTSIZE);
+    size_t padding = requiredCbWidth - cbWidth;
+    size_t finalSize = dataSize + padding;
+
+    if (mData.size() != finalSize) {
+        mData.resize(finalSize);
     }
 
     if (out != nullptr) {
