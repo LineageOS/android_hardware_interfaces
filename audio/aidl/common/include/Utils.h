@@ -47,6 +47,9 @@ inline std::string errorToString(const ScopedAStatus& s) {
 
 namespace aidl::android::hardware::audio::common {
 
+// TODO: b/275135031 - move this string to AIDL interfaces.
+static constexpr char kDumpFromAudioServerArgument[] = "dump_from_audioserver";
+
 // Some values are reserved for use by the system code only.
 // HALs must not accept or emit values outside from the provided list.
 constexpr std::array<::aidl::android::media::audio::common::AudioMode, 5> kValidAudioModes = {
