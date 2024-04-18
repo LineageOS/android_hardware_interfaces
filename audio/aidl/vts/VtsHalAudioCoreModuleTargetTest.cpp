@@ -2978,6 +2978,11 @@ static bool skipStreamIoTestForMixPortConfig(const AudioPortConfig& portConfig) 
                      AudioOutputFlags::COMPRESS_OFFLOAD, AudioOutputFlags::INCALL_MUSIC}));
 }
 
+// Certain types of devices can not be used without special preconditions.
+static bool skipStreamIoTestForDevice(const AudioDevice& device) {
+    return device.type.type == AudioDeviceType::IN_ECHO_REFERENCE;
+}
+
 template <typename Stream>
 class StreamFixtureWithWorker {
   public:
@@ -3886,6 +3891,9 @@ class AudioStreamIo : public AudioCoreModuleBase,
             GTEST_SKIP() << "No mix ports have attached devices";
         }
         for (const auto& portConfig : allPortConfigs) {
+            auto port = moduleConfig->getPort(portConfig.portId);
+            ASSERT_TRUE(port.has_value());
+            SCOPED_TRACE(port->toString());
             SCOPED_TRACE(portConfig.toString());
             if (skipStreamIoTestForMixPortConfig(portConfig)) continue;
             const bool isNonBlocking =
@@ -3968,6 +3976,7 @@ class AudioStreamIo : public AudioCoreModuleBase,
         StreamFixture<Stream> stream;
         ASSERT_NO_FATAL_FAILURE(
                 stream.SetUpStreamForMixPortConfig(module.get(), moduleConfig.get(), portConfig));
+        if (skipStreamIoTestForDevice(stream.getDevice())) return;
         ASSERT_EQ("", stream.skipTestReason());
         StreamLogicDefaultDriver driver(commandsAndStates,
                                         stream.getStreamContext()->getFrameSizeBytes());
@@ -3996,6 +4005,7 @@ class AudioStreamIo : public AudioCoreModuleBase,
         StreamFixture<Stream> stream;
         ASSERT_NO_FATAL_FAILURE(
                 stream.SetUpPatchForMixPortConfig(module.get(), moduleConfig.get(), portConfig));
+        if (skipStreamIoTestForDevice(stream.getDevice())) return;
         ASSERT_EQ("", stream.skipTestReason());
         ASSERT_NO_FATAL_FAILURE(stream.TeardownPatchSetUpStream(module.get()));
         StreamLogicDefaultDriver driver(commandsAndStates,
