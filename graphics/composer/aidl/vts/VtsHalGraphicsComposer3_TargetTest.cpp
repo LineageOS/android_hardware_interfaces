@@ -2203,13 +2203,13 @@ TEST_P(GraphicsComposerAidlCommandTest, SetLayerCompositionType) {
 
 TEST_P(GraphicsComposerAidlCommandTest, DisplayDecoration) {
     for (VtsDisplay& display : mDisplays) {
-        auto& writer = getWriter(display.getDisplayId());
+        const auto displayId = display.getDisplayId();
+        auto& writer = getWriter(displayId);
         const auto [layerStatus, layer] =
-                mComposerClient->createLayer(display.getDisplayId(), kBufferSlotCount, &writer);
-        EXPECT_TRUE(layerStatus.isOk());
+                mComposerClient->createLayer(displayId, kBufferSlotCount, &writer);
+        ASSERT_TRUE(layerStatus.isOk());
 
-        const auto [error, support] =
-                mComposerClient->getDisplayDecorationSupport(display.getDisplayId());
+        const auto [error, support] = mComposerClient->getDisplayDecorationSupport(displayId);
 
         const auto format = (error.isOk() && support) ? support->format
                         : aidl::android::hardware::graphics::common::PixelFormat::RGBA_8888;
@@ -2229,9 +2229,9 @@ TEST_P(GraphicsComposerAidlCommandTest, DisplayDecoration) {
 
         configureLayer(display, layer, Composition::DISPLAY_DECORATION, display.getFrameRect(),
                        display.getCrop());
-        writer.setLayerBuffer(display.getDisplayId(), layer, /*slot*/ 0, decorBuffer->handle,
+        writer.setLayerBuffer(displayId, layer, /*slot*/ 0, decorBuffer->handle,
                               /*acquireFence*/ -1);
-        writer.validateDisplay(display.getDisplayId(), ComposerClientWriter::kNoTimestamp,
+        writer.validateDisplay(displayId, ComposerClientWriter::kNoTimestamp,
                                VtsComposerClient::kNoFrameIntervalNs);
         execute();
         if (support) {
@@ -2241,6 +2241,7 @@ TEST_P(GraphicsComposerAidlCommandTest, DisplayDecoration) {
             ASSERT_EQ(1, errors.size());
             EXPECT_EQ(IComposerClient::EX_UNSUPPORTED, errors[0].errorCode);
         }
+        EXPECT_TRUE(mComposerClient->destroyLayer(displayId, layer, &writer).isOk());
     }
 }
 
