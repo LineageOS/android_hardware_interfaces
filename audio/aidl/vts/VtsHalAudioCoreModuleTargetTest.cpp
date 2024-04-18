@@ -1040,7 +1040,9 @@ class StreamWriterLogic : public StreamCommonLogic {
                        << ": received invalid byte count in the reply: " << reply.fmqByteCount;
             return Status::ABORT;
         }
-        if (getDataMQ()->availableToWrite() != getDataMQ()->getQuantumCount()) {
+        // It is OK for the implementation to leave data in the MQ when the stream is paused.
+        if (reply.state != StreamDescriptor::State::PAUSED &&
+            getDataMQ()->availableToWrite() != getDataMQ()->getQuantumCount()) {
             LOG(ERROR) << __func__ << ": the HAL module did not consume all data from the data MQ: "
                        << "available to write " << getDataMQ()->availableToWrite()
                        << ", total size: " << getDataMQ()->getQuantumCount();
@@ -4550,9 +4552,8 @@ std::shared_ptr<StateSequence> makePauseCommands(bool isInput, bool isSync) {
                                             std::make_pair(State::PAUSED, kStartCommand),
                                             std::make_pair(State::ACTIVE, kPauseCommand),
                                             std::make_pair(State::PAUSED, kBurstCommand),
-                                            std::make_pair(State::PAUSED, kStartCommand),
-                                            std::make_pair(State::ACTIVE, kPauseCommand)},
-                                           State::PAUSED);
+                                            std::make_pair(State::PAUSED, kFlushCommand)},
+                                           State::IDLE);
         if (!isSync) {
             idle.children().push_back(
                     d->makeNodes({std::make_pair(State::TRANSFERRING, kPauseCommand),
