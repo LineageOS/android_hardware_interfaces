@@ -133,13 +133,23 @@ auto findAny(const std::vector<T>& v, const std::set<int32_t>& ids) {
 }
 
 template <typename C>
-std::vector<int32_t> GetNonExistentIds(const C& allIds) {
+std::vector<int32_t> GetNonExistentIds(const C& allIds, bool includeZero = true) {
     if (allIds.empty()) {
-        return std::vector<int32_t>{-1, 0, 1};
+        return includeZero ? std::vector<int32_t>{-1, 0, 1} : std::vector<int32_t>{-1, 1};
     }
     std::vector<int32_t> nonExistentIds;
-    nonExistentIds.push_back(*std::min_element(allIds.begin(), allIds.end()) - 1);
-    nonExistentIds.push_back(*std::max_element(allIds.begin(), allIds.end()) + 1);
+    if (auto value = *std::min_element(allIds.begin(), allIds.end()) - 1;
+        includeZero || value != 0) {
+        nonExistentIds.push_back(value);
+    } else {
+        nonExistentIds.push_back(value - 1);
+    }
+    if (auto value = *std::max_element(allIds.begin(), allIds.end()) + 1;
+        includeZero || value != 0) {
+        nonExistentIds.push_back(value);
+    } else {
+        nonExistentIds.push_back(value + 1);
+    }
     return nonExistentIds;
 }
 
@@ -4206,7 +4216,7 @@ class AudioModulePatch : public AudioCoreModule {
         // Then use the same patch setting, except for having an invalid ID.
         std::set<int32_t> patchIds;
         ASSERT_NO_FATAL_FAILURE(GetAllPatchIds(&patchIds));
-        for (const auto patchId : GetNonExistentIds(patchIds)) {
+        for (const auto patchId : GetNonExistentIds(patchIds, false /*includeZero*/)) {
             AudioPatch patchWithNonExistendId = patch.get();
             patchWithNonExistendId.id = patchId;
             EXPECT_STATUS(EX_ILLEGAL_ARGUMENT,
