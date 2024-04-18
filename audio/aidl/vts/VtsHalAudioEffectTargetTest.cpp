@@ -58,6 +58,7 @@ class AudioEffectTest : public testing::TestWithParam<EffectTestParam>, public E
   public:
     AudioEffectTest() {
         std::tie(mFactory, mDescriptor) = std::get<PARAM_INSTANCE_NAME>(GetParam());
+        mVersion = EffectFactoryHelper::getHalVersion(mFactory);
     }
 
     void SetUp() override {}
@@ -76,6 +77,7 @@ class AudioEffectTest : public testing::TestWithParam<EffectTestParam>, public E
     std::shared_ptr<IFactory> mFactory;
     std::shared_ptr<IEffect> mEffect;
     Descriptor mDescriptor;
+    int mVersion = 0;
 
     void setAndGetParameter(Parameter::Id id, const Parameter& set) {
         Parameter get;
@@ -682,7 +684,7 @@ TEST_P(AudioEffectDataPathTest, ConsumeDataInProcessingState) {
 
     std::vector<float> buffer;
     EXPECT_NO_FATAL_FAILURE(EffectHelper::allocateInputData(common, inputMQ, buffer));
-    EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToFmq(statusMQ, inputMQ, buffer));
+    EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToFmq(statusMQ, inputMQ, buffer, mVersion));
     EXPECT_NO_FATAL_FAILURE(
             EffectHelper::readFromFmq(statusMQ, 1, outputMQ, buffer.size(), buffer));
 
@@ -722,7 +724,7 @@ TEST_P(AudioEffectDataPathTest, ConsumeDataAfterRestart) {
     ASSERT_NO_FATAL_FAILURE(expectState(mEffect, State::PROCESSING));
 
     EXPECT_NO_FATAL_FAILURE(EffectHelper::allocateInputData(common, inputMQ, buffer));
-    EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToFmq(statusMQ, inputMQ, buffer));
+    EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToFmq(statusMQ, inputMQ, buffer, mVersion));
     EXPECT_NO_FATAL_FAILURE(
             EffectHelper::readFromFmq(statusMQ, 1, outputMQ, buffer.size(), buffer));
 
@@ -759,7 +761,7 @@ TEST_P(AudioEffectDataPathTest, ConsumeDataAfterReopen) {
     ASSERT_NO_FATAL_FAILURE(command(mEffect, CommandId::START));
     ASSERT_NO_FATAL_FAILURE(expectState(mEffect, State::PROCESSING));
     EXPECT_NO_FATAL_FAILURE(EffectHelper::allocateInputData(common, inputMQ, buffer));
-    EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToFmq(statusMQ, inputMQ, buffer));
+    EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToFmq(statusMQ, inputMQ, buffer, mVersion));
     EXPECT_NO_FATAL_FAILURE(
             EffectHelper::readFromFmq(statusMQ, 1, outputMQ, buffer.size(), buffer));
 
@@ -779,7 +781,7 @@ TEST_P(AudioEffectDataPathTest, ConsumeDataAfterReopen) {
 
     // verify data consume again
     EXPECT_NO_FATAL_FAILURE(EffectHelper::allocateInputData(common, inputMQ, buffer));
-    EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToFmq(statusMQ, inputMQ, buffer));
+    EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToFmq(statusMQ, inputMQ, buffer, mVersion));
     EXPECT_NO_FATAL_FAILURE(
             EffectHelper::readFromFmq(statusMQ, 1, outputMQ, buffer.size(), buffer));
 
@@ -810,7 +812,7 @@ TEST_P(AudioEffectDataPathTest, SendDataAtIdleAndConsumeDataInProcessing) {
 
     std::vector<float> buffer;
     EXPECT_NO_FATAL_FAILURE(EffectHelper::allocateInputData(common, inputMQ, buffer));
-    EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToFmq(statusMQ, inputMQ, buffer));
+    EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToFmq(statusMQ, inputMQ, buffer, mVersion));
 
     ASSERT_NO_FATAL_FAILURE(command(mEffect, CommandId::START));
     ASSERT_NO_FATAL_FAILURE(expectState(mEffect, State::PROCESSING));
@@ -844,7 +846,7 @@ TEST_P(AudioEffectDataPathTest, ProcessDataMultipleTimes) {
 
     std::vector<float> buffer;
     EXPECT_NO_FATAL_FAILURE(EffectHelper::allocateInputData(common, inputMQ, buffer));
-    EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToFmq(statusMQ, inputMQ, buffer));
+    EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToFmq(statusMQ, inputMQ, buffer, mVersion));
     EXPECT_NO_FATAL_FAILURE(EffectHelper::readFromFmq(statusMQ, 0, outputMQ, 0, buffer));
 
     ASSERT_NO_FATAL_FAILURE(command(mEffect, CommandId::START));
@@ -853,7 +855,7 @@ TEST_P(AudioEffectDataPathTest, ProcessDataMultipleTimes) {
     EXPECT_NO_FATAL_FAILURE(
             EffectHelper::readFromFmq(statusMQ, 1, outputMQ, buffer.size(), buffer));
 
-    EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToFmq(statusMQ, inputMQ, buffer));
+    EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToFmq(statusMQ, inputMQ, buffer, mVersion));
     EXPECT_NO_FATAL_FAILURE(
             EffectHelper::readFromFmq(statusMQ, 1, outputMQ, buffer.size(), buffer));
 
@@ -886,13 +888,13 @@ TEST_P(AudioEffectDataPathTest, ConsumeDataAndRestart) {
     ASSERT_NO_FATAL_FAILURE(expectState(mEffect, State::PROCESSING));
     std::vector<float> buffer;
     EXPECT_NO_FATAL_FAILURE(EffectHelper::allocateInputData(common, inputMQ, buffer));
-    EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToFmq(statusMQ, inputMQ, buffer));
+    EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToFmq(statusMQ, inputMQ, buffer, mVersion));
     EXPECT_NO_FATAL_FAILURE(
             EffectHelper::readFromFmq(statusMQ, 1, outputMQ, buffer.size(), buffer));
 
     ASSERT_NO_FATAL_FAILURE(command(mEffect, CommandId::STOP));
     ASSERT_NO_FATAL_FAILURE(expectState(mEffect, State::IDLE));
-    EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToFmq(statusMQ, inputMQ, buffer));
+    EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToFmq(statusMQ, inputMQ, buffer, mVersion));
     EXPECT_NO_FATAL_FAILURE(EffectHelper::readFromFmq(statusMQ, 0, outputMQ, 0, buffer));
 
     ASSERT_NO_FATAL_FAILURE(command(mEffect, CommandId::START));
@@ -928,7 +930,7 @@ TEST_P(AudioEffectDataPathTest, NotConsumeDataByClosedEffect) {
 
     std::vector<float> buffer;
     EXPECT_NO_FATAL_FAILURE(EffectHelper::allocateInputData(common, inputMQ, buffer));
-    EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToFmq(statusMQ, inputMQ, buffer));
+    EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToFmq(statusMQ, inputMQ, buffer, mVersion));
     EXPECT_NO_FATAL_FAILURE(EffectHelper::readFromFmq(statusMQ, 0, outputMQ, 0, buffer));
 
     ASSERT_NO_FATAL_FAILURE(destroy(mFactory, mEffect));
@@ -964,7 +966,7 @@ TEST_P(AudioEffectDataPathTest, ConsumeDataMultipleEffects) {
 
     std::vector<float> buffer1, buffer2;
     EXPECT_NO_FATAL_FAILURE(EffectHelper::allocateInputData(common1, inputMQ1, buffer1));
-    EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToFmq(statusMQ1, inputMQ1, buffer1));
+    EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToFmq(statusMQ1, inputMQ1, buffer1, mVersion));
     EXPECT_NO_FATAL_FAILURE(
             EffectHelper::readFromFmq(statusMQ1, 1, outputMQ1, buffer1.size(), buffer1));
 
@@ -975,7 +977,7 @@ TEST_P(AudioEffectDataPathTest, ConsumeDataMultipleEffects) {
     auto outputMQ2 = std::make_unique<EffectHelper::DataMQ>(ret2.outputDataMQ);
     ASSERT_TRUE(outputMQ2->isValid());
     EXPECT_NO_FATAL_FAILURE(EffectHelper::allocateInputData(common2, inputMQ2, buffer2));
-    EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToFmq(statusMQ2, inputMQ2, buffer2));
+    EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToFmq(statusMQ2, inputMQ2, buffer2, mVersion));
     EXPECT_NO_FATAL_FAILURE(
             EffectHelper::readFromFmq(statusMQ2, 1, outputMQ2, buffer2.size(), buffer2));
 

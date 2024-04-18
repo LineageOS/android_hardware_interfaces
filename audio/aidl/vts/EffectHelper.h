@@ -43,8 +43,10 @@ using namespace android;
 using aidl::android::hardware::audio::effect::CommandId;
 using aidl::android::hardware::audio::effect::Descriptor;
 using aidl::android::hardware::audio::effect::IEffect;
+using aidl::android::hardware::audio::effect::kEventFlagDataMqNotEmpty;
 using aidl::android::hardware::audio::effect::kEventFlagDataMqUpdate;
 using aidl::android::hardware::audio::effect::kEventFlagNotEmpty;
+using aidl::android::hardware::audio::effect::kReopenSupportedVersion;
 using aidl::android::hardware::audio::effect::Parameter;
 using aidl::android::hardware::audio::effect::Range;
 using aidl::android::hardware::audio::effect::State;
@@ -158,7 +160,7 @@ class EffectHelper {
         std::fill(buffer.begin(), buffer.end(), 0x5a);
     }
     static void writeToFmq(std::unique_ptr<StatusMQ>& statusMq, std::unique_ptr<DataMQ>& dataMq,
-                           const std::vector<float>& buffer) {
+                           const std::vector<float>& buffer, int version) {
         const size_t available = dataMq->availableToWrite();
         ASSERT_NE(0Ul, available);
         auto bufferFloats = buffer.size();
@@ -169,7 +171,8 @@ class EffectHelper {
         ASSERT_EQ(::android::OK,
                   EventFlag::createEventFlag(statusMq->getEventFlagWord(), &efGroup));
         ASSERT_NE(nullptr, efGroup);
-        efGroup->wake(kEventFlagNotEmpty);
+        efGroup->wake(version >= kReopenSupportedVersion ? kEventFlagDataMqNotEmpty
+                                                         : kEventFlagNotEmpty);
         ASSERT_EQ(::android::OK, EventFlag::deleteEventFlag(&efGroup));
     }
     static void readFromFmq(std::unique_ptr<StatusMQ>& statusMq, size_t statusNum,
@@ -320,7 +323,10 @@ class EffectHelper {
         ASSERT_NO_FATAL_FAILURE(expectState(mEffect, State::PROCESSING));
 
         // Write from buffer to message queues and calling process
-        EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToFmq(statusMQ, inputMQ, inputBuffer));
+        EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToFmq(statusMQ, inputMQ, inputBuffer, [&]() {
+            int version = 0;
+            return (mEffect && mEffect->getInterfaceVersion(&version).isOk()) ? version : 0;
+        }()));
 
         // Read the updated message queues into buffer
         EXPECT_NO_FATAL_FAILURE(EffectHelper::readFromFmq(statusMQ, 1, outputMQ,
