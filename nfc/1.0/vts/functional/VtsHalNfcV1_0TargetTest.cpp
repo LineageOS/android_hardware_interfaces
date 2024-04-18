@@ -562,7 +562,18 @@ TEST_P(NfcHidlTest, CloseAfterClose) {
  */
 TEST_P(NfcHidlTest, OpenAfterOpen) {
   EXPECT_EQ(NfcStatus::OK, nfc_->open(nfc_cb_));
+  // Wait for OPEN_CPLT event
+  auto res = nfc_cb_->WaitForCallback(kCallbackNameSendEvent);
+  EXPECT_TRUE(res.no_timeout);
+  EXPECT_EQ(NfcEvent::OPEN_CPLT, res.args->last_event_);
+  EXPECT_EQ(NfcStatus::OK, res.args->last_status_);
+
   EXPECT_EQ(NfcStatus::OK, nfc_->open(nfc_cb_));
+  // Wait for OPEN_CPLT event
+  res = nfc_cb_->WaitForCallback(kCallbackNameSendEvent);
+  EXPECT_TRUE(res.no_timeout);
+  EXPECT_EQ(NfcEvent::OPEN_CPLT, res.args->last_event_);
+  EXPECT_EQ(NfcStatus::OK, res.args->last_status_);
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(NfcHidlTest);
