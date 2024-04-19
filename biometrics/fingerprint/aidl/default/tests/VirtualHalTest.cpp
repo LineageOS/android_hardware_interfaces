@@ -100,6 +100,27 @@ TEST_F(VirtualHalTest, enrollment_hit_int32) {
     ASSERT_TRUE(Fingerprint::cfg().get<int32_t>("enrollment_hit") == 11);
 }
 
+TEST_F(VirtualHalTest, next_enrollment) {
+    struct {
+        std::string nextEnrollmentStr;
+        fingerprint::NextEnrollment nextEnrollment;
+    } testData[] = {
+            {"1:20:true", {1, {{20}}, true}},
+            {"1:50,60,70:true", {1, {{50}, {60}, {70}}, true}},
+            {"2:50-[8],60,70-[2,1002,1]:false",
+             {2,
+              {{50, {{AcquiredInfo::START}}},
+               {60},
+               {70, {{AcquiredInfo::PARTIAL}, {1002}, {AcquiredInfo::GOOD}}}},
+              false}},
+    };
+
+    for (auto& d : testData) {
+        mVhal->setNextEnrollment(d.nextEnrollment);
+        ASSERT_TRUE(Fingerprint::cfg().get<std::string>("next_enrollment") == d.nextEnrollmentStr);
+    }
+}
+
 TEST_F(VirtualHalTest, authenticator_id_int64) {
     mVhal->setAuthenticatorId(12345678900);
     ASSERT_TRUE(Fingerprint::cfg().get<int64_t>("authenticator_id") == 12345678900);
@@ -111,12 +132,16 @@ TEST_F(VirtualHalTest, opeationAuthenticateFails_bool) {
 }
 
 TEST_F(VirtualHalTest, operationAuthenticateAcquired_int32_vector) {
-    std::vector<int32_t> ac{1, 2, 3, 4, 5, 6, 7};
+    using Tag = AcquiredInfoAndVendorCode::Tag;
+    std::vector<AcquiredInfoAndVendorCode> ac{
+            {AcquiredInfo::START}, {AcquiredInfo::PARTIAL}, {1023}};
     mVhal->setOperationAuthenticateAcquired(ac);
     OptIntVec ac_get = Fingerprint::cfg().getopt<OptIntVec>("operation_authenticate_acquired");
     ASSERT_TRUE(ac_get.size() == ac.size());
     for (int i = 0; i < ac.size(); i++) {
-        ASSERT_TRUE(ac[i] == ac_get[i]);
+        int acCode = (ac[i].getTag() == Tag::acquiredInfo) ? (int)ac[i].get<Tag::acquiredInfo>()
+                                                           : ac[i].get<Tag::vendorCode>();
+        ASSERT_TRUE(acCode == ac_get[i]);
     }
 }
 
@@ -212,7 +237,7 @@ TEST_F(VirtualHalTest, setOthers) {
     mVhal->setOperationEnrollError(5);
     mVhal->setOperationEnrollLatency({4, 5});
     mVhal->setOperationDetectInteractionError(6);
-    mVhal->setOperationDetectInteractionAcquired({4, 3, 2});
+    mVhal->setOperationDetectInteractionAcquired({{AcquiredInfo::START}, {AcquiredInfo::GOOD}});
     mVhal->setLockout(false);
     mVhal->setLockoutEnable(false);
     mVhal->setSensorId(5);

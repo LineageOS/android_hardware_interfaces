@@ -28,6 +28,9 @@ class VirtualHal : public BnVirtualHal {
 
     ::ndk::ScopedAStatus setEnrollments(const std::vector<int32_t>& in_id) override;
     ::ndk::ScopedAStatus setEnrollmentHit(int32_t in_hit_id) override;
+    ::ndk::ScopedAStatus setNextEnrollment(
+            const ::aidl::android::hardware::biometrics::fingerprint::NextEnrollment&
+                    in_next_enrollment) override;
     ::ndk::ScopedAStatus setAuthenticatorId(int64_t in_id) override;
     ::ndk::ScopedAStatus setChallenge(int64_t in_challenge) override;
     ::ndk::ScopedAStatus setOperationAuthenticateFails(bool in_fail) override;
@@ -36,7 +39,7 @@ class VirtualHal : public BnVirtualHal {
     ::ndk::ScopedAStatus setOperationAuthenticateDuration(int32_t in_duration) override;
     ::ndk::ScopedAStatus setOperationAuthenticateError(int32_t in_error) override;
     ::ndk::ScopedAStatus setOperationAuthenticateAcquired(
-            const std::vector<int32_t>& in_acquired) override;
+            const std::vector<AcquiredInfoAndVendorCode>& in_acquired) override;
     ::ndk::ScopedAStatus setOperationEnrollError(int32_t in_error) override;
     ::ndk::ScopedAStatus setOperationEnrollLatency(const std::vector<int32_t>& in_latency) override;
     ::ndk::ScopedAStatus setOperationDetectInteractionLatency(
@@ -44,12 +47,13 @@ class VirtualHal : public BnVirtualHal {
     ::ndk::ScopedAStatus setOperationDetectInteractionError(int32_t in_error) override;
     ::ndk::ScopedAStatus setOperationDetectInteractionDuration(int32_t in_duration) override;
     ::ndk::ScopedAStatus setOperationDetectInteractionAcquired(
-            const std::vector<int32_t>& in_acquired) override;
+            const std::vector<AcquiredInfoAndVendorCode>& in_acquired) override;
     ::ndk::ScopedAStatus setLockout(bool in_lockout) override;
     ::ndk::ScopedAStatus setLockoutEnable(bool in_enable) override;
     ::ndk::ScopedAStatus setLockoutTimedThreshold(int32_t in_threshold) override;
     ::ndk::ScopedAStatus setLockoutTimedDuration(int32_t in_duration) override;
     ::ndk::ScopedAStatus setLockoutPermanentThreshold(int32_t in_threshold) override;
+    ::ndk::ScopedAStatus resetConfigurations() override;
     ::ndk::ScopedAStatus setType(
             ::aidl::android::hardware::biometrics::fingerprint::FingerprintSensorType in_type)
             override;
@@ -66,6 +70,7 @@ class VirtualHal : public BnVirtualHal {
 
   private:
     OptIntVec intVec2OptIntVec(const std::vector<int32_t>& intVec);
+    OptIntVec acquiredInfoVec2OptIntVec(const std::vector<AcquiredInfoAndVendorCode>& intVec);
     ::ndk::ScopedAStatus sanityCheckLatency(const std::vector<int32_t>& in_latency);
     Fingerprint* mFp;
 };
