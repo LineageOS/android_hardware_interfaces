@@ -791,6 +791,13 @@ struct StateDag : public Dag<StateTransitionFrom> {
         };
         return helper(v.begin(), helper);
     }
+    Node makeNodes(StreamDescriptor::State s, TransitionTrigger t, size_t count, Node last) {
+        auto helper = [&](size_t c, auto&& h) -> Node {
+            if (c == 0) return last;
+            return makeNode(s, t, h(--c, h));
+        };
+        return helper(count, helper);
+    }
     Node makeNodes(const std::vector<StateTransitionFrom>& v, StreamDescriptor::State f) {
         return makeNodes(v, makeFinalNode(f));
     }
@@ -4399,17 +4406,22 @@ std::shared_ptr<StateSequence> makeBurstCommands(bool isSync) {
     using State = StreamDescriptor::State;
     auto d = std::make_unique<StateDag>();
     StateDag::Node last = d->makeFinalNode(State::ACTIVE);
-    // Use a couple of bursts to ensure that the driver starts reporting the position.
-    StateDag::Node active2 = d->makeNode(State::ACTIVE, kBurstCommand, last);
-    StateDag::Node active = d->makeNode(State::ACTIVE, kBurstCommand, active2);
-    StateDag::Node idle = d->makeNode(State::IDLE, kBurstCommand, active);
-    if (!isSync) {
+    if (isSync) {
+        StateDag::Node idle = d->makeNode(
+                State::IDLE, kBurstCommand,
+                // Use several bursts to ensure that the driver starts reporting the position.
+                d->makeNodes(State::ACTIVE, kBurstCommand, 10, last));
+        d->makeNode(State::STANDBY, kStartCommand, idle);
+    } else {
+        StateDag::Node active2 = d->makeNode(State::ACTIVE, kBurstCommand, last);
+        StateDag::Node active = d->makeNode(State::ACTIVE, kBurstCommand, active2);
+        StateDag::Node idle = d->makeNode(State::IDLE, kBurstCommand, active);
         // Allow optional routing via the TRANSFERRING state on bursts.
         active2.children().push_back(d->makeNode(State::TRANSFERRING, kTransferReadyEvent, last));
         active.children().push_back(d->makeNode(State::TRANSFERRING, kTransferReadyEvent, active2));
         idle.children().push_back(d->makeNode(State::TRANSFERRING, kTransferReadyEvent, active));
+        d->makeNode(State::STANDBY, kStartCommand, idle);
     }
-    d->makeNode(State::STANDBY, kStartCommand, idle);
     return std::make_shared<StateSequenceFollower>(std::move(d));
 }
 static const NamedCommandSequence kReadSeq =
