@@ -93,6 +93,8 @@ class EvsVideoEmulatedCamera : public EvsCamera {
 
     bool initialize();
 
+    bool initializeMediaCodec();
+
     void generateFrames();
 
     void renderOneFrame();

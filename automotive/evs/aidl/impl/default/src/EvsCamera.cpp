@@ -198,9 +198,14 @@ ndk::ScopedAStatus EvsCamera::stopVideoStream() {
     auto status = ndk::ScopedAStatus::ok();
     {
         std::unique_lock lck(mMutex);
+        if (mStreamState != StreamState::RUNNING) {
+            // We're already in the middle of the procedure to stop current data
+            // stream.
+            return status;
+        }
+
         if ((!preVideoStreamStop_locked(status, lck) || !stopVideoStreamImpl_locked(status, lck) ||
-             !postVideoStreamStop_locked(status, lck)) &&
-            !status.isOk()) {
+             !postVideoStreamStop_locked(status, lck)) && !status.isOk()) {
             needShutdown = true;
         }
     }
