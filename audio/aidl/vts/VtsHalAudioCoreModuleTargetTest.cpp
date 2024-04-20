@@ -133,13 +133,23 @@ auto findAny(const std::vector<T>& v, const std::set<int32_t>& ids) {
 }
 
 template <typename C>
-std::vector<int32_t> GetNonExistentIds(const C& allIds) {
+std::vector<int32_t> GetNonExistentIds(const C& allIds, bool includeZero = true) {
     if (allIds.empty()) {
-        return std::vector<int32_t>{-1, 0, 1};
+        return includeZero ? std::vector<int32_t>{-1, 0, 1} : std::vector<int32_t>{-1, 1};
     }
     std::vector<int32_t> nonExistentIds;
-    nonExistentIds.push_back(*std::min_element(allIds.begin(), allIds.end()) - 1);
-    nonExistentIds.push_back(*std::max_element(allIds.begin(), allIds.end()) + 1);
+    if (auto value = *std::min_element(allIds.begin(), allIds.end()) - 1;
+        includeZero || value != 0) {
+        nonExistentIds.push_back(value);
+    } else {
+        nonExistentIds.push_back(value - 1);
+    }
+    if (auto value = *std::max_element(allIds.begin(), allIds.end()) + 1;
+        includeZero || value != 0) {
+        nonExistentIds.push_back(value);
+    } else {
+        nonExistentIds.push_back(value + 1);
+    }
     return nonExistentIds;
 }
 
@@ -1040,7 +1050,9 @@ class StreamWriterLogic : public StreamCommonLogic {
                        << ": received invalid byte count in the reply: " << reply.fmqByteCount;
             return Status::ABORT;
         }
-        if (getDataMQ()->availableToWrite() != getDataMQ()->getQuantumCount()) {
+        // It is OK for the implementation to leave data in the MQ when the stream is paused.
+        if (reply.state != StreamDescriptor::State::PAUSED &&
+            getDataMQ()->availableToWrite() != getDataMQ()->getQuantumCount()) {
             LOG(ERROR) << __func__ << ": the HAL module did not consume all data from the data MQ: "
                        << "available to write " << getDataMQ()->availableToWrite()
                        << ", total size: " << getDataMQ()->getQuantumCount();
@@ -2978,6 +2990,11 @@ static bool skipStreamIoTestForMixPortConfig(const AudioPortConfig& portConfig) 
                      AudioOutputFlags::COMPRESS_OFFLOAD, AudioOutputFlags::INCALL_MUSIC}));
 }
 
+// Certain types of devices can not be used without special preconditions.
+static bool skipStreamIoTestForDevice(const AudioDevice& device) {
+    return device.type.type == AudioDeviceType::IN_ECHO_REFERENCE;
+}
+
 template <typename Stream>
 class StreamFixtureWithWorker {
   public:
@@ -3886,6 +3903,9 @@ class AudioStreamIo : public AudioCoreModuleBase,
             GTEST_SKIP() << "No mix ports have attached devices";
         }
         for (const auto& portConfig : allPortConfigs) {
+            auto port = moduleConfig->getPort(portConfig.portId);
+            ASSERT_TRUE(port.has_value());
+            SCOPED_TRACE(port->toString());
             SCOPED_TRACE(portConfig.toString());
             if (skipStreamIoTestForMixPortConfig(portConfig)) continue;
             const bool isNonBlocking =
@@ -3968,6 +3988,7 @@ class AudioStreamIo : public AudioCoreModuleBase,
         StreamFixture<Stream> stream;
         ASSERT_NO_FATAL_FAILURE(
                 stream.SetUpStreamForMixPortConfig(module.get(), moduleConfig.get(), portConfig));
+        if (skipStreamIoTestForDevice(stream.getDevice())) return;
         ASSERT_EQ("", stream.skipTestReason());
         StreamLogicDefaultDriver driver(commandsAndStates,
                                         stream.getStreamContext()->getFrameSizeBytes());
@@ -3996,6 +4017,7 @@ class AudioStreamIo : public AudioCoreModuleBase,
         StreamFixture<Stream> stream;
         ASSERT_NO_FATAL_FAILURE(
                 stream.SetUpPatchForMixPortConfig(module.get(), moduleConfig.get(), portConfig));
+        if (skipStreamIoTestForDevice(stream.getDevice())) return;
         ASSERT_EQ("", stream.skipTestReason());
         ASSERT_NO_FATAL_FAILURE(stream.TeardownPatchSetUpStream(module.get()));
         StreamLogicDefaultDriver driver(commandsAndStates,
@@ -4194,7 +4216,7 @@ class AudioModulePatch : public AudioCoreModule {
         // Then use the same patch setting, except for having an invalid ID.
         std::set<int32_t> patchIds;
         ASSERT_NO_FATAL_FAILURE(GetAllPatchIds(&patchIds));
-        for (const auto patchId : GetNonExistentIds(patchIds)) {
+        for (const auto patchId : GetNonExistentIds(patchIds, false /*includeZero*/)) {
             AudioPatch patchWithNonExistendId = patch.get();
             patchWithNonExistendId.id = patchId;
             EXPECT_STATUS(EX_ILLEGAL_ARGUMENT,
@@ -4550,9 +4572,8 @@ std::shared_ptr<StateSequence> makePauseCommands(bool isInput, bool isSync) {
                                             std::make_pair(State::PAUSED, kStartCommand),
                                             std::make_pair(State::ACTIVE, kPauseCommand),
                                             std::make_pair(State::PAUSED, kBurstCommand),
-                                            std::make_pair(State::PAUSED, kStartCommand),
-                                            std::make_pair(State::ACTIVE, kPauseCommand)},
-                                           State::PAUSED);
+                                            std::make_pair(State::PAUSED, kFlushCommand)},
+                                           State::IDLE);
         if (!isSync) {
             idle.children().push_back(
                     d->makeNodes({std::make_pair(State::TRANSFERRING, kPauseCommand),
