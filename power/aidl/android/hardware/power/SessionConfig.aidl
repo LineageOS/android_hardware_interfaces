@@ -25,6 +25,9 @@ parcelable SessionConfig {
     /**
      * The session's unique ID, used to identify the session for debugging and
      * for multiplexing on the per-process FMQ channel.
+     *
+     * Values that fit in the 32-bit int range value must be provided when using
+     * the FMQ API, as the FMQ messages can only accept 32-bit Session IDs.
      */
     long id;
 }
