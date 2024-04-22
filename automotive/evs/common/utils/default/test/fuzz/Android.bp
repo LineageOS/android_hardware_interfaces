@@ -15,6 +15,7 @@
 //
 
 package {
+    default_team: "trendy_team_automotive",
     // See: http://go/android-license-faq
     // A large-scale-change added 'default_applicable_licenses' to import
     // all of the 'license_kinds' from "hardware_interfaces_license"
@@ -25,12 +26,12 @@ package {
 
 cc_fuzz {
     host_supported: true,
-    name : "FormatConvertFuzzer_copyNV21toRGB32",
+    name: "FormatConvertFuzzer_copyNV21toRGB32",
     srcs: [
         "FormatConvertFuzzer.cpp",
     ],
     static_libs: [
-        "android.hardware.automotive.evs@common-default-lib"
+        "android.hardware.automotive.evs@common-default-lib",
     ],
     cflags: [
         "-DCOPY_NV21_TO_RGB32",
@@ -39,12 +40,12 @@ cc_fuzz {
 
 cc_fuzz {
     host_supported: true,
-    name : "FormatConvertFuzzer_copyNV21toBGR32",
+    name: "FormatConvertFuzzer_copyNV21toBGR32",
     srcs: [
         "FormatConvertFuzzer.cpp",
     ],
     static_libs: [
-        "android.hardware.automotive.evs@common-default-lib"
+        "android.hardware.automotive.evs@common-default-lib",
     ],
     cflags: [
         "-DCOPY_NV21_TO_BGR32",
@@ -53,12 +54,12 @@ cc_fuzz {
 
 cc_fuzz {
     host_supported: true,
-    name : "FormatConvertFuzzer_copyYV12toRGB32",
+    name: "FormatConvertFuzzer_copyYV12toRGB32",
     srcs: [
         "FormatConvertFuzzer.cpp",
     ],
     static_libs: [
-        "android.hardware.automotive.evs@common-default-lib"
+        "android.hardware.automotive.evs@common-default-lib",
     ],
     cflags: [
         "-DCOPY_YV12_TO_RGB32",
@@ -67,12 +68,12 @@ cc_fuzz {
 
 cc_fuzz {
     host_supported: true,
-    name : "FormatConvertFuzzer_copyYV12toBGR32",
+    name: "FormatConvertFuzzer_copyYV12toBGR32",
     srcs: [
         "FormatConvertFuzzer.cpp",
     ],
     static_libs: [
-        "android.hardware.automotive.evs@common-default-lib"
+        "android.hardware.automotive.evs@common-default-lib",
     ],
     cflags: [
         "-DCOPY_YV12_TO_BGR32",
@@ -81,12 +82,12 @@ cc_fuzz {
 
 cc_fuzz {
     host_supported: true,
-    name : "FormatConvertFuzzer_copyYUYVtoRGB32",
+    name: "FormatConvertFuzzer_copyYUYVtoRGB32",
     srcs: [
         "FormatConvertFuzzer.cpp",
     ],
     static_libs: [
-        "android.hardware.automotive.evs@common-default-lib"
+        "android.hardware.automotive.evs@common-default-lib",
     ],
     cflags: [
         "-DCOPY_YUYV_TO_RGB32",
@@ -95,12 +96,12 @@ cc_fuzz {
 
 cc_fuzz {
     host_supported: true,
-    name : "FormatConvertFuzzer_copyYUYVtoBGR32",
+    name: "FormatConvertFuzzer_copyYUYVtoBGR32",
     srcs: [
         "FormatConvertFuzzer.cpp",
     ],
     static_libs: [
-        "android.hardware.automotive.evs@common-default-lib"
+        "android.hardware.automotive.evs@common-default-lib",
     ],
     cflags: [
         "-DCOPY_YUYV_TO_BGR32",
