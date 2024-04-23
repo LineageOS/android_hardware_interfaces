@@ -8140,7 +8140,7 @@ void CameraHidlTest::verifyCameraCharacteristics(Status status, const CameraMeta
             ANDROID_LENS_POSE_REFERENCE, &entry);
     if (0 == retcode && entry.count > 0) {
         uint8_t poseReference = entry.data.u8[0];
-        ASSERT_TRUE(poseReference <= ANDROID_LENS_POSE_REFERENCE_UNDEFINED &&
+        ASSERT_TRUE(poseReference <= ANDROID_LENS_POSE_REFERENCE_AUTOMOTIVE &&
                 poseReference >= ANDROID_LENS_POSE_REFERENCE_PRIMARY_CAMERA);
     }
 
