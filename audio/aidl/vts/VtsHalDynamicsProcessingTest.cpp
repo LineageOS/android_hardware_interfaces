@@ -195,48 +195,42 @@ const std::set<std::vector<DynamicsProcessing::InputGain>>
 
 template <typename T>
 bool DynamicsProcessingTestHelper::isBandConfigValid(const std::vector<T>& cfgs, int bandCount) {
-    std::vector<float> freqs(cfgs.size(), -1);
+    std::unordered_set<int> freqs;
     for (auto cfg : cfgs) {
         if (cfg.channel < 0 || cfg.channel >= mChannelCount) return false;
         if (cfg.band < 0 || cfg.band >= bandCount) return false;
-        freqs[cfg.band] = cfg.cutoffFrequencyHz;
+        // duplicated band index
+        if (freqs.find(cfg.band) != freqs.end()) return false;
+        freqs.insert(cfg.band);
     }
-    if (std::count(freqs.begin(), freqs.end(), -1)) return false;
-    return std::is_sorted(freqs.begin(), freqs.end());
+    return true;
 }
 
 bool DynamicsProcessingTestHelper::isParamValid(const DynamicsProcessing::Tag& tag,
                                                 const DynamicsProcessing& dp) {
     switch (tag) {
         case DynamicsProcessing::preEq: {
-            if (!mEngineConfigApplied.preEqStage.inUse) return false;
             return isChannelConfigValid(dp.get<DynamicsProcessing::preEq>());
         }
         case DynamicsProcessing::postEq: {
-            if (!mEngineConfigApplied.postEqStage.inUse) return false;
             return isChannelConfigValid(dp.get<DynamicsProcessing::postEq>());
         }
         case DynamicsProcessing::mbc: {
-            if (!mEngineConfigApplied.mbcStage.inUse) return false;
             return isChannelConfigValid(dp.get<DynamicsProcessing::mbc>());
         }
         case DynamicsProcessing::preEqBand: {
-            if (!mEngineConfigApplied.preEqStage.inUse) return false;
             return isBandConfigValid(dp.get<DynamicsProcessing::preEqBand>(),
                                      mEngineConfigApplied.preEqStage.bandCount);
         }
         case DynamicsProcessing::postEqBand: {
-            if (!mEngineConfigApplied.postEqStage.inUse) return false;
             return isBandConfigValid(dp.get<DynamicsProcessing::postEqBand>(),
                                      mEngineConfigApplied.postEqStage.bandCount);
         }
         case DynamicsProcessing::mbcBand: {
-            if (!mEngineConfigApplied.mbcStage.inUse) return false;
             return isBandConfigValid(dp.get<DynamicsProcessing::mbcBand>(),
                                      mEngineConfigApplied.mbcStage.bandCount);
         }
         case DynamicsProcessing::limiter: {
-            if (!mEngineConfigApplied.limiterInUse) return false;
             return isChannelConfigValid(dp.get<DynamicsProcessing::limiter>());
         }
         case DynamicsProcessing::inputGain: {
