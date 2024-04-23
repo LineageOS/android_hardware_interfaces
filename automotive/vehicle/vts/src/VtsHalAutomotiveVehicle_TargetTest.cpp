@@ -603,6 +603,7 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, subscribe_enableVurIfSupported) {
                      << "skip testing";
     }
 
+    // Subscribe to PERF_VEHICLE_SPEED using the max sample rate.
     auto client = mVhalClient->getSubscriptionClient(mCallback);
     ASSERT_NE(client, nullptr) << "Failed to get subscription client";
     SubscribeOptionsBuilder builder(propId);
@@ -616,18 +617,17 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, subscribe_enableVurIfSupported) {
                                              ", error: %s",
                                              propId, result.error().message().c_str());
 
-    ASSERT_TRUE(mCallback->waitForExpectedEvents(propId, 1, std::chrono::seconds(2)))
-            << "Must get at least 1 events within 2 seconds after subscription for rate: "
-            << maxSampleRate;
-
     // Sleep for 1 seconds to wait for more possible events to arrive.
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
     client->unsubscribe({propId});
 
     auto events = mCallback->getEvents(propId);
-    if (events.size() == 1) {
-        // We only received one event, the value is not changing so nothing to check here.
+    if (events.size() <= 1) {
+        // We received 0 or 1 event, the value is not changing so nothing to check here.
+        // If all VHAL clients are subscribing to PERF_VEHICLE_SPEED with VUR on, then we
+        // will receive 0 event. If there are other VHAL clients subscribing to PERF_VEHICLE_SPEED
+        // with VUR off, then we will receive 1 event which is the initial value.
         return;
     }
 
