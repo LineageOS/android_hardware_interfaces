@@ -166,6 +166,8 @@ class ModuleConfig {
         return *config.begin();
     }
 
+    std::optional<aidl::android::media::audio::common::AudioPort> getPort(int32_t portId);
+
     ndk::ScopedAStatus onExternalDeviceConnected(
             aidl::android::hardware::audio::core::IModule* module,
             const aidl::android::media::audio::common::AudioPort& port);
