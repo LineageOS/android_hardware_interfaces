@@ -169,7 +169,8 @@ void ServiceImpl::loop() {
     Looper::setForThread(mLooper);
 
     while (true) {
-        mLooper->pollAll(/*timeoutMillis=*/-1);
+        // Don't use pollAll since it might swallow wake.
+        mLooper->pollOnce(/*timeoutMillis=*/-1);
         if (mServerStopped) {
             return;
         }
