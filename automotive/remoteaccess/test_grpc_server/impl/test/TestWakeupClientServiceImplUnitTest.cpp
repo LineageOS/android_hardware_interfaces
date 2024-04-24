@@ -53,6 +53,9 @@ class TestWakeupClientServiceImplUnitTest : public ::testing::Test {
   public:
     virtual void SetUp() override {
         int selectedPort = 0;
+        mServerStarted = false;
+        mService.reset();
+        mServer.reset();
         mServerThread = std::thread([this, &selectedPort] {
             mService = std::make_unique<MyTestWakeupClientServiceImpl>();
             ServerBuilder builder;
