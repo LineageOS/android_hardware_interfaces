@@ -81,6 +81,10 @@ bool EvsVideoEmulatedCamera::initialize() {
         }
     }
 
+    return initializeMediaCodec();
+}
+
+bool EvsVideoEmulatedCamera::initializeMediaCodec() {
     // Initialize Media Codec and file format.
     std::unique_ptr<AMediaFormat, FormatDeleter> format;
     const char* mime;
@@ -304,6 +308,13 @@ void EvsVideoEmulatedCamera::renderOneFrame() {
         LOG(ERROR) << __func__
                    << ": Received error in releasing output buffer. Error code: " << release_status;
     }
+
+    if ((info.flags & AMEDIACODEC_BUFFER_FLAG_END_OF_STREAM) != 0) {
+        LOG(INFO) << "Start video playback from the beginning.";
+        AMediaExtractor_seekTo(mVideoExtractor.get(), /* seekPosUs= */ 0,
+                               AMEDIAEXTRACTOR_SEEK_CLOSEST_SYNC);
+        AMediaCodec_flush(mVideoCodec.get());
+    }
 }
 
 void EvsVideoEmulatedCamera::initializeParameters() {
@@ -337,11 +348,24 @@ bool EvsVideoEmulatedCamera::startVideoStreamImpl_locked(
         std::unique_lock<std::mutex>& /* lck */) {
     mStream = receiver;
 
-    const media_status_t status = AMediaCodec_start(mVideoCodec.get());
-    if (status != AMEDIA_OK) {
-        LOG(ERROR) << __func__ << ": Received error in starting decoder. Error code: " << status
-                   << ".";
-        return false;
+    if (auto status = AMediaCodec_start(mVideoCodec.get()); status != AMEDIA_OK) {
+        LOG(INFO) << __func__ << ": Received error in starting decoder. "
+                     << "Trying again after resetting this emulated device.";
+
+        if (!initializeMediaCodec()) {
+            LOG(ERROR) << __func__ << ": Failed to re-configure the media codec.";
+            return false;
+        }
+
+        AMediaExtractor_seekTo(mVideoExtractor.get(), /* seekPosUs= */ 0,
+                               AMEDIAEXTRACTOR_SEEK_CLOSEST_SYNC);
+        AMediaCodec_flush(mVideoCodec.get());
+
+        if(auto status = AMediaCodec_start(mVideoCodec.get()); status != AMEDIA_OK) {
+            LOG(ERROR) << __func__ << ": Received error again in starting decoder. "
+                       << "Error code: " << status;
+            return false;
+        }
     }
     mCaptureThread = std::thread([this]() { generateFrames(); });
 
@@ -364,6 +388,12 @@ bool EvsVideoEmulatedCamera::postVideoStreamStop_locked(ndk::ScopedAStatus& stat
     if (!Base::postVideoStreamStop_locked(status, lck)) {
         return false;
     }
+
+    EvsEventDesc event = { .aType = EvsEventType::STREAM_STOPPED, };
+    if (auto result = mStream->notify(event); !result.isOk()) {
+        LOG(WARNING) << "Failed to notify the end of the stream.";
+    }
+
     mStream = nullptr;
     return true;
 }
