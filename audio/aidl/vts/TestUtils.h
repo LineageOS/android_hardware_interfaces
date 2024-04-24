@@ -108,7 +108,7 @@ inline ::testing::AssertionResult assertResultOrUnknownTransaction(
     ({                                                                                            \
         if ((flags).hwAcceleratorMode ==                                                          \
                     aidl::android::hardware::audio::effect::Flags::HardwareAccelerator::TUNNEL || \
-            (flags).bypass) {                                                                     \
+            (flags).bypass || (flags).offloadIndication) {                                        \
             GTEST_SKIP() << "Skip data path for offload";                                         \
         }                                                                                         \
     })
