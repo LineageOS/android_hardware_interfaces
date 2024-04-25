@@ -22,6 +22,12 @@ as the `<instance>` in the VINTF manifest `<interface>` section. For example:
 ```
 defines that the IMapper 5.0 library is provided by `/vendor/lib[64]/hw/mapper.minigbm.so`.
 
+ServiceManager should be able to `find` the instance. The instance should be labelled in
+`service_contexts` as follows:
+```
+mapper/minigbm    u:object_r:hal_graphics_mapper_service:s0
+```
+
 This library must export the following `extern "C"` symbols:
 
 ### `ANDROID_HAL_STABLEC_VERSION`
