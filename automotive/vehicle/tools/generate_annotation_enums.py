@@ -32,7 +32,7 @@ import sys
 import tempfile
 
 # Keep this updated with the latest in-development property version.
-PROPERTY_VERSION = '3'
+PROPERTY_VERSION = '4'
 
 PROP_AIDL_FILE_PATH = ('hardware/interfaces/automotive/vehicle/aidl_property/android/hardware/' +
     'automotive/vehicle/VehicleProperty.aidl')

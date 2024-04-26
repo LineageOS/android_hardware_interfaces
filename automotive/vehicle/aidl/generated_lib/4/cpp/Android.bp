@@ -19,7 +19,15 @@ package {
 }
 
 cc_library_headers {
-    name: "IVehicleGeneratedHeaders-V3",
+    name: "IVehicleGeneratedHeaders",
+    vendor_available: true,
+    local_include_dirs: ["."],
+    export_include_dirs: ["."],
+    defaults: ["VehicleHalInterfaceDefaults"],
+}
+
+cc_library_headers {
+    name: "IVehicleGeneratedHeaders-V4",
     vendor_available: true,
     local_include_dirs: ["."],
     export_include_dirs: ["."],

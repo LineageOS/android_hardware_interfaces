@@ -19,13 +19,6 @@ package {
 }
 
 filegroup {
-    name: "IVehicleGeneratedJavaFiles",
-    srcs: [
-        "*.java",
-    ],
-}
-
-filegroup {
     name: "IVehicleGeneratedJavaFiles-V3",
     srcs: [
         "*.java",
