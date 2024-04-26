@@ -49,7 +49,7 @@ android_test {
     name: "VehiclePropertyAnnotationJavaTest",
     srcs: [
         "VehiclePropertyAnnotationJavaTest.java",
-        ":IVehicleGeneratedJavaFiles",
+        ":IVehicleGeneratedJavaFiles-V3",
     ],
     static_libs: [
         "android.hardware.automotive.vehicle-V3-java",
