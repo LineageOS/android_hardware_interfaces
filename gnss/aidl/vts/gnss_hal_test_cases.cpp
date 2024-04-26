@@ -1714,7 +1714,8 @@ TEST_P(GnssHalTest, TestAccumulatedDeltaRange) {
  * 2. verify the SvStatus are received at expected interval
  */
 TEST_P(GnssHalTest, TestSvStatusIntervals) {
-    if (aidl_gnss_hal_->getInterfaceVersion() <= 2) {
+    // Only runs on devices launched in Android 15+
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 3) {
         return;
     }
     ALOGD("TestSvStatusIntervals");
