@@ -694,8 +694,8 @@ void CameraAidlTest::verifyCameraCharacteristics(const CameraMetadata& chars) {
     retcode = find_camera_metadata_ro_entry(metadata, ANDROID_LENS_POSE_REFERENCE, &entry);
     if (0 == retcode && entry.count > 0) {
         uint8_t poseReference = entry.data.u8[0];
-        ASSERT_TRUE(poseReference <= ANDROID_LENS_POSE_REFERENCE_UNDEFINED &&
-                    poseReference >= ANDROID_LENS_POSE_REFERENCE_PRIMARY_CAMERA);
+        ASSERT_TRUE(poseReference <= ANDROID_LENS_POSE_REFERENCE_AUTOMOTIVE &&
+                poseReference >= ANDROID_LENS_POSE_REFERENCE_PRIMARY_CAMERA);
     }
 
     retcode =

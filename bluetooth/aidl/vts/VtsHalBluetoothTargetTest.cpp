@@ -1095,6 +1095,37 @@ TEST_P(BluetoothAidlTest, Vsr_Bluetooth4_2Requirements) {
 
 }
 
+/**
+ * VSR-5.3.14-012 MUST support at least eight LE concurrent connections with
+ *                three in peripheral role.
+ */
+// @VsrTest = 5.3.14-012
+TEST_P(BluetoothAidlTest, Vsr_BlE_Connection_Requirement) {
+  std::vector<uint8_t> version_event;
+  send_and_wait_for_cmd_complete(ReadLocalVersionInformationBuilder::Create(),
+                                 version_event);
+  auto version_view = ReadLocalVersionInformationCompleteView::Create(
+      CommandCompleteView::Create(EventView::Create(PacketView<true>(
+          std::make_shared<std::vector<uint8_t>>(version_event)))));
+  ASSERT_TRUE(version_view.IsValid());
+  ASSERT_EQ(::bluetooth::hci::ErrorCode::SUCCESS, version_view.GetStatus());
+  auto version = version_view.GetLocalVersionInformation();
+  if (version.hci_version_ < ::bluetooth::hci::HciVersion::V_5_0) {
+    // This test does not apply to controllers below 5.0
+    return;
+  };
+
+  int max_connections = ::android::base::GetIntProperty(
+      "bluetooth.core.le.max_number_of_concurrent_connections", -1);
+  if (max_connections == -1) {
+    // With the property not set the default minimum of 8 will be used
+    ALOGI("Max number of LE concurrent connections isn't set");
+    return;
+  }
+  ALOGI("Max number of LE concurrent connections = %d", max_connections);
+  ASSERT_GE(max_connections, 8);
+}
+
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(BluetoothAidlTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance, BluetoothAidlTest,
                          testing::ValuesIn(android::getAidlHalInstanceNames(
