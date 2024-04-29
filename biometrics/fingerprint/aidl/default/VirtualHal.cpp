@@ -27,6 +27,8 @@
 
 namespace aidl::android::hardware::biometrics::fingerprint {
 
+using Tag = AcquiredInfoAndVendorCode::Tag;
+
 ::ndk::ScopedAStatus VirtualHal::setEnrollments(const std::vector<int32_t>& enrollments) {
     Fingerprint::cfg().sourcedFromAidl();
     Fingerprint::cfg().setopt<OptIntVec>("enrollments", intVec2OptIntVec(enrollments));
@@ -36,6 +38,42 @@ namespace aidl::android::hardware::biometrics::fingerprint {
 ::ndk::ScopedAStatus VirtualHal::setEnrollmentHit(int32_t enrollment_hit) {
     Fingerprint::cfg().sourcedFromAidl();
     Fingerprint::cfg().set<std::int32_t>("enrollment_hit", enrollment_hit);
+    return ndk::ScopedAStatus::ok();
+}
+
+::ndk::ScopedAStatus VirtualHal::setNextEnrollment(
+        const ::aidl::android::hardware::biometrics::fingerprint::NextEnrollment& next_enrollment) {
+    Fingerprint::cfg().sourcedFromAidl();
+    std::ostringstream os;
+    os << next_enrollment.id << ":";
+
+    int stepSize = next_enrollment.progressSteps.size();
+    for (int i = 0; i < stepSize; i++) {
+        auto& step = next_enrollment.progressSteps[i];
+        os << step.durationMs;
+        int acSize = step.acquiredInfoAndVendorCodes.size();
+        for (int j = 0; j < acSize; j++) {
+            if (j == 0) os << "-[";
+            auto& acquiredInfoAndVendorCode = step.acquiredInfoAndVendorCodes[j];
+            if (acquiredInfoAndVendorCode.getTag() == AcquiredInfoAndVendorCode::vendorCode)
+                os << acquiredInfoAndVendorCode.get<Tag::vendorCode>();
+            else if (acquiredInfoAndVendorCode.getTag() == AcquiredInfoAndVendorCode::acquiredInfo)
+                os << (int)acquiredInfoAndVendorCode.get<Tag::acquiredInfo>();
+            else
+                LOG(FATAL) << "ERROR: wrong AcquiredInfoAndVendorCode union tag";
+            if (j == acSize - 1)
+                os << "]";
+            else
+                os << ",";
+        }
+        if (i == stepSize - 1)
+            os << ":";
+        else
+            os << ",";
+    }
+
+    os << (next_enrollment.result ? "true" : "false");
+    Fingerprint::cfg().set<std::string>("next_enrollment", os.str());
     return ndk::ScopedAStatus::ok();
 }
 
@@ -87,10 +125,10 @@ namespace aidl::android::hardware::biometrics::fingerprint {
 }
 
 ::ndk::ScopedAStatus VirtualHal::setOperationAuthenticateAcquired(
-        const std::vector<int32_t>& in_acquired) {
+        const std::vector<AcquiredInfoAndVendorCode>& in_acquired) {
     Fingerprint::cfg().sourcedFromAidl();
     Fingerprint::cfg().setopt<OptIntVec>("operation_authenticate_acquired",
-                                         intVec2OptIntVec(in_acquired));
+                                         acquiredInfoVec2OptIntVec(in_acquired));
     return ndk::ScopedAStatus::ok();
 }
 
@@ -139,10 +177,10 @@ namespace aidl::android::hardware::biometrics::fingerprint {
 }
 
 ::ndk::ScopedAStatus VirtualHal::setOperationDetectInteractionAcquired(
-        const std::vector<int32_t>& in_acquired) {
+        const std::vector<AcquiredInfoAndVendorCode>& in_acquired) {
     Fingerprint::cfg().sourcedFromAidl();
     Fingerprint::cfg().setopt<OptIntVec>("operation_detect_interaction_acquired",
-                                         intVec2OptIntVec(in_acquired));
+                                         acquiredInfoVec2OptIntVec(in_acquired));
     return ndk::ScopedAStatus::ok();
 }
 
@@ -185,6 +223,12 @@ namespace aidl::android::hardware::biometrics::fingerprint {
     }
     Fingerprint::cfg().sourcedFromAidl();
     Fingerprint::cfg().set<int32_t>("lockout_permanent_threshold", in_threshold);
+    return ndk::ScopedAStatus::ok();
+}
+
+::ndk::ScopedAStatus VirtualHal::resetConfigurations() {
+    Fingerprint::cfg().sourcedFromAidl();
+    Fingerprint::cfg().init();
     return ndk::ScopedAStatus::ok();
 }
 
@@ -251,6 +295,23 @@ OptIntVec VirtualHal::intVec2OptIntVec(const std::vector<int32_t>& in_vec) {
     OptIntVec optIntVec;
     std::transform(in_vec.begin(), in_vec.end(), std::back_inserter(optIntVec),
                    [](int value) { return std::optional<int>(value); });
+    return optIntVec;
+}
+
+OptIntVec VirtualHal::acquiredInfoVec2OptIntVec(
+        const std::vector<AcquiredInfoAndVendorCode>& in_vec) {
+    OptIntVec optIntVec;
+    std::transform(in_vec.begin(), in_vec.end(), std::back_inserter(optIntVec),
+                   [](AcquiredInfoAndVendorCode ac) {
+                       int value;
+                       if (ac.getTag() == AcquiredInfoAndVendorCode::acquiredInfo)
+                           value = (int)ac.get<Tag::acquiredInfo>();
+                       else if (ac.getTag() == AcquiredInfoAndVendorCode::vendorCode)
+                           value = ac.get<Tag::vendorCode>();
+                       else
+                           LOG(FATAL) << "ERROR: wrong AcquiredInfoAndVendorCode tag";
+                       return std::optional<int>(value);
+                   });
     return optIntVec;
 }
 
