@@ -31,7 +31,7 @@ cc_test {
         "libgtest",
     ],
     header_libs: [
-        "IVehicleGeneratedHeaders",
+        "IVehicleGeneratedHeaders-V3",
     ],
     shared_libs: [
         "libjsoncpp",
@@ -57,7 +57,7 @@ cc_test {
         "-DENABLE_VEHICLE_HAL_TEST_PROPERTIES",
     ],
     header_libs: [
-        "IVehicleGeneratedHeaders",
+        "IVehicleGeneratedHeaders-V3",
     ],
     shared_libs: [
         "libjsoncpp",
