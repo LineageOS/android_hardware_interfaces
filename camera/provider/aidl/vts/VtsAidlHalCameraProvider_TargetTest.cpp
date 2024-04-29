@@ -341,6 +341,10 @@ TEST_P(CameraAidlTest, getSessionCharacteristics) {
             ret = device->getSessionCharacteristics(config, &session_chars);
             ASSERT_TRUE(ret.isOk());
             verifySessionCharacteristics(session_chars, camera_chars);
+
+            ret = mSession->close();
+            mSession = nullptr;
+            ASSERT_TRUE(ret.isOk());
         }
     } else {
         ALOGI("getSessionCharacteristics: Test skipped.\n");

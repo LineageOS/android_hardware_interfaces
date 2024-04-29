@@ -17,7 +17,9 @@
 package android.hardware.biometrics.fingerprint;
 
 import android.hardware.biometrics.common.SensorStrength;
+import android.hardware.biometrics.fingerprint.AcquiredInfoAndVendorCode;
 import android.hardware.biometrics.fingerprint.FingerprintSensorType;
+import android.hardware.biometrics.fingerprint.NextEnrollment;
 import android.hardware.biometrics.fingerprint.SensorLocation;
 
 /**
@@ -52,6 +54,15 @@ oneway interface IVirtualHal {
      * @param ids ids can contain 1 or more ids, each must be larger than 0
      */
     void setEnrollmentHit(in int hit_id);
+
+    /**
+     * setNextEnrollment
+     *
+     * Set the next enrollment behavior
+     *
+     * @param next_enrollment specifies enrollment id, progress stages and final result
+     */
+    void setNextEnrollment(in NextEnrollment next_enrollment);
 
     /**
      * setAuthenticatorId
@@ -137,7 +148,7 @@ oneway interface IVirtualHal {
      *
      * @param acquired[], one or more acquired info codes
      */
-    void setOperationAuthenticateAcquired(in int[] acquired);
+    void setOperationAuthenticateAcquired(in AcquiredInfoAndVendorCode[] acquired);
 
     /**
      * setOperationEnrollError
@@ -226,7 +237,7 @@ oneway interface IVirtualHal {
      *
      * @param acquired[], one or more acquired info codes
      */
-    void setOperationDetectInteractionAcquired(in int[] acquired);
+    void setOperationDetectInteractionAcquired(in AcquiredInfoAndVendorCode[] acquired);
 
     /**
      * setLockout
@@ -283,6 +294,13 @@ oneway interface IVirtualHal {
      * @param threshold, the number of consecutive failures
      */
     void setLockoutPermanentThreshold(in int threshold);
+
+    /**
+     * resetConfigurations
+     *
+     * Reset all virtual hal configurations to default values
+     */
+    void resetConfigurations();
 
     /**
      * The following functions are used to configure Fingerprint Virtual HAL sensor properties

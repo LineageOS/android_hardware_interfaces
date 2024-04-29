@@ -64,6 +64,9 @@ aidl_interface {
             ],
             min_sdk_version: "31",
         },
+        rust: {
+            enabled: true,
+        },
     },
     versions_with_info: [
         {
@@ -109,6 +112,13 @@ cc_defaults {
     name: "latest_android_hardware_audio_common_ndk_shared",
     shared_libs: [
         latest_android_hardware_audio_common + "-ndk",
+    ],
+}
+
+rust_defaults {
+    name: "latest_android_hardware_audio_common_rust",
+    rustlibs: [
+        latest_android_hardware_audio_common + "-rust",
     ],
 }
 
