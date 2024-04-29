@@ -17,11 +17,15 @@
 //! Default implementation of the KeyMint HAL and related HALs.
 //!
 //! This implementation of the HAL is only intended to allow testing and policy compliance.  A real
-//! implementation **must be implemented in a secure environment**.
+//! implementation **must implement the TA in a secure environment**, as per CDD 9.11 [C-1-1]:
+//! "MUST back up the keystore implementation with an isolated execution environment."
+//!
+//! The additional device-specific components that are required for a real implementation of KeyMint
+//! that is based on the Rust reference implementation are described in system/keymint/README.md.
 
 use kmr_hal::SerializedChannel;
 use kmr_hal_nonsecure::{attestation_id_info, get_boot_info};
-use log::{debug, error, info};
+use log::{debug, error, info, warn};
 use std::ops::DerefMut;
 use std::sync::{mpsc, Arc, Mutex};
 
@@ -62,7 +66,7 @@ fn inner_main() -> Result<(), HalServiceError> {
         error!("{}", panic_info);
     }));
 
-    info!("Insecure KeyMint HAL service is starting.");
+    warn!("Insecure KeyMint HAL service is starting.");
 
     info!("Starting thread pool now.");
     binder::ProcessState::start_thread_pool();
