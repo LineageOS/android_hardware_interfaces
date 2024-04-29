@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <iostream>
 #include <map>
+#include <set>
 
 #include <openssl/curve25519.h>
 #include <openssl/ec.h>
@@ -3584,6 +3585,42 @@ TEST_P(SigningOperationsTest, HmacAllDigests) {
         EXPECT_EQ(160U / 8U, signature.size())
                 << "Failed to sign with HMAC key with digest " << digest;
         CheckedDeleteKey();
+    }
+}
+
+/*
+ * SigningOperationsTest.HmacMessageDigestUnique
+ *
+ * Verifies that HMAC with different keys gives different results.
+ */
+TEST_P(SigningOperationsTest, HmacMessageDigestUnique) {
+    for (int key_len : {64, 128, 192, 256, 512}) {
+        for (int msg_len = 0; msg_len <= 30; msg_len += 10) {
+            string message = string(msg_len, 'x');
+            for (auto digest : ValidDigests(false /* withNone */, false /* withMD5 */)) {
+                SCOPED_TRACE(testing::Message() << "Digest::" << digest << "::MsgLen::" << msg_len);
+
+                int count = 10;
+                std::set<string> results;
+                for (int ii = 0; ii < count; ii++) {
+                    ASSERT_EQ(ErrorCode::OK,
+                              GenerateKey(AuthorizationSetBuilder()
+                                                  .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                  .HmacKey(key_len)
+                                                  .Digest(digest)
+                                                  .Authorization(TAG_MIN_MAC_LENGTH, 160)))
+                            << "Failed to create HMAC key with digest " << digest;
+                    string signature = MacMessage(message, digest, 160);
+                    EXPECT_EQ(160U / 8U, signature.size())
+                            << "Failed to sign with HMAC key with digest " << digest;
+                    CheckedDeleteKey();
+                    results.insert(signature);
+                }
+                EXPECT_EQ(results.size(), count)
+                        << "HMAC of a message '" << message << "' with " << count
+                        << " fresh keys only gave " << results.size() << " distinct results";
+            }
+        }
     }
 }
 
