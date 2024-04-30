@@ -20,8 +20,8 @@
 #include <aidl/android/hardware/threadnetwork/IThreadChipCallback.h>
 
 #include "lib/spinel/spinel_interface.hpp"
-#include "lib/url/url.hpp"
 #include "mainloop.hpp"
+#include "radio_url.hpp"
 
 #include <android/binder_auto_utils.h>
 #include <android/binder_ibinder.h>
@@ -34,7 +34,7 @@ namespace threadnetwork {
 
 class ThreadChip : public BnThreadChip, ot::Posix::Mainloop::Source {
   public:
-    ThreadChip(char* url);
+    ThreadChip(const char* url);
     ~ThreadChip() {}
 
     ndk::ScopedAStatus open(const std::shared_ptr<IThreadChipCallback>& in_callback) override;
@@ -55,7 +55,7 @@ class ThreadChip : public BnThreadChip, ot::Posix::Mainloop::Source {
     ndk::ScopedAStatus initChip(const std::shared_ptr<IThreadChipCallback>& in_callback);
     ndk::ScopedAStatus deinitChip();
 
-    ot::Url::Url mUrl;
+    ot::Posix::RadioUrl mUrl;
     std::shared_ptr<ot::Spinel::SpinelInterface> mSpinelInterface;
     ot::Spinel::SpinelInterface::RxFrameBuffer mRxFrameBuffer;
     std::shared_ptr<IThreadChipCallback> mCallback;

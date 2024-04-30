@@ -32,10 +32,8 @@ namespace android {
 namespace hardware {
 namespace threadnetwork {
 
-ThreadChip::ThreadChip(char* url) : mUrl(), mRxFrameBuffer(), mCallback(nullptr) {
+ThreadChip::ThreadChip(const char* url) : mUrl(url), mRxFrameBuffer(), mCallback(nullptr) {
     const char* interfaceName;
-
-    CHECK_EQ(mUrl.Init(url), 0);
 
     interfaceName = mUrl.GetProtocol();
     CHECK_NE(interfaceName, nullptr);
