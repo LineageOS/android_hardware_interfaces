@@ -201,7 +201,7 @@ RKP VM:
 
 It is important to distinquish the RKP VM from other components, such as KeyMint. An
 [RKP VM marker](https://pigweed.googlesource.com/open-dice/+/HEAD/docs/android.md#configuration-descriptor)
-(key `-70006) is used for this purpose. The existence or absence of this marker is used to
+(key `-70006`) is used for this purpose. The existence or absence of this marker is used to
 identify the type of component decribed by a given DICE chain.
 
 The following describes which certificate types may be request based on the RKP VM marker:
