@@ -48,7 +48,8 @@ cc_fuzz {
     ],
     fuzz_config: {
         cc: [
-            "android-media-fuzzing-reports@google.com",
+            "chrisweir@google.com",
+            "twasilczyk@google.com",
         ],
         componentid: 533764,
         hotlists: [
