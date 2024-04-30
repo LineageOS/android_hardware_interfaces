@@ -51,6 +51,7 @@ cc_library_shared {
         "libxsdc-utils",
     ],
     defaults: [
+        "aconfig_lib_cc_static_link.defaults",
         "latest_android_hardware_bluetooth_audio_ndk_shared",
     ],
     shared_libs: [

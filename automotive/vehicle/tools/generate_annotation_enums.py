@@ -17,9 +17,9 @@
 """A script to generate Java files and CPP header files based on annotations in VehicleProperty.aidl
 
    Need ANDROID_BUILD_TOP environmental variable to be set. This script will update
-   ChangeModeForVehicleProperty.h and AccessForVehicleProperty.h under generated_lib/cpp and
+   ChangeModeForVehicleProperty.h and AccessForVehicleProperty.h under generated_lib/version/cpp and
    ChangeModeForVehicleProperty.java, AccessForVehicleProperty.java, EnumForVehicleProperty.java
-   UnitsForVehicleProperty.java under generated_lib/java.
+   UnitsForVehicleProperty.java under generated_lib/version/java.
 
    Usage:
    $ python generate_annotation_enums.py
@@ -31,22 +31,20 @@ import re
 import sys
 import tempfile
 
+# Keep this updated with the latest in-development property version.
+PROPERTY_VERSION = '4'
+
 PROP_AIDL_FILE_PATH = ('hardware/interfaces/automotive/vehicle/aidl_property/android/hardware/' +
     'automotive/vehicle/VehicleProperty.aidl')
-CHANGE_MODE_CPP_FILE_PATH = ('hardware/interfaces/automotive/vehicle/aidl/generated_lib/cpp/' +
-    'ChangeModeForVehicleProperty.h')
-ACCESS_CPP_FILE_PATH = ('hardware/interfaces/automotive/vehicle/aidl/generated_lib/cpp/' +
-    'AccessForVehicleProperty.h')
-CHANGE_MODE_JAVA_FILE_PATH = ('hardware/interfaces/automotive/vehicle/aidl/generated_lib/java/' +
-    'ChangeModeForVehicleProperty.java')
-ACCESS_JAVA_FILE_PATH = ('hardware/interfaces/automotive/vehicle/aidl/generated_lib/java/' +
-    'AccessForVehicleProperty.java')
-ENUM_JAVA_FILE_PATH = ('hardware/interfaces/automotive/vehicle/aidl/generated_lib/java/' +
-                         'EnumForVehicleProperty.java')
-UNITS_JAVA_FILE_PATH = ('hardware/interfaces/automotive/vehicle/aidl/generated_lib/java/' +
-                       'UnitsForVehicleProperty.java')
-VERSION_CPP_FILE_PATH = ('hardware/interfaces/automotive/vehicle/aidl/generated_lib/cpp/' +
-    'VersionForVehicleProperty.h')
+GENERATED_LIB = ('hardware/interfaces/automotive/vehicle/aidl/generated_lib/' + PROPERTY_VERSION +
+        '/')
+CHANGE_MODE_CPP_FILE_PATH = GENERATED_LIB + '/cpp/ChangeModeForVehicleProperty.h'
+ACCESS_CPP_FILE_PATH = GENERATED_LIB + '/cpp/AccessForVehicleProperty.h'
+CHANGE_MODE_JAVA_FILE_PATH = GENERATED_LIB + '/java/ChangeModeForVehicleProperty.java'
+ACCESS_JAVA_FILE_PATH = GENERATED_LIB + '/java/AccessForVehicleProperty.java'
+ENUM_JAVA_FILE_PATH = GENERATED_LIB + '/java/EnumForVehicleProperty.java'
+UNITS_JAVA_FILE_PATH = GENERATED_LIB + '/java/UnitsForVehicleProperty.java'
+VERSION_CPP_FILE_PATH = GENERATED_LIB + '/cpp/VersionForVehicleProperty.h'
 SCRIPT_PATH = 'hardware/interfaces/automotive/vehicle/tools/generate_annotation_enums.py'
 
 TAB = '    '

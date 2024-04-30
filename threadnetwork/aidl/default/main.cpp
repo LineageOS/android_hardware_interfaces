@@ -26,24 +26,29 @@
 using aidl::android::hardware::threadnetwork::IThreadChip;
 using aidl::android::hardware::threadnetwork::ThreadChip;
 
+namespace {
+void addThreadChip(int id, const char* url) {
+    binder_status_t status;
+    const std::string serviceName(std::string() + IThreadChip::descriptor + "/chip" +
+            std::to_string(id));
+
+    ALOGI("ServiceName: %s, Url: %s", serviceName.c_str(), url);
+
+    auto threadChip = ndk::SharedRefBase::make<ThreadChip>(url);
+
+    CHECK_NE(threadChip, nullptr);
+
+    status = AServiceManager_addService(threadChip->asBinder().get(), serviceName.c_str());
+    CHECK_EQ(status, STATUS_OK);
+}
+}
+
 int main(int argc, char* argv[]) {
     CHECK_GT(argc, 1);
-    std::vector<std::shared_ptr<ThreadChip>> threadChips;
     aidl::android::hardware::threadnetwork::Service service;
 
     for (int id = 0; id < argc - 1; id++) {
-        binder_status_t status;
-        const std::string serviceName(std::string() + IThreadChip::descriptor + "/chip" +
-                                      std::to_string(id));
-        auto threadChip = ndk::SharedRefBase::make<ThreadChip>(argv[id + 1]);
-
-        CHECK_NE(threadChip, nullptr);
-
-        status = AServiceManager_addService(threadChip->asBinder().get(), serviceName.c_str());
-        CHECK_EQ(status, STATUS_OK);
-
-        ALOGI("ServiceName: %s, Url: %s", serviceName.c_str(), argv[id + 1]);
-        threadChips.push_back(std::move(threadChip));
+        addThreadChip(id, argv[id + 1]);
     }
 
     ALOGI("Thread Network HAL is running");

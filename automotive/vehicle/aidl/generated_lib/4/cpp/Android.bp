@@ -18,9 +18,18 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-filegroup {
-    name: "IVehicleGeneratedJavaFiles",
-    srcs: [
-        "*.java",
-    ],
+cc_library_headers {
+    name: "IVehicleGeneratedHeaders",
+    vendor_available: true,
+    local_include_dirs: ["."],
+    export_include_dirs: ["."],
+    defaults: ["VehicleHalInterfaceDefaults"],
+}
+
+cc_library_headers {
+    name: "IVehicleGeneratedHeaders-V4",
+    vendor_available: true,
+    local_include_dirs: ["."],
+    export_include_dirs: ["."],
+    defaults: ["VehicleHalInterfaceDefaults"],
 }
