@@ -27,6 +27,9 @@ aidl_interface {
                 "com.android.car.framework",
             ],
         },
+        rust: {
+            enabled: true,
+        },
     },
     versions_with_info: [
         {
@@ -98,5 +101,12 @@ java_defaults {
     name: "latest_android_hardware_automotive_audiocontrol_java_static",
     static_libs: [
         latest_android_hardware_automotive_audiocontrol + "-java",
+    ],
+}
+
+rust_defaults {
+    name: "latest_android_hardware_automotive_audiocontrol_rust",
+    rustlibs: [
+        latest_android_hardware_automotive_audiocontrol + "-rust",
     ],
 }
