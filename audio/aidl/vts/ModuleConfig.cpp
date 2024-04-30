@@ -551,6 +551,11 @@ std::vector<AudioPortConfig> ModuleConfig::generateAudioDevicePortConfigs(
     return result;
 }
 
+std::optional<AudioPort> ModuleConfig::getPort(int32_t portId) {
+    auto portsIt = findById(mPorts, portId);
+    return portsIt != mPorts.end() ? std::optional<AudioPort>(*portsIt) : std::nullopt;
+}
+
 ndk::ScopedAStatus ModuleConfig::onExternalDeviceConnected(IModule* module, const AudioPort& port) {
     RETURN_STATUS_IF_ERROR(module->getAudioPorts(&mPorts));
     RETURN_STATUS_IF_ERROR(module->getAudioRoutes(&mRoutes));
