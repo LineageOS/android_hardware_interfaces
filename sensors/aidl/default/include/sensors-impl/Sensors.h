@@ -119,6 +119,8 @@ class Sensors : public BnSensors, public ISensorsEventCallback {
 
     // Utility function to delete the Event Flag
     void deleteEventFlag() {
+        // Hold the lock to ensure we don't delete the flag while it's being used in postEvents()
+        std::lock_guard<std::mutex> lock(mWriteLock);
         if (mEventQueueFlag != nullptr) {
             status_t status = EventFlag::deleteEventFlag(&mEventQueueFlag);
             if (status != OK) {
