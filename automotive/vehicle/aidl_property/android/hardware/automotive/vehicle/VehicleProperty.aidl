@@ -1734,8 +1734,13 @@ enum VehicleProperty {
      * change display brightness from Settings, but that must not be reflected
      * to other displays.
      *
+     * If this is writable, writing this property must cause an on property
+     * change event even if the new display brightness is the same as the
+     * current value.
+     *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      * @version 2
      */
     DISPLAY_BRIGHTNESS = 0x0A03 + 0x10000000 + 0x01000000
@@ -1754,6 +1759,15 @@ enum VehicleProperty {
      *
      * The display port uniquely identifies a physical connector on the device
      * for display output, ranging from 0 to 255.
+     *
+     * Writing this property must cause an on property change event that
+     * contains the same [display port, brightness] tuple even if the new
+     * display brightness is the same as the current value.
+     *
+     * To get the display brightness for a specific display port, the
+     * GetValueRequest must contain a VehiclePropValue, which contains one
+     * int32Value: displayPort. Getting this property without specifying the
+     * the display port is undefined behavior.
      *
      * int32Values[0] : display port
      * int32Values[1] : brightness
