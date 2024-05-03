@@ -192,6 +192,12 @@ class ConfirmationUIAidlTest : public ::testing::TestWithParam<std::string> {
   public:
     void TearDown() override { confirmator_->abort(); }
     void SetUp() override {
+        // Wake up the device in-case screen is off. b/332827323
+        int ret = system("input keyevent KEYCODE_WAKEUP");
+        if (ret != 0) {
+            ALOGE("Failed to run keyevent KEYCODE_WAKEUP command");
+        }
+        usleep(100000);  // wait for 100ms to wake up the screen.
         std::string name = GetParam();
         ASSERT_TRUE(AServiceManager_isDeclared(name.c_str())) << name;
         ndk::SpAIBinder binder(AServiceManager_waitForService(name.c_str()));
