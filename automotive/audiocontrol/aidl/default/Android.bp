@@ -30,15 +30,14 @@ cc_binary {
     defaults: [
         "latest_android_hardware_audio_common_ndk_shared",
         "latest_android_hardware_automotive_audiocontrol_ndk_shared",
+        "powerpolicyclient_defaults",
     ],
     shared_libs: [
         "android.hardware.audio.common@7.0-enums",
-        "android.frameworks.automotive.powerpolicy-V2-ndk",
         "libbase",
         "libbinder_ndk",
         "libcutils",
         "liblog",
-        "libpowerpolicyclient",
     ],
     srcs: [
         "AudioControl.cpp",
