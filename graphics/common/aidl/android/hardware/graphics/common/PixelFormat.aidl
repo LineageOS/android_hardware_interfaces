@@ -161,8 +161,7 @@ enum PixelFormat {
      *
      * The allocator should examine the usage bits passed in when allocating a
      * buffer with this format, and it should derive the pixel format from
-     * those usage flags. This format must never be used with any of the
-     * BufferUsage::CPU_* usage flags.
+     * those usage flags.
      *
      * Even when the internally chosen format has an alpha component, the
      * clients must assume the alpha vlaue to be 1.0.
