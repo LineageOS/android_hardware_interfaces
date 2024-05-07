@@ -41,6 +41,7 @@
 #include <regex>
 #include <typeinfo>
 #include "utils/Errors.h"
+#include <nativebase/nativebase.h>
 
 using ::aidl::android::hardware::camera::common::CameraDeviceStatus;
 using ::aidl::android::hardware::camera::common::TorchModeStatus;
@@ -2263,8 +2264,8 @@ void CameraAidlTest::processCaptureRequestInternal(uint64_t bufferUsage,
                     /* We don't look at halStreamConfig.streams[0].consumerUsage
                      * since that is 0 for output streams
                      */
-                    android_convertGralloc1To0Usage(
-                            static_cast<uint64_t>(halStreams[0].producerUsage), bufferUsage),
+                    ANDROID_NATIVE_UNSIGNED_CAST(android_convertGralloc1To0Usage(
+                            static_cast<uint64_t>(halStreams[0].producerUsage), bufferUsage)),
                     halStreams[0].overrideFormat, &handle);
 
             outputBuffer = {halStreams[0].id, bufferId,       ::android::makeToAidl(handle),
@@ -2775,9 +2776,9 @@ void CameraAidlTest::processPreviewStabilizationCaptureRequestInternal(
                                   /* We don't look at halStreamConfig.streams[0].consumerUsage
                                    * since that is 0 for output streams
                                    */
-                                  android_convertGralloc1To0Usage(
+                                  ANDROID_NATIVE_UNSIGNED_CAST(android_convertGralloc1To0Usage(
                                           static_cast<uint64_t>(halStreams[0].producerUsage),
-                                          GRALLOC1_CONSUMER_USAGE_HWCOMPOSER),
+                                          GRALLOC1_CONSUMER_USAGE_HWCOMPOSER)),
                                   halStreams[0].overrideFormat, &buffer_handle);
             outputBuffer = {halStreams[0].id, bufferId,       ::android::makeToAidl(buffer_handle),
                             BufferStatus::OK, NativeHandle(), NativeHandle()};
@@ -3757,9 +3758,9 @@ void CameraAidlTest::processColorSpaceRequest(
                                         NativeHandle(), BufferStatus::OK,
                                         NativeHandle(), NativeHandle()};
                 } else {
-                    auto usage = android_convertGralloc1To0Usage(
+                    auto usage = ANDROID_NATIVE_UNSIGNED_CAST(android_convertGralloc1To0Usage(
                             static_cast<uint64_t>(halStream.producerUsage),
-                            static_cast<uint64_t>(halStream.consumerUsage));
+                            static_cast<uint64_t>(halStream.consumerUsage)));
                     allocateGraphicBuffer(previewStream.width, previewStream.height, usage,
                                             halStream.overrideFormat, &buffer_handle);
 
@@ -3913,9 +3914,9 @@ void CameraAidlTest::processZoomSettingsOverrideRequests(
                                 NativeHandle(),   NativeHandle()};
             } else {
                 allocateGraphicBuffer(previewStream.width, previewStream.height,
-                                      android_convertGralloc1To0Usage(
+                                      ANDROID_NATIVE_UNSIGNED_CAST(android_convertGralloc1To0Usage(
                                               static_cast<uint64_t>(halStreams[0].producerUsage),
-                                              static_cast<uint64_t>(halStreams[0].consumerUsage)),
+                                              static_cast<uint64_t>(halStreams[0].consumerUsage))),
                                       halStreams[0].overrideFormat, &buffers[i]);
                 outputBuffer = {halStreams[0].id, bufferId + i,   ::android::makeToAidl(buffers[i]),
                                 BufferStatus::OK, NativeHandle(), NativeHandle()};
