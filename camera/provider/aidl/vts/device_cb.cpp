@@ -20,6 +20,7 @@
 #include <aidlcommonsupport/NativeHandle.h>
 #include <grallocusage/GrallocUsageConversion.h>
 #include <cinttypes>
+#include <nativebase/nativebase.h>
 
 using ::aidl::android::hardware::camera::device::BufferStatus;
 using ::aidl::android::hardware::camera::device::ErrorMsg;
@@ -143,8 +144,8 @@ ScopedAStatus DeviceCb::requestStreamBuffers(const std::vector<BufferRequest>& b
 
             CameraAidlTest::allocateGraphicBuffer(
                     w, h,
-                    android_convertGralloc1To0Usage(static_cast<uint64_t>(halStream.producerUsage),
-                                                    static_cast<uint64_t>(halStream.consumerUsage)),
+                    ANDROID_NATIVE_UNSIGNED_CAST(android_convertGralloc1To0Usage(static_cast<uint64_t>(halStream.producerUsage),
+                                                    static_cast<uint64_t>(halStream.consumerUsage))),
                     halStream.overrideFormat, &handle);
 
             StreamBuffer streamBuffer = StreamBuffer();
