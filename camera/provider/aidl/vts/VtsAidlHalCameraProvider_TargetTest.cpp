@@ -300,6 +300,15 @@ TEST_P(CameraAidlTest, getSessionCharacteristics) {
             ASSERT_TRUE(ret.isOk());
             ASSERT_NE(device, nullptr);
 
+            int32_t interfaceVersion = -1;
+            ret = device->getInterfaceVersion(&interfaceVersion);
+            ASSERT_TRUE(ret.isOk());
+            bool supportSessionCharacteristics =
+                    (interfaceVersion >= CAMERA_DEVICE_API_MINOR_VERSION_3);
+            if (!supportSessionCharacteristics) {
+                continue;
+            }
+
             CameraMetadata meta;
             openEmptyDeviceSession(name, mProvider, &mSession /*out*/, &meta /*out*/,
                                    &device /*out*/);
