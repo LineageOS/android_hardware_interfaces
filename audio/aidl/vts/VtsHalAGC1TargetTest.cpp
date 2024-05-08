@@ -53,7 +53,7 @@ class AGC1ParamTest : public ::testing::TestWithParam<AGC1ParamTestParam>, publi
         ASSERT_NO_FATAL_FAILURE(create(mFactory, mEffect, mDescriptor));
 
         Parameter::Specific specific = getDefaultParamSpecific();
-        Parameter::Common common = EffectHelper::createParamCommon(
+        Parameter::Common common = createParamCommon(
                 0 /* session */, 1 /* ioHandle */, 44100 /* iSampleRate */, 44100 /* oSampleRate */,
                 kInputFrameCount /* iFrameCount */, kOutputFrameCount /* oFrameCount */);
         IEffect::OpenEffectReturn ret;

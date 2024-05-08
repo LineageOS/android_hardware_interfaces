@@ -39,7 +39,7 @@ class PresetReverbHelper : public EffectHelper {
         ASSERT_NE(nullptr, mFactory);
         ASSERT_NO_FATAL_FAILURE(create(mFactory, mEffect, mDescriptor));
         Parameter::Specific specific = getDefaultParamSpecific();
-        Parameter::Common common = EffectHelper::createParamCommon(
+        Parameter::Common common = createParamCommon(
                 0 /* session */, 1 /* ioHandle */, kSamplingFrequency /* iSampleRate */,
                 kSamplingFrequency /* oSampleRate */, mFrameCount /* iFrameCount */,
                 mFrameCount /* oFrameCount */);
