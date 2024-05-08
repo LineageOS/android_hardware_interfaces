@@ -747,6 +747,7 @@ oneway interface IRadioNetworkResponse {
 
     /**
      * Response of isCellularIdentifierTransparencyEnabled.
+     * This is an optional API.
      *
      * @param info Response info struct containing response type, serial no. and error.
      * @param isEnabled Indicates whether cellular identifier transparency is enabled or not.
@@ -757,12 +758,14 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
+     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void isCellularIdentifierTransparencyEnabledResponse(
             in RadioResponseInfo info, boolean isEnabled);
 
     /**
      * Response of setCellularIdentifierTransparencyEnabled.
+     * This is an optional API.
      *
      * @param info Response info struct containing response type, serial no. and error.
      *
@@ -773,11 +776,13 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
      *   RadioError:INVALID_STATE
+     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void setCellularIdentifierTransparencyEnabledResponse(in RadioResponseInfo info);
 
     /**
      * Response of setSecurityAlgorithmsUpdatedEnabled.
+     * This is an optional API.
      *
      * @param info Response info struct containing response type, serial no. and error.
      *
@@ -788,11 +793,13 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
      *   RadioError:INVALID_STATE
+     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void setSecurityAlgorithmsUpdatedEnabledResponse(in RadioResponseInfo info);
 
     /**
      * Response of isSecurityAlgorithmsUpdatedEnabled.
+     * This is an optional API.
      *
      * @param info Response info struct containing response type, serial no. and error.
      * @param isEnabled Indicates whether cellular ciphering transparency is enabled or not.
@@ -803,6 +810,7 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
+     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void isSecurityAlgorithmsUpdatedEnabledResponse(
             in RadioResponseInfo info, in boolean isEnabled);
