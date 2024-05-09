@@ -53,6 +53,7 @@ class LoudnessEnhancerEffectHelper : public EffectHelper {
                 kInputFrameCount /* iFrameCount */, kOutputFrameCount /* oFrameCount */);
         ASSERT_NO_FATAL_FAILURE(open(mEffect, common, specific, &mOpenEffectReturn, EX_NONE));
         ASSERT_NE(nullptr, mEffect);
+        mVersion = EffectFactoryHelper::getHalVersion(mFactory);
     }
 
     void TearDownLoudnessEnhancer() {
@@ -114,6 +115,7 @@ class LoudnessEnhancerEffectHelper : public EffectHelper {
     std::shared_ptr<IFactory> mFactory;
     std::shared_ptr<IEffect> mEffect;
     Descriptor mDescriptor;
+    int mVersion = 0;
 };
 
 /**
@@ -190,7 +192,8 @@ class LoudnessEnhancerDataTest : public ::testing::TestWithParam<LoudnessEnhance
         ASSERT_NO_FATAL_FAILURE(expectState(mEffect, State::PROCESSING));
 
         // Write from buffer to message queues and calling process
-        EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToFmq(mStatusMQ, mInputMQ, mInputBuffer));
+        EXPECT_NO_FATAL_FAILURE(
+                EffectHelper::writeToFmq(mStatusMQ, mInputMQ, mInputBuffer, mVersion));
 
         // Read the updated message queues into buffer
         EXPECT_NO_FATAL_FAILURE(EffectHelper::readFromFmq(mStatusMQ, 1, mOutputMQ,
