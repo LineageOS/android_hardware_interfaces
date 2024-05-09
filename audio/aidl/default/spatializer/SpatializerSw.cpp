@@ -64,7 +64,12 @@ namespace aidl::android::hardware::audio::effect {
 
 const std::string SpatializerSw::kEffectName = "SpatializerSw";
 
+const AudioChannelLayout kSupportedChannelMask =
+        AudioChannelLayout::make<AudioChannelLayout::layoutMask>(
+                AudioChannelLayout::LAYOUT_5POINT1);
 const std::vector<Range::SpatializerRange> SpatializerSw::kRanges = {
+        MAKE_RANGE(Spatializer, supportedChannelLayout, {kSupportedChannelMask},
+                   {kSupportedChannelMask}),
         MAKE_RANGE(Spatializer, spatializationLevel, Spatialization::Level::NONE,
                    Spatialization::Level::BED_PLUS_OBJECTS),
         MAKE_RANGE(Spatializer, spatializationMode, Spatialization::Mode::BINAURAL,
@@ -133,6 +138,11 @@ ndk::ScopedAStatus SpatializerSw::getParameterSpecific(const Parameter::Id& id,
 }
 
 std::shared_ptr<EffectContext> SpatializerSw::createContext(const Parameter::Common& common) {
+    if (common.input.base.channelMask != kSupportedChannelMask) {
+        LOG(ERROR) << __func__
+                   << " channelMask not supported: " << common.input.base.channelMask.toString();
+        return nullptr;
+    }
     if (mContext) {
         LOG(DEBUG) << __func__ << " context already exist";
     } else {

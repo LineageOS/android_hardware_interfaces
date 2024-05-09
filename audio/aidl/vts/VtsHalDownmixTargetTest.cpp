@@ -97,7 +97,9 @@ class DownmixEffectHelper : public EffectHelper {
         Parameter::Common common = EffectHelper::createParamCommon(
                 0 /* session */, 1 /* ioHandle */, 44100 /* iSampleRate */, 44100 /* oSampleRate */,
                 kInputFrameCount /* iFrameCount */, kOutputFrameCount /* oFrameCount */,
-                inputChannelLayout);
+                inputChannelLayout,
+                AudioChannelLayout::make<AudioChannelLayout::layoutMask>(
+                        AudioChannelLayout::LAYOUT_STEREO));
         ASSERT_NO_FATAL_FAILURE(open(mEffect, common, specific, &mOpenEffectReturn, EX_NONE));
         ASSERT_NE(nullptr, mEffect);
     }
