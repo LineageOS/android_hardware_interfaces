@@ -57,7 +57,7 @@ class DynamicsProcessingTestHelper : public EffectHelper {
         ASSERT_NO_FATAL_FAILURE(create(mFactory, mEffect, mDescriptor));
 
         Parameter::Specific specific = getDefaultParamSpecific();
-        Parameter::Common common = EffectHelper::createParamCommon(
+        Parameter::Common common = createParamCommon(
                 0 /* session */, 1 /* ioHandle */, 44100 /* iSampleRate */, 44100 /* oSampleRate */,
                 0x100 /* iFrameCount */, 0x100 /* oFrameCount */,
                 AudioChannelLayout::make<AudioChannelLayout::layoutMask>(mChannelLayout),

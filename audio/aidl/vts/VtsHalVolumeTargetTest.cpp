@@ -37,7 +37,7 @@ class VolumeControlHelper : public EffectHelper {
         ASSERT_NO_FATAL_FAILURE(create(mFactory, mEffect, mDescriptor));
         initFrameCount();
         Parameter::Specific specific = getDefaultParamSpecific();
-        Parameter::Common common = EffectHelper::createParamCommon(
+        Parameter::Common common = createParamCommon(
                 0 /* session */, 1 /* ioHandle */, kSamplingFrequency /* iSampleRate */,
                 kSamplingFrequency /* oSampleRate */, mInputFrameCount /* iFrameCount */,
                 mInputFrameCount /* oFrameCount */);
