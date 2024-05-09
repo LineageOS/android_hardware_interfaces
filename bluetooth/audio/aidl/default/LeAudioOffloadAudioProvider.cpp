@@ -165,8 +165,8 @@ bool LeAudioOffloadAudioProvider::isMatchedValidCodec(CodecId cfg_codec,
   return cfg_codec == req_codec;
 }
 
-bool LeAudioOffloadAudioProvider::isCapabilitiesMatchedContext(
-    AudioContext setting_context,
+bool LeAudioOffloadAudioProvider::filterCapabilitiesMatchedContext(
+    AudioContext& setting_context,
     const IBluetoothAudioProvider::LeAudioDeviceCapabilities& capabilities) {
   // If has no metadata, assume match
   if (!capabilities.metadata.has_value()) return true;
@@ -178,7 +178,11 @@ bool LeAudioOffloadAudioProvider::isCapabilitiesMatchedContext(
       auto& context = metadata.value()
                           .get<MetadataLtv::Tag::preferredAudioContexts>()
                           .values;
-      if (setting_context.bitmask & context.bitmask) return true;
+      if (setting_context.bitmask & context.bitmask) {
+        // New mask with matched capability
+        setting_context.bitmask &= context.bitmask;
+        return true;
+      }
     }
   }
 
@@ -189,8 +193,12 @@ bool LeAudioOffloadAudioProvider::isMatchedSamplingFreq(
     CodecSpecificConfigurationLtv::SamplingFrequency& cfg_freq,
     CodecSpecificCapabilitiesLtv::SupportedSamplingFrequencies&
         capability_freq) {
-  for (auto [freq, bitmask] : freq_to_support_bitmask_map)
-    if (cfg_freq == freq) return (capability_freq.bitmask & bitmask);
+  auto p = freq_to_support_bitmask_map.find(cfg_freq);
+  if (p != freq_to_support_bitmask_map.end()) {
+    if (capability_freq.bitmask & p->second) {
+      return true;
+    }
+  }
   return false;
 }
 
@@ -198,9 +206,11 @@ bool LeAudioOffloadAudioProvider::isMatchedFrameDuration(
     CodecSpecificConfigurationLtv::FrameDuration& cfg_fduration,
     CodecSpecificCapabilitiesLtv::SupportedFrameDurations&
         capability_fduration) {
-  for (auto [fduration, bitmask] : fduration_to_support_fduration_map)
-    if (cfg_fduration == fduration)
-      return (capability_fduration.bitmask & bitmask);
+  auto p = fduration_to_support_fduration_map.find(cfg_fduration);
+  if (p != fduration_to_support_fduration_map.end())
+    if (capability_fduration.bitmask & p->second) {
+      return true;
+    }
   return false;
 }
 
@@ -240,50 +250,67 @@ bool LeAudioOffloadAudioProvider::isCapabilitiesMatchedCodecConfiguration(
 
   for (auto& codec_capability : codec_capabilities) {
     auto cfg = cfg_tag_map.find(cap_to_cfg_tag_map[codec_capability.getTag()]);
-    // Cannot find tag for the capability:
-    if (cfg == cfg_tag_map.end()) return false;
+    // If capability has this tag, but our configuration doesn't
+    // Then we will assume it is matched
+    if (cfg == cfg_tag_map.end()) {
+      continue;
+    }
 
-    // Matching logic for sampling frequency
-    if (codec_capability.getTag() ==
-        CodecSpecificCapabilitiesLtv::Tag::supportedSamplingFrequencies) {
-      if (!isMatchedSamplingFreq(
-              cfg->second
-                  .get<CodecSpecificConfigurationLtv::Tag::samplingFrequency>(),
-              codec_capability.get<CodecSpecificCapabilitiesLtv::Tag::
-                                       supportedSamplingFrequencies>()))
-        return false;
-    } else if (codec_capability.getTag() ==
-               CodecSpecificCapabilitiesLtv::Tag::supportedFrameDurations) {
-      if (!isMatchedFrameDuration(
-              cfg->second
-                  .get<CodecSpecificConfigurationLtv::Tag::frameDuration>(),
-              codec_capability.get<CodecSpecificCapabilitiesLtv::Tag::
-                                       supportedFrameDurations>()))
-        return false;
-    } else if (codec_capability.getTag() ==
-               CodecSpecificCapabilitiesLtv::Tag::supportedAudioChannelCounts) {
-      if (!isMatchedAudioChannel(
-              cfg->second.get<
-                  CodecSpecificConfigurationLtv::Tag::audioChannelAllocation>(),
-              codec_capability.get<CodecSpecificCapabilitiesLtv::Tag::
-                                       supportedAudioChannelCounts>()))
-        return false;
-    } else if (codec_capability.getTag() == CodecSpecificCapabilitiesLtv::Tag::
-                                                supportedMaxCodecFramesPerSDU) {
-      if (!isMatchedCodecFramesPerSDU(
-              cfg->second.get<
-                  CodecSpecificConfigurationLtv::Tag::codecFrameBlocksPerSDU>(),
-              codec_capability.get<CodecSpecificCapabilitiesLtv::Tag::
-                                       supportedMaxCodecFramesPerSDU>()))
-        return false;
-    } else if (codec_capability.getTag() == CodecSpecificCapabilitiesLtv::Tag::
-                                                supportedOctetsPerCodecFrame) {
-      if (!isMatchedOctetsPerCodecFrame(
-              cfg->second.get<
-                  CodecSpecificConfigurationLtv::Tag::octetsPerCodecFrame>(),
-              codec_capability.get<CodecSpecificCapabilitiesLtv::Tag::
-                                       supportedOctetsPerCodecFrame>()))
-        return false;
+    switch (codec_capability.getTag()) {
+      case CodecSpecificCapabilitiesLtv::Tag::supportedSamplingFrequencies: {
+        if (!isMatchedSamplingFreq(
+                cfg->second.get<
+                    CodecSpecificConfigurationLtv::Tag::samplingFrequency>(),
+                codec_capability.get<CodecSpecificCapabilitiesLtv::Tag::
+                                         supportedSamplingFrequencies>())) {
+          return false;
+        }
+        break;
+      }
+
+      case CodecSpecificCapabilitiesLtv::Tag::supportedFrameDurations: {
+        if (!isMatchedFrameDuration(
+                cfg->second
+                    .get<CodecSpecificConfigurationLtv::Tag::frameDuration>(),
+                codec_capability.get<CodecSpecificCapabilitiesLtv::Tag::
+                                         supportedFrameDurations>())) {
+          return false;
+        }
+        break;
+      }
+
+      case CodecSpecificCapabilitiesLtv::Tag::supportedAudioChannelCounts: {
+        if (!isMatchedAudioChannel(
+                cfg->second.get<CodecSpecificConfigurationLtv::Tag::
+                                    audioChannelAllocation>(),
+                codec_capability.get<CodecSpecificCapabilitiesLtv::Tag::
+                                         supportedAudioChannelCounts>())) {
+          return false;
+        }
+        break;
+      }
+
+      case CodecSpecificCapabilitiesLtv::Tag::supportedMaxCodecFramesPerSDU: {
+        if (!isMatchedCodecFramesPerSDU(
+                cfg->second.get<CodecSpecificConfigurationLtv::Tag::
+                                    codecFrameBlocksPerSDU>(),
+                codec_capability.get<CodecSpecificCapabilitiesLtv::Tag::
+                                         supportedMaxCodecFramesPerSDU>())) {
+          return false;
+        }
+        break;
+      }
+
+      case CodecSpecificCapabilitiesLtv::Tag::supportedOctetsPerCodecFrame: {
+        if (!isMatchedOctetsPerCodecFrame(
+                cfg->second.get<
+                    CodecSpecificConfigurationLtv::Tag::octetsPerCodecFrame>(),
+                codec_capability.get<CodecSpecificCapabilitiesLtv::Tag::
+                                         supportedOctetsPerCodecFrame>())) {
+          return false;
+        }
+        break;
+      }
     }
   }
 
@@ -298,11 +325,16 @@ bool LeAudioOffloadAudioProvider::isMatchedAseConfiguration(
   if (requirement_cfg.codecId.has_value()) {
     if (!setting_cfg.codecId.has_value()) return false;
     if (!isMatchedValidCodec(setting_cfg.codecId.value(),
-                             requirement_cfg.codecId.value()))
+                             requirement_cfg.codecId.value())) {
       return false;
+    }
   }
 
-  if (setting_cfg.targetLatency != requirement_cfg.targetLatency) return false;
+  if (requirement_cfg.targetLatency ==
+          LeAudioAseConfiguration::TargetLatency::UNDEFINED ||
+      setting_cfg.targetLatency != requirement_cfg.targetLatency) {
+    return false;
+  }
   // Ignore PHY requirement
 
   // Check all codec configuration
@@ -314,9 +346,13 @@ bool LeAudioOffloadAudioProvider::isMatchedAseConfiguration(
   for (auto requirement_cfg : requirement_cfg.codecConfiguration) {
     // Directly compare CodecSpecificConfigurationLtv
     auto cfg = cfg_tag_map.find(requirement_cfg.getTag());
-    if (cfg == cfg_tag_map.end()) return false;
+    if (cfg == cfg_tag_map.end()) {
+      return false;
+    }
 
-    if (cfg->second != requirement_cfg) return false;
+    if (cfg->second != requirement_cfg) {
+      return false;
+    }
   }
   // Ignore vendor configuration and metadata requirement
 
@@ -326,10 +362,13 @@ bool LeAudioOffloadAudioProvider::isMatchedAseConfiguration(
 bool LeAudioOffloadAudioProvider::isMatchedBISConfiguration(
     LeAudioBisConfiguration bis_cfg,
     const IBluetoothAudioProvider::LeAudioDeviceCapabilities& capabilities) {
-  if (!isMatchedValidCodec(bis_cfg.codecId, capabilities.codecId)) return false;
-  if (!isCapabilitiesMatchedCodecConfiguration(
-          bis_cfg.codecConfiguration, capabilities.codecSpecificCapabilities))
+  if (!isMatchedValidCodec(bis_cfg.codecId, capabilities.codecId)) {
     return false;
+  }
+  if (!isCapabilitiesMatchedCodecConfiguration(
+          bis_cfg.codecConfiguration, capabilities.codecSpecificCapabilities)) {
+    return false;
+  }
   return true;
 }
 
@@ -357,30 +396,34 @@ void LeAudioOffloadAudioProvider::filterCapabilitiesAseDirectionConfiguration(
 }
 
 void LeAudioOffloadAudioProvider::filterRequirementAseDirectionConfiguration(
-    std::vector<std::optional<AseDirectionConfiguration>>&
+    std::optional<std::vector<std::optional<AseDirectionConfiguration>>>&
         direction_configurations,
-    const std::optional<std::vector<std::optional<AseDirectionRequirement>>>&
-        requirements,
-    std::vector<std::optional<AseDirectionConfiguration>>&
+    const std::vector<std::optional<AseDirectionRequirement>>& requirements,
+    std::optional<std::vector<std::optional<AseDirectionConfiguration>>>&
         valid_direction_configurations) {
-  for (auto direction_configuration : direction_configurations) {
-    if (!requirements.has_value()) {
-      // If there's no requirement, all are valid
-      valid_direction_configurations.push_back(direction_configuration);
-      continue;
-    }
-    if (!direction_configuration.has_value()) continue;
-
-    for (auto& requirement : requirements.value()) {
-      if (!requirement.has_value()) continue;
+  if (!valid_direction_configurations.has_value()) {
+    valid_direction_configurations =
+        std::vector<std::optional<AseDirectionConfiguration>>();
+  }
+  // For every requirement, find the matched ase configuration
+  if (!direction_configurations.has_value()) return;
+  for (auto& requirement : requirements) {
+    if (!requirement.has_value()) continue;
+    for (auto direction_configuration : direction_configurations.value()) {
+      if (!direction_configuration.has_value()) continue;
       if (!isMatchedAseConfiguration(
               direction_configuration.value().aseConfiguration,
               requirement.value().aseConfiguration))
         continue;
       // Valid if match any requirement.
-      valid_direction_configurations.push_back(direction_configuration);
+      valid_direction_configurations.value().push_back(direction_configuration);
       break;
     }
+  }
+  // Ensure that each requirement will have one direction configurations
+  if (valid_direction_configurations.value().empty() ||
+      (valid_direction_configurations.value().size() != requirements.size())) {
+    valid_direction_configurations = std::nullopt;
   }
 }
 
@@ -392,8 +435,18 @@ LeAudioOffloadAudioProvider::getCapabilitiesMatchedAseConfigurationSettings(
     IBluetoothAudioProvider::LeAudioAseConfigurationSetting& setting,
     const IBluetoothAudioProvider::LeAudioDeviceCapabilities& capabilities,
     uint8_t direction) {
+  // Create a new LeAudioAseConfigurationSetting and return
+  // For other direction will contain all settings
+  LeAudioAseConfigurationSetting filtered_setting{
+      .audioContext = setting.audioContext,
+      .sinkAseConfiguration = setting.sinkAseConfiguration,
+      .sourceAseConfiguration = setting.sourceAseConfiguration,
+      .flags = setting.flags,
+      .packing = setting.packing,
+  };
   // Try to match context in metadata.
-  if (!isCapabilitiesMatchedContext(setting.audioContext, capabilities))
+  if (!filterCapabilitiesMatchedContext(filtered_setting.audioContext,
+                                        capabilities))
     return std::nullopt;
 
   // Get a list of all matched AseDirectionConfiguration
@@ -401,28 +454,30 @@ LeAudioOffloadAudioProvider::getCapabilitiesMatchedAseConfigurationSettings(
   std::vector<std::optional<AseDirectionConfiguration>>*
       direction_configuration = nullptr;
   if (direction == kLeAudioDirectionSink) {
-    if (!setting.sinkAseConfiguration.has_value()) return std::nullopt;
-    direction_configuration = &setting.sinkAseConfiguration.value();
+    if (!filtered_setting.sinkAseConfiguration.has_value()) return std::nullopt;
+    direction_configuration = &filtered_setting.sinkAseConfiguration.value();
   } else {
-    if (!setting.sourceAseConfiguration.has_value()) return std::nullopt;
-    direction_configuration = &setting.sourceAseConfiguration.value();
+    if (!filtered_setting.sourceAseConfiguration.has_value())
+      return std::nullopt;
+    direction_configuration = &filtered_setting.sourceAseConfiguration.value();
   }
   std::vector<std::optional<AseDirectionConfiguration>>
       valid_direction_configuration;
   filterCapabilitiesAseDirectionConfiguration(
       *direction_configuration, capabilities, valid_direction_configuration);
-  if (valid_direction_configuration.empty()) return std::nullopt;
+
+  // No valid configuration for this direction
+  if (valid_direction_configuration.empty()) {
+    return std::nullopt;
+  }
 
   // Create a new LeAudioAseConfigurationSetting and return
-  LeAudioAseConfigurationSetting filtered_setting;
-  filtered_setting.audioContext = setting.audioContext;
-  filtered_setting.packing = setting.packing;
+  // For other direction will contain all settings
   if (direction == kLeAudioDirectionSink) {
     filtered_setting.sinkAseConfiguration = valid_direction_configuration;
   } else {
     filtered_setting.sourceAseConfiguration = valid_direction_configuration;
   }
-  filtered_setting.flags = setting.flags;
 
   return filtered_setting;
 }
@@ -436,41 +491,49 @@ LeAudioOffloadAudioProvider::getRequirementMatchedAseConfigurationSettings(
     const IBluetoothAudioProvider::LeAudioConfigurationRequirement&
         requirement) {
   // Try to match context in metadata.
-  if (setting.audioContext != requirement.audioContext) return std::nullopt;
+  if ((setting.audioContext.bitmask & requirement.audioContext.bitmask) !=
+      requirement.audioContext.bitmask)
+    return std::nullopt;
+
+  // Further filter setting's context
+  setting.audioContext.bitmask &= requirement.audioContext.bitmask;
 
   // Check requirement for the correct direction
   const std::optional<std::vector<std::optional<AseDirectionRequirement>>>*
       direction_requirement;
   std::vector<std::optional<AseDirectionConfiguration>>*
       direction_configuration;
-  if (setting.sinkAseConfiguration.has_value()) {
-    direction_configuration = &setting.sinkAseConfiguration.value();
-    direction_requirement = &requirement.sinkAseRequirement;
-  } else {
-    direction_configuration = &setting.sourceAseConfiguration.value();
-    direction_requirement = &requirement.sourceAseRequirement;
+
+  // Create a new LeAudioAseConfigurationSetting to return
+  LeAudioAseConfigurationSetting filtered_setting{
+      .audioContext = setting.audioContext,
+      .packing = setting.packing,
+      .flags = setting.flags,
+  };
+
+  if (requirement.sinkAseRequirement.has_value()) {
+    filterRequirementAseDirectionConfiguration(
+        setting.sinkAseConfiguration, requirement.sinkAseRequirement.value(),
+        filtered_setting.sinkAseConfiguration);
+    if (!filtered_setting.sinkAseConfiguration.has_value()) return std::nullopt;
   }
 
-  std::vector<std::optional<AseDirectionConfiguration>>
-      valid_direction_configuration;
-  filterRequirementAseDirectionConfiguration(*direction_configuration,
-                                             *direction_requirement,
-                                             valid_direction_configuration);
-  if (valid_direction_configuration.empty()) return std::nullopt;
-
-  // Create a new LeAudioAseConfigurationSetting and return
-  LeAudioAseConfigurationSetting filtered_setting;
-  filtered_setting.audioContext = setting.audioContext;
-  filtered_setting.packing = setting.packing;
-  if (setting.sinkAseConfiguration.has_value())
-    filtered_setting.sinkAseConfiguration = valid_direction_configuration;
-  else
-    filtered_setting.sourceAseConfiguration = valid_direction_configuration;
-  filtered_setting.flags = setting.flags;
+  if (requirement.sourceAseRequirement.has_value()) {
+    filterRequirementAseDirectionConfiguration(
+        setting.sourceAseConfiguration,
+        requirement.sourceAseRequirement.value(),
+        filtered_setting.sourceAseConfiguration);
+    if (!filtered_setting.sourceAseConfiguration.has_value())
+      return std::nullopt;
+  }
 
   return filtered_setting;
 }
 
+// For each requirement, a valid ASE configuration will satify:
+// - matched with any sink capability (if presented)
+// - OR matched with any source capability (if presented)
+// - and the setting need to pass the requirement
 ndk::ScopedAStatus LeAudioOffloadAudioProvider::getLeAudioAseConfiguration(
     const std::optional<std::vector<
         std::optional<IBluetoothAudioProvider::LeAudioDeviceCapabilities>>>&
@@ -487,45 +550,80 @@ ndk::ScopedAStatus LeAudioOffloadAudioProvider::getLeAudioAseConfiguration(
       ase_configuration_settings =
           BluetoothAudioCodecs::GetLeAudioAseConfigurationSettings();
 
-  // Currently won't handle case where both sink and source capabilities
-  // are passed in. Only handle one of them.
-  const std::optional<std::vector<
-      std::optional<IBluetoothAudioProvider::LeAudioDeviceCapabilities>>>*
-      in_remoteAudioCapabilities;
-  uint8_t direction = 0;
-  if (in_remoteSinkAudioCapabilities.has_value()) {
-    direction = kLeAudioDirectionSink;
-    in_remoteAudioCapabilities = &in_remoteSinkAudioCapabilities;
-  } else {
-    direction = kLeAudioDirectionSource;
-    in_remoteAudioCapabilities = &in_remoteSourceAudioCapabilities;
+  if (!in_remoteSinkAudioCapabilities.has_value() &&
+      !in_remoteSourceAudioCapabilities.has_value()) {
+    return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
   }
 
+  // Each setting consist of source and sink AseDirectionConfiguration vector
+  // Filter every sink capability
   std::vector<IBluetoothAudioProvider::LeAudioAseConfigurationSetting>
-      capability_matched_ase_configuration_settings;
-  // Matching with remote capabilities
-  for (auto& setting : ase_configuration_settings) {
-    for (auto& capability : in_remoteAudioCapabilities->value()) {
-      if (!capability.has_value()) continue;
-      auto filtered_ase_configuration_setting =
-          getCapabilitiesMatchedAseConfigurationSettings(
-              setting, capability.value(), direction);
-      if (filtered_ase_configuration_setting.has_value()) {
-        capability_matched_ase_configuration_settings.push_back(
-            filtered_ase_configuration_setting.value());
+      matched_ase_configuration_settings;
+
+  if (in_remoteSinkAudioCapabilities.has_value()) {
+    // Matching each setting with any remote capabilities
+    for (auto& setting : ase_configuration_settings) {
+      for (auto& capability : in_remoteSinkAudioCapabilities.value()) {
+        if (!capability.has_value()) continue;
+        auto filtered_ase_configuration_setting =
+            getCapabilitiesMatchedAseConfigurationSettings(
+                setting, capability.value(), kLeAudioDirectionSink);
+        if (filtered_ase_configuration_setting.has_value()) {
+          matched_ase_configuration_settings.push_back(
+              filtered_ase_configuration_setting.value());
+        }
       }
     }
   }
 
-  // Matching with requirements
+  // Combine filter every source capability
+  if (in_remoteSourceAudioCapabilities.has_value()) {
+    // Matching each setting with any remote capabilities
+    for (auto& setting : ase_configuration_settings) {
+      for (auto& capability : in_remoteSourceAudioCapabilities.value()) {
+        if (!capability.has_value()) continue;
+        auto filtered_ase_configuration_setting =
+            getCapabilitiesMatchedAseConfigurationSettings(
+                setting, capability.value(), kLeAudioDirectionSource);
+        if (filtered_ase_configuration_setting.has_value()) {
+          // Put into the same list
+          // possibly duplicated, filtered by requirement later
+          matched_ase_configuration_settings.push_back(
+              filtered_ase_configuration_setting.value());
+        }
+      }
+    }
+  }
+
+  if (matched_ase_configuration_settings.empty()) {
+    LOG(WARNING) << __func__ << ": No setting matched the capability";
+    return ndk::ScopedAStatus::ok();
+  }
+  // Each requirement will match with a valid setting
   std::vector<IBluetoothAudioProvider::LeAudioAseConfigurationSetting> result;
-  for (auto& setting : capability_matched_ase_configuration_settings) {
-    for (auto& requirement : in_requirements) {
+  for (auto& requirement : in_requirements) {
+    LOG(INFO) << __func__ << ": Trying to match for the requirement "
+              << requirement.toString();
+    bool is_matched = false;
+
+    for (auto& setting : matched_ase_configuration_settings) {
       auto filtered_ase_configuration_setting =
           getRequirementMatchedAseConfigurationSettings(setting, requirement);
       if (filtered_ase_configuration_setting.has_value()) {
         result.push_back(filtered_ase_configuration_setting.value());
+        LOG(INFO) << __func__ << ": Result = "
+                  << filtered_ase_configuration_setting.value().toString();
+        // Found a matched setting, ignore other settings
+        is_matched = true;
+        break;
       }
+    }
+    if (!is_matched) {
+      // If cannot satisfy this requirement, return an empty result
+      LOG(WARNING) << __func__ << ": Cannot match the requirement "
+                   << requirement.toString();
+      result.clear();
+      break;
     }
   }
 
@@ -537,41 +635,45 @@ bool LeAudioOffloadAudioProvider::isMatchedQosRequirement(
     LeAudioAseQosConfiguration setting_qos,
     AseQosDirectionRequirement requirement_qos) {
   if (setting_qos.retransmissionNum !=
-      requirement_qos.preferredRetransmissionNum)
+      requirement_qos.preferredRetransmissionNum) {
     return false;
-  if (setting_qos.maxTransportLatencyMs > requirement_qos.maxTransportLatencyMs)
+  }
+  if (setting_qos.maxTransportLatencyMs >
+      requirement_qos.maxTransportLatencyMs) {
     return false;
+  }
   // Ignore other parameters, as they are not populated in the setting_qos
   return true;
 }
 
-ndk::ScopedAStatus LeAudioOffloadAudioProvider::getLeAudioAseQosConfiguration(
-    const IBluetoothAudioProvider::LeAudioAseQosConfigurationRequirement&
-        in_qosRequirement,
-    IBluetoothAudioProvider::LeAudioAseQosConfigurationPair* _aidl_return) {
-  IBluetoothAudioProvider::LeAudioAseQosConfigurationPair result;
-  // Get all configuration settings
-  std::vector<IBluetoothAudioProvider::LeAudioAseConfigurationSetting>
-      ase_configuration_settings =
-          BluetoothAudioCodecs::GetLeAudioAseConfigurationSettings();
+bool isValidQosRequirement(AseQosDirectionRequirement qosRequirement) {
+  return ((qosRequirement.maxTransportLatencyMs > 0) &&
+          (qosRequirement.presentationDelayMaxUs > 0) &&
+          (qosRequirement.presentationDelayMaxUs >=
+           qosRequirement.presentationDelayMinUs));
+}
 
-  // Direction QoS matching
-  // Only handle one direction input case
-  uint8_t direction = 0;
+std::optional<LeAudioAseQosConfiguration>
+LeAudioOffloadAudioProvider::getDirectionQosConfiguration(
+    uint8_t direction,
+    const IBluetoothAudioProvider::LeAudioAseQosConfigurationRequirement&
+        qosRequirement,
+    std::vector<LeAudioAseConfigurationSetting>& ase_configuration_settings) {
   std::optional<AseQosDirectionRequirement> direction_qos_requirement =
       std::nullopt;
-  if (in_qosRequirement.sinkAseQosRequirement.has_value()) {
-    direction_qos_requirement = in_qosRequirement.sinkAseQosRequirement.value();
-    direction = kLeAudioDirectionSink;
-  } else if (in_qosRequirement.sourceAseQosRequirement.has_value()) {
-    direction_qos_requirement =
-        in_qosRequirement.sourceAseQosRequirement.value();
-    direction = kLeAudioDirectionSource;
+
+  // Get the correct direction
+  if (direction == kLeAudioDirectionSink) {
+    direction_qos_requirement = qosRequirement.sinkAseQosRequirement.value();
+  } else {
+    direction_qos_requirement = qosRequirement.sourceAseQosRequirement.value();
   }
 
   for (auto& setting : ase_configuration_settings) {
     // Context matching
-    if (setting.audioContext != in_qosRequirement.audioContext) continue;
+    if ((setting.audioContext.bitmask & qosRequirement.audioContext.bitmask) !=
+        qosRequirement.audioContext.bitmask)
+      continue;
 
     // Match configuration flags
     // Currently configuration flags are not populated, ignore.
@@ -592,10 +694,7 @@ ndk::ScopedAStatus LeAudioOffloadAudioProvider::getLeAudioAseQosConfiguration(
       if (!cfg.has_value()) continue;
       // If no requirement, return the first QoS
       if (!direction_qos_requirement.has_value()) {
-        result.sinkQosConfiguration = cfg.value().qosConfiguration;
-        result.sourceQosConfiguration = cfg.value().qosConfiguration;
-        *_aidl_return = result;
-        return ndk::ScopedAStatus::ok();
+        return cfg.value().qosConfiguration;
       }
 
       // If has requirement, return the first matched QoS
@@ -607,17 +706,41 @@ ndk::ScopedAStatus LeAudioOffloadAudioProvider::getLeAudioAseQosConfiguration(
               direction_qos_requirement.value().aseConfiguration) &&
           isMatchedQosRequirement(cfg.value().qosConfiguration.value(),
                                   direction_qos_requirement.value())) {
-        if (direction == kLeAudioDirectionSink)
-          result.sinkQosConfiguration = cfg.value().qosConfiguration;
-        else
-          result.sourceQosConfiguration = cfg.value().qosConfiguration;
-        *_aidl_return = result;
-        return ndk::ScopedAStatus::ok();
+        return cfg.value().qosConfiguration;
       }
     }
   }
 
-  // No match, return empty QoS
+  return std::nullopt;
+}
+
+ndk::ScopedAStatus LeAudioOffloadAudioProvider::getLeAudioAseQosConfiguration(
+    const IBluetoothAudioProvider::LeAudioAseQosConfigurationRequirement&
+        in_qosRequirement,
+    IBluetoothAudioProvider::LeAudioAseQosConfigurationPair* _aidl_return) {
+  IBluetoothAudioProvider::LeAudioAseQosConfigurationPair result;
+
+  // Get all configuration settings
+  std::vector<IBluetoothAudioProvider::LeAudioAseConfigurationSetting>
+      ase_configuration_settings =
+          BluetoothAudioCodecs::GetLeAudioAseConfigurationSettings();
+
+  // Direction QoS matching
+  // Only handle one direction input case
+  if (in_qosRequirement.sinkAseQosRequirement.has_value()) {
+    if (!isValidQosRequirement(in_qosRequirement.sinkAseQosRequirement.value()))
+      return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    result.sinkQosConfiguration = getDirectionQosConfiguration(
+        kLeAudioDirectionSink, in_qosRequirement, ase_configuration_settings);
+  }
+  if (in_qosRequirement.sourceAseQosRequirement.has_value()) {
+    if (!isValidQosRequirement(
+            in_qosRequirement.sourceAseQosRequirement.value()))
+      return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    result.sourceQosConfiguration = getDirectionQosConfiguration(
+        kLeAudioDirectionSource, in_qosRequirement, ase_configuration_settings);
+  }
+
   *_aidl_return = result;
   return ndk::ScopedAStatus::ok();
 };
@@ -649,9 +772,13 @@ void LeAudioOffloadAudioProvider::getBroadcastSettings() {
       BluetoothAudioCodecs::GetLeAudioOffloadCodecInfo(
           SessionType::LE_AUDIO_BROADCAST_HARDWARE_OFFLOAD_ENCODING_DATAPATH);
   broadcast_settings.clear();
+
+  // Default value for unmapped fields
   CodecSpecificConfigurationLtv::AudioChannelAllocation default_allocation;
   default_allocation.bitmask =
       CodecSpecificConfigurationLtv::AudioChannelAllocation::FRONT_CENTER;
+  CodecSpecificConfigurationLtv::CodecFrameBlocksPerSDU default_frame;
+  default_frame.value = 2;
 
   for (auto& codec_info : db_codec_info) {
     if (codec_info.transport.getTag() != CodecInfo::Transport::leAudio)
@@ -669,15 +796,20 @@ void LeAudioOffloadAudioProvider::getBroadcastSettings() {
     octets.value = transport.bitdepth[0];
 
     bis_cfg.codecConfiguration = {
-        sampling_freq_map[transport.samplingFrequencyHz[0]], octets,
-        frame_duration_map[transport.frameDurationUs[0]], default_allocation};
+        sampling_freq_map[transport.samplingFrequencyHz[0]],
+        octets,
+        frame_duration_map[transport.frameDurationUs[0]],
+        default_allocation,
+        default_frame,
+    };
 
     // Add information to structure
     IBluetoothAudioProvider::LeAudioSubgroupBisConfiguration sub_bis_cfg;
-    sub_bis_cfg.numBis = 1;
+    sub_bis_cfg.numBis = 2;
     sub_bis_cfg.bisConfiguration = bis_cfg;
     IBluetoothAudioProvider::LeAudioBroadcastSubgroupConfiguration sub_cfg;
-    sub_cfg.bisConfigurations = {sub_bis_cfg};
+    // Populate the same sub config
+    sub_cfg.bisConfigurations = {sub_bis_cfg, sub_bis_cfg};
     setting.subgroupsConfigurations = {sub_cfg};
 
     broadcast_settings.push_back(setting);
@@ -721,6 +853,36 @@ LeAudioOffloadAudioProvider::
   return filtered_setting;
 }
 
+bool LeAudioOffloadAudioProvider::isSubgroupConfigurationMatchedContext(
+    AudioContext setting_context,
+    LeAudioBroadcastSubgroupConfiguration configuration) {
+  // Find any valid context metadata in the bisConfigurations
+  // assuming the bis configuration in the same bis subgroup
+  // will have the same context metadata
+  std::optional<AudioContext> config_context = std::nullopt;
+
+  for (auto& p : configuration.bisConfigurations)
+    if (p.bisConfiguration.metadata.has_value()) {
+      bool is_context_found = false;
+      for (auto& metadata : p.bisConfiguration.metadata.value()) {
+        if (!metadata.has_value()) continue;
+        if (metadata.value().getTag() ==
+            MetadataLtv::Tag::preferredAudioContexts) {
+          config_context = metadata.value()
+                               .get<MetadataLtv::Tag::preferredAudioContexts>()
+                               .values;
+          is_context_found = true;
+          break;
+        }
+      }
+      if (is_context_found) break;
+    }
+
+  // Not found context metadata in any of the bis configuration, assume matched
+  if (!config_context.has_value()) return true;
+  return (setting_context.bitmask & config_context.value().bitmask);
+}
+
 ndk::ScopedAStatus
 LeAudioOffloadAudioProvider::getLeAudioBroadcastConfiguration(
     const std::optional<std::vector<
@@ -729,23 +891,28 @@ LeAudioOffloadAudioProvider::getLeAudioBroadcastConfiguration(
     const IBluetoothAudioProvider::LeAudioBroadcastConfigurationRequirement&
         in_requirement,
     LeAudioBroadcastConfigurationSetting* _aidl_return) {
-  getBroadcastSettings();
-  _aidl_return = nullptr;
+  if (in_requirement.subgroupConfigurationRequirements.empty()) {
+    LOG(WARNING) << __func__ << ": Empty requirement";
+    return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+  }
 
-  // Match and filter capability
+  // Broadcast setting are from provider info
+  // We will allow empty capability input, match all settings with requirements.
+  getBroadcastSettings();
   std::vector<LeAudioBroadcastConfigurationSetting> filtered_settings;
   if (!in_remoteSinkAudioCapabilities.has_value()) {
-    LOG(WARNING) << __func__ << ": Empty capability";
-    return ndk::ScopedAStatus::ok();
-  }
-  for (auto& setting : broadcast_settings) {
-    for (auto& capability : in_remoteSinkAudioCapabilities.value()) {
-      if (!capability.has_value()) continue;
-      auto filtered_setting =
-          getCapabilitiesMatchedBroadcastConfigurationSettings(
-              setting, capability.value());
-      if (filtered_setting.has_value())
-        filtered_settings.push_back(filtered_setting.value());
+    LOG(INFO) << __func__ << ": Empty capability, get all broadcast settings";
+    filtered_settings = broadcast_settings;
+  } else {
+    for (auto& setting : broadcast_settings) {
+      for (auto& capability : in_remoteSinkAudioCapabilities.value()) {
+        if (!capability.has_value()) continue;
+        auto filtered_setting =
+            getCapabilitiesMatchedBroadcastConfigurationSettings(
+                setting, capability.value());
+        if (filtered_setting.has_value())
+          filtered_settings.push_back(filtered_setting.value());
+      }
     }
   }
 
@@ -754,36 +921,52 @@ LeAudioOffloadAudioProvider::getLeAudioBroadcastConfiguration(
     return ndk::ScopedAStatus::ok();
   }
 
-  // Match and return the first matched requirement
   if (in_requirement.subgroupConfigurationRequirements.empty()) {
     LOG(INFO) << __func__ << ": Empty requirement";
     *_aidl_return = filtered_settings[0];
     return ndk::ScopedAStatus::ok();
   }
 
+  // For each subgroup config requirement, find a suitable subgroup config.
+  // Gather these suitable subgroup config in an array.
+  // If the setting can satisfy all requirement, we can return the setting
+  // with the filtered array.
   for (auto& setting : filtered_settings) {
-    // Further filter out bis configuration
-    LeAudioBroadcastConfigurationSetting filtered_setting(setting);
-    filtered_setting.subgroupsConfigurations.clear();
-    for (auto& sub_cfg : setting.subgroupsConfigurations) {
-      bool isMatched = false;
-      for (auto& sub_req : in_requirement.subgroupConfigurationRequirements) {
+    LeAudioBroadcastConfigurationSetting matched_setting(setting);
+    matched_setting.subgroupsConfigurations.clear();
+    auto total_num_bis = 0;
+
+    bool matched_all_requirement = true;
+
+    for (auto& sub_req : in_requirement.subgroupConfigurationRequirements) {
+      bool is_matched = false;
+      for (auto& sub_cfg : setting.subgroupsConfigurations) {
+        // Match the context
+        if (!isSubgroupConfigurationMatchedContext(sub_req.audioContext,
+                                                   sub_cfg))
+          continue;
         // Matching number of BIS
         if (sub_req.bisNumPerSubgroup != sub_cfg.bisConfigurations.size())
           continue;
-        // Currently will ignore quality and context hint.
-        isMatched = true;
+        // Currently will ignore quality matching.
+        matched_setting.subgroupsConfigurations.push_back(sub_cfg);
+        total_num_bis += sub_cfg.bisConfigurations.size();
+        is_matched = true;
         break;
       }
-      if (isMatched)
-        filtered_setting.subgroupsConfigurations.push_back(sub_cfg);
+      // There is an unmatched requirement, this setting cannot be used
+      if (!is_matched) {
+        matched_all_requirement = false;
+        break;
+      }
     }
-    // Return the first match
-    if (!filtered_setting.subgroupsConfigurations.empty()) {
-      LOG(INFO) << __func__ << ": Matched requirement";
-      *_aidl_return = filtered_setting;
-      return ndk::ScopedAStatus::ok();
-    }
+
+    if (!matched_all_requirement) continue;
+
+    matched_setting.numBis = total_num_bis;
+    // Return the filtered setting if all requirement satified
+    *_aidl_return = matched_setting;
+    return ndk::ScopedAStatus::ok();
   }
 
   LOG(WARNING) << __func__ << ": Cannot match any requirement";
