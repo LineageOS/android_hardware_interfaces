@@ -23,6 +23,9 @@
 #include "include/effect-impl/EffectTypes.h"
 
 using aidl::android::hardware::audio::effect::IEffect;
+using aidl::android::hardware::audio::effect::kEventFlagDataMqNotEmpty;
+using aidl::android::hardware::audio::effect::kEventFlagNotEmpty;
+using aidl::android::hardware::audio::effect::kReopenSupportedVersion;
 using aidl::android::hardware::audio::effect::State;
 using aidl::android::media::audio::common::PcmType;
 using ::android::hardware::EventFlag;
@@ -43,7 +46,6 @@ namespace aidl::android::hardware::audio::effect {
 ndk::ScopedAStatus EffectImpl::open(const Parameter::Common& common,
                                     const std::optional<Parameter::Specific>& specific,
                                     OpenEffectReturn* ret) {
-    LOG(DEBUG) << getEffectName() << __func__;
     // effect only support 32bits float
     RETURN_IF(common.input.base.format.pcm != common.output.base.format.pcm ||
                       common.input.base.format.pcm != PcmType::FLOAT_32_BIT,
@@ -54,11 +56,12 @@ ndk::ScopedAStatus EffectImpl::open(const Parameter::Common& common,
     mImplContext = createContext(common);
     RETURN_IF(!mImplContext, EX_NULL_POINTER, "nullContext");
 
-    int version = 0;
-    RETURN_IF(!getInterfaceVersion(&version).isOk(), EX_UNSUPPORTED_OPERATION,
+    RETURN_IF(!getInterfaceVersion(&mVersion).isOk(), EX_UNSUPPORTED_OPERATION,
               "FailedToGetInterfaceVersion");
-    mImplContext->setVersion(version);
+    mImplContext->setVersion(mVersion);
     mEventFlag = mImplContext->getStatusEventFlag();
+    mDataMqNotEmptyEf =
+            mVersion >= kReopenSupportedVersion ? kEventFlagDataMqNotEmpty : kEventFlagNotEmpty;
 
     if (specific.has_value()) {
         RETURN_IF_ASTATUS_NOT_OK(setParameterSpecific(specific.value()), "setSpecParamErr");
@@ -66,8 +69,9 @@ ndk::ScopedAStatus EffectImpl::open(const Parameter::Common& common,
 
     mState = State::IDLE;
     mImplContext->dupeFmq(ret);
-    RETURN_IF(createThread(getEffectName()) != RetCode::SUCCESS, EX_UNSUPPORTED_OPERATION,
-              "FailedToCreateWorker");
+    RETURN_IF(createThread(getEffectNameWithVersion()) != RetCode::SUCCESS,
+              EX_UNSUPPORTED_OPERATION, "FailedToCreateWorker");
+    LOG(INFO) << getEffectNameWithVersion() << __func__;
     return ndk::ScopedAStatus::ok();
 }
 
@@ -89,7 +93,7 @@ ndk::ScopedAStatus EffectImpl::close() {
         mState = State::INIT;
     }
 
-    RETURN_IF(notifyEventFlag(kEventFlagNotEmpty) != RetCode::SUCCESS, EX_ILLEGAL_STATE,
+    RETURN_IF(notifyEventFlag(mDataMqNotEmptyEf) != RetCode::SUCCESS, EX_ILLEGAL_STATE,
               "notifyEventFlagNotEmptyFailed");
     // stop the worker thread, ignore the return code
     RETURN_IF(destroyThread() != RetCode::SUCCESS, EX_UNSUPPORTED_OPERATION,
@@ -101,13 +105,13 @@ ndk::ScopedAStatus EffectImpl::close() {
         mImplContext.reset();
     }
 
-    LOG(DEBUG) << getEffectName() << __func__;
+    LOG(INFO) << getEffectNameWithVersion() << __func__;
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus EffectImpl::setParameter(const Parameter& param) {
     std::lock_guard lg(mImplMutex);
-    LOG(VERBOSE) << getEffectName() << __func__ << " with: " << param.toString();
+    LOG(VERBOSE) << getEffectNameWithVersion() << __func__ << " with: " << param.toString();
 
     const auto& tag = param.getTag();
     switch (tag) {
@@ -122,7 +126,7 @@ ndk::ScopedAStatus EffectImpl::setParameter(const Parameter& param) {
             return setParameterSpecific(param.get<Parameter::specific>());
         }
         default: {
-            LOG(ERROR) << getEffectName() << __func__ << " unsupportedParameterTag "
+            LOG(ERROR) << getEffectNameWithVersion() << __func__ << " unsupportedParameterTag "
                        << toString(tag);
             return ndk::ScopedAStatus::fromExceptionCodeWithMessage(EX_ILLEGAL_ARGUMENT,
                                                                     "ParameterNotSupported");
@@ -147,7 +151,7 @@ ndk::ScopedAStatus EffectImpl::getParameter(const Parameter::Id& id, Parameter* 
             break;
         }
     }
-    LOG(VERBOSE) << getEffectName() << __func__ << id.toString() << param->toString();
+    LOG(VERBOSE) << getEffectNameWithVersion() << __func__ << id.toString() << param->toString();
     return ndk::ScopedAStatus::ok();
 }
 
@@ -180,7 +184,7 @@ ndk::ScopedAStatus EffectImpl::setParameterCommon(const Parameter& param) {
                       EX_ILLEGAL_ARGUMENT, "setVolumeStereoFailed");
             break;
         default: {
-            LOG(ERROR) << getEffectName() << __func__ << " unsupportedParameterTag "
+            LOG(ERROR) << getEffectNameWithVersion() << __func__ << " unsupportedParameterTag "
                        << toString(tag);
             return ndk::ScopedAStatus::fromExceptionCodeWithMessage(EX_ILLEGAL_ARGUMENT,
                                                                     "commonParamNotSupported");
@@ -214,7 +218,8 @@ ndk::ScopedAStatus EffectImpl::getParameterCommon(const Parameter::Tag& tag, Par
             break;
         }
         default: {
-            LOG(DEBUG) << getEffectName() << __func__ << " unsupported tag " << toString(tag);
+            LOG(DEBUG) << getEffectNameWithVersion() << __func__ << " unsupported tag "
+                       << toString(tag);
             return ndk::ScopedAStatus::fromExceptionCodeWithMessage(EX_ILLEGAL_ARGUMENT,
                                                                     "tagNotSupported");
         }
@@ -236,7 +241,7 @@ ndk::ScopedAStatus EffectImpl::command(CommandId command) {
             RETURN_OK_IF(mState == State::PROCESSING);
             RETURN_IF_ASTATUS_NOT_OK(commandImpl(command), "commandImplFailed");
             mState = State::PROCESSING;
-            RETURN_IF(notifyEventFlag(kEventFlagNotEmpty) != RetCode::SUCCESS, EX_ILLEGAL_STATE,
+            RETURN_IF(notifyEventFlag(mDataMqNotEmptyEf) != RetCode::SUCCESS, EX_ILLEGAL_STATE,
                       "notifyEventFlagNotEmptyFailed");
             startThread();
             break;
@@ -244,17 +249,18 @@ ndk::ScopedAStatus EffectImpl::command(CommandId command) {
         case CommandId::RESET:
             RETURN_OK_IF(mState == State::IDLE);
             mState = State::IDLE;
-            RETURN_IF(notifyEventFlag(kEventFlagNotEmpty) != RetCode::SUCCESS, EX_ILLEGAL_STATE,
+            RETURN_IF(notifyEventFlag(mDataMqNotEmptyEf) != RetCode::SUCCESS, EX_ILLEGAL_STATE,
                       "notifyEventFlagNotEmptyFailed");
             stopThread();
             RETURN_IF_ASTATUS_NOT_OK(commandImpl(command), "commandImplFailed");
             break;
         default:
-            LOG(ERROR) << getEffectName() << __func__ << " instance still processing";
+            LOG(ERROR) << getEffectNameWithVersion() << __func__ << " instance still processing";
             return ndk::ScopedAStatus::fromExceptionCodeWithMessage(EX_ILLEGAL_ARGUMENT,
                                                                     "CommandIdNotSupported");
     }
-    LOG(VERBOSE) << getEffectName() << __func__ << " transfer to state: " << toString(mState);
+    LOG(VERBOSE) << getEffectNameWithVersion() << __func__
+                 << " transfer to state: " << toString(mState);
     return ndk::ScopedAStatus::ok();
 }
 
@@ -284,14 +290,14 @@ void EffectImpl::cleanUp() {
 
 RetCode EffectImpl::notifyEventFlag(uint32_t flag) {
     if (!mEventFlag) {
-        LOG(ERROR) << getEffectName() << __func__ << ": StatusEventFlag invalid";
+        LOG(ERROR) << getEffectNameWithVersion() << __func__ << ": StatusEventFlag invalid";
         return RetCode::ERROR_EVENT_FLAG_ERROR;
     }
     if (const auto ret = mEventFlag->wake(flag); ret != ::android::OK) {
-        LOG(ERROR) << getEffectName() << __func__ << ": wake failure with ret " << ret;
+        LOG(ERROR) << getEffectNameWithVersion() << __func__ << ": wake failure with ret " << ret;
         return RetCode::ERROR_EVENT_FLAG_ERROR;
     }
-    LOG(VERBOSE) << getEffectName() << __func__ << ": " << std::hex << mEventFlag;
+    LOG(VERBOSE) << getEffectNameWithVersion() << __func__ << ": " << std::hex << mEventFlag;
     return RetCode::SUCCESS;
 }
 
@@ -304,17 +310,17 @@ IEffect::Status EffectImpl::status(binder_status_t status, size_t consumed, size
 }
 
 void EffectImpl::process() {
-    ATRACE_NAME(getEffectName().c_str());
+    ATRACE_NAME(getEffectNameWithVersion().c_str());
     /**
      * wait for the EventFlag without lock, it's ok because the mEfGroup pointer will not change
      * in the life cycle of workerThread (threadLoop).
      */
     uint32_t efState = 0;
     if (!mEventFlag ||
-        ::android::OK != mEventFlag->wait(kEventFlagNotEmpty, &efState, 0 /* no timeout */,
+        ::android::OK != mEventFlag->wait(mDataMqNotEmptyEf, &efState, 0 /* no timeout */,
                                           true /* retry */) ||
-        !(efState & kEventFlagNotEmpty)) {
-        LOG(ERROR) << getEffectName() << __func__ << ": StatusEventFlag - " << mEventFlag
+        !(efState & mDataMqNotEmptyEf)) {
+        LOG(ERROR) << getEffectNameWithVersion() << __func__ << ": StatusEventFlag - " << mEventFlag
                    << " efState - " << std::hex << efState;
         return;
     }
@@ -322,7 +328,8 @@ void EffectImpl::process() {
     {
         std::lock_guard lg(mImplMutex);
         if (mState != State::PROCESSING) {
-            LOG(DEBUG) << getEffectName() << " skip process in state: " << toString(mState);
+            LOG(DEBUG) << getEffectNameWithVersion()
+                       << " skip process in state: " << toString(mState);
             return;
         }
         RETURN_VALUE_IF(!mImplContext, void(), "nullContext");
