@@ -110,7 +110,7 @@ import java.lang.annotation.RetentionPolicy;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import android.test.suitebuilder.annotation.SmallTest;
+import androidx.test.filters.SmallTest;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
