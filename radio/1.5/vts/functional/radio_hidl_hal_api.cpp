@@ -519,26 +519,38 @@ TEST_P(RadioHidlTest_v1_5, areUiccApplicationsEnabled) {
 TEST_P(RadioHidlTest_v1_5, setSystemSelectionChannels_1_5) {
     serial = GetRandomSerialNumber();
 
-    ::android::hardware::radio::V1_5::RadioAccessSpecifier::Bands bandP900;
-    bandP900.geranBands() = {GeranBands::BAND_P900};
-    ::android::hardware::radio::V1_5::RadioAccessSpecifier::Bands band850;
-    band850.geranBands() = {GeranBands::BAND_850};
-    ::android::hardware::radio::V1_5::RadioAccessSpecifier specifierP900 = {
-            .radioAccessNetwork = ::android::hardware::radio::V1_5::RadioAccessNetworks::GERAN,
-            .bands = bandP900,
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier::Bands band3;
+    band3.eutranBands({::android::hardware::radio::V1_5::EutranBands::BAND_3});
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier::Bands band17;
+    band17.eutranBands({::android::hardware::radio::V1_5::EutranBands::BAND_17});
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier::Bands band20;
+    band20.eutranBands({::android::hardware::radio::V1_5::EutranBands::BAND_20});
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier::Bands band40;
+    band40.eutranBands({::android::hardware::radio::V1_5::EutranBands::BAND_40});
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier specifier3 = {
+            .radioAccessNetwork = ::android::hardware::radio::V1_5::RadioAccessNetworks::EUTRAN,
+            .bands = band3,
             .channels = {1, 2}};
-    ::android::hardware::radio::V1_5::RadioAccessSpecifier specifier850 = {
-            .radioAccessNetwork = ::android::hardware::radio::V1_5::RadioAccessNetworks::GERAN,
-            .bands = band850,
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier specifier17 = {
+            .radioAccessNetwork = ::android::hardware::radio::V1_5::RadioAccessNetworks::EUTRAN,
+            .bands = band17,
+            .channels = {1, 2}};
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier specifier20 = {
+            .radioAccessNetwork = ::android::hardware::radio::V1_5::RadioAccessNetworks::EUTRAN,
+            .bands = band20,
+            .channels = {128, 129}};
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier specifier40 = {
+            .radioAccessNetwork = ::android::hardware::radio::V1_5::RadioAccessNetworks::EUTRAN,
+            .bands = band40,
             .channels = {128, 129}};
 
-    Return<void> res =
-            radio_v1_5->setSystemSelectionChannels_1_5(serial, true, {specifierP900, specifier850});
+    Return<void> res = radio_v1_5->setSystemSelectionChannels_1_5(
+            serial, true, {specifier3, specifier17, specifier20, specifier40});
     ASSERT_OK(res);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
-    ALOGI("setSystemSelectionChannels, rspInfo.error = %s\n",
+    ALOGI("setSystemSelectionChannels_1_5, rspInfo.error = %s\n",
           toString(radioRsp_v1_5->rspInfo.error).c_str());
     ASSERT_TRUE(CheckAnyOfErrors(
             radioRsp_v1_5->rspInfo.error,
@@ -547,12 +559,12 @@ TEST_P(RadioHidlTest_v1_5, setSystemSelectionChannels_1_5) {
     if (radioRsp_v1_5->rspInfo.error == RadioError::NONE) {
         serial = GetRandomSerialNumber();
         Return<void> res = radio_v1_5->setSystemSelectionChannels_1_5(
-                serial, false, {specifierP900, specifier850});
+                serial, false, {specifier3, specifier17, specifier20, specifier40});
         ASSERT_OK(res);
         EXPECT_EQ(std::cv_status::no_timeout, wait());
         EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
         EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
-        ALOGI("setSystemSelectionChannels, rspInfo.error = %s\n",
+        ALOGI("setSystemSelectionChannels_1_5, rspInfo.error = %s\n",
               toString(radioRsp_v1_5->rspInfo.error).c_str());
         EXPECT_EQ(RadioError::NONE, radioRsp_v1_5->rspInfo.error);
     }
@@ -1190,11 +1202,12 @@ TEST_P(RadioHidlTest_v1_5, setNetworkSelectionModeManual_1_5) {
 
     // can't camp on nonexistent MCCMNC, so we expect this to fail.
     Return<void> res = radio_v1_5->setNetworkSelectionModeManual_1_5(
-            serial, "123456", android::hardware::radio::V1_5::RadioAccessNetworks::GERAN);
+            serial, "123456", android::hardware::radio::V1_5::RadioAccessNetworks::EUTRAN);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
-
+    ALOGI("setNetworkSelectionModeManual_1_5, rspInfo.error = %s\n",
+          toString(radioRsp_v1_5->rspInfo.error).c_str());
     if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
                                      {RadioError::NONE, RadioError::ILLEGAL_SIM_OR_ME,
