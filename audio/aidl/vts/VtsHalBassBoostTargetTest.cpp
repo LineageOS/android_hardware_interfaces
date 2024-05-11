@@ -57,7 +57,7 @@ class BassBoostEffectHelper : public EffectHelper {
                 AudioChannelLayout::make<AudioChannelLayout::layoutMask>(layout);
 
         Parameter::Specific specific = getDefaultParamSpecific();
-        Parameter::Common common = EffectHelper::createParamCommon(
+        Parameter::Common common = createParamCommon(
                 0 /* session */, 1 /* ioHandle */, kSamplingFrequency /* iSampleRate */,
                 kSamplingFrequency /* oSampleRate */, mInputFrameCount /* iFrameCount */,
                 mOutputFrameCount /* oFrameCount */, channelLayout, channelLayout);
