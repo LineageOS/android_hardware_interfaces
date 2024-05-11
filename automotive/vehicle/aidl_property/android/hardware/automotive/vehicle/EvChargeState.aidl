@@ -18,6 +18,9 @@ package android.hardware.automotive.vehicle;
 
 /**
  * Used by EV charging properties to enumerate the current state of the battery charging.
+ *
+ * Through the use of VehicleAreaConfig#supportedEnumValues, OEMs may specify they only support a
+ * subset of the enums that are defined here.
  */
 @VintfStability
 @Backing(type="int")

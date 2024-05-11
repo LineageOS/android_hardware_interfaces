@@ -22,6 +22,9 @@ package android.hardware.automotive.vehicle;
  * XXX_LIGHTS_SWITCH properties report the switch settings that the user
  * selects.  The switch setting may be decoupled from the state reported if the
  * user selects AUTOMATIC.
+ *
+ * Through the use of VehicleAreaConfig#supportedEnumValues, OEMs may specify they only support a
+ * subset of the enums that are defined here.
  */
 @VintfStability
 @Backing(type="int")

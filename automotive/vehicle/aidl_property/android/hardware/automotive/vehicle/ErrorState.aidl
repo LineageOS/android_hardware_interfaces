@@ -19,6 +19,9 @@ package android.hardware.automotive.vehicle;
 /**
  * Used to enumerate the possible error states. For version 2 of this interface, ErrorState is used
  * by ADAS STATE properties, but its use may be expanded in future releases.
+ *
+ * Through the use of VehicleAreaConfig#supportedEnumValues, OEMs may specify they only support a
+ * subset of the enums that are defined here.
  */
 @VintfStability
 @Backing(type="int")
