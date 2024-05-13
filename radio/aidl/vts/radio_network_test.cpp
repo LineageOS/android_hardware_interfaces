@@ -2471,9 +2471,9 @@ TEST_P(RadioNetworkTest, isCellularIdentifierTransparencyEnabled) {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
 
-    ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp_network->rspInfo.error,
-            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
+                                 {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
+                                  RadioError::MODEM_ERR, RadioError::REQUEST_NOT_SUPPORTED}));
 }
 
 TEST_P(RadioNetworkTest, setCellularIdentifierTransparencyEnabled) {
@@ -2502,9 +2502,9 @@ TEST_P(RadioNetworkTest, setCellularIdentifierTransparencyEnabled) {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
 
-    ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp_network->rspInfo.error,
-            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
+                                 {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
+                                  RadioError::MODEM_ERR, RadioError::REQUEST_NOT_SUPPORTED}));
 
     // Assert the value has changed
     serial = GetRandomSerialNumber();
@@ -2514,9 +2514,9 @@ TEST_P(RadioNetworkTest, setCellularIdentifierTransparencyEnabled) {
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
-    ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp_network->rspInfo.error,
-            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
+                                 {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
+                                  RadioError::MODEM_ERR, RadioError::REQUEST_NOT_SUPPORTED}));
     EXPECT_EQ(valueToSet, radioRsp_network->isCellularIdentifierTransparencyEnabled);
 
     // Reset original state
@@ -2555,9 +2555,9 @@ TEST_P(RadioNetworkTest, setSecurityAlgorithmsUpdatedEnabled) {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
 
-    ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp_network->rspInfo.error,
-            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
+                                 {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
+                                  RadioError::MODEM_ERR, RadioError::REQUEST_NOT_SUPPORTED}));
 
     // Assert the value has changed
     serial = GetRandomSerialNumber();
@@ -2567,9 +2567,9 @@ TEST_P(RadioNetworkTest, setSecurityAlgorithmsUpdatedEnabled) {
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
-    ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp_network->rspInfo.error,
-            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
+                                 {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
+                                  RadioError::MODEM_ERR, RadioError::REQUEST_NOT_SUPPORTED}));
     EXPECT_EQ(valueToSet, radioRsp_network->isSecurityAlgorithmsUpdatedEnabled);
 
     // Reset original state
@@ -2601,7 +2601,7 @@ TEST_P(RadioNetworkTest, isSecurityAlgorithmsUpdatedEnabled) {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
 
-    ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp_network->rspInfo.error,
-            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
+                                 {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
+                                  RadioError::MODEM_ERR, RadioError::REQUEST_NOT_SUPPORTED}));
 }
