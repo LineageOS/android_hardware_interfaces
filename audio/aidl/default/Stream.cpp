@@ -183,17 +183,19 @@ StreamInWorkerLogic::Status StreamInWorkerLogic::cycle() {
     switch (command.getTag()) {
         case Tag::halReservedExit: {
             const int32_t cookie = command.get<Tag::halReservedExit>();
+            StreamInWorkerLogic::Status status = Status::CONTINUE;
             if (cookie == (mContext->getInternalCommandCookie() ^ getTid())) {
                 mDriver->shutdown();
                 setClosed();
+                status = Status::EXIT;
             } else {
                 LOG(WARNING) << __func__ << ": EXIT command has a bad cookie: " << cookie;
             }
             if (cookie != 0) {  // This is an internal command, no need to reply.
-                return Status::EXIT;
-            } else {
-                break;
+                return status;
             }
+            // `cookie == 0` can only occur in the context of a VTS test, need to reply.
+            break;
         }
         case Tag::getStatus:
             populateReply(&reply, mIsConnected);
@@ -411,17 +413,19 @@ StreamOutWorkerLogic::Status StreamOutWorkerLogic::cycle() {
     switch (command.getTag()) {
         case Tag::halReservedExit: {
             const int32_t cookie = command.get<Tag::halReservedExit>();
+            StreamOutWorkerLogic::Status status = Status::CONTINUE;
             if (cookie == (mContext->getInternalCommandCookie() ^ getTid())) {
                 mDriver->shutdown();
                 setClosed();
+                status = Status::EXIT;
             } else {
                 LOG(WARNING) << __func__ << ": EXIT command has a bad cookie: " << cookie;
             }
             if (cookie != 0) {  // This is an internal command, no need to reply.
-                return Status::EXIT;
-            } else {
-                break;
+                return status;
             }
+            // `cookie == 0` can only occur in the context of a VTS test, need to reply.
+            break;
         }
         case Tag::getStatus:
             populateReply(&reply, mIsConnected);
