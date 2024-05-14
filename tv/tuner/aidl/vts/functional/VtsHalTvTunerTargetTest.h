@@ -31,11 +31,7 @@ namespace {
 
 bool initConfiguration() {
     std::array<char, PROPERTY_VALUE_MAX> variant;
-    auto res = property_get("ro.vendor.vts_tuner_configuration_variant", variant.data(), "");
-    if (res <= 0) {
-        ALOGE("[vts] failed to read system property ro.vendor.vts_tuner_configuration_variant");
-        return false;
-    }
+    property_get("ro.vendor.vts_tuner_configuration_variant", variant.data(), "");
     string configFilePath = "/vendor/etc/tuner_vts_config_aidl_V1";
     if (variant.size() != 0) {
         configFilePath = configFilePath + "."  + variant.data();
