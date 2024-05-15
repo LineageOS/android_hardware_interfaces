@@ -172,9 +172,7 @@ VhalResult<void> VehiclePropertyStore::writeValue(VehiclePropValuePool::Recyclab
     }
 
     if (onValuesChangeCallback == nullptr && onValueChangeCallback == nullptr) {
-        ALOGW("No callback registered, ignoring property update for propId: %" PRId32
-              ", area ID: %" PRId32,
-              propId, areaId);
+        // No callback registered.
         return {};
     }
 

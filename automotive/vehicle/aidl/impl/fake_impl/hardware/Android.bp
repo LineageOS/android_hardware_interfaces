@@ -37,6 +37,7 @@ cc_library {
     whole_static_libs: [
         "wakeup_client_protos",
     ],
+    host_supported: true,
 }
 
 cc_defaults {
