@@ -184,7 +184,7 @@ class FakeVehicleHardware : public IVehicleHardware {
     std::unordered_set<int32_t> hvacPowerDependentProps;
 
     const bool mForceOverride;
-    bool mAddExtraTestVendorConfigs;
+    bool mAddExtraTestVendorConfigs = false;
 
     // Only used during initialization.
     JsonConfigLoader mLoader;
