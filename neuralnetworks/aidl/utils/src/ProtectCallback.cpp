@@ -25,6 +25,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <vector>
@@ -33,6 +34,16 @@
 
 namespace aidl::android::hardware::neuralnetworks::utils {
 
+namespace {
+
+// Only dereference the cookie if it's valid (if it's in this set)
+// Only used with ndk
+std::mutex sCookiesMutex;
+uintptr_t sCookieKeyCounter GUARDED_BY(sCookiesMutex) = 0;
+std::map<uintptr_t, std::weak_ptr<DeathMonitor>> sCookies GUARDED_BY(sCookiesMutex);
+
+}  // namespace
+
 void DeathMonitor::serviceDied() {
     std::lock_guard guard(mMutex);
     std::for_each(mObjects.begin(), mObjects.end(),
@@ -40,8 +51,24 @@ void DeathMonitor::serviceDied() {
 }
 
 void DeathMonitor::serviceDied(void* cookie) {
-    auto deathMonitor = static_cast<DeathMonitor*>(cookie);
-    deathMonitor->serviceDied();
+    std::shared_ptr<DeathMonitor> monitor;
+    {
+        std::lock_guard<std::mutex> guard(sCookiesMutex);
+        if (auto it = sCookies.find(reinterpret_cast<uintptr_t>(cookie)); it != sCookies.end()) {
+            monitor = it->second.lock();
+            sCookies.erase(it);
+        } else {
+            LOG(INFO)
+                    << "Service died, but cookie is no longer valid so there is nothing to notify.";
+            return;
+        }
+    }
+    if (monitor) {
+        LOG(INFO) << "Notifying DeathMonitor from serviceDied.";
+        monitor->serviceDied();
+    } else {
+        LOG(INFO) << "Tried to notify DeathMonitor from serviceDied but could not promote.";
+    }
 }
 
 void DeathMonitor::add(IProtectedCallback* killable) const {
@@ -57,12 +84,25 @@ void DeathMonitor::remove(IProtectedCallback* killable) const {
     mObjects.erase(removedIter);
 }
 
+DeathMonitor::~DeathMonitor() {
+    // lock must be taken so object is not used in OnBinderDied"
+    std::lock_guard<std::mutex> guard(sCookiesMutex);
+    sCookies.erase(kCookieKey);
+}
+
 nn::GeneralResult<DeathHandler> DeathHandler::create(std::shared_ptr<ndk::ICInterface> object) {
     if (object == nullptr) {
         return NN_ERROR(nn::ErrorStatus::INVALID_ARGUMENT)
                << "utils::DeathHandler::create must have non-null object";
     }
-    auto deathMonitor = std::make_shared<DeathMonitor>();
+
+    std::shared_ptr<DeathMonitor> deathMonitor;
+    {
+        std::lock_guard<std::mutex> guard(sCookiesMutex);
+        deathMonitor = std::make_shared<DeathMonitor>(sCookieKeyCounter++);
+        sCookies[deathMonitor->getCookieKey()] = deathMonitor;
+    }
+
     auto deathRecipient = ndk::ScopedAIBinder_DeathRecipient(
             AIBinder_DeathRecipient_new(DeathMonitor::serviceDied));
 
@@ -70,8 +110,9 @@ nn::GeneralResult<DeathHandler> DeathHandler::create(std::shared_ptr<ndk::ICInte
     // STATUS_INVALID_OPERATION. We ignore this case because we only use local binders in tests
     // where this is not an error.
     if (object->isRemote()) {
-        const auto ret = ndk::ScopedAStatus::fromStatus(AIBinder_linkToDeath(
-                object->asBinder().get(), deathRecipient.get(), deathMonitor.get()));
+        const auto ret = ndk::ScopedAStatus::fromStatus(
+                AIBinder_linkToDeath(object->asBinder().get(), deathRecipient.get(),
+                                     reinterpret_cast<void*>(deathMonitor->getCookieKey())));
         HANDLE_ASTATUS(ret) << "AIBinder_linkToDeath failed";
     }
 
@@ -91,8 +132,9 @@ DeathHandler::DeathHandler(std::shared_ptr<ndk::ICInterface> object,
 
 DeathHandler::~DeathHandler() {
     if (kObject != nullptr && kDeathRecipient.get() != nullptr && kDeathMonitor != nullptr) {
-        const auto ret = ndk::ScopedAStatus::fromStatus(AIBinder_unlinkToDeath(
-                kObject->asBinder().get(), kDeathRecipient.get(), kDeathMonitor.get()));
+        const auto ret = ndk::ScopedAStatus::fromStatus(
+                AIBinder_unlinkToDeath(kObject->asBinder().get(), kDeathRecipient.get(),
+                                       reinterpret_cast<void*>(kDeathMonitor->getCookieKey())));
         const auto maybeSuccess = handleTransportError(ret);
         if (!maybeSuccess.ok()) {
             LOG(ERROR) << maybeSuccess.error().message;

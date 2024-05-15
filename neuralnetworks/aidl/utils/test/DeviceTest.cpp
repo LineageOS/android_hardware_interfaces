@@ -697,7 +697,8 @@ TEST_P(DeviceTest, prepareModelAsyncCrash) {
     const auto mockDevice = createMockDevice();
     const auto device = Device::create(kName, mockDevice, kVersion).value();
     const auto ret = [&device]() {
-        DeathMonitor::serviceDied(device->getDeathMonitor());
+        DeathMonitor::serviceDied(
+                reinterpret_cast<void*>(device->getDeathMonitor()->getCookieKey()));
         return ndk::ScopedAStatus::ok();
     };
     EXPECT_CALL(*mockDevice, prepareModel(_, _, _, _, _, _, _, _))
@@ -846,7 +847,8 @@ TEST_P(DeviceTest, prepareModelWithConfigAsyncCrash) {
     const auto mockDevice = createMockDevice();
     const auto device = Device::create(kName, mockDevice, kVersion).value();
     const auto ret = [&device]() {
-        DeathMonitor::serviceDied(device->getDeathMonitor());
+        DeathMonitor::serviceDied(
+                reinterpret_cast<void*>(device->getDeathMonitor()->getCookieKey()));
         return ndk::ScopedAStatus::ok();
     };
     EXPECT_CALL(*mockDevice, prepareModelWithConfig(_, _, _))
@@ -970,7 +972,8 @@ TEST_P(DeviceTest, prepareModelFromCacheAsyncCrash) {
     const auto mockDevice = createMockDevice();
     const auto device = Device::create(kName, mockDevice, kVersion).value();
     const auto ret = [&device]() {
-        DeathMonitor::serviceDied(device->getDeathMonitor());
+        DeathMonitor::serviceDied(
+                reinterpret_cast<void*>(device->getDeathMonitor()->getCookieKey()));
         return ndk::ScopedAStatus::ok();
     };
     EXPECT_CALL(*mockDevice, prepareModelFromCache(_, _, _, _, _))
