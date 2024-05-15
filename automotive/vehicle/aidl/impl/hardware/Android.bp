@@ -30,4 +30,5 @@ cc_library_headers {
     export_header_lib_headers: [
         "VehicleHalUtilHeaders",
     ],
+    host_supported: true,
 }

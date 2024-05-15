@@ -29,4 +29,5 @@ cc_library {
         "VehicleHalUtils",
     ],
     export_static_lib_headers: ["VehicleHalUtils"],
+    host_supported: true,
 }
