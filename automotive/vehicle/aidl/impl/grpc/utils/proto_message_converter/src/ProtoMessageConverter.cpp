@@ -152,6 +152,24 @@ void protoToAidl(const proto::VehiclePropValue& in, aidl_vehicle::VehiclePropVal
     COPY_PROTOBUF_VEC_TO_VHAL_TYPE(in, float_values, out, value.floatValues);
 }
 
+void aidlToProto(const aidl_vehicle::SubscribeOptions& in, proto::SubscribeOptions* out) {
+    out->set_prop_id(in.propId);
+    for (int areaId : in.areaIds) {
+        out->add_area_ids(areaId);
+    }
+    out->set_sample_rate(in.sampleRate);
+    out->set_resolution(in.resolution);
+    out->set_enable_variable_update_rate(in.enableVariableUpdateRate);
+}
+
+void protoToAidl(const proto::SubscribeOptions& in, aidl_vehicle::SubscribeOptions* out) {
+    out->propId = in.prop_id();
+    COPY_PROTOBUF_VEC_TO_VHAL_TYPE(in, area_ids, out, areaIds);
+    out->sampleRate = in.sample_rate();
+    out->resolution = in.resolution();
+    out->enableVariableUpdateRate = in.enable_variable_update_rate();
+}
+
 #undef COPY_PROTOBUF_VEC_TO_VHAL_TYPE
 #undef CAST_COPY_PROTOBUF_VEC_TO_VHAL_TYPE
 
