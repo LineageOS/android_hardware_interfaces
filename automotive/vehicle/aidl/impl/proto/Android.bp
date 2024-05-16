@@ -50,6 +50,8 @@ genrule {
         "android/hardware/automotive/vehicle/VehiclePropertyStatus.pb.h",
         "android/hardware/automotive/vehicle/VehiclePropValue.pb.h",
         "android/hardware/automotive/vehicle/VehiclePropValueRequest.pb.h",
+        "android/hardware/automotive/vehicle/SubscribeOptions.pb.h",
+        "android/hardware/automotive/vehicle/SubscribeRequest.pb.h",
     ],
 }
 
@@ -74,6 +76,8 @@ genrule {
         "android/hardware/automotive/vehicle/VehiclePropertyStatus.pb.cc",
         "android/hardware/automotive/vehicle/VehiclePropValue.pb.cc",
         "android/hardware/automotive/vehicle/VehiclePropValueRequest.pb.cc",
+        "android/hardware/automotive/vehicle/SubscribeOptions.pb.cc",
+        "android/hardware/automotive/vehicle/SubscribeRequest.pb.cc",
     ],
 }
 

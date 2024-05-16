@@ -55,5 +55,10 @@
     {
       "name": "VehicleHalProtoMessageConverterTest"
     }
+  ],
+  "postsubmit": [
+    {
+      "name": "VehicleHalProtoMessageConverterTest"
+    }
   ]
 }
