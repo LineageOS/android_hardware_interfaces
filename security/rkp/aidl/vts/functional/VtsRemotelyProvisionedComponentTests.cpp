@@ -188,9 +188,15 @@ class VtsRemotelyProvisionedComponentTests : public testing::TestWithParam<std::
         }
         ASSERT_NE(provisionable_, nullptr);
         auto status = provisionable_->getHardwareInfo(&rpcHardwareInfo);
-        if (GetParam() == RKP_VM_INSTANCE_NAME &&
-            status.getExceptionCode() == EX_UNSUPPORTED_OPERATION) {
-            GTEST_SKIP() << "The RKP VM is not supported on this system.";
+        if (GetParam() == RKP_VM_INSTANCE_NAME) {
+            if (status.getExceptionCode() == EX_UNSUPPORTED_OPERATION) {
+                GTEST_SKIP() << "The RKP VM is not supported on this system.";
+            }
+            int apiLevel = get_vsr_api_level();
+            if (apiLevel < __ANDROID_API_V__) {
+                GTEST_SKIP() << "The RKP VM is supported only on V+ devices. Vendor API level: "
+                             << apiLevel;
+            }
         }
         ASSERT_TRUE(status.isOk());
     }
