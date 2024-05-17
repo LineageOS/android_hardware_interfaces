@@ -8917,13 +8917,6 @@ TEST_F(InstanceTest, FeatureVersionInAidl) {
 using aidl::android::hardware::security::keymint::test::KeyMintAidlTestBase;
 
 int main(int argc, char** argv) {
-    std::cout << "Testing ";
-    auto halInstances = KeyMintAidlTestBase::build_params();
-    std::cout << "HAL instances:\n";
-    for (auto& entry : halInstances) {
-        std::cout << "    " << entry << '\n';
-    }
-
     ::testing::InitGoogleTest(&argc, argv);
     for (int i = 1; i < argc; ++i) {
         if (argv[i][0] == '-') {
