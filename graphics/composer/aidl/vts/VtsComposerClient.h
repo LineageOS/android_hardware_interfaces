@@ -288,6 +288,20 @@ class VtsDisplay {
         return false;
     }
 
+    std::string printConfig(int config) {
+        const auto displayConfig = getDisplayConfig(config);
+        const auto vrrConfigOpt = displayConfig.vrrConfigOpt;
+        std::stringstream ss;
+        if (displayConfig.vrrConfigOpt) {
+            ss << "{Config " << config << ": vsyncPeriod " << displayConfig.vsyncPeriod
+                << ", minFrameIntervalNs " << vrrConfigOpt->minFrameIntervalNs << "}";
+        }
+        else {
+            ss << "{Config " << config << ": vsyncPeriod " << displayConfig.vsyncPeriod << "}";
+        }
+        return ss.str();
+    }
+
     std::unordered_map<int32_t, DisplayConfig> getDisplayConfigs() { return mDisplayConfigs; }
 
   private:

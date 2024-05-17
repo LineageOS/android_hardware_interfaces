@@ -2877,8 +2877,9 @@ TEST_P(GraphicsComposerAidlCommandV2Test,
             } while (--retryCount > 0);
 
             if (retryCount == 0) {
-                GTEST_FAIL() << "failed to get a callback for the display " << displayId
-                             << " with config " << config2;
+                GTEST_FAIL() << "Failed to get a callback for Display " << displayId
+                             << " switching from " << display.printConfig(config1)
+                             << " to " << display.printConfig(config2);
             }
         });
 
