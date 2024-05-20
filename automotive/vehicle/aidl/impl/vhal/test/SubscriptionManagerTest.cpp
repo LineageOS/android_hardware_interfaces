@@ -521,6 +521,8 @@ TEST_F(SubscriptionManagerTest, testCheckSampleRateHzInvalidZero) {
 }
 
 TEST_F(SubscriptionManagerTest, testCheckResolutionValid) {
+    ASSERT_TRUE(SubscriptionManager::checkResolution(0.0));
+    ASSERT_TRUE(SubscriptionManager::checkResolution(0.1));
     ASSERT_TRUE(SubscriptionManager::checkResolution(1.0));
 }
 

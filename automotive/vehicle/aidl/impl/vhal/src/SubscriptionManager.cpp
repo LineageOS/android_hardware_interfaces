@@ -40,6 +40,7 @@ using ::android::base::Result;
 using ::android::base::StringPrintf;
 using ::ndk::ScopedAStatus;
 
+constexpr float EPSILON = 0.0000001;
 constexpr float ONE_SECOND_IN_NANOS = 1'000'000'000.;
 
 SubscribeOptions newSubscribeOptions(int32_t propId, int32_t areaId, float sampleRateHz,
@@ -88,7 +89,7 @@ bool SubscriptionManager::checkResolution(float resolution) {
     }
 
     float log = std::log10(resolution);
-    return log == (int)log;
+    return std::abs(log - std::round(log)) < EPSILON;
 }
 
 void ContSubConfigs::refreshCombinedConfig() {
