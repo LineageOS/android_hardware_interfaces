@@ -22,6 +22,7 @@
 
 #include <android-base/file.h>
 #include <android-base/format.h>
+#include <android/hardware/automotive/vehicle/SubscribeOptions.pb.h>
 #include <android/hardware/automotive/vehicle/VehiclePropConfig.pb.h>
 #include <android/hardware/automotive/vehicle/VehiclePropValue.pb.h>
 #include <gtest/gtest.h>
@@ -113,6 +114,21 @@ INSTANTIATE_TEST_SUITE_P(TestValues, PropValueConversionTest,
                          [](const ::testing::TestParamInfo<aidl_vehicle::VehiclePropValue>& info) {
                              return ::fmt::format("property_{:d}", info.param.prop);
                          });
+
+TEST_F(PropValueConversionTest, testConvertSubscribeOption) {
+    proto::SubscribeOptions protoOptions;
+    aidl_vehicle::SubscribeOptions aidlOptions = {.propId = 1,
+                                                  .areaIds = {1, 2},
+                                                  .sampleRate = 1.234,
+                                                  .resolution = 0.01,
+                                                  .enableVariableUpdateRate = true};
+    aidl_vehicle::SubscribeOptions outputOptions;
+
+    aidlToProto(aidlOptions, &protoOptions);
+    protoToAidl(protoOptions, &outputOptions);
+
+    EXPECT_EQ(aidlOptions, outputOptions);
+}
 
 }  // namespace proto_msg_converter
 }  // namespace vehicle
