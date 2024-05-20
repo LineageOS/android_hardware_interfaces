@@ -24,6 +24,7 @@ cc_library_headers {
     local_include_dirs: ["."],
     export_include_dirs: ["."],
     defaults: ["VehicleHalInterfaceDefaults"],
+    host_supported: true,
 }
 
 cc_library_headers {
@@ -32,4 +33,5 @@ cc_library_headers {
     local_include_dirs: ["."],
     export_include_dirs: ["."],
     defaults: ["VehicleHalInterfaceDefaults"],
+    host_supported: true,
 }

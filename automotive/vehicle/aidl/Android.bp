@@ -60,5 +60,5 @@ aidl_interface {
         },
 
     ],
-
+    host_supported: true,
 }
