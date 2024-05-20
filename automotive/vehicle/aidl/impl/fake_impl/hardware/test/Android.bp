@@ -54,6 +54,8 @@ cc_test {
     defaults: [
         "VehicleHalDefaults",
     ],
+    // Need root to use vendor lib: libgrpc++.
+    require_root: true,
     test_suites: ["device-tests"],
 }
 
