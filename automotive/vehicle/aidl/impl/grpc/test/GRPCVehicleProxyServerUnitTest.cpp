@@ -219,4 +219,23 @@ TEST(GRPCVehicleProxyServerUnitTest, SubscribeNotAvailable) {
     EXPECT_EQ(returnStatus.status_code(), proto::StatusCode::NOT_AVAILABLE);
 }
 
+TEST(GRPCVehicleProxyServerUnitTest, Unsubscribe) {
+    auto mockHardware = std::make_unique<MockVehicleHardware>();
+    // We make sure this is alive inside the function scope.
+    MockVehicleHardware* mockHardwarePtr = mockHardware.get();
+    GrpcVehicleProxyServer server = GrpcVehicleProxyServer("", std::move(mockHardware));
+    ::grpc::ServerContext context;
+    proto::UnsubscribeRequest request;
+    proto::VehicleHalCallStatus returnStatus;
+    request.set_prop_id(1);
+    request.set_area_id(2);
+
+    EXPECT_CALL(*mockHardwarePtr, unsubscribe(1, 2)).WillOnce(Return(aidlvhal::StatusCode::OK));
+
+    auto grpcStatus = server.Unsubscribe(&context, &request, &returnStatus);
+
+    EXPECT_TRUE(grpcStatus.ok());
+    EXPECT_EQ(returnStatus.status_code(), proto::StatusCode::OK);
+}
+
 }  // namespace android::hardware::automotive::vehicle::virtualization

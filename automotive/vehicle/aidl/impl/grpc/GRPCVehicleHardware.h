@@ -85,6 +85,8 @@ class GRPCVehicleHardware : public IVehicleHardware {
 
     aidlvhal::StatusCode subscribe(aidlvhal::SubscribeOptions options) override;
 
+    aidlvhal::StatusCode unsubscribe(int32_t propId, int32_t areaId) override;
+
     bool waitForConnected(std::chrono::milliseconds waitTime);
 
   protected:
