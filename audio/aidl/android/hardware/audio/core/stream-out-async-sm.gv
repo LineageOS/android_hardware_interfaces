@@ -51,9 +51,7 @@ digraph stream_out_async_state_machine {
     DRAIN_PAUSED -> DRAINING [label="start"];         // consumer -> active
     DRAIN_PAUSED -> TRANSFER_PAUSED [label="burst"];  // producer -> active
     DRAIN_PAUSED -> IDLE [label="flush"];             // buffer is cleared
-    IDLE -> ERROR [label="←IStreamCallback.onError"];
-    DRAINING -> ERROR [label="←IStreamCallback.onError"];
-    TRANSFERRING -> ERROR [label="←IStreamCallback.onError"];
+    ANY_STATE -> ERROR [label="←IStreamCallback.onError"];
     ANY_STATE -> CLOSED [label="→IStream*.close"];
     CLOSED -> F;
 }
