@@ -32,4 +32,5 @@ cc_library {
     shared_libs: [
         "libjsoncpp",
     ],
+    host_supported: true,
 }

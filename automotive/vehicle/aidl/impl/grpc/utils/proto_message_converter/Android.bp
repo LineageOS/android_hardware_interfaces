@@ -39,25 +39,24 @@ cc_library {
     ],
     defaults: ["VehicleHalDefaults"],
     export_static_lib_headers: ["VehicleHalUtils"],
+    host_supported: true,
 }
 
-cc_test {
+cc_test_host {
     name: "VehicleHalProtoMessageConverterTest",
     srcs: [
         "test/*.cpp",
     ],
     vendor: true,
     defaults: ["VehicleHalDefaults"],
-    shared_libs: [
-        "libprotobuf-cpp-full",
-        "libjsoncpp",
-    ],
     static_libs: [
         "VehicleHalJsonConfigLoaderEnableTestProperties",
         "VehicleHalProtoMessageConverter",
         "VehicleHalProtos",
         "VehicleHalUtils",
         "libgtest",
+        "libprotobuf-cpp-full",
+        "libjsoncpp",
     ],
     data: [
         ":VehicleHalDefaultProperties_JSON",

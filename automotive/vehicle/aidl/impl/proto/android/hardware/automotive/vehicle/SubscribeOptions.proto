@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2024 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,14 @@
  * limitations under the License.
  */
 
-package {
-    default_applicable_licenses: ["Android-Apache-2.0"],
-}
+syntax = "proto3";
 
-cc_library {
-    name: "FakeUserHal",
-    vendor: true,
-    srcs: ["src/*.cpp"],
-    local_include_dirs: ["include"],
-    export_include_dirs: ["include"],
-    defaults: ["VehicleHalDefaults"],
-    static_libs: [
-        "VehicleHalUtils",
-    ],
-    export_static_lib_headers: ["VehicleHalUtils"],
-    host_supported: true,
+package android.hardware.automotive.vehicle.proto;
+
+message SubscribeOptions {
+    int32 prop_id = 1;
+    repeated int32 area_ids = 2;
+    float sample_rate = 3;
+    float resolution = 4;
+    bool enable_variable_update_rate = 5;
 }

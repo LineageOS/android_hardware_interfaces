@@ -22,7 +22,7 @@ genrule {
         "aprotoc",
         "protoc-gen-grpc-cpp-plugin",
     ],
-    cmd: "$(location aprotoc) -I$$(dirname $(location proto/VehicleServer.proto)) -Ihardware/interfaces/automotive/vehicle/aidl/impl/proto -Iexternal/protobuf/src --plugin=protoc-gen-grpc=$(location protoc-gen-grpc-cpp-plugin) $(location proto/VehicleServer.proto) --grpc_out=$(genDir) --cpp_out=$(genDir)",
+    cmd: "$(location aprotoc) -I$$(dirname $(location proto/VehicleServer.proto)) -Ihardware/interfaces/automotive/vehicle/aidl/impl/proto -Iexternal/protobuf/src --plugin=protoc-gen-grpc=$(location protoc-gen-grpc-cpp-plugin) $(location proto/VehicleServer.proto) --grpc_opt=generate_mock_code=true --grpc_out=$(genDir) --cpp_out=$(genDir)",
     srcs: [
         "proto/VehicleServer.proto",
         ":libprotobuf-internal-protos",
@@ -31,6 +31,7 @@ genrule {
     out: [
         "VehicleServer.pb.h",
         "VehicleServer.grpc.pb.h",
+        "VehicleServer_mock.grpc.pb.h",
     ],
     visibility: ["//visibility:private"],
 }
@@ -127,4 +128,5 @@ cc_library_static {
     cflags: [
         "-Wno-unused-parameter",
     ],
+    host_supported: true,
 }
