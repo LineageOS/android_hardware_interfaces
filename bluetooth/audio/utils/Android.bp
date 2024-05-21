@@ -90,6 +90,9 @@ cc_library_shared {
 
 cc_test {
     name: "BluetoothLeAudioCodecsProviderTest",
+    defaults: [
+        "latest_android_hardware_bluetooth_audio_ndk_shared",
+    ],
     srcs: [
         "aidl_session/BluetoothLeAudioCodecsProvider.cpp",
         "aidl_session/BluetoothLeAudioCodecsProviderTest.cpp",
@@ -100,7 +103,6 @@ cc_test {
     shared_libs: [
         "libbase",
         "libbinder_ndk",
-        "android.hardware.bluetooth.audio-V4-ndk",
         "libxml2",
     ],
     test_suites: [
