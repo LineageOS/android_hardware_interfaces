@@ -38,15 +38,15 @@ interface IConfirmationResultCallback {
      * prevented the TUI from being shut down gracefully.
      *
      * @param formattedMessage holds the prompt text and extra data.
-     *                         The message is CBOR (RFC 7049) encoded and has the following format:
-     *                         CBOR_MAP{ "prompt", <promptText>, "extra", <extraData> }
-     *                         The message is a CBOR encoded map (type 5) with the keys
-     *                         "prompt" and "extra". The keys are encoded as CBOR text string
-     *                         (type 3). The value <promptText> is encoded as CBOR text string
-     *                         (type 3), and the value <extraData> is encoded as CBOR byte string
-     *                         (type 2). The map must have exactly one key value pair for each of
-     *                         the keys "prompt" and "extra". Other keys are not allowed.
-     *                         The value of "prompt" is given by the proptText argument to
+     *                         The message is CBOR (RFC 7049) encoded and has the exact format
+     *                         given by the following CDDL:
+     *
+     *                         formattedMessage = {
+     *                             "prompt" : tstr,
+     *                             "extra" : bstr,
+     *                         }
+     *
+     *                         The value of "prompt" is given by the promptText argument to
      *                         IConfirmationUI::promptUserConfirmation and must not be modified
      *                         by the implementation.
      *                         The value of "extra" is given by the extraData argument to
@@ -59,8 +59,7 @@ interface IConfirmationResultCallback {
      *                          the "", concatenated with the formatted message as returned in the
      *                          formattedMessage argument. The HMAC is keyed with a 256-bit secret
      *                          which is shared with Keymaster. In test mode the test key MUST be
-     *                          used (see TestModeCommands.aidl and
-     * IConfirmationUI::TEST_KEY_BYTE).
+     *                          used (see TestModeCommands.aidl and IConfirmationUI::TEST_KEY_BYTE)
      */
     void result(in int error, in byte[] formattedMessage, in byte[] confirmationToken);
 }
