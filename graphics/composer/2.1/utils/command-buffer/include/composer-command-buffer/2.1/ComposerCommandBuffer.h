@@ -33,6 +33,7 @@
 #include <string.h>
 
 #include <android/hardware/graphics/composer/2.1/IComposer.h>
+#include <android/hardware/graphics/composer/2.1/IComposerClient.h>
 #include <fmq/MessageQueue.h>
 #include <log/log.h>
 #include <sync/sync.h>
@@ -649,7 +650,8 @@ class CommandReaderBase {
         *outLength = static_cast<uint16_t>(val & length_mask);
 
         if (mDataRead + *outLength > mDataSize) {
-            ALOGE("command 0x%x has invalid command length %" PRIu16, *outCommand, *outLength);
+            ALOGE("command %s has invalid command length %" PRIu16,
+                  toString(*outCommand).c_str(), *outLength);
             // undo the read() above
             mDataRead--;
             return false;

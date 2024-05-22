@@ -105,3 +105,25 @@ cc_defaults {
         latest_android_hardware_bluetooth_audio + "-ndk",
     ],
 }
+
+cc_defaults {
+    name: "latest_android_hardware_bluetooth_audio_ndk_android_shared",
+    target: {
+        android: {
+            shared_libs: [
+                latest_android_hardware_bluetooth_audio + "-ndk",
+            ],
+        },
+    },
+}
+
+cc_defaults {
+    name: "latest_android_hardware_bluetooth_audio_ndk_android_static",
+    target: {
+        android: {
+            static_libs: [
+                latest_android_hardware_bluetooth_audio + "-ndk",
+            ],
+        },
+    },
+}

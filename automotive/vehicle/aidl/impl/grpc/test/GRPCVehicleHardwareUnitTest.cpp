@@ -151,7 +151,7 @@ TEST_F(GRPCVehicleHardwareMockServerUnitTest, SubscribeLegacyServer) {
     EXPECT_CALL(*mGrpcStub, Subscribe(_, _, _))
             .WillOnce(Return(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "")));
 
-    aidlvhal::SubscribeOptions options;  // Your options here (consider adding sample data)
+    aidlvhal::SubscribeOptions options;
     auto status = mHardware->subscribe(options);
 
     EXPECT_EQ(status, aidlvhal::StatusCode::OK);
@@ -177,6 +177,55 @@ TEST_F(GRPCVehicleHardwareMockServerUnitTest, SubscribeProtoFailure) {
 
     aidlvhal::SubscribeOptions options;
     auto status = mHardware->subscribe(options);
+
+    EXPECT_EQ(status, aidlvhal::StatusCode::NOT_AVAILABLE_SPEED_LOW);
+}
+
+TEST_F(GRPCVehicleHardwareMockServerUnitTest, Unsubscribe) {
+    proto::VehicleHalCallStatus protoStatus;
+    protoStatus.set_status_code(proto::StatusCode::OK);
+    proto::UnsubscribeRequest actualRequest;
+
+    EXPECT_CALL(*mGrpcStub, Unsubscribe(_, _, _))
+            .WillOnce(DoAll(SaveArg<1>(&actualRequest), SetArgPointee<2>(protoStatus),
+                            Return(::grpc::Status::OK)));
+
+    int32_t propId = 1;
+    int32_t areaId = 2;
+    auto status = mHardware->unsubscribe(propId, areaId);
+
+    EXPECT_EQ(status, aidlvhal::StatusCode::OK);
+    EXPECT_EQ(actualRequest.prop_id(), propId);
+    EXPECT_EQ(actualRequest.area_id(), areaId);
+}
+
+TEST_F(GRPCVehicleHardwareMockServerUnitTest, UnsubscribeLegacyServer) {
+    EXPECT_CALL(*mGrpcStub, Unsubscribe(_, _, _))
+            .WillOnce(Return(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "")));
+
+    auto status = mHardware->unsubscribe(1, 2);
+
+    EXPECT_EQ(status, aidlvhal::StatusCode::OK);
+}
+
+TEST_F(GRPCVehicleHardwareMockServerUnitTest, UnsubscribeGrpcFailure) {
+    EXPECT_CALL(*mGrpcStub, Unsubscribe(_, _, _))
+            .WillOnce(Return(::grpc::Status(::grpc::StatusCode::INTERNAL, "GRPC Error")));
+
+    auto status = mHardware->unsubscribe(1, 2);
+
+    EXPECT_EQ(status, aidlvhal::StatusCode::INTERNAL_ERROR);
+}
+
+TEST_F(GRPCVehicleHardwareMockServerUnitTest, UnsubscribeProtoFailure) {
+    proto::VehicleHalCallStatus protoStatus;
+    protoStatus.set_status_code(proto::StatusCode::NOT_AVAILABLE_SPEED_LOW);
+
+    EXPECT_CALL(*mGrpcStub, Unsubscribe(_, _, _))
+            .WillOnce(DoAll(SetArgPointee<2>(protoStatus),  // Set the output status
+                            Return(::grpc::Status::OK)));
+
+    auto status = mHardware->unsubscribe(1, 2);
 
     EXPECT_EQ(status, aidlvhal::StatusCode::NOT_AVAILABLE_SPEED_LOW);
 }
