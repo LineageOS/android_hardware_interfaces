@@ -96,8 +96,8 @@ class LeAudioOffloadAudioProvider : public BluetoothAudioProvider {
 
   // Private matching function definitions
   bool isMatchedValidCodec(CodecId cfg_codec, CodecId req_codec);
-  bool isCapabilitiesMatchedContext(
-      AudioContext setting_context,
+  bool filterCapabilitiesMatchedContext(
+      AudioContext& setting_context,
       const IBluetoothAudioProvider::LeAudioDeviceCapabilities& capabilities);
   bool isMatchedSamplingFreq(
       CodecSpecificConfigurationLtv::SamplingFrequency& cfg_freq,
@@ -134,11 +134,10 @@ class LeAudioOffloadAudioProvider : public BluetoothAudioProvider {
       std::vector<std::optional<AseDirectionConfiguration>>&
           valid_direction_configurations);
   void filterRequirementAseDirectionConfiguration(
-      std::vector<std::optional<AseDirectionConfiguration>>&
+      std::optional<std::vector<std::optional<AseDirectionConfiguration>>>&
           direction_configurations,
-      const std::optional<std::vector<std::optional<AseDirectionRequirement>>>&
-          requirements,
-      std::vector<std::optional<AseDirectionConfiguration>>&
+      const std::vector<std::optional<AseDirectionRequirement>>& requirements,
+      std::optional<std::vector<std::optional<AseDirectionConfiguration>>>&
           valid_direction_configurations);
   std::optional<LeAudioAseConfigurationSetting>
   getCapabilitiesMatchedAseConfigurationSettings(
@@ -157,6 +156,14 @@ class LeAudioOffloadAudioProvider : public BluetoothAudioProvider {
       LeAudioBroadcastConfigurationSetting& setting,
       const IBluetoothAudioProvider::LeAudioDeviceCapabilities& capabilities);
   void getBroadcastSettings();
+  std::optional<LeAudioAseQosConfiguration> getDirectionQosConfiguration(
+      uint8_t direction,
+      const IBluetoothAudioProvider::LeAudioAseQosConfigurationRequirement&
+          qosRequirement,
+      std::vector<LeAudioAseConfigurationSetting>& ase_configuration_settings);
+  bool isSubgroupConfigurationMatchedContext(
+      AudioContext requirement_context,
+      LeAudioBroadcastSubgroupConfiguration configuration);
 };
 
 class LeAudioOffloadOutputAudioProvider : public LeAudioOffloadAudioProvider {
