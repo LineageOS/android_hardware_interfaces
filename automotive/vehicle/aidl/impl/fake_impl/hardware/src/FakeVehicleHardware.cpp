@@ -281,6 +281,19 @@ void maybeGetGrpcServiceInfo(std::string* address) {
     ifs.close();
 }
 
+inline std::string vecToStringOfHexValues(const std::vector<int32_t>& vec) {
+    std::stringstream ss;
+    ss << "[";
+    for (size_t i = 0; i < vec.size(); i++) {
+        if (i != 0) {
+            ss << ",";
+        }
+        ss << std::showbase << std::hex << vec[i];
+    }
+    ss << "]";
+    return ss.str();
+}
+
 }  // namespace
 
 void FakeVehicleHardware::storePropInitialValue(const ConfigDeclaration& config) {
@@ -1770,19 +1783,26 @@ std::string FakeVehicleHardware::dumpHelp() {
     return "Usage: \n\n"
            "[no args]: dumps (id and value) all supported properties \n"
            "--help: shows this help\n"
-           "--list: lists the ids of all supported properties\n"
-           "--get <PROP1> [PROP2] [PROPN]: dumps the value of specific properties. \n"
-           "--getWithArg <PROP> [ValueArguments]: gets the value for a specific property with "
-           "arguments. \n"
-           "--set <PROP> [ValueArguments]: sets the value of property PROP. \n"
-           "--save-prop <prop> [-a AREA_ID]: saves the current value for PROP, integration test"
-           " that modifies prop value must call this before test and restore-prop after test. \n"
-           "--restore-prop <prop> [-a AREA_ID]: restores a previously saved property value. \n"
-           "--inject-event <PROP> [ValueArguments]: inject a property update event from car\n\n"
-           "ValueArguments are in the format of [-i INT_VALUE [INT_VALUE ...]] "
-           "[-i64 INT64_VALUE [INT64_VALUE ...]] [-f FLOAT_VALUE [FLOAT_VALUE ...]] [-s STR_VALUE] "
-           "[-b BYTES_VALUE] [-a AREA_ID].\n"
-           "Notice that the string, bytes and area value can be set just once, while the other can"
+           "--list: lists the property IDs and their supported area IDs for all supported "
+           "properties\n"
+           "--get <PROP_ID_1> [PROP_ID_2] [PROP_ID_N]: dumps the value of specific properties. \n"
+           "--getWithArg <PROP_ID> [ValueArguments]: gets the value for a specific property. "
+           "The value arguments constructs a VehiclePropValue used in the getValue request. \n"
+           "--set <PROP_ID> [ValueArguments]: sets the value of property PROP_ID, the value "
+           "arguments constructs a VehiclePropValue used in the setValue request. \n"
+           "--save-prop <PROP_ID> [-a AREA_ID]: saves the current value for PROP_ID, integration "
+           "tests that modify prop value must call this before test and restore-prop after test. \n"
+           "--restore-prop <PROP_ID> [-a AREA_ID]: restores a previously saved property value. \n"
+           "--inject-event <PROP_ID> [ValueArguments]: inject a property update event from car\n\n"
+           "ValueArguments are in the format of [-a OPTIONAL_AREA_ID] "
+           "[-i INT_VALUE_1 [INT_VALUE_2 ...]] "
+           "[-i64 INT64_VALUE_1 [INT64_VALUE_2 ...]] "
+           "[-f FLOAT_VALUE_1 [FLOAT_VALUE_2 ...]] "
+           "[-s STR_VALUE] "
+           "[-b BYTES_VALUE].\n"
+           "For example: to set property ID 0x1234, areaId 0x1 to int32 values: [1, 2, 3], "
+           "use \"--set 0x1234 -a 0x1 -i 1 2 3\"\n"
+           "Note that the string, bytes and area value can be set just once, while the other can"
            " have multiple values (so they're used in the respective array), "
            "BYTES_VALUE is in the form of 0xXXXX, e.g. 0xdeadbeef.\n" +
            genFakeDataHelp() + "Fake user HAL usage: \n" + mFakeUserHal->showDumpHelp();
@@ -1848,11 +1868,18 @@ std::string FakeVehicleHardware::dumpListProperties() {
         return "no properties to list\n";
     }
     int rowNumber = 1;
-    std::string msg = StringPrintf("listing %zu properties\n", configs.size());
+    std::stringstream ss;
+    ss << "listing " << configs.size() << " properties" << std::endl;
     for (const auto& config : configs) {
-        msg += StringPrintf("%d: %s\n", rowNumber++, PROP_ID_TO_CSTR(config.prop));
+        std::vector<int32_t> areaIds;
+        for (const auto& areaConfig : config.areaConfigs) {
+            areaIds.push_back(areaConfig.areaId);
+        }
+        ss << rowNumber++ << ": " << PROP_ID_TO_CSTR(config.prop) << ", propID: " << std::showbase
+           << std::hex << config.prop << std::noshowbase << std::dec
+           << ", areaIDs: " << vecToStringOfHexValues(areaIds) << std::endl;
     }
-    return msg;
+    return ss.str();
 }
 
 Result<void> FakeVehicleHardware::checkArgumentsSize(const std::vector<std::string>& options,
