@@ -79,7 +79,7 @@ class AudioSetConfigurationProviderJson {
 
   static void populateAseQosConfiguration(
       LeAudioAseQosConfiguration& qos,
-      const le_audio::QosConfiguration* qos_cfg);
+      const le_audio::QosConfiguration* qos_cfg, LeAudioAseConfiguration& ase);
 
   static AseDirectionConfiguration SetConfigurationFromFlatSubconfig(
       const le_audio::AudioSetSubConfiguration* flat_subconfig,

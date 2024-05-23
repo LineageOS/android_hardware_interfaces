@@ -122,8 +122,9 @@ class LeAudioOffloadAudioProvider : public BluetoothAudioProvider {
   bool isCapabilitiesMatchedCodecConfiguration(
       std::vector<CodecSpecificConfigurationLtv>& codec_cfg,
       std::vector<CodecSpecificCapabilitiesLtv> codec_capabilities);
-  bool isMatchedAseConfiguration(LeAudioAseConfiguration setting_cfg,
-                                 LeAudioAseConfiguration requirement_cfg);
+  bool filterMatchedAseConfiguration(
+      LeAudioAseConfiguration& setting_cfg,
+      const LeAudioAseConfiguration& requirement_cfg);
   bool isMatchedBISConfiguration(
       LeAudioBisConfiguration bis_cfg,
       const IBluetoothAudioProvider::LeAudioDeviceCapabilities& capabilities);
@@ -164,6 +165,13 @@ class LeAudioOffloadAudioProvider : public BluetoothAudioProvider {
   bool isSubgroupConfigurationMatchedContext(
       AudioContext requirement_context,
       LeAudioBroadcastSubgroupConfiguration configuration);
+  std::vector<IBluetoothAudioProvider::LeAudioAseConfigurationSetting>
+  matchWithRequirement(
+      std::vector<IBluetoothAudioProvider::LeAudioAseConfigurationSetting>&
+          matched_ase_configuration_settings,
+      const std::vector<
+          IBluetoothAudioProvider::LeAudioConfigurationRequirement>&
+          in_requirements);
 };
 
 class LeAudioOffloadOutputAudioProvider : public LeAudioOffloadAudioProvider {

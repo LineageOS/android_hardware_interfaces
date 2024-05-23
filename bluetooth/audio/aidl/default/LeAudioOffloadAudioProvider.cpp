@@ -175,12 +175,13 @@ bool LeAudioOffloadAudioProvider::filterCapabilitiesMatchedContext(
     if (!metadata.has_value()) continue;
     if (metadata.value().getTag() == MetadataLtv::Tag::preferredAudioContexts) {
       // Check all pref audio context to see if anything matched
-      auto& context = metadata.value()
-                          .get<MetadataLtv::Tag::preferredAudioContexts>()
-                          .values;
-      if (setting_context.bitmask & context.bitmask) {
+      auto& prefer_context =
+          metadata.value()
+              .get<MetadataLtv::Tag::preferredAudioContexts>()
+              .values;
+      if (setting_context.bitmask & prefer_context.bitmask) {
         // New mask with matched capability
-        setting_context.bitmask &= context.bitmask;
+        setting_context.bitmask &= prefer_context.bitmask;
         return true;
       }
     }
@@ -219,8 +220,9 @@ bool LeAudioOffloadAudioProvider::isMatchedAudioChannel(
     /*cfg_channel*/,
     CodecSpecificCapabilitiesLtv::SupportedAudioChannelCounts&
     /*capability_channel*/) {
+  // Simply ignore.
+  // Later can use additional capabilities to match requirement.
   bool isMatched = true;
-  // TODO: how to match?
   return isMatched;
 }
 
@@ -317,22 +319,34 @@ bool LeAudioOffloadAudioProvider::isCapabilitiesMatchedCodecConfiguration(
   return true;
 }
 
-bool LeAudioOffloadAudioProvider::isMatchedAseConfiguration(
-    LeAudioAseConfiguration setting_cfg,
-    LeAudioAseConfiguration requirement_cfg) {
+bool isMonoConfig(
+    CodecSpecificConfigurationLtv::AudioChannelAllocation allocation) {
+  auto channel_count = std::bitset<32>(allocation.bitmask);
+  return (channel_count.count() <= 1);
+}
+
+bool LeAudioOffloadAudioProvider::filterMatchedAseConfiguration(
+    LeAudioAseConfiguration& setting_cfg,
+    const LeAudioAseConfiguration& requirement_cfg) {
   // Check matching for codec configuration <=> requirement ASE codec
   // Also match if no CodecId requirement
   if (requirement_cfg.codecId.has_value()) {
     if (!setting_cfg.codecId.has_value()) return false;
     if (!isMatchedValidCodec(setting_cfg.codecId.value(),
                              requirement_cfg.codecId.value())) {
+      LOG(WARNING) << __func__ << ": Doesn't match valid codec, cfg = "
+                   << setting_cfg.codecId.value().toString()
+                   << ", req = " << requirement_cfg.codecId.value().toString();
       return false;
     }
   }
 
-  if (requirement_cfg.targetLatency ==
-          LeAudioAseConfiguration::TargetLatency::UNDEFINED ||
+  if (requirement_cfg.targetLatency !=
+          LeAudioAseConfiguration::TargetLatency::UNDEFINED &&
       setting_cfg.targetLatency != requirement_cfg.targetLatency) {
+    LOG(WARNING) << __func__ << ": Doesn't match target latency, cfg = "
+                 << int(setting_cfg.targetLatency)
+                 << ", req = " << int(requirement_cfg.targetLatency);
     return false;
   }
   // Ignore PHY requirement
@@ -346,11 +360,24 @@ bool LeAudioOffloadAudioProvider::isMatchedAseConfiguration(
   for (auto requirement_cfg : requirement_cfg.codecConfiguration) {
     // Directly compare CodecSpecificConfigurationLtv
     auto cfg = cfg_tag_map.find(requirement_cfg.getTag());
+    // Config not found for this requirement, cannot match
     if (cfg == cfg_tag_map.end()) {
+      LOG(WARNING) << __func__ << ": Config not found for the requirement "
+                   << requirement_cfg.toString();
       return false;
     }
 
+    // Ignore matching for audio channel allocation
+    // since the rule is complicated. Match outside instead
+    if (requirement_cfg.getTag() ==
+        CodecSpecificConfigurationLtv::Tag::audioChannelAllocation)
+      continue;
+
     if (cfg->second != requirement_cfg) {
+      LOG(WARNING) << __func__
+                   << ": Config doesn't match the requirement, cfg = "
+                   << cfg->second.toString()
+                   << ", req = " << requirement_cfg.toString();
       return false;
     }
   }
@@ -395,35 +422,132 @@ void LeAudioOffloadAudioProvider::filterCapabilitiesAseDirectionConfiguration(
   }
 }
 
+int getLeAudioAseConfigurationAllocationBitmask(LeAudioAseConfiguration cfg) {
+  for (auto cfg_ltv : cfg.codecConfiguration) {
+    if (cfg_ltv.getTag() ==
+        CodecSpecificConfigurationLtv::Tag::audioChannelAllocation) {
+      return cfg_ltv
+          .get<CodecSpecificConfigurationLtv::Tag::audioChannelAllocation>()
+          .bitmask;
+    }
+  }
+  return 0;
+}
+
+int getCountFromBitmask(int bitmask) {
+  return std::bitset<32>(bitmask).count();
+}
+
+std::optional<AseDirectionConfiguration> findValidMonoConfig(
+    std::vector<AseDirectionConfiguration>& valid_direction_configurations,
+    int bitmask) {
+  for (auto& cfg : valid_direction_configurations) {
+    int cfg_bitmask =
+        getLeAudioAseConfigurationAllocationBitmask(cfg.aseConfiguration);
+    if (getCountFromBitmask(cfg_bitmask) <= 1) {
+      LOG(INFO) << __func__ << ": Found a mono config for the mono requirement";
+      // Modify the bitmask to be the same as the requirement
+      for (auto& codec_cfg : cfg.aseConfiguration.codecConfiguration) {
+        if (codec_cfg.getTag() ==
+            CodecSpecificConfigurationLtv::Tag::audioChannelAllocation) {
+          codec_cfg
+              .get<CodecSpecificConfigurationLtv::Tag::audioChannelAllocation>()
+              .bitmask = bitmask;
+          return cfg;
+        }
+      }
+    }
+  }
+  return std::nullopt;
+}
+
+std::vector<AseDirectionConfiguration> getValidConfigurationsFromAllocation(
+    int req_allocation_bitmask,
+    std::vector<AseDirectionConfiguration>& valid_direction_configurations) {
+  // Prefer the same allocation_bitmask
+  int channel_count = getCountFromBitmask(req_allocation_bitmask);
+  for (auto& cfg : valid_direction_configurations) {
+    int cfg_bitmask =
+        getLeAudioAseConfigurationAllocationBitmask(cfg.aseConfiguration);
+    if (cfg_bitmask == req_allocation_bitmask) {
+      LOG(INFO) << __func__
+                << ": Found an exact match for the requirement allocation of "
+                << cfg_bitmask;
+      return {cfg};
+    }
+  }
+  // No exact match found
+  if (channel_count <= 1) {
+    // Mono requirement matched if cfg is a mono config
+    auto cfg = findValidMonoConfig(valid_direction_configurations,
+                                   req_allocation_bitmask);
+    if (cfg.has_value()) return {cfg.value()};
+  } else {
+    // Stereo requirement returns 2 mono configs
+    // that has a combined bitmask equal to the stereo config
+    std::vector<AseDirectionConfiguration> temp;
+    for (int bit = 0; bit < 32; ++bit)
+      if (req_allocation_bitmask & (1 << bit)) {
+        auto cfg =
+            findValidMonoConfig(valid_direction_configurations, (1 << bit));
+        if (cfg.has_value()) temp.push_back(cfg.value());
+      }
+    if (temp.size() == channel_count) return temp;
+  }
+  return {};
+}
+
 void LeAudioOffloadAudioProvider::filterRequirementAseDirectionConfiguration(
     std::optional<std::vector<std::optional<AseDirectionConfiguration>>>&
         direction_configurations,
     const std::vector<std::optional<AseDirectionRequirement>>& requirements,
     std::optional<std::vector<std::optional<AseDirectionConfiguration>>>&
         valid_direction_configurations) {
+  // For every requirement, find the matched ase configuration
+  if (!direction_configurations.has_value()) return;
+
   if (!valid_direction_configurations.has_value()) {
     valid_direction_configurations =
         std::vector<std::optional<AseDirectionConfiguration>>();
   }
-  // For every requirement, find the matched ase configuration
-  if (!direction_configurations.has_value()) return;
+
   for (auto& requirement : requirements) {
     if (!requirement.has_value()) continue;
+    LOG(INFO) << __func__ << ": Testing for requirement = "
+              << requirement.value().toString();
+    auto req_allocation_bitmask = getLeAudioAseConfigurationAllocationBitmask(
+        requirement.value().aseConfiguration);
+    auto req_channel_count = getCountFromBitmask(req_allocation_bitmask);
+
+    auto temp = std::vector<AseDirectionConfiguration>();
+
     for (auto direction_configuration : direction_configurations.value()) {
       if (!direction_configuration.has_value()) continue;
-      if (!isMatchedAseConfiguration(
+      if (!filterMatchedAseConfiguration(
               direction_configuration.value().aseConfiguration,
               requirement.value().aseConfiguration))
         continue;
       // Valid if match any requirement.
-      valid_direction_configurations.value().push_back(direction_configuration);
-      break;
+      temp.push_back(direction_configuration.value());
     }
-  }
-  // Ensure that each requirement will have one direction configurations
-  if (valid_direction_configurations.value().empty() ||
-      (valid_direction_configurations.value().size() != requirements.size())) {
-    valid_direction_configurations = std::nullopt;
+
+    // Get the best matching config based on channel allocation
+    auto total_cfg_channel_count = 0;
+    auto req_valid_configs =
+        getValidConfigurationsFromAllocation(req_allocation_bitmask, temp);
+    // Count and check required channel counts
+    for (auto& cfg : req_valid_configs) {
+      total_cfg_channel_count += getCountFromBitmask(
+          getLeAudioAseConfigurationAllocationBitmask(cfg.aseConfiguration));
+      valid_direction_configurations.value().push_back(cfg);
+    }
+    if (total_cfg_channel_count != req_channel_count) {
+      LOG(WARNING) << __func__
+                   << ": Wrong channel count, req = " << req_channel_count
+                   << ", total = " << total_cfg_channel_count;
+      valid_direction_configurations = std::nullopt;
+      return;
+    }
   }
 }
 
@@ -444,10 +568,6 @@ LeAudioOffloadAudioProvider::getCapabilitiesMatchedAseConfigurationSettings(
       .flags = setting.flags,
       .packing = setting.packing,
   };
-  // Try to match context in metadata.
-  if (!filterCapabilitiesMatchedContext(filtered_setting.audioContext,
-                                        capabilities))
-    return std::nullopt;
 
   // Get a list of all matched AseDirectionConfiguration
   // for the input direction
@@ -495,14 +615,10 @@ LeAudioOffloadAudioProvider::getRequirementMatchedAseConfigurationSettings(
       requirement.audioContext.bitmask)
     return std::nullopt;
 
+  LOG(INFO) << __func__
+            << ": Checking if the setting match: " << setting.toString();
   // Further filter setting's context
   setting.audioContext.bitmask &= requirement.audioContext.bitmask;
-
-  // Check requirement for the correct direction
-  const std::optional<std::vector<std::optional<AseDirectionRequirement>>>*
-      direction_requirement;
-  std::vector<std::optional<AseDirectionConfiguration>>*
-      direction_configuration;
 
   // Create a new LeAudioAseConfigurationSetting to return
   LeAudioAseConfigurationSetting filtered_setting{
@@ -515,7 +631,10 @@ LeAudioOffloadAudioProvider::getRequirementMatchedAseConfigurationSettings(
     filterRequirementAseDirectionConfiguration(
         setting.sinkAseConfiguration, requirement.sinkAseRequirement.value(),
         filtered_setting.sinkAseConfiguration);
-    if (!filtered_setting.sinkAseConfiguration.has_value()) return std::nullopt;
+    if (!filtered_setting.sinkAseConfiguration.has_value()) {
+      LOG(WARNING) << __func__ << "Setting's sink doesn't match!";
+      return std::nullopt;
+    }
   }
 
   if (requirement.sourceAseRequirement.has_value()) {
@@ -523,82 +642,21 @@ LeAudioOffloadAudioProvider::getRequirementMatchedAseConfigurationSettings(
         setting.sourceAseConfiguration,
         requirement.sourceAseRequirement.value(),
         filtered_setting.sourceAseConfiguration);
-    if (!filtered_setting.sourceAseConfiguration.has_value())
+    if (!filtered_setting.sourceAseConfiguration.has_value()) {
+      LOG(WARNING) << __func__ << "Setting's source doesn't match!";
       return std::nullopt;
+    }
   }
 
   return filtered_setting;
 }
 
-// For each requirement, a valid ASE configuration will satify:
-// - matched with any sink capability (if presented)
-// - OR matched with any source capability (if presented)
-// - and the setting need to pass the requirement
-ndk::ScopedAStatus LeAudioOffloadAudioProvider::getLeAudioAseConfiguration(
-    const std::optional<std::vector<
-        std::optional<IBluetoothAudioProvider::LeAudioDeviceCapabilities>>>&
-        in_remoteSinkAudioCapabilities,
-    const std::optional<std::vector<
-        std::optional<IBluetoothAudioProvider::LeAudioDeviceCapabilities>>>&
-        in_remoteSourceAudioCapabilities,
+std::vector<IBluetoothAudioProvider::LeAudioAseConfigurationSetting>
+LeAudioOffloadAudioProvider::matchWithRequirement(
+    std::vector<IBluetoothAudioProvider::LeAudioAseConfigurationSetting>&
+        matched_ase_configuration_settings,
     const std::vector<IBluetoothAudioProvider::LeAudioConfigurationRequirement>&
-        in_requirements,
-    std::vector<IBluetoothAudioProvider::LeAudioAseConfigurationSetting>*
-        _aidl_return) {
-  // Get all configuration settings
-  std::vector<IBluetoothAudioProvider::LeAudioAseConfigurationSetting>
-      ase_configuration_settings =
-          BluetoothAudioCodecs::GetLeAudioAseConfigurationSettings();
-
-  if (!in_remoteSinkAudioCapabilities.has_value() &&
-      !in_remoteSourceAudioCapabilities.has_value()) {
-    return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
-  }
-
-  // Each setting consist of source and sink AseDirectionConfiguration vector
-  // Filter every sink capability
-  std::vector<IBluetoothAudioProvider::LeAudioAseConfigurationSetting>
-      matched_ase_configuration_settings;
-
-  if (in_remoteSinkAudioCapabilities.has_value()) {
-    // Matching each setting with any remote capabilities
-    for (auto& setting : ase_configuration_settings) {
-      for (auto& capability : in_remoteSinkAudioCapabilities.value()) {
-        if (!capability.has_value()) continue;
-        auto filtered_ase_configuration_setting =
-            getCapabilitiesMatchedAseConfigurationSettings(
-                setting, capability.value(), kLeAudioDirectionSink);
-        if (filtered_ase_configuration_setting.has_value()) {
-          matched_ase_configuration_settings.push_back(
-              filtered_ase_configuration_setting.value());
-        }
-      }
-    }
-  }
-
-  // Combine filter every source capability
-  if (in_remoteSourceAudioCapabilities.has_value()) {
-    // Matching each setting with any remote capabilities
-    for (auto& setting : ase_configuration_settings) {
-      for (auto& capability : in_remoteSourceAudioCapabilities.value()) {
-        if (!capability.has_value()) continue;
-        auto filtered_ase_configuration_setting =
-            getCapabilitiesMatchedAseConfigurationSettings(
-                setting, capability.value(), kLeAudioDirectionSource);
-        if (filtered_ase_configuration_setting.has_value()) {
-          // Put into the same list
-          // possibly duplicated, filtered by requirement later
-          matched_ase_configuration_settings.push_back(
-              filtered_ase_configuration_setting.value());
-        }
-      }
-    }
-  }
-
-  if (matched_ase_configuration_settings.empty()) {
-    LOG(WARNING) << __func__ << ": No setting matched the capability";
-    return ndk::ScopedAStatus::ok();
-  }
+        in_requirements) {
   // Each requirement will match with a valid setting
   std::vector<IBluetoothAudioProvider::LeAudioAseConfigurationSetting> result;
   for (auto& requirement : in_requirements) {
@@ -626,7 +684,103 @@ ndk::ScopedAStatus LeAudioOffloadAudioProvider::getLeAudioAseConfiguration(
       break;
     }
   }
+  return result;
+}
 
+// For each requirement, a valid ASE configuration will satify:
+// - matched with any sink capability (if presented)
+// - OR matched with any source capability (if presented)
+// - and the setting need to pass the requirement
+ndk::ScopedAStatus LeAudioOffloadAudioProvider::getLeAudioAseConfiguration(
+    const std::optional<std::vector<
+        std::optional<IBluetoothAudioProvider::LeAudioDeviceCapabilities>>>&
+        in_remoteSinkAudioCapabilities,
+    const std::optional<std::vector<
+        std::optional<IBluetoothAudioProvider::LeAudioDeviceCapabilities>>>&
+        in_remoteSourceAudioCapabilities,
+    const std::vector<IBluetoothAudioProvider::LeAudioConfigurationRequirement>&
+        in_requirements,
+    std::vector<IBluetoothAudioProvider::LeAudioAseConfigurationSetting>*
+        _aidl_return) {
+  // Get all configuration settings
+  std::vector<IBluetoothAudioProvider::LeAudioAseConfigurationSetting>
+      ase_configuration_settings =
+          BluetoothAudioCodecs::GetLeAudioAseConfigurationSettings();
+
+  if (!in_remoteSinkAudioCapabilities.has_value() &&
+      !in_remoteSourceAudioCapabilities.has_value()) {
+    return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+  }
+
+  // Split out preferred and non-preferred settings based on context
+  // An example: preferred = MEDIA, available: MEDIA | CONVERSATION
+  // -> preferred list will have settings with MEDIA context
+  // -> non-preferred list will have settings with any context
+  // We want to match requirement with preferred context settings first
+  std::vector<IBluetoothAudioProvider::LeAudioAseConfigurationSetting>
+      matched_ase_configuration_settings;
+  // Matched ASE configuration with non-preferred audio context
+  std::vector<IBluetoothAudioProvider::LeAudioAseConfigurationSetting>
+      non_prefer_matched_ase_configuration_settings;
+
+  if (in_remoteSinkAudioCapabilities.has_value())
+    // Matching each setting with any remote capabilities
+    for (auto& setting : ase_configuration_settings)
+      for (auto& capability : in_remoteSinkAudioCapabilities.value()) {
+        if (!capability.has_value()) continue;
+        auto filtered_ase_configuration_setting =
+            getCapabilitiesMatchedAseConfigurationSettings(
+                setting, capability.value(), kLeAudioDirectionSink);
+        if (filtered_ase_configuration_setting.has_value()) {
+          // Push to non-prefer first for the broadest matching possible
+          non_prefer_matched_ase_configuration_settings.push_back(
+              filtered_ase_configuration_setting.value());
+          // Try to filter out prefer context to another vector.
+          if (filterCapabilitiesMatchedContext(
+                  filtered_ase_configuration_setting.value().audioContext,
+                  capability.value())) {
+            matched_ase_configuration_settings.push_back(
+                filtered_ase_configuration_setting.value());
+          }
+        }
+      }
+
+  // Combine filter every source capability
+  if (in_remoteSourceAudioCapabilities.has_value())
+    // Matching each setting with any remote capabilities
+    for (auto& setting : ase_configuration_settings)
+      for (auto& capability : in_remoteSourceAudioCapabilities.value()) {
+        if (!capability.has_value()) continue;
+        auto filtered_ase_configuration_setting =
+            getCapabilitiesMatchedAseConfigurationSettings(
+                setting, capability.value(), kLeAudioDirectionSource);
+        if (filtered_ase_configuration_setting.has_value()) {
+          // Put into the same list
+          // possibly duplicated, filtered by requirement later
+          // Push to non-prefer first for the broadest matching possible
+          non_prefer_matched_ase_configuration_settings.push_back(
+              filtered_ase_configuration_setting.value());
+          // Try to filter out prefer context to another vector.
+          if (filterCapabilitiesMatchedContext(
+                  filtered_ase_configuration_setting.value().audioContext,
+                  capability.value())) {
+            matched_ase_configuration_settings.push_back(
+                filtered_ase_configuration_setting.value());
+          }
+        }
+      }
+
+  auto result =
+      matchWithRequirement(matched_ase_configuration_settings, in_requirements);
+  if (result.empty()) {
+    LOG(WARNING) << __func__
+                 << ": Cannot match with preferred context settings";
+    result = matchWithRequirement(non_prefer_matched_ase_configuration_settings,
+                                  in_requirements);
+    if (result.empty())
+      LOG(WARNING) << __func__
+                   << ": Cannot match with non preferred context settings";
+  }
   *_aidl_return = result;
   return ndk::ScopedAStatus::ok();
 };
@@ -642,7 +796,6 @@ bool LeAudioOffloadAudioProvider::isMatchedQosRequirement(
       requirement_qos.maxTransportLatencyMs) {
     return false;
   }
-  // Ignore other parameters, as they are not populated in the setting_qos
   return true;
 }
 
@@ -680,17 +833,26 @@ LeAudioOffloadAudioProvider::getDirectionQosConfiguration(
 
     // Get a list of all matched AseDirectionConfiguration
     // for the input direction
-    std::vector<std::optional<AseDirectionConfiguration>>*
-        direction_configuration = nullptr;
+    std::optional<std::vector<std::optional<AseDirectionConfiguration>>>
+        direction_configuration = std::nullopt;
     if (direction == kLeAudioDirectionSink) {
       if (!setting.sinkAseConfiguration.has_value()) continue;
-      direction_configuration = &setting.sinkAseConfiguration.value();
+      direction_configuration.emplace(setting.sinkAseConfiguration.value());
     } else {
       if (!setting.sourceAseConfiguration.has_value()) continue;
-      direction_configuration = &setting.sourceAseConfiguration.value();
+      direction_configuration.emplace(setting.sourceAseConfiguration.value());
     }
 
-    for (auto cfg : *direction_configuration) {
+    if (!direction_configuration.has_value()) {
+      return std::nullopt;
+    }
+
+    // Collect all valid cfg into a vector
+    // Then try to get the best match for audio allocation
+
+    auto temp = std::vector<AseDirectionConfiguration>();
+
+    for (auto& cfg : direction_configuration.value()) {
       if (!cfg.has_value()) continue;
       // If no requirement, return the first QoS
       if (!direction_qos_requirement.has_value()) {
@@ -701,13 +863,29 @@ LeAudioOffloadAudioProvider::getDirectionQosConfiguration(
       // Try to match the ASE configuration
       // and QoS with requirement
       if (!cfg.value().qosConfiguration.has_value()) continue;
-      if (isMatchedAseConfiguration(
+      if (filterMatchedAseConfiguration(
               cfg.value().aseConfiguration,
               direction_qos_requirement.value().aseConfiguration) &&
           isMatchedQosRequirement(cfg.value().qosConfiguration.value(),
                                   direction_qos_requirement.value())) {
-        return cfg.value().qosConfiguration;
+        temp.push_back(cfg.value());
       }
+    }
+    LOG(WARNING) << __func__ << ": Got " << temp.size()
+                 << " configs, start matching allocation";
+
+    int qos_allocation_bitmask = getLeAudioAseConfigurationAllocationBitmask(
+        direction_qos_requirement.value().aseConfiguration);
+    // Get the best matching config based on channel allocation
+    auto req_valid_configs =
+        getValidConfigurationsFromAllocation(qos_allocation_bitmask, temp);
+    if (req_valid_configs.empty()) {
+      LOG(WARNING) << __func__
+                   << ": Cannot find matching allocation for bitmask "
+                   << qos_allocation_bitmask;
+
+    } else {
+      return req_valid_configs[0].qosConfiguration;
     }
   }
 
