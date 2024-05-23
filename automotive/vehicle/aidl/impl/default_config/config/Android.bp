@@ -45,3 +45,24 @@ prebuilt_etc {
     sub_dir: "automotive/vhalconfig/",
     vendor: true,
 }
+
+prebuilt_etc_host {
+    name: "Host_Prebuilt_VehicleHalDefaultProperties_JSON",
+    filename_from_src: true,
+    src: "DefaultProperties.json",
+    relative_install_path: "automotive/vhalconfig/",
+}
+
+prebuilt_etc_host {
+    name: "Host_Prebuilt_VehicleHalTestProperties_JSON",
+    filename_from_src: true,
+    src: "TestProperties.json",
+    relative_install_path: "automotive/vhalconfig/",
+}
+
+prebuilt_etc_host {
+    name: "Host_Prebuilt_VehicleHalVendorClusterTestProperties_JSON",
+    filename_from_src: true,
+    src: "VendorClusterTestProperties.json",
+    relative_install_path: "automotive/vhalconfig/",
+}
