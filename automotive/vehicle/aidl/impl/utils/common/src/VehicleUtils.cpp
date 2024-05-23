@@ -16,20 +16,57 @@
 
 #include "VehicleUtils.h"
 
+#include <unordered_map>
+
 namespace android {
 namespace hardware {
 namespace automotive {
 namespace vehicle {
 
 using ::aidl::android::hardware::automotive::vehicle::StatusCode;
+using ::aidl::android::hardware::automotive::vehicle::toString;
 using ::aidl::android::hardware::automotive::vehicle::VehicleAreaConfig;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig;
+using ::aidl::android::hardware::automotive::vehicle::VehicleProperty;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyGroup;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
 using ::android::base::Error;
 using ::android::base::Result;
 using ::ndk::ScopedAStatus;
+
+namespace {
+
+class PropertyIdByNameSingleton {
+  public:
+    static PropertyIdByNameSingleton& getInstance() {
+        static PropertyIdByNameSingleton instance;
+        return instance;
+    }
+
+    Result<int32_t> getPropertyId(const std::string& name) {
+        auto it = mPropertyIdByName.find(name);
+        if (it == mPropertyIdByName.end()) {
+            return Error();
+        }
+        return it->second;
+    }
+
+    PropertyIdByNameSingleton(PropertyIdByNameSingleton const&) = delete;
+    void operator=(PropertyIdByNameSingleton const&) = delete;
+
+  private:
+    std::unordered_map<std::string, int32_t> mPropertyIdByName;
+
+    PropertyIdByNameSingleton() {
+        constexpr auto values = ndk::internal::enum_values<VehicleProperty>;
+        for (unsigned int i = 0; i < values.size(); i++) {
+            mPropertyIdByName.emplace(toString(values[i]), toInt(values[i]));
+        }
+    }
+};
+
+}  // namespace
 
 Result<void> checkPropValue(const VehiclePropValue& value, const VehiclePropConfig* config) {
     int32_t property = value.prop;
@@ -211,6 +248,10 @@ StatusCode VhalError::value() const {
 
 std::string VhalError::print() const {
     return aidl::android::hardware::automotive::vehicle::toString(mCode);
+}
+
+Result<int32_t> stringToPropId(const std::string& propName) {
+    return PropertyIdByNameSingleton::getInstance().getPropertyId(propName);
 }
 
 }  // namespace vehicle

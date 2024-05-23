@@ -1892,6 +1892,16 @@ Result<void> FakeVehicleHardware::checkArgumentsSize(const std::vector<std::stri
                                    minSize, size);
 }
 
+Result<int32_t> FakeVehicleHardware::parsePropId(const std::vector<std::string>& options,
+                                                 size_t index) {
+    const std::string& propIdStr = options[index];
+    auto result = stringToPropId(propIdStr);
+    if (result.ok()) {
+        return result;
+    }
+    return safelyParseInt<int32_t>(index, propIdStr);
+}
+
 std::string FakeVehicleHardware::dumpSpecificProperty(const std::vector<std::string>& options) {
     if (auto result = checkArgumentsSize(options, /*minSize=*/2); !result.ok()) {
         return getErrorMsg(result);
@@ -1902,7 +1912,7 @@ std::string FakeVehicleHardware::dumpSpecificProperty(const std::vector<std::str
     size_t size = options.size();
     std::string msg = "";
     for (size_t i = 1; i < size; ++i) {
-        auto propResult = safelyParseInt<int32_t>(i, options[i]);
+        auto propResult = parsePropId(options, i);
         if (!propResult.ok()) {
             msg += getErrorMsg(propResult);
             continue;
@@ -1938,9 +1948,9 @@ Result<VehiclePropValue> FakeVehicleHardware::parsePropOptions(
     // --set/get/inject-event PROP [-f f1 f2...] [-i i1 i2...] [-i64 i1 i2...] [-s s1 s2...]
     // [-b b1 b2...] [-a a] [-t timestamp]
     size_t optionIndex = 1;
-    auto result = safelyParseInt<int32_t>(optionIndex, options[optionIndex]);
+    auto result = parsePropId(options, optionIndex);
     if (!result.ok()) {
-        return Error() << StringPrintf("Property value: \"%s\" is not a valid int: %s\n",
+        return Error() << StringPrintf("Property ID/Name: \"%s\" is not valid: %s\n",
                                        options[optionIndex].c_str(), getErrorMsg(result).c_str());
     }
     VehiclePropValue prop = {};

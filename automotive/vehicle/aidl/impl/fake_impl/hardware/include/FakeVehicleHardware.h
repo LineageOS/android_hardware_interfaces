@@ -269,16 +269,6 @@ class FakeVehicleHardware : public IVehicleHardware {
     std::string dumpInjectEvent(const std::vector<std::string>& options);
     std::string dumpSubscriptions();
 
-    template <typename T>
-    android::base::Result<T> safelyParseInt(int index, const std::string& s) {
-        T out;
-        if (!::android::base::ParseInt(s, &out)) {
-            return android::base::Error() << android::base::StringPrintf(
-                           "non-integer argument at index %d: %s\n", index, s.c_str());
-        }
-        return out;
-    }
-    android::base::Result<float> safelyParseFloat(int index, const std::string& s);
     std::vector<std::string> getOptionValues(const std::vector<std::string>& options,
                                              size_t* index);
     android::base::Result<aidl::android::hardware::automotive::vehicle::VehiclePropValue>
@@ -325,6 +315,18 @@ class FakeVehicleHardware : public IVehicleHardware {
             const aidl::android::hardware::automotive::vehicle::VehiclePropConfig&
                     vehiclePropConfig,
             int32_t areaId);
+    template <typename T>
+    static android::base::Result<T> safelyParseInt(int index, const std::string& s) {
+        T out;
+        if (!::android::base::ParseInt(s, &out)) {
+            return android::base::Error() << android::base::StringPrintf(
+                           "non-integer argument at index %d: %s\n", index, s.c_str());
+        }
+        return out;
+    }
+    static android::base::Result<float> safelyParseFloat(int index, const std::string& s);
+    static android::base::Result<int32_t> parsePropId(const std::vector<std::string>& options,
+                                                      size_t index);
 };
 
 }  // namespace fake
