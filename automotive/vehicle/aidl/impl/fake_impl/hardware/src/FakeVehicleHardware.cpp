@@ -329,7 +329,12 @@ bool FakeVehicleHardware::UseOverrideConfigDir() {
 
 std::unordered_map<int32_t, ConfigDeclaration> FakeVehicleHardware::loadConfigDeclarations() {
     std::unordered_map<int32_t, ConfigDeclaration> configsByPropId;
-    loadPropConfigsFromDir(mDefaultConfigDir, &configsByPropId);
+    bool defaultConfigLoaded = loadPropConfigsFromDir(mDefaultConfigDir, &configsByPropId);
+    if (!defaultConfigLoaded) {
+        // This cannot work without a valid default config.
+        ALOGE("Failed to load default config, exiting");
+        exit(1);
+    }
     if (UseOverrideConfigDir()) {
         loadPropConfigsFromDir(mOverrideConfigDir, &configsByPropId);
     }
@@ -2258,30 +2263,35 @@ void FakeVehicleHardware::onValuesChangeCallback(std::vector<VehiclePropValue> v
     (*mOnPropertyChangeCallback)(std::move(subscribedUpdatedValues));
 }
 
-void FakeVehicleHardware::loadPropConfigsFromDir(
+bool FakeVehicleHardware::loadPropConfigsFromDir(
         const std::string& dirPath,
         std::unordered_map<int32_t, ConfigDeclaration>* configsByPropId) {
     ALOGI("loading properties from %s", dirPath.c_str());
-    if (auto dir = opendir(dirPath.c_str()); dir != NULL) {
-        std::regex regJson(".*[.]json", std::regex::icase);
-        while (auto f = readdir(dir)) {
-            if (!std::regex_match(f->d_name, regJson)) {
-                continue;
-            }
-            std::string filePath = dirPath + "/" + std::string(f->d_name);
-            ALOGI("loading properties from %s", filePath.c_str());
-            auto result = mLoader.loadPropConfig(filePath);
-            if (!result.ok()) {
-                ALOGE("failed to load config file: %s, error: %s", filePath.c_str(),
-                      result.error().message().c_str());
-                continue;
-            }
-            for (auto& [propId, configDeclaration] : result.value()) {
-                (*configsByPropId)[propId] = std::move(configDeclaration);
-            }
-        }
-        closedir(dir);
+    auto dir = opendir(dirPath.c_str());
+    if (dir == nullptr) {
+        ALOGE("Failed to open config directory: %s", dirPath.c_str());
+        return false;
     }
+
+    std::regex regJson(".*[.]json", std::regex::icase);
+    while (auto f = readdir(dir)) {
+        if (!std::regex_match(f->d_name, regJson)) {
+            continue;
+        }
+        std::string filePath = dirPath + "/" + std::string(f->d_name);
+        ALOGI("loading properties from %s", filePath.c_str());
+        auto result = mLoader.loadPropConfig(filePath);
+        if (!result.ok()) {
+            ALOGE("failed to load config file: %s, error: %s", filePath.c_str(),
+                  result.error().message().c_str());
+            continue;
+        }
+        for (auto& [propId, configDeclaration] : result.value()) {
+            (*configsByPropId)[propId] = std::move(configDeclaration);
+        }
+    }
+    closedir(dir);
+    return true;
 }
 
 Result<float> FakeVehicleHardware::safelyParseFloat(int index, const std::string& s) {

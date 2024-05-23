@@ -49,6 +49,7 @@ cc_library {
     ],
     cflags: ["-DENABLE_VEHICLE_HAL_TEST_PROPERTIES"],
     shared_libs: ["libjsoncpp"],
+    host_supported: true,
 }
 
 cc_library_headers {
