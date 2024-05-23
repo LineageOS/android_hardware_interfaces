@@ -200,7 +200,7 @@ class FakeVehicleHardware : public IVehicleHardware {
             EXCLUDES(mLock);
     // Load the config files in format '*.json' from the directory and parse the config files
     // into a map from property ID to ConfigDeclarations.
-    void loadPropConfigsFromDir(const std::string& dirPath,
+    bool loadPropConfigsFromDir(const std::string& dirPath,
                                 std::unordered_map<int32_t, ConfigDeclaration>* configs);
     // Function to be called when a value change event comes from vehicle bus. In our fake
     // implementation, this function is only called during "--inject-event" dump command.
