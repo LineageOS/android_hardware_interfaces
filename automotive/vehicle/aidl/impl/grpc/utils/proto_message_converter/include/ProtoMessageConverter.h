@@ -18,6 +18,7 @@
 #define android_hardware_automotive_vehicle_aidl_impl_grpc_utils_proto_message_converter_include_ProtoMessageConverter_H_
 
 #include <VehicleHalTypes.h>
+#include <android/hardware/automotive/vehicle/SubscribeOptions.pb.h>
 #include <android/hardware/automotive/vehicle/VehicleAreaConfig.pb.h>
 #include <android/hardware/automotive/vehicle/VehiclePropConfig.pb.h>
 #include <android/hardware/automotive/vehicle/VehiclePropValue.pb.h>
@@ -46,6 +47,12 @@ void aidlToProto(const ::aidl::android::hardware::automotive::vehicle::VehiclePr
 void protoToAidl(
         const ::android::hardware::automotive::vehicle::proto::VehiclePropValue& inProtoVal,
         ::aidl::android::hardware::automotive::vehicle::VehiclePropValue* outAidlVal);
+// Convert AIDL SubscribeOptions to Protobuf SubscribeOptions.
+void aidlToProto(const ::aidl::android::hardware::automotive::vehicle::SubscribeOptions& in,
+                 ::android::hardware::automotive::vehicle::proto::SubscribeOptions* out);
+// Convert Protobuf SubscribeOptions to AIDL SubscribeOptions.
+void protoToAidl(const ::android::hardware::automotive::vehicle::proto::SubscribeOptions& in,
+                 ::aidl::android::hardware::automotive::vehicle::SubscribeOptions* out);
 
 }  // namespace proto_msg_converter
 }  // namespace vehicle
