@@ -39,6 +39,13 @@ GRPCVehicleHardware::GRPCVehicleHardware(std::string service_addr)
       mGrpcStub(proto::VehicleServer::NewStub(mGrpcChannel)),
       mValuePollingThread([this] { ValuePollingLoop(); }) {}
 
+// Only used for unit testing.
+GRPCVehicleHardware::GRPCVehicleHardware(std::unique_ptr<proto::VehicleServer::StubInterface> stub)
+    : mServiceAddr(""),
+      mGrpcChannel(nullptr),
+      mGrpcStub(std::move(stub)),
+      mValuePollingThread([] {}) {}
+
 GRPCVehicleHardware::~GRPCVehicleHardware() {
     {
         std::lock_guard lck(mShutdownMutex);
@@ -176,6 +183,43 @@ aidlvhal::StatusCode GRPCVehicleHardware::checkHealth() {
     auto grpc_status = mGrpcStub->CheckHealth(&context, ::google::protobuf::Empty(), &protoStatus);
     if (!grpc_status.ok()) {
         LOG(ERROR) << __func__ << ": GRPC CheckHealth Failed: " << grpc_status.error_message();
+        return aidlvhal::StatusCode::INTERNAL_ERROR;
+    }
+    return static_cast<aidlvhal::StatusCode>(protoStatus.status_code());
+}
+
+aidlvhal::StatusCode GRPCVehicleHardware::subscribe(aidlvhal::SubscribeOptions options) {
+    proto::SubscribeRequest request;
+    ::grpc::ClientContext context;
+    proto::VehicleHalCallStatus protoStatus;
+    proto_msg_converter::aidlToProto(options, request.mutable_options());
+    auto grpc_status = mGrpcStub->Subscribe(&context, request, &protoStatus);
+    if (!grpc_status.ok()) {
+        if (grpc_status.error_code() == ::grpc::StatusCode::UNIMPLEMENTED) {
+            // This is a legacy sever. It should handle updateSampleRate.
+            LOG(INFO) << __func__ << ": GRPC Subscribe is not supported by the server";
+            return aidlvhal::StatusCode::OK;
+        }
+        LOG(ERROR) << __func__ << ": GRPC Subscribe Failed: " << grpc_status.error_message();
+        return aidlvhal::StatusCode::INTERNAL_ERROR;
+    }
+    return static_cast<aidlvhal::StatusCode>(protoStatus.status_code());
+}
+
+aidlvhal::StatusCode GRPCVehicleHardware::unsubscribe(int32_t propId, int32_t areaId) {
+    proto::UnsubscribeRequest request;
+    ::grpc::ClientContext context;
+    proto::VehicleHalCallStatus protoStatus;
+    request.set_prop_id(propId);
+    request.set_area_id(areaId);
+    auto grpc_status = mGrpcStub->Unsubscribe(&context, request, &protoStatus);
+    if (!grpc_status.ok()) {
+        if (grpc_status.error_code() == ::grpc::StatusCode::UNIMPLEMENTED) {
+            // This is a legacy sever. Ignore unsubscribe request.
+            LOG(INFO) << __func__ << ": GRPC Unsubscribe is not supported by the server";
+            return aidlvhal::StatusCode::OK;
+        }
+        LOG(ERROR) << __func__ << ": GRPC Unsubscribe Failed: " << grpc_status.error_message();
         return aidlvhal::StatusCode::INTERNAL_ERROR;
     }
     return static_cast<aidlvhal::StatusCode>(protoStatus.status_code());

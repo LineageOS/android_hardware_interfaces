@@ -43,6 +43,9 @@ class GRPCVehicleHardware : public IVehicleHardware {
   public:
     explicit GRPCVehicleHardware(std::string service_addr);
 
+    // Only used for unit testing.
+    explicit GRPCVehicleHardware(std::unique_ptr<proto::VehicleServer::StubInterface> stub);
+
     ~GRPCVehicleHardware();
 
     // Get all the property configs.
@@ -80,6 +83,10 @@ class GRPCVehicleHardware : public IVehicleHardware {
     aidlvhal::StatusCode updateSampleRate(int32_t propId, int32_t areaId,
                                           float sampleRate) override;
 
+    aidlvhal::StatusCode subscribe(aidlvhal::SubscribeOptions options) override;
+
+    aidlvhal::StatusCode unsubscribe(int32_t propId, int32_t areaId) override;
+
     bool waitForConnected(std::chrono::milliseconds waitTime);
 
   protected:
@@ -91,7 +98,7 @@ class GRPCVehicleHardware : public IVehicleHardware {
 
     std::string mServiceAddr;
     std::shared_ptr<::grpc::Channel> mGrpcChannel;
-    std::unique_ptr<proto::VehicleServer::Stub> mGrpcStub;
+    std::unique_ptr<proto::VehicleServer::StubInterface> mGrpcStub;
     std::thread mValuePollingThread;
 
     std::unique_ptr<const PropertySetErrorCallback> mOnSetErr;

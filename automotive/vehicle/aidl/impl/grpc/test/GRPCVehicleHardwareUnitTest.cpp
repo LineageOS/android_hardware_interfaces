@@ -15,6 +15,7 @@
 #include "GRPCVehicleHardware.h"
 #include "VehicleServer.grpc.pb.h"
 #include "VehicleServer.pb.h"
+#include "VehicleServer_mock.grpc.pb.h"
 
 #include <gmock/gmock.h>
 #include <grpc++/grpc++.h>
@@ -25,6 +26,17 @@
 #include <string>
 
 namespace android::hardware::automotive::vehicle::virtualization {
+
+namespace aidlvhal = ::aidl::android::hardware::automotive::vehicle;
+
+using ::testing::_;
+using ::testing::DoAll;
+using ::testing::NiceMock;
+using ::testing::Return;
+using ::testing::SaveArg;
+using ::testing::SetArgPointee;
+
+using proto::MockVehicleServerStub;
 
 const std::string kFakeServerAddr = "0.0.0.0:54321";
 
@@ -89,6 +101,133 @@ TEST(GRPCVehicleHardwareUnitTest, Reconnect) {
         // Reset for the next round.
         receivedUpdate->store(0);
     }
+}
+
+class GRPCVehicleHardwareMockServerUnitTest : public ::testing::Test {
+  protected:
+    NiceMock<MockVehicleServerStub>* mGrpcStub;
+    std::unique_ptr<GRPCVehicleHardware> mHardware;
+
+    void SetUp() override {
+        auto stub = std::make_unique<NiceMock<MockVehicleServerStub>>();
+        ;
+        mGrpcStub = stub.get();
+        mHardware = std::make_unique<GRPCVehicleHardware>(std::move(stub));
+    }
+
+    void TearDown() override { mHardware.reset(); }
+};
+
+MATCHER_P(RepeatedInt32Eq, expected_values, "") {
+    return std::vector<int32_t>(arg.begin(), arg.end()) == expected_values;
+}
+
+TEST_F(GRPCVehicleHardwareMockServerUnitTest, Subscribe) {
+    proto::VehicleHalCallStatus protoStatus;
+    protoStatus.set_status_code(proto::StatusCode::OK);
+    proto::SubscribeRequest actualRequest;
+
+    EXPECT_CALL(*mGrpcStub, Subscribe(_, _, _))
+            .WillOnce(DoAll(SaveArg<1>(&actualRequest), SetArgPointee<2>(protoStatus),
+                            Return(::grpc::Status::OK)));
+
+    aidlvhal::SubscribeOptions options = {.propId = 1,
+                                          .areaIds = {1, 2, 3, 4},
+                                          .sampleRate = 1.234,
+                                          .resolution = 0.01,
+                                          .enableVariableUpdateRate = true};
+    auto status = mHardware->subscribe(options);
+
+    EXPECT_EQ(status, aidlvhal::StatusCode::OK);
+    const auto& protoOptions = actualRequest.options();
+    EXPECT_EQ(protoOptions.prop_id(), 1);
+    EXPECT_THAT(protoOptions.area_ids(), RepeatedInt32Eq(std::vector<int32_t>({1, 2, 3, 4})));
+    EXPECT_FLOAT_EQ(protoOptions.sample_rate(), 1.234);
+    EXPECT_FLOAT_EQ(protoOptions.resolution(), 0.01);
+    EXPECT_EQ(protoOptions.enable_variable_update_rate(), true);
+}
+
+TEST_F(GRPCVehicleHardwareMockServerUnitTest, SubscribeLegacyServer) {
+    EXPECT_CALL(*mGrpcStub, Subscribe(_, _, _))
+            .WillOnce(Return(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "")));
+
+    aidlvhal::SubscribeOptions options;
+    auto status = mHardware->subscribe(options);
+
+    EXPECT_EQ(status, aidlvhal::StatusCode::OK);
+}
+
+TEST_F(GRPCVehicleHardwareMockServerUnitTest, SubscribeGrpcFailure) {
+    EXPECT_CALL(*mGrpcStub, Subscribe(_, _, _))
+            .WillOnce(Return(::grpc::Status(::grpc::StatusCode::INTERNAL, "GRPC Error")));
+
+    aidlvhal::SubscribeOptions options;
+    auto status = mHardware->subscribe(options);
+
+    EXPECT_EQ(status, aidlvhal::StatusCode::INTERNAL_ERROR);
+}
+
+TEST_F(GRPCVehicleHardwareMockServerUnitTest, SubscribeProtoFailure) {
+    proto::VehicleHalCallStatus protoStatus;
+    protoStatus.set_status_code(proto::StatusCode::NOT_AVAILABLE_SPEED_LOW);
+
+    EXPECT_CALL(*mGrpcStub, Subscribe(_, _, _))
+            .WillOnce(DoAll(SetArgPointee<2>(protoStatus),  // Set the output status
+                            Return(::grpc::Status::OK)));
+
+    aidlvhal::SubscribeOptions options;
+    auto status = mHardware->subscribe(options);
+
+    EXPECT_EQ(status, aidlvhal::StatusCode::NOT_AVAILABLE_SPEED_LOW);
+}
+
+TEST_F(GRPCVehicleHardwareMockServerUnitTest, Unsubscribe) {
+    proto::VehicleHalCallStatus protoStatus;
+    protoStatus.set_status_code(proto::StatusCode::OK);
+    proto::UnsubscribeRequest actualRequest;
+
+    EXPECT_CALL(*mGrpcStub, Unsubscribe(_, _, _))
+            .WillOnce(DoAll(SaveArg<1>(&actualRequest), SetArgPointee<2>(protoStatus),
+                            Return(::grpc::Status::OK)));
+
+    int32_t propId = 1;
+    int32_t areaId = 2;
+    auto status = mHardware->unsubscribe(propId, areaId);
+
+    EXPECT_EQ(status, aidlvhal::StatusCode::OK);
+    EXPECT_EQ(actualRequest.prop_id(), propId);
+    EXPECT_EQ(actualRequest.area_id(), areaId);
+}
+
+TEST_F(GRPCVehicleHardwareMockServerUnitTest, UnsubscribeLegacyServer) {
+    EXPECT_CALL(*mGrpcStub, Unsubscribe(_, _, _))
+            .WillOnce(Return(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "")));
+
+    auto status = mHardware->unsubscribe(1, 2);
+
+    EXPECT_EQ(status, aidlvhal::StatusCode::OK);
+}
+
+TEST_F(GRPCVehicleHardwareMockServerUnitTest, UnsubscribeGrpcFailure) {
+    EXPECT_CALL(*mGrpcStub, Unsubscribe(_, _, _))
+            .WillOnce(Return(::grpc::Status(::grpc::StatusCode::INTERNAL, "GRPC Error")));
+
+    auto status = mHardware->unsubscribe(1, 2);
+
+    EXPECT_EQ(status, aidlvhal::StatusCode::INTERNAL_ERROR);
+}
+
+TEST_F(GRPCVehicleHardwareMockServerUnitTest, UnsubscribeProtoFailure) {
+    proto::VehicleHalCallStatus protoStatus;
+    protoStatus.set_status_code(proto::StatusCode::NOT_AVAILABLE_SPEED_LOW);
+
+    EXPECT_CALL(*mGrpcStub, Unsubscribe(_, _, _))
+            .WillOnce(DoAll(SetArgPointee<2>(protoStatus),  // Set the output status
+                            Return(::grpc::Status::OK)));
+
+    auto status = mHardware->unsubscribe(1, 2);
+
+    EXPECT_EQ(status, aidlvhal::StatusCode::NOT_AVAILABLE_SPEED_LOW);
 }
 
 }  // namespace android::hardware::automotive::vehicle::virtualization

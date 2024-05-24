@@ -20,7 +20,9 @@ package android.hardware.automotive.vehicle.proto;
 
 import "android/hardware/automotive/vehicle/DumpOptions.proto";
 import "android/hardware/automotive/vehicle/DumpResult.proto";
+import "android/hardware/automotive/vehicle/SubscribeRequest.proto";
 import "android/hardware/automotive/vehicle/StatusCode.proto";
+import "android/hardware/automotive/vehicle/UnsubscribeRequest.proto";
 import "android/hardware/automotive/vehicle/VehiclePropConfig.proto";
 import "android/hardware/automotive/vehicle/VehiclePropValue.proto";
 import "android/hardware/automotive/vehicle/VehiclePropValueRequest.proto";
@@ -40,4 +42,8 @@ service VehicleServer {
     rpc Dump(DumpOptions) returns (DumpResult) {}
 
     rpc StartPropertyValuesStream(google.protobuf.Empty) returns (stream VehiclePropValues) {}
+
+    rpc Subscribe(SubscribeRequest) returns (VehicleHalCallStatus) {}
+
+    rpc Unsubscribe(UnsubscribeRequest) returns (VehicleHalCallStatus) {}
 }

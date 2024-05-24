@@ -164,6 +164,27 @@ GrpcVehicleProxyServer::GrpcVehicleProxyServer(std::string serverAddr,
     return ::grpc::Status::OK;
 }
 
+::grpc::Status GrpcVehicleProxyServer::Subscribe(::grpc::ServerContext* context,
+                                                 const proto::SubscribeRequest* request,
+                                                 proto::VehicleHalCallStatus* status) {
+    const auto& protoSubscribeOptions = request->options();
+    aidlvhal::SubscribeOptions aidlSubscribeOptions = {};
+    proto_msg_converter::protoToAidl(protoSubscribeOptions, &aidlSubscribeOptions);
+    const auto status_code = mHardware->subscribe(aidlSubscribeOptions);
+    status->set_status_code(static_cast<proto::StatusCode>(status_code));
+    return ::grpc::Status::OK;
+}
+
+::grpc::Status GrpcVehicleProxyServer::Unsubscribe(::grpc::ServerContext* context,
+                                                   const proto::UnsubscribeRequest* request,
+                                                   proto::VehicleHalCallStatus* status) {
+    int32_t propId = request->prop_id();
+    int32_t areaId = request->area_id();
+    const auto status_code = mHardware->unsubscribe(propId, areaId);
+    status->set_status_code(static_cast<proto::StatusCode>(status_code));
+    return ::grpc::Status::OK;
+}
+
 ::grpc::Status GrpcVehicleProxyServer::CheckHealth(::grpc::ServerContext* context,
                                                    const ::google::protobuf::Empty*,
                                                    proto::VehicleHalCallStatus* status) {
