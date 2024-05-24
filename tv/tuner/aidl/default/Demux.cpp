@@ -53,9 +53,6 @@ void Demux::setTunerService(std::shared_ptr<Tuner> tuner) {
 
 Demux::~Demux() {
     ALOGV("%s", __FUNCTION__);
-    if (mDemuxIptvReadThread.joinable()) {
-        mDemuxIptvReadThread.join();
-    }
     close();
 }
 
@@ -123,26 +120,43 @@ void Demux::setIptvThreadRunning(bool isIptvThreadRunning) {
     mIsIptvThreadRunningCv.notify_all();
 }
 
-void Demux::readIptvThreadLoop(dtv_plugin* interface, dtv_streamer* streamer, size_t buf_size,
-                               int timeout_ms, int buffer_timeout) {
+void Demux::frontendIptvInputThreadLoop(dtv_plugin* interface, dtv_streamer* streamer, void* buf) {
     Timer *timer, *fullBufferTimer;
+    bool isTuneBytePushedToDvr = false;
     while (true) {
         std::unique_lock<std::mutex> lock(mIsIptvThreadRunningMutex);
-        mIsIptvThreadRunningCv.wait(lock, [this] { return mIsIptvReadThreadRunning; });
-        if (mIsIptvDvrFMQFull && fullBufferTimer->get_elapsed_time_ms() > buffer_timeout) {
-            ALOGE("DVR FMQ has not been flushed within timeout of %d ms", buffer_timeout);
+        mIsIptvThreadRunningCv.wait(
+                lock, [this] { return mIsIptvReadThreadRunning || mIsIptvReadThreadTerminated; });
+        if (mIsIptvReadThreadTerminated) {
+            ALOGI("[Demux] IPTV reading thread for playback terminated");
+            break;
+        }
+        if (mIsIptvDvrFMQFull &&
+            fullBufferTimer->get_elapsed_time_ms() > IPTV_PLAYBACK_BUFFER_TIMEOUT) {
+            ALOGE("DVR FMQ has not been flushed within timeout of %d ms",
+                  IPTV_PLAYBACK_BUFFER_TIMEOUT);
             delete fullBufferTimer;
             break;
         }
         timer = new Timer();
-        void* buf = malloc(sizeof(char) * IPTV_BUFFER_SIZE);
-        if (buf == nullptr) ALOGI("Buffer allocation failed");
-        ssize_t bytes_read = interface->read_stream(streamer, buf, buf_size, timeout_ms);
-        if (bytes_read == 0) {
+        ssize_t bytes_read;
+        void* tuneByteBuffer = mFrontend->getTuneByteBuffer();
+        if (!isTuneBytePushedToDvr && tuneByteBuffer != nullptr) {
+            memcpy(buf, tuneByteBuffer, 1);
+            char* offsetBuf = (char*)buf + 1;
+            bytes_read = interface->read_stream(streamer, (void*)offsetBuf, IPTV_BUFFER_SIZE - 1,
+                                                IPTV_PLAYBACK_TIMEOUT);
+            isTuneBytePushedToDvr = true;
+        } else {
+            bytes_read =
+                    interface->read_stream(streamer, buf, IPTV_BUFFER_SIZE, IPTV_PLAYBACK_TIMEOUT);
+        }
+
+        if (bytes_read <= 0) {
             double elapsed_time = timer->get_elapsed_time_ms();
-            if (elapsed_time > timeout_ms) {
+            if (elapsed_time > IPTV_PLAYBACK_TIMEOUT) {
                 ALOGE("[Demux] timeout reached - elapsed_time: %f, timeout: %d", elapsed_time,
-                      timeout_ms);
+                      IPTV_PLAYBACK_TIMEOUT);
             }
             ALOGE("[Demux] Cannot read data from the socket");
             delete timer;
@@ -170,8 +184,6 @@ void Demux::readIptvThreadLoop(dtv_plugin* interface, dtv_streamer* streamer, si
             default:
                 ALOGI("Invalid DVR Status");
         }
-
-        free(buf);
     }
 }
 
@@ -206,32 +218,44 @@ void Demux::readIptvThreadLoop(dtv_plugin* interface, dtv_streamer* streamer, si
 
         // get plugin interface from frontend
         dtv_plugin* interface = mFrontend->getIptvPluginInterface();
+        // if plugin interface is not on frontend, create a new plugin interface
         if (interface == nullptr) {
-            ALOGE("[Demux] getIptvPluginInterface(): plugin interface is null");
-            return ::ndk::ScopedAStatus::fromServiceSpecificError(
-                    static_cast<int32_t>(Result::INVALID_STATE));
+            interface = mFrontend->createIptvPluginInterface();
+            if (interface == nullptr) {
+                ALOGE("[   INFO   ] Failed to load plugin.");
+                return ::ndk::ScopedAStatus::fromServiceSpecificError(
+                        static_cast<int32_t>(Result::INVALID_STATE));
+            }
         }
-        ALOGI("[Demux] getIptvPluginInterface(): plugin interface is not null");
+
+        // get transport description from frontend
+        string transport_desc = mFrontend->getIptvTransportDescription();
+        if (transport_desc.empty()) {
+            string content_url = "rtp://127.0.0.1:12345";
+            transport_desc = "{ \"uri\": \"" + content_url + "\"}";
+        }
+        ALOGI("[Demux] transport_desc: %s", transport_desc.c_str());
 
         // get streamer object from Frontend instance
         dtv_streamer* streamer = mFrontend->getIptvPluginStreamer();
         if (streamer == nullptr) {
-            ALOGE("[Demux] getIptvPluginStreamer(): streamer is null");
+            streamer = mFrontend->createIptvPluginStreamer(interface, transport_desc.c_str());
+            if (streamer == nullptr) {
+                ALOGE("[   INFO   ] Failed to open stream");
+                return ::ndk::ScopedAStatus::fromServiceSpecificError(
+                        static_cast<int32_t>(Result::INVALID_STATE));
+            }
+        }
+        stopIptvFrontendInput();
+        mIsIptvReadThreadTerminated = false;
+        void* buf = malloc(sizeof(char) * IPTV_BUFFER_SIZE);
+        if (buf == nullptr) {
+            ALOGE("[Demux] Buffer allocation failed");
             return ::ndk::ScopedAStatus::fromServiceSpecificError(
                     static_cast<int32_t>(Result::INVALID_STATE));
         }
-        ALOGI("[Demux] getIptvPluginStreamer(): streamer is not null");
-
-        // get transport description from frontend
-        string transport_desc = mFrontend->getIptvTransportDescription();
-        ALOGI("[Demux] getIptvTransportDescription(): transport_desc: %s", transport_desc.c_str());
-
-        // call read_stream on the socket to populate the buffer with TS data
-        // while thread is alive, keep reading data
-        int timeout_ms = 20;
-        int buffer_timeout = 10000;  // 10s
-        mDemuxIptvReadThread = std::thread(&Demux::readIptvThreadLoop, this, interface, streamer,
-                                           IPTV_BUFFER_SIZE, timeout_ms, buffer_timeout);
+        mDemuxIptvReadThread =
+                std::thread(&Demux::frontendIptvInputThreadLoop, this, interface, streamer, buf);
     }
     return ::ndk::ScopedAStatus::ok();
 }
@@ -348,6 +372,7 @@ void Demux::readIptvThreadLoop(dtv_plugin* interface, dtv_streamer* streamer, si
     ALOGV("%s", __FUNCTION__);
 
     stopFrontendInput();
+    stopIptvFrontendInput();
 
     set<int64_t>::iterator it;
     for (it = mPlaybackFilterIds.begin(); it != mPlaybackFilterIds.end(); it++) {
@@ -540,6 +565,15 @@ void Demux::stopFrontendInput() {
     mFrontendInputThreadRunning = false;
     if (mFrontendInputThread.joinable()) {
         mFrontendInputThread.join();
+    }
+}
+
+void Demux::stopIptvFrontendInput() {
+    ALOGD("[Demux] stop iptv frontend on demux");
+    if (mDemuxIptvReadThread.joinable()) {
+        mIsIptvReadThreadTerminated = true;
+        mIsIptvThreadRunningCv.notify_all();
+        mDemuxIptvReadThread.join();
     }
 }
 

@@ -31,8 +31,8 @@ typedef struct {
     u8 is_flexible_twt_supported;  // 0 for not supporting flexible twt schedules
     u32 min_wake_duration_micros;  // minimum twt wake duration capable in microseconds
     u32 max_wake_duration_micros;  // maximum twt wake duration capable in microseconds
-    u32 min_wake_interval_micros;  // minimum twt wake interval capable in microseconds
-    u32 max_wake_interval_micros;  // maximum twt wake interval capable in microseconds
+    u64 min_wake_interval_micros;  // minimum twt wake interval capable in microseconds
+    u64 max_wake_interval_micros;  // maximum twt wake interval capable in microseconds
 } wifi_twt_capabilities;
 
 /* TWT request parameters to setup or update a TWT session */
@@ -41,8 +41,8 @@ typedef struct {
                      // Otherwise UNSPECIFIED.
     u32 min_wake_duration_micros;  // minimum twt wake duration in microseconds
     u32 max_wake_duration_micros;  // maximum twt wake duration in microseconds
-    u32 min_wake_interval_micros;  // minimum twt wake interval in microseconds
-    u32 max_wake_interval_micros;  // maximum twt wake interval in microseconds
+    u64 min_wake_interval_micros;  // minimum twt wake interval in microseconds
+    u64 max_wake_interval_micros;  // maximum twt wake interval in microseconds
 } wifi_twt_request;
 
 /* TWT negotiation types */
@@ -56,7 +56,7 @@ typedef struct {
     u32 session_id; // a unique identifier for the session
     s8 mlo_link_id; // link id in case of MLO connection. Otherwise UNSPECIFIED.
     u32 wake_duration_micros; // TWT service period in microseconds
-    u32 wake_interval_micros; // TWT wake interval for this session in microseconds
+    u64 wake_interval_micros; // TWT wake interval for this session in microseconds
     wifi_twt_negotiation_type negotiation_type; // TWT negotiation type
     u8 is_trigger_enabled; // 0 if this TWT session is not trigger enabled
     u8 is_announced;       // 0 if this TWT session is not announced

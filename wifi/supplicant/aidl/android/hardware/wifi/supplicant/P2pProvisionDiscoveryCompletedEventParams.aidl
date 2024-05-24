@@ -18,7 +18,6 @@ package android.hardware.wifi.supplicant;
 
 import android.hardware.wifi.common.OuiKeyedData;
 import android.hardware.wifi.supplicant.P2pProvDiscStatusCode;
-import android.hardware.wifi.supplicant.WpsConfigMethods;
 
 /**
  * Parameters passed as a part of P2P provision discovery frame notification.
@@ -34,8 +33,8 @@ parcelable P2pProvisionDiscoveryCompletedEventParams {
     boolean isRequest;
     /** Status of the provision discovery */
     P2pProvDiscStatusCode status;
-    /** Mask of WPS configuration methods supported */
-    WpsConfigMethods configMethods;
+    /** Mask of |WpsConfigMethods| indicating the supported methods */
+    int configMethods;
     /** 8-digit pin generated */
     String generatedPin;
     /**

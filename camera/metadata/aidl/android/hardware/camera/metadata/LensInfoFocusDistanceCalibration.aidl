@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.lens.info.focusDistanceCalibration enumeration values
  * @see ANDROID_LENS_INFO_FOCUS_DISTANCE_CALIBRATION
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

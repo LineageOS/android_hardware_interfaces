@@ -544,6 +544,8 @@ interface ISession {
      * whenever it's appropriate.
      *
      * @param shouldIgnore whether the display touches should be ignored.
+
+     * @deprecated use isHardwareIgnoringTouches in OperationContext from onContextChanged instead
      */
     void setIgnoreDisplayTouches(in boolean shouldIgnore);
 }

@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.depth.availableDepthStreamConfigurations enumeration values
  * @see ANDROID_DEPTH_AVAILABLE_DEPTH_STREAM_CONFIGURATIONS
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

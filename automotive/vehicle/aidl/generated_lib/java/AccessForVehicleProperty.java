@@ -117,6 +117,7 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.DISPLAY_BRIGHTNESS, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.PER_DISPLAY_BRIGHTNESS, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.VALET_MODE_ENABLED, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.HEAD_UP_DISPLAY_ENABLED, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.HW_KEY_INPUT, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.HW_KEY_INPUT_V2, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.HW_MOTION_INPUT, VehiclePropertyAccess.READ),
@@ -196,6 +197,7 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.ULTRASONICS_SENSOR_FIELD_OF_VIEW, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.ULTRASONICS_SENSOR_DETECTION_RANGE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.ULTRASONICS_SENSOR_SUPPORTED_RANGES, VehiclePropertyAccess.READ),
+        Map.entry(VehicleProperty.ULTRASONICS_SENSOR_MEASURED_DISTANCE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.OBD2_LIVE_FRAME, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.OBD2_FREEZE_FRAME, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.OBD2_FREEZE_FRAME_INFO, VehiclePropertyAccess.READ),
@@ -253,6 +255,7 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.VEHICLE_IN_USE, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.CLUSTER_HEARTBEAT, VehiclePropertyAccess.WRITE),
         Map.entry(VehicleProperty.VEHICLE_DRIVING_AUTOMATION_CURRENT_LEVEL, VehiclePropertyAccess.READ),
+        Map.entry(VehicleProperty.CAMERA_SERVICE_CURRENT_STATE, VehiclePropertyAccess.WRITE),
         Map.entry(VehicleProperty.AUTOMATIC_EMERGENCY_BRAKING_ENABLED, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.AUTOMATIC_EMERGENCY_BRAKING_STATE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.FORWARD_COLLISION_WARNING_ENABLED, VehiclePropertyAccess.READ_WRITE),
@@ -289,7 +292,9 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.LOW_SPEED_COLLISION_WARNING_ENABLED, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.LOW_SPEED_COLLISION_WARNING_STATE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.CROSS_TRAFFIC_MONITORING_ENABLED, VehiclePropertyAccess.READ_WRITE),
-        Map.entry(VehicleProperty.CROSS_TRAFFIC_MONITORING_WARNING_STATE, VehiclePropertyAccess.READ)
+        Map.entry(VehicleProperty.CROSS_TRAFFIC_MONITORING_WARNING_STATE, VehiclePropertyAccess.READ),
+        Map.entry(VehicleProperty.LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_ENABLED, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_STATE, VehiclePropertyAccess.READ)
     );
 
 }

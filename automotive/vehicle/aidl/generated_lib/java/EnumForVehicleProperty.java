@@ -85,6 +85,7 @@ public final class EnumForVehicleProperty {
         Map.entry(VehicleProperty.GENERAL_SAFETY_REGULATION_COMPLIANCE_REQUIREMENT, List.of(GsrComplianceRequirementType.class)),
         Map.entry(VehicleProperty.SHUTDOWN_REQUEST, List.of(VehicleApPowerStateShutdownParam.class)),
         Map.entry(VehicleProperty.VEHICLE_DRIVING_AUTOMATION_CURRENT_LEVEL, List.of(VehicleAutonomousState.class)),
+        Map.entry(VehicleProperty.CAMERA_SERVICE_CURRENT_STATE, List.of(CameraServiceState.class)),
         Map.entry(VehicleProperty.AUTOMATIC_EMERGENCY_BRAKING_STATE, List.of(AutomaticEmergencyBrakingState.class, ErrorState.class)),
         Map.entry(VehicleProperty.FORWARD_COLLISION_WARNING_STATE, List.of(ForwardCollisionWarningState.class, ErrorState.class)),
         Map.entry(VehicleProperty.BLIND_SPOT_WARNING_STATE, List.of(BlindSpotWarningState.class, ErrorState.class)),
@@ -103,7 +104,8 @@ public final class EnumForVehicleProperty {
         Map.entry(VehicleProperty.DRIVER_DISTRACTION_STATE, List.of(DriverDistractionState.class, ErrorState.class)),
         Map.entry(VehicleProperty.DRIVER_DISTRACTION_WARNING, List.of(DriverDistractionWarning.class, ErrorState.class)),
         Map.entry(VehicleProperty.LOW_SPEED_COLLISION_WARNING_STATE, List.of(LowSpeedCollisionWarningState.class, ErrorState.class)),
-        Map.entry(VehicleProperty.CROSS_TRAFFIC_MONITORING_WARNING_STATE, List.of(CrossTrafficMonitoringWarningState.class, ErrorState.class))
+        Map.entry(VehicleProperty.CROSS_TRAFFIC_MONITORING_WARNING_STATE, List.of(CrossTrafficMonitoringWarningState.class, ErrorState.class)),
+        Map.entry(VehicleProperty.LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_STATE, List.of(LowSpeedAutomaticEmergencyBrakingState.class, ErrorState.class))
     );
 
 }

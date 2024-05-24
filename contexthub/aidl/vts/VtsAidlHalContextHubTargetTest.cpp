@@ -421,7 +421,7 @@ std::vector<std::tuple<std::string, int32_t>> generateContextHubMapping() {
     return tuples;
 }
 
-TEST_P(ContextHubAidl, TestHostConnection) {
+TEST_P(ContextHubTransactionTest, TestHostConnection) {
     constexpr char16_t kHostEndpointId = 1;
     HostEndpointInfo hostEndpointInfo;
     hostEndpointInfo.type = HostEndpointInfo::Type::NATIVE;
@@ -431,13 +431,13 @@ TEST_P(ContextHubAidl, TestHostConnection) {
     ASSERT_TRUE(contextHub->onHostEndpointDisconnected(kHostEndpointId).isOk());
 }
 
-TEST_P(ContextHubAidl, TestInvalidHostConnection) {
+TEST_P(ContextHubTransactionTest, TestInvalidHostConnection) {
     constexpr char16_t kHostEndpointId = 1;
 
     ASSERT_TRUE(contextHub->onHostEndpointDisconnected(kHostEndpointId).isOk());
 }
 
-TEST_P(ContextHubAidl, TestNanSessionStateChange) {
+TEST_P(ContextHubTransactionTest, TestNanSessionStateChange) {
     NanSessionStateUpdate update;
     update.state = true;
     Status status = contextHub->onNanSessionStateChanged(update);

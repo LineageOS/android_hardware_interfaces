@@ -43,11 +43,12 @@ using ::ndk::ScopedAStatus;
 constexpr float ONE_SECOND_IN_NANOS = 1'000'000'000.;
 
 SubscribeOptions newSubscribeOptions(int32_t propId, int32_t areaId, float sampleRateHz,
-                                     bool enableVur) {
+                                     float resolution, bool enableVur) {
     SubscribeOptions subscribedOptions;
     subscribedOptions.propId = propId;
     subscribedOptions.areaIds = {areaId};
     subscribedOptions.sampleRate = sampleRateHz;
+    subscribedOptions.resolution = resolution;
     subscribedOptions.enableVariableUpdateRate = enableVur;
 
     return subscribedOptions;
@@ -81,14 +82,27 @@ Result<int64_t> SubscriptionManager::getIntervalNanos(float sampleRateHz) {
     return intervalNanos;
 }
 
+bool SubscriptionManager::checkResolution(float resolution) {
+    if (resolution == 0) {
+        return true;
+    }
+
+    float log = std::log10(resolution);
+    return log == (int)log;
+}
+
 void ContSubConfigs::refreshCombinedConfig() {
     float maxSampleRateHz = 0.;
+    float minRequiredResolution = std::numeric_limits<float>::max();
     bool enableVur = true;
     // This is not called frequently so a brute-focre is okay. More efficient way exists but this
     // is simpler.
     for (const auto& [_, subConfig] : mConfigByClient) {
         if (subConfig.sampleRateHz > maxSampleRateHz) {
             maxSampleRateHz = subConfig.sampleRateHz;
+        }
+        if (subConfig.resolution < minRequiredResolution) {
+            minRequiredResolution = subConfig.resolution;
         }
         if (!subConfig.enableVur) {
             // If one client does not enable variable update rate, we cannot enable variable update
@@ -97,14 +111,12 @@ void ContSubConfigs::refreshCombinedConfig() {
         }
     }
     mMaxSampleRateHz = maxSampleRateHz;
+    mMinRequiredResolution = minRequiredResolution;
     mEnableVur = enableVur;
 }
 
-void ContSubConfigs::addClient(const ClientIdType& clientId, float sampleRateHz, bool enableVur) {
-    mConfigByClient[clientId] = {
-            .sampleRateHz = sampleRateHz,
-            .enableVur = enableVur,
-    };
+void ContSubConfigs::addClient(const ClientIdType& clientId, const SubConfig& subConfig) {
+    mConfigByClient[clientId] = subConfig;
     refreshCombinedConfig();
 }
 
@@ -117,12 +129,26 @@ float ContSubConfigs::getMaxSampleRateHz() const {
     return mMaxSampleRateHz;
 }
 
+float ContSubConfigs::getMinRequiredResolution() const {
+    return mMinRequiredResolution;
+}
+
 bool ContSubConfigs::isVurEnabled() const {
     return mEnableVur;
 }
 
-bool ContSubConfigs::isVurEnabledForClient(const ClientIdType& clientId) {
-    return mConfigByClient[clientId].enableVur;
+bool ContSubConfigs::isVurEnabledForClient(const ClientIdType& clientId) const {
+    if (mConfigByClient.find(clientId) == mConfigByClient.end()) {
+        return false;
+    }
+    return mConfigByClient.at(clientId).enableVur;
+}
+
+float ContSubConfigs::getResolutionForClient(const ClientIdType& clientId) const {
+    if (mConfigByClient.find(clientId) == mConfigByClient.end()) {
+        return 0.0f;
+    }
+    return mConfigByClient.at(clientId).resolution;
 }
 
 VhalResult<void> SubscriptionManager::addOnChangeSubscriberLocked(
@@ -135,7 +161,8 @@ VhalResult<void> SubscriptionManager::addOnChangeSubscriberLocked(
     int32_t propId = propIdAreaId.propId;
     int32_t areaId = propIdAreaId.areaId;
     if (auto status = mVehicleHardware->subscribe(
-                newSubscribeOptions(propId, areaId, /*updateRateHz=*/0, /*enableVur*/ false));
+                newSubscribeOptions(propId, areaId, /*updateRateHz=*/0, /*resolution*/ 0.0f,
+                                    /*enableVur*/ false));
         status != StatusCode::OK) {
         return StatusError(status)
                << StringPrintf("failed subscribe for prop: %s, areaId: %" PRId32,
@@ -146,10 +173,15 @@ VhalResult<void> SubscriptionManager::addOnChangeSubscriberLocked(
 
 VhalResult<void> SubscriptionManager::addContinuousSubscriberLocked(
         const ClientIdType& clientId, const PropIdAreaId& propIdAreaId, float sampleRateHz,
-        bool enableVur) {
+        float resolution, bool enableVur) {
     // Make a copy so that we don't modify 'mContSubConfigsByPropIdArea' on failure cases.
     ContSubConfigs newConfig = mContSubConfigsByPropIdArea[propIdAreaId];
-    newConfig.addClient(clientId, sampleRateHz, enableVur);
+    SubConfig subConfig = {
+            .sampleRateHz = sampleRateHz,
+            .resolution = resolution,
+            .enableVur = enableVur,
+    };
+    newConfig.addClient(clientId, subConfig);
     return updateContSubConfigsLocked(propIdAreaId, newConfig);
 }
 
@@ -183,7 +215,10 @@ VhalResult<void> SubscriptionManager::updateContSubConfigsLocked(const PropIdAre
     const auto& oldConfig = mContSubConfigsByPropIdArea[propIdAreaId];
     float newRateHz = newConfig.getMaxSampleRateHz();
     float oldRateHz = oldConfig.getMaxSampleRateHz();
-    if (newRateHz == oldRateHz && newConfig.isVurEnabled() == oldConfig.isVurEnabled()) {
+    float newResolution = newConfig.getMinRequiredResolution();
+    float oldResolution = oldConfig.getMinRequiredResolution();
+    if (newRateHz == oldRateHz && newResolution == oldResolution &&
+        newConfig.isVurEnabled() == oldConfig.isVurEnabled()) {
         mContSubConfigsByPropIdArea[propIdAreaId] = newConfig;
         return {};
     }
@@ -199,8 +234,8 @@ VhalResult<void> SubscriptionManager::updateContSubConfigsLocked(const PropIdAre
         }
     }
     if (newRateHz != 0) {
-        if (auto status = mVehicleHardware->subscribe(
-                    newSubscribeOptions(propId, areaId, newRateHz, newConfig.isVurEnabled()));
+        if (auto status = mVehicleHardware->subscribe(newSubscribeOptions(
+                    propId, areaId, newRateHz, newResolution, newConfig.isVurEnabled()));
             status != StatusCode::OK) {
             return StatusError(status) << StringPrintf(
                            "failed subscribe for prop: %s, areaId"
@@ -231,6 +266,11 @@ VhalResult<void> SubscriptionManager::subscribe(const std::shared_ptr<IVehicleCa
             if (auto result = getIntervalNanos(sampleRateHz); !result.ok()) {
                 return StatusError(StatusCode::INVALID_ARG) << result.error().message();
             }
+            if (!checkResolution(option.resolution)) {
+                return StatusError(StatusCode::INVALID_ARG) << StringPrintf(
+                               "SubscribeOptions.resolution %f is not an integer power of 10",
+                               option.resolution);
+            }
         }
 
         if (option.areaIds.empty()) {
@@ -253,6 +293,7 @@ VhalResult<void> SubscriptionManager::subscribe(const std::shared_ptr<IVehicleCa
             VhalResult<void> result;
             if (isContinuousProperty) {
                 result = addContinuousSubscriberLocked(clientId, propIdAreaId, option.sampleRate,
+                                                       option.resolution,
                                                        option.enableVariableUpdateRate);
             } else {
                 result = addOnChangeSubscriberLocked(propIdAreaId);
@@ -393,15 +434,19 @@ SubscriptionManager::getSubscribedClients(std::vector<VehiclePropValue>&& update
 
         for (const auto& [client, callback] : mClientsByPropIdAreaId[propIdAreaId]) {
             auto& subConfigs = mContSubConfigsByPropIdArea[propIdAreaId];
+            // Clients must be sent different VehiclePropValues with different levels of granularity
+            // as requested by the client using resolution.
+            VehiclePropValue newValue = value;
+            sanitizeByResolution(&(newValue.value), subConfigs.getResolutionForClient(client));
             // If client wants VUR (and VUR is supported as checked in DefaultVehicleHal), it is
             // possible that VUR is not enabled in IVehicleHardware because another client does not
             // enable VUR. We will implement VUR filtering here for the client that enables it.
             if (subConfigs.isVurEnabledForClient(client) && !subConfigs.isVurEnabled()) {
-                if (isValueUpdatedLocked(callback, value)) {
-                    clients[callback].push_back(value);
+                if (isValueUpdatedLocked(callback, newValue)) {
+                    clients[callback].push_back(newValue);
                 }
             } else {
-                clients[callback].push_back(value);
+                clients[callback].push_back(newValue);
             }
         }
     }

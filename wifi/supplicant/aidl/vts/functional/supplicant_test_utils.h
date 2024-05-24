@@ -91,3 +91,9 @@ std::shared_ptr<ISupplicant> getSupplicant(const char* supplicant_name) {
     }
     return supplicant;
 }
+
+std::array<uint8_t, 6> vecToArrayMacAddr(std::vector<uint8_t> vectorAddr) {
+    std::array<uint8_t, 6> arrayAddr;
+    std::copy(vectorAddr.begin(), vectorAddr.begin() + 6, arrayAddr.begin());
+    return arrayAddr;
+}

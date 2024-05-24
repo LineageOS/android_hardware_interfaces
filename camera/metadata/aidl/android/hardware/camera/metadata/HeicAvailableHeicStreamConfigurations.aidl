@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.heic.availableHeicStreamConfigurations enumeration values
  * @see ANDROID_HEIC_AVAILABLE_HEIC_STREAM_CONFIGURATIONS
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

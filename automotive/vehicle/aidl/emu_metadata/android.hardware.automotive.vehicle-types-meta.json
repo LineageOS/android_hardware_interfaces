@@ -16,7 +16,7 @@
                 "value": 286261506
             },
             {
-                "name": "Model year of vehicle.",
+                "name": "INFO_MODEL_YEAR",
                 "value": 289407235
             },
             {
@@ -441,6 +441,10 @@
                 "value": 287312389
             },
             {
+                "name": "Head up display (HUD) enabled",
+                "value": 354421254
+            },
+            {
                 "name": "HW_KEY_INPUT",
                 "value": 289475088
             },
@@ -774,7 +778,7 @@
             },
             {
                 "name": "ULTRASONICS_SENSOR_ORIENTATION",
-                "value": 406916129
+                "value": 409013281
             },
             {
                 "name": "ULTRASONICS_SENSOR_FIELD_OF_VIEW",
@@ -787,6 +791,10 @@
             {
                 "name": "ULTRASONICS_SENSOR_SUPPORTED_RANGES",
                 "value": 406916132
+            },
+            {
+                "name": "ULTRASONICS_SENSOR_MEASURED_DISTANCE",
+                "value": 406916133
             },
             {
                 "name": "OBD2 Live Sensor Data",
@@ -1081,7 +1089,7 @@
                 "data_enum": "TrailerState"
             },
             {
-                "name": "Vehicle’s curb weight",
+                "name": "VEHICLE_CURB_WEIGHT",
                 "value": 289410886
             },
             {
@@ -1119,6 +1127,14 @@
                     "VehicleAutonomousState"
                 ],
                 "data_enum": "VehicleAutonomousState"
+            },
+            {
+                "name": "CAMERA_SERVICE_CURRENT_STATE",
+                "value": 289476429,
+                "data_enums": [
+                    "CameraServiceState"
+                ],
+                "data_enum": "CameraServiceState"
             },
             {
                 "name": "AUTOMATIC_EMERGENCY_BRAKING_ENABLED",
@@ -1360,6 +1376,19 @@
                     "ErrorState"
                 ],
                 "data_enum": "CrossTrafficMonitoringWarningState"
+            },
+            {
+                "name": "LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_ENABLED",
+                "value": 287313957
+            },
+            {
+                "name": "LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_STATE",
+                "value": 289411110,
+                "data_enums": [
+                    "LowSpeedAutomaticEmergencyBrakingState",
+                    "ErrorState"
+                ],
+                "data_enum": "LowSpeedAutomaticEmergencyBrakingState"
             }
         ]
     },
@@ -2352,6 +2381,28 @@
         ]
     },
     {
+        "name": "LowSpeedAutomaticEmergencyBrakingState",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "OTHER",
+                "value": 0
+            },
+            {
+                "name": "ENABLED",
+                "value": 1
+            },
+            {
+                "name": "ACTIVATED",
+                "value": 2
+            },
+            {
+                "name": "USER_OVERRIDE",
+                "value": 3
+            }
+        ]
+    },
+    {
         "name": "LaneCenteringAssistState",
         "package": "android.hardware.automotive.vehicle",
         "values": [
@@ -2772,6 +2823,28 @@
             {
                 "name": "ERROR",
                 "value": 4
+            }
+        ]
+    },
+    {
+        "name": "CameraServiceState",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "UNAVAILABLE",
+                "value": 0
+            },
+            {
+                "name": "INACTIVE",
+                "value": 1
+            },
+            {
+                "name": "REQUESTED",
+                "value": 2
+            },
+            {
+                "name": "ACTIVE",
+                "value": 3
             }
         ]
     },

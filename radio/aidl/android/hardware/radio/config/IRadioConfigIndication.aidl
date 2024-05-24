@@ -37,4 +37,15 @@ oneway interface IRadioConfigIndication {
      */
     void simSlotsStatusChanged(
             in android.hardware.radio.RadioIndicationType type, in SimSlotStatus[] slotStatus);
+
+    /**
+     * The logical slots supporting simultaneous cellular calling has changed.
+     *
+     * @param enabledLogicalSlots The slots that have simultaneous cellular calling enabled. If
+     * there is a call active on logical slot X, then a simultaneous cellular call is only possible
+     * on logical slot Y if BOTH slot X and slot Y are in enabledLogicalSlots. If simultaneous
+     * cellular calling is not currently supported, the expected value of enabledLogicalSLots is an
+     * empty int array. Sending only one radio slot is not acceptable in any case.
+     */
+    void onSimultaneousCallingSupportChanged(in int[] enabledLogicalSlots);
 }

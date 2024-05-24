@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.jpegr.availableJpegRStreamConfigurations enumeration values
  * @see ANDROID_JPEGR_AVAILABLE_JPEG_R_STREAM_CONFIGURATIONS
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

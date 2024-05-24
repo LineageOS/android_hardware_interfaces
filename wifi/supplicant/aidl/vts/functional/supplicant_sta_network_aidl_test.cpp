@@ -27,6 +27,7 @@
 #include <cutils/properties.h>
 
 #include "supplicant_test_utils.h"
+#include "wifi_aidl_test_utils.h"
 
 using aidl::android::hardware::wifi::supplicant::AuthAlgMask;
 using aidl::android::hardware::wifi::supplicant::BnSupplicantStaNetworkCallback;
@@ -72,6 +73,7 @@ const std::string kTestEapMatch = "match";
 const KeyMgmtMask kTestKeyMgmt =
     static_cast<KeyMgmtMask>(static_cast<uint32_t>(KeyMgmtMask::WPA_PSK) |
                              static_cast<uint32_t>(KeyMgmtMask::WPA_EAP));
+const auto& kTestVendorData = generateOuiKeyedDataList(5);
 
 }  // namespace
 
@@ -110,6 +112,7 @@ class SupplicantStaNetworkAidlTest
         initializeService();
         supplicant_ = getSupplicant(GetParam().c_str());
         ASSERT_NE(supplicant_, nullptr);
+        ASSERT_TRUE(supplicant_->getInterfaceVersion(&interface_version_).isOk());
         ASSERT_TRUE(supplicant_
                         ->setDebugParams(DebugLevel::EXCESSIVE,
                                          true,  // show timestamps
@@ -131,6 +134,7 @@ class SupplicantStaNetworkAidlTest
     std::shared_ptr<ISupplicant> supplicant_;
     std::shared_ptr<ISupplicantStaIface> sta_iface_;
     std::shared_ptr<ISupplicantStaNetwork> sta_network_;
+    int interface_version_;
 
     void removeNetwork() {
         ASSERT_NE(sta_iface_, nullptr);
@@ -826,7 +830,20 @@ TEST_P(SupplicantStaNetworkAidlTest, SetMinimumTlsVersionEapPhase1Param) {
  * disableEht
  */
 TEST_P(SupplicantStaNetworkAidlTest, DisableEht) {
+    if (interface_version_ < 3) {
+        GTEST_SKIP() << "disableEht is available as of Supplicant V3";
+    }
     EXPECT_TRUE(sta_network_->disableEht().isOk());
+}
+
+/*
+ * SetVendorData
+ */
+TEST_P(SupplicantStaNetworkAidlTest, SetVendorData) {
+    if (interface_version_ < 3) {
+        GTEST_SKIP() << "setVendorData is available as of Supplicant V3";
+    }
+    EXPECT_TRUE(sta_network_->setVendorData(kTestVendorData).isOk());
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SupplicantStaNetworkAidlTest);

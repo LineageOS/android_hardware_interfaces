@@ -38,16 +38,16 @@ class RadioNetworkResponse : public BnRadioNetworkResponse {
     RadioResponseInfo rspInfo;
     std::vector<RadioBandMode> radioBandModes;
     std::vector<OperatorInfo> networkInfos;
-    bool isNrDualConnectivityEnabled;
-    int networkTypeBitmapResponse;
+    bool isNrDualConnectivityEnabled = false;
+    int networkTypeBitmapResponse = 0;
     RegStateResult voiceRegResp;
     RegStateResult dataRegResp;
     CellIdentity barringCellIdentity;
     std::vector<BarringInfo> barringInfoList;
     UsageSetting usageSetting;
     std::vector<RadioAccessSpecifier> specifiers;
-    bool isCellularIdentifierTransparencyEnabled;
-    bool isSecurityAlgorithmsUpdatedEnabled;
+    bool isCellularIdentifierTransparencyEnabled = false;
+    bool isSecurityAlgorithmsUpdatedEnabled = false;
 
     virtual ndk::ScopedAStatus acknowledgeRequest(int32_t serial) override;
 

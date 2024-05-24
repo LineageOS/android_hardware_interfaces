@@ -630,10 +630,7 @@ int colorFormatConversion(BufferInfo* buffer, buffer_handle_t buff, PixelFormat 
         if (error != android::NO_ERROR) return 1;
     } else {
         void* data;
-        int32_t outBytesPerPixel;
-        int32_t outBytesPerStride;
-        error = gbmapper.lock(buff, buffer->omxBuffer.attr.anwBuffer.usage, rect, &data,
-                              &outBytesPerPixel, &outBytesPerStride);
+        error = gbmapper.lock(buff, buffer->omxBuffer.attr.anwBuffer.usage, rect, &data);
         EXPECT_EQ(error, android::NO_ERROR);
         if (error != android::NO_ERROR) return 1;
 

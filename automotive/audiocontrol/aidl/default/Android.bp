@@ -27,11 +27,13 @@ cc_binary {
     init_rc: ["audiocontrol-default.rc"],
     vintf_fragments: ["audiocontrol-default.xml"],
     vendor: true,
+    defaults: [
+        "latest_android_hardware_audio_common_ndk_shared",
+        "latest_android_hardware_automotive_audiocontrol_ndk_shared",
+    ],
     shared_libs: [
         "android.hardware.audio.common@7.0-enums",
-        "android.hardware.audio.common-V1-ndk",
         "android.frameworks.automotive.powerpolicy-V2-ndk",
-        "android.hardware.automotive.audiocontrol-V3-ndk",
         "libbase",
         "libbinder_ndk",
         "libcutils",

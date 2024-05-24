@@ -20,12 +20,19 @@ package android.hardware.radio.ims.media;
 parcelable RtpReceptionStats {
     /** The timestamp of the latest RTP packet received */
     int rtpTimestamp;
-    /** The sequence number of latest RTP packet received */
-    int rtpSequenceNumber;
-    /** The system clock time in millisecond of latest RTP packet received */
-    int timeDurationMs;
-    /** The jitter buffer size in millisecond when latest RTP packet received */
+
+    /** The timestamp of the latest RTCP-SR packet received */
+    int rtcpSrTimestamp;
+
+    /** The NTP timestamp of latest RTCP-SR packet received */
+    long rtcpSrNtpTimestamp;
+
+    /**
+     * The mean jitter buffer delay of a media stream from received to playback, measured in
+     *  milliseconds, within the reporting interval
+     */
     int jitterBufferMs;
+
     /** The round trip time delay in millisecond when latest RTP packet received */
     int roundTripTimeMs;
 }

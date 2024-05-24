@@ -66,6 +66,7 @@ cc_library {
     ],
     header_libs: [
         "IVehicleHardware",
+        "IVehicleGeneratedHeaders",
     ],
     shared_libs: [
         "libbinder_ndk",

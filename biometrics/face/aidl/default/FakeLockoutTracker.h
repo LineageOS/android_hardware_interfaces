@@ -28,7 +28,9 @@ class FakeLockoutTracker {
   public:
     FakeLockoutTracker()
         : mFailedCount(0),
+          mTimedFailedCount(0),
           mLastFailedTime(0),
+          mCurrentMode(LockoutMode::kNone),
           mIsLockoutTimerStarted(false),
           mIsLockoutTimerAborted(false) {}
     ~FakeLockoutTracker() {}

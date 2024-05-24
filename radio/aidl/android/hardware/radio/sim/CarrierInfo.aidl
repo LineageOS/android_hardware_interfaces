@@ -56,7 +56,7 @@ parcelable CarrierInfo {
      * Equivalent HPLMN of the SIM card of the Carrier.
      */
     @nullable
-    List<Plmn> ephlmn;
+    List<Plmn> ehplmn;
     /**
      * ICCID (Integrated Circuit Card Identification) of the SIM card.
      */

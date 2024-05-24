@@ -44,7 +44,7 @@ parcelable TwtSessionStats {
     /**
      * Average End of Service period in microseconds.
      */
-    int avgEospDurationMicros;
+    int avgEospDurationUs;
 
     /**
      * Count of early terminations.

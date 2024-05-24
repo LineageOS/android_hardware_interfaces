@@ -127,4 +127,24 @@ parcelable HalStream {
      *
      */
     boolean supportOffline;
+
+    /**
+     * Whether the buffers for this stream are HAL buffer managed.
+     *
+     * If ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION is
+     * ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION_SESSION_CONFIGURABLE, this field
+     * must be set by the HAL to inform the camera framework, whether output buffers for this
+     * stream will be HAL buffer managed - i.e. requested through the
+     * ICameraDeviceCallback.requestStreamsBuffers() API. Only the output buffers for the streams
+     * that have this field set to 'true' will be HAL buffer managed. The output buffers for other
+     * streams will be managed by the camera framework.
+     *
+     * If the value of ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION is
+     * ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION_AIDL_DEVICE, the camera framework
+     * will ignore this field and assume that all output streams are hal buffer managed.
+     *
+     * If ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION is not set at all, the camera framework
+     * will ignore this field and assume output buffers are managed by the camera framework.
+     */
+    boolean enableHalBufferManager;
 }

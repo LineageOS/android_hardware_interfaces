@@ -494,7 +494,11 @@ void DefaultVehicleHal::onContinuousPropertyTimer(const std::vector<int32_t>& pr
             }
 
             for (int areaId : areaIds) {
-                auto v = pool.obtain(*mPropStore->refreshTimestamp(property, areaId));
+                auto refreshedProp = mPropStore->refreshTimestamp(property, areaId);
+                VehiclePropValuePtr v = nullptr;
+                if (refreshedProp != nullptr) {
+                    v = pool.obtain(*refreshedProp);
+                }
                 if (v.get()) {
                     events.push_back(std::move(v));
                 }

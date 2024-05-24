@@ -136,14 +136,14 @@ interface IGnssCallback {
          *
          * - GNSS:    1-32
          * - SBAS:    120-151, 183-192
-         * - GLONASS: 1-24, the orbital slot number (OSN), if known.  Or, if not:
+         * - GLONASS: 1-25, the orbital slot number (OSN), if known.  Or, if not:
          *            93-106, the frequency channel number (FCN) (-7 to +6) offset by
          *            + 100
          *            i.e. report an FCN of -7 as 93, FCN of 0 as 100, and FCN of +6
          *            as 106.
-         * - QZSS:    193-200
+         * - QZSS:    183-206
          * - Galileo: 1-36
-         * - Beidou:  1-37
+         * - Beidou:  1-63
          * - IRNSS:   1-14
          */
         int svid;

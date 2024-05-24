@@ -20,6 +20,8 @@
 #include <queue>
 #include <thread>
 
+#include <android-base/thread_annotations.h>
+
 namespace android {
 
 class WorkerThread {
@@ -40,11 +42,11 @@ class WorkerThread {
     };
     friend bool operator<(const Task& lhs, const Task& rhs);
 
-    std::atomic<bool> mIsTerminating;
     std::mutex mMut;
-    std::condition_variable mCond;
+    bool mIsTerminating GUARDED_BY(mMut);
+    std::condition_variable mCond GUARDED_BY(mMut);
     std::thread mThread;
-    std::priority_queue<Task> mTasks;
+    std::priority_queue<Task> mTasks GUARDED_BY(mMut);
 
     void threadLoop();
 };

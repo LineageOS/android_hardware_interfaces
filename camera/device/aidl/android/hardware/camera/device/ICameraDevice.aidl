@@ -365,16 +365,20 @@ interface ICameraDevice {
      * isStreamCombinationWithSettingsSupported:
      *
      * This is the same as isStreamCombinationSupported with below exceptions:
-     *
      * 1. The input StreamConfiguration parameter may contain session parameters
-     * supported by this camera device. When checking if the particular StreamConfiguration
-     * is supported, the camera HAL must take the session parameters into consideration.
+     * as well as additional CaptureRequest keys. See the comment
+     * sections below on what additional capture request keys are passed in
+     * StreamConfiguration::sessionParameters for each interface version. When checking if
+     * the particular StreamConfiguration is supported, the camera HAL must take all
+     * the keys in sessionParameters into consideration.
      *
      * 2. For version 3 of this interface, the camera compliance test will verify that
      * isStreamCombinationWithSettingsSupported behaves properly for all combinations of
      * below features. This function must return true for all supported combinations,
      * and return false for non-supported feature combinations. The list of features
-     * required may grow in future versions.
+     * required may grow in future versions. The additional metadata entries in
+     * StreamConfiguration::sessionParameters are {CONTROL_AE_TARGET_FPS_RANGE,
+     * CONTROL_VIDEO_STABILIZATION_MODE}.
      *
      * - Stream Combinations (a subset of LEGACY device mandatory stream combinations):
      *   {
@@ -429,7 +433,7 @@ interface ICameraDevice {
      * 4032 x 3024, the camera compliance test will verify both
      * {PRIV, 1920 x 1440, JPEG, 4032 x 3024} and {PRIV, 2560 x 1440, JPEG, 4032 x 2268}.
      *
-     * @param streams The StreamConfiguration to be tested, with optional session parameters.
+     * @param streams The StreamConfiguration to be tested, with optional CaptureRequest parameters.
      *
      * @return true in case the stream combination is supported, false otherwise.
      *
@@ -444,6 +448,10 @@ interface ICameraDevice {
      *
      * For Android 15, the characteristics which need to be set are:
      *   - ANDROID_CONTROL_ZOOM_RATIO_RANGE
+     *   - SCALER_AVAILABLE_MAX_DIGITAL_ZOOM
+     *
+     * No other tags (other than vendor tags) should be set in the characteristics returned from
+     * the HAL.
      *
      * A service specific error will be returned on the following conditions
      *     INTERNAL_ERROR:

@@ -18,6 +18,7 @@ package android.hardware.wifi;
 
 import android.hardware.wifi.RttBw;
 import android.hardware.wifi.RttPreamble;
+import android.hardware.wifi.common.OuiKeyedData;
 
 /**
  * RTT Capabilities.
@@ -64,12 +65,12 @@ parcelable RttCapabilities {
      * Bit mask indicating what preamble is supported by IEEE 802.11az initiator.
      * Combination of |RttPreamble| values.
      */
-    RttPreamble azPreambleSupport;
+    int azPreambleSupport;
     /**
      * Bit mask indicating what BW is supported by IEEE 802.11az initiator.
      * Combination of |RttBw| values.
      */
-    RttBw azBwSupport;
+    int azBwSupport;
     /**
      * Whether the initiator supports IEEE 802.11az Non-Trigger-based (non-TB) measurement.
      */
@@ -79,8 +80,8 @@ parcelable RttCapabilities {
      */
     boolean ntbResponderSupported;
     /**
-     * Maximum HE LTF repetitions the IEEE 802.11az initiator is capable of transmitting in the
-     * preamble of I2R NDP.
+     * Optional vendor-specific parameters. Null value indicates
+     * that no vendor data is provided.
      */
-    int maxTxLtfRepetitionCount;
+    @nullable OuiKeyedData[] vendorData;
 }

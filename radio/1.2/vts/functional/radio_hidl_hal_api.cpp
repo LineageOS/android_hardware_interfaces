@@ -807,11 +807,16 @@ TEST_P(RadioHidlTest_v1_2, getDataRegistrationState) {
             cellIdentities.cellIdentityTdscdma[0];
         hidl_mcc = cit.base.mcc;
         hidl_mnc = cit.base.mnc;
-    } else {
+    } else if (cellInfoType == CellInfoType::CDMA) {
         // CellIndentityCdma has no mcc and mnc.
         EXPECT_EQ(CellInfoType::CDMA, cellInfoType);
         EXPECT_EQ(1, cellIdentities.cellIdentityCdma.size());
         checkMccMnc = false;
+    } else {
+        // This test can be skipped for newer networks if a new RAT (e.g. 5g) that was not
+        // supported in this version is added to the response from a modem that supports a new
+        // version of this interface.
+        GTEST_SKIP() << "Exempt from 1.2 test: camped on a new network:" << (int)cellInfoType;
     }
 
     // Check only one CellIdentity is size 1, and others must be 0.

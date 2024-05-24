@@ -21,6 +21,7 @@
 #include <aidl/android/hardware/wifi/IWifi.h>
 #include <aidl/android/hardware/wifi/IWifiChip.h>
 #include <android/binder_manager.h>
+#include <android/persistable_bundle_aidl.h>
 #include <wifi_system/interface_tool.h>
 
 using aidl::android::hardware::wifi::IfaceConcurrencyType;
@@ -30,6 +31,8 @@ using aidl::android::hardware::wifi::IWifiChip;
 using aidl::android::hardware::wifi::IWifiNanIface;
 using aidl::android::hardware::wifi::IWifiStaIface;
 using aidl::android::hardware::wifi::WifiStatusCode;
+using aidl::android::hardware::wifi::common::OuiKeyedData;
+using aidl::android::os::PersistableBundle;
 
 // Helper functions to obtain references to the various AIDL interface objects.
 std::shared_ptr<IWifi> getWifi(const char* instance_name);
@@ -50,3 +53,6 @@ void stopWifiService(const char* instance_name);
 int32_t getChipFeatureSet(const std::shared_ptr<IWifiChip>& wifi_chip);
 bool checkStatusCode(ndk::ScopedAStatus* status, WifiStatusCode expected_code);
 bool isAidlServiceAvailable(const char* instance_name);
+// Generate test vendor data.
+std::vector<OuiKeyedData> generateOuiKeyedDataList(int size);
+std::optional<std::vector<std::optional<OuiKeyedData>>> generateOuiKeyedDataListOptional(int size);

@@ -21,6 +21,7 @@
 #include <android-base/logging.h>
 
 #include "FakeLockoutTracker.h"
+#include "Fingerprint.h"
 #include "util/Util.h"
 
 using namespace ::android::fingerprint::virt;
@@ -35,32 +36,33 @@ class FakeLockoutTrackerTest : public ::testing::Test {
     static constexpr int32_t LOCKOUT_TIMED_DURATION = 100;
 
     void SetUp() override {
-        FingerprintHalProperties::lockout_timed_threshold(LOCKOUT_TIMED_THRESHOLD);
-        FingerprintHalProperties::lockout_timed_duration(LOCKOUT_TIMED_DURATION);
-        FingerprintHalProperties::lockout_permanent_threshold(LOCKOUT_PERMANENT_THRESHOLD);
+        Fingerprint::cfg().set<std::int32_t>("lockout_timed_threshold", LOCKOUT_TIMED_THRESHOLD);
+        Fingerprint::cfg().set<std::int32_t>("lockout_timed_duration", LOCKOUT_TIMED_DURATION);
+        Fingerprint::cfg().set<std::int32_t>("lockout_permanent_threshold",
+                                             LOCKOUT_PERMANENT_THRESHOLD);
     }
 
     void TearDown() override {
         // reset to default
-        FingerprintHalProperties::lockout_timed_threshold(5);
-        FingerprintHalProperties::lockout_timed_duration(20);
-        FingerprintHalProperties::lockout_permanent_threshold(10000);
-        FingerprintHalProperties::lockout_enable(false);
-        FingerprintHalProperties::lockout(false);
+        Fingerprint::cfg().set<std::int32_t>("lockout_timed_threshold", 5);
+        Fingerprint::cfg().set<std::int32_t>("lockout_timed_duration", 20);
+        Fingerprint::cfg().set<std::int32_t>("lockout_permanent_threshold", 10000);
+        Fingerprint::cfg().set<bool>("lockout_enable", false);
+        Fingerprint::cfg().set<bool>("lockout", false);
     }
 
     FakeLockoutTracker mLockoutTracker;
 };
 
 TEST_F(FakeLockoutTrackerTest, addFailedAttemptDisable) {
-    FingerprintHalProperties::lockout_enable(false);
+    Fingerprint::cfg().set<bool>("lockout_enable", false);
     for (int i = 0; i < LOCKOUT_TIMED_THRESHOLD + 1; i++) mLockoutTracker.addFailedAttempt();
     ASSERT_EQ(mLockoutTracker.getMode(), FakeLockoutTracker::LockoutMode::kNone);
     mLockoutTracker.reset();
 }
 
 TEST_F(FakeLockoutTrackerTest, addFailedAttemptLockoutTimed) {
-    FingerprintHalProperties::lockout_enable(true);
+    Fingerprint::cfg().set<bool>("lockout_enable", true);
     for (int i = 0; i < LOCKOUT_TIMED_THRESHOLD; i++) mLockoutTracker.addFailedAttempt();
     ASSERT_EQ(mLockoutTracker.getMode(), FakeLockoutTracker::LockoutMode::kTimed);
     // time left
@@ -77,12 +79,12 @@ TEST_F(FakeLockoutTrackerTest, addFailedAttemptLockoutTimed) {
 }
 
 TEST_F(FakeLockoutTrackerTest, addFailedAttemptPermanent) {
-    FingerprintHalProperties::lockout_enable(true);
+    Fingerprint::cfg().set<bool>("lockout_enable", true);
     for (int i = 0; i < LOCKOUT_PERMANENT_THRESHOLD - 1; i++) mLockoutTracker.addFailedAttempt();
     ASSERT_NE(mLockoutTracker.getMode(), FakeLockoutTracker::LockoutMode::kPermanent);
     mLockoutTracker.addFailedAttempt();
     ASSERT_EQ(mLockoutTracker.getMode(), FakeLockoutTracker::LockoutMode::kPermanent);
-    ASSERT_TRUE(FingerprintHalProperties::lockout());
+    ASSERT_TRUE(Fingerprint::cfg().get<bool>("lockout"));
     mLockoutTracker.reset();
 }
 

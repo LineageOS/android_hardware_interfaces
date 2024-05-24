@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.flash.info.available enumeration values
  * @see ANDROID_FLASH_INFO_AVAILABLE
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

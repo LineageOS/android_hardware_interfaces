@@ -36,6 +36,11 @@ void OnCallbackDiedWrapped(void* cookie) {
     LinkedCallback* linked = reinterpret_cast<LinkedCallback*>(cookie);
     linked->OnCallbackDied();
 }
+// Delete the owned cookie.
+void onCallbackUnlinked(void* cookie) {
+    LinkedCallback* linked = reinterpret_cast<LinkedCallback*>(cookie);
+    delete linked;
+}
 }  // namespace
 
 /*
@@ -57,6 +62,7 @@ Health::Health(std::string_view instance_name, std::unique_ptr<struct healthd_co
     : instance_name_(instance_name),
       healthd_config_(std::move(config)),
       death_recipient_(AIBinder_DeathRecipient_new(&OnCallbackDiedWrapped)) {
+    AIBinder_DeathRecipient_setOnUnlinked(death_recipient_.get(), onCallbackUnlinked);
     battery_monitor_.init(healthd_config_.get());
 }
 
@@ -286,7 +292,7 @@ ndk::ScopedAStatus Health::registerCallback(const std::shared_ptr<IHealthInfoCal
         if (!linked_callback_result.ok()) {
             return ndk::ScopedAStatus::fromStatus(-linked_callback_result.error().code());
         }
-        callbacks_.emplace_back(std::move(*linked_callback_result));
+        callbacks_[*linked_callback_result] = callback;
         // unlock
     }
 
@@ -314,12 +320,24 @@ ndk::ScopedAStatus Health::unregisterCallback(
 
     std::lock_guard<decltype(callbacks_lock_)> lock(callbacks_lock_);
 
-    auto matches = [callback](const auto& linked) {
-        return linked->callback()->asBinder() == callback->asBinder();  // compares binder object
+    auto matches = [callback](const auto& cb) {
+        return cb->asBinder() == callback->asBinder();  // compares binder object
     };
-    auto it = std::remove_if(callbacks_.begin(), callbacks_.end(), matches);
-    bool removed = (it != callbacks_.end());
-    callbacks_.erase(it, callbacks_.end());  // calls unlinkToDeath on deleted callbacks.
+    bool removed = false;
+    for (auto it = callbacks_.begin(); it != callbacks_.end();) {
+        if (it->second->asBinder() == callback->asBinder()) {
+            auto status = AIBinder_unlinkToDeath(callback->asBinder().get(), death_recipient_.get(),
+                                                 reinterpret_cast<void*>(it->first));
+            if (status != STATUS_OK && status != STATUS_DEAD_OBJECT) {
+                LOG(WARNING) << __func__
+                             << "Cannot unlink to death: " << ::android::statusToString(status);
+            }
+            it = callbacks_.erase(it);
+            removed = true;
+        } else {
+            it++;
+        }
+    }
     return removed ? ndk::ScopedAStatus::ok()
                    : ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
 }
@@ -347,8 +365,8 @@ ndk::ScopedAStatus Health::update() {
 void Health::OnHealthInfoChanged(const HealthInfo& health_info) {
     // Notify all callbacks
     std::unique_lock<decltype(callbacks_lock_)> lock(callbacks_lock_);
-    for (const auto& linked : callbacks_) {
-        auto res = linked->callback()->healthInfoChanged(health_info);
+    for (const auto& [_, callback] : callbacks_) {
+        auto res = callback->healthInfoChanged(health_info);
         if (!res.isOk()) {
             LOG(DEBUG) << "Cannot call healthInfoChanged:" << res.getDescription()
                        << ". Do nothing here if callback is dead as it will be cleaned up later.";

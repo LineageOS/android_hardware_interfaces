@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.request.type enumeration values
  * @see ANDROID_REQUEST_TYPE
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

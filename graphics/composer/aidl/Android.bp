@@ -29,7 +29,7 @@ aidl_interface {
     host_supported: true,
     vendor_available: true,
     double_loadable: true,
-    frozen: false,
+    frozen: true,
     vndk_use_version: "1",
     srcs: [
         "android/hardware/graphics/composer3/*.aidl",
@@ -47,6 +47,8 @@ aidl_interface {
             sdk_version: "module_current",
             enabled: false,
         },
+        ndk: {
+        },
         rust: {
             enabled: true,
         },
@@ -61,6 +63,13 @@ aidl_interface {
         },
         {
             version: "2",
+            imports: [
+                "android.hardware.graphics.common-V5",
+                "android.hardware.common-V2",
+            ],
+        },
+        {
+            version: "3",
             imports: [
                 "android.hardware.graphics.common-V5",
                 "android.hardware.common-V2",

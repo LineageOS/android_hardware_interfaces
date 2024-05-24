@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.quirks.partialResult enumeration values
  * @see ANDROID_QUIRKS_PARTIAL_RESULT
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

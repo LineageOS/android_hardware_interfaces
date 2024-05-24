@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#define LOG_TAG "tv_input_aidl_hal_test"
+
 #include "VtsHalTvInputTargetTest.h"
 
 #include <android-base/properties.h>
@@ -181,7 +183,9 @@ TEST_P(TvInputAidlTest, OpenAndCloseStreamTest) {
             ALOGD("OpenAndCloseStreamTest: open stream, device_id=%d, stream_id=%d", device_id,
                   stream_id);
             ASSERT_TRUE(tv_input_->openStream(device_id, stream_id, &handle).isOk());
-            ASSERT_TRUE(isValidHandle(handle));
+            if (VERIFY_SIDEBAND_STREAM_HANDLE) {
+                ASSERT_TRUE(isValidHandle(handle));
+            }
 
             ALOGD("OpenAndCloseStreamTest: close stream, device_id=%d, stream_id=%d", device_id,
                   stream_id);
@@ -283,7 +287,9 @@ TEST_P(TvInputAidlTest, OpenAnOpenedStreamsTest) {
 
     ALOGD("OpenAnOpenedStreamsTest: open stream, device_id=%d, stream_id=%d", device_id, stream_id);
     ASSERT_TRUE(tv_input_->openStream(device_id, stream_id, &handle).isOk());
-    ASSERT_TRUE(isValidHandle(handle));
+    if (VERIFY_SIDEBAND_STREAM_HANDLE) {
+        ASSERT_TRUE(isValidHandle(handle));
+    }
 
     ALOGD("OpenAnOpenedStreamsTest: open stream, device_id=%d, stream_id=%d", device_id, stream_id);
     ASSERT_TRUE(tv_input_->openStream(device_id, stream_id, &handle).getServiceSpecificError() ==

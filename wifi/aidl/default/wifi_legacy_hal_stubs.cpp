@@ -182,12 +182,14 @@ bool initHalFuncTableWithStubs(wifi_hal_fn* hal_fn) {
     populateStubFor(&hal_fn->wifi_get_rtt_capabilities_v3);
     populateStubFor(&hal_fn->wifi_rtt_range_request_v3);
     populateStubFor(&hal_fn->wifi_twt_get_capabilities);
+    populateStubFor(&hal_fn->wifi_twt_register_events);
     populateStubFor(&hal_fn->wifi_twt_session_setup);
     populateStubFor(&hal_fn->wifi_twt_session_update);
     populateStubFor(&hal_fn->wifi_twt_session_suspend);
     populateStubFor(&hal_fn->wifi_twt_session_resume);
     populateStubFor(&hal_fn->wifi_twt_session_teardown);
     populateStubFor(&hal_fn->wifi_twt_session_get_stats);
+    populateStubFor(&hal_fn->wifi_virtual_interface_create_with_vendor_data);
     return true;
 }
 

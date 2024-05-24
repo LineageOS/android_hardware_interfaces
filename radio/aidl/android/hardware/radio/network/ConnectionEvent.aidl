@@ -42,14 +42,20 @@ enum ConnectionEvent {
     AS_SIGNALLING_LTE = 5,
 
     // VoLTE
+    // Note: emergency calls could use either normal or SOS (emergency) PDN in practice
     VOLTE_SIP = 6,
-    VOLTE_RTP = 7,
+    VOLTE_SIP_SOS = 7,
+    VOLTE_RTP = 8,
+    VOLTE_RTP_SOS = 9,
 
     // 5G packet services
-    NAS_SIGNALLING_5G = 8,
-    AS_SIGNALLING_5G = 9,
+    NAS_SIGNALLING_5G = 10,
+    AS_SIGNALLING_5G = 11,
 
     // VoNR
-    VONR_SIP = 10,
-    VONR_RTP = 11,
+    // Note: emergency calls could use either normal or SOS (emergency) PDN in practice
+    VONR_SIP = 12,
+    VONR_SIP_SOS = 13,
+    VONR_RTP = 14,
+    VONR_RTP_SOS = 15
 }

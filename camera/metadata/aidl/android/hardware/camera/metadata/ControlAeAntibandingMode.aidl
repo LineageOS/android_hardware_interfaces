@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.control.aeAntibandingMode enumeration values
  * @see ANDROID_CONTROL_AE_ANTIBANDING_MODE
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

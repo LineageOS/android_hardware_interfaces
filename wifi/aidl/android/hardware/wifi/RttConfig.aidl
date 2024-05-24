@@ -21,6 +21,7 @@ import android.hardware.wifi.RttPeerType;
 import android.hardware.wifi.RttPreamble;
 import android.hardware.wifi.RttType;
 import android.hardware.wifi.WifiChannelInfo;
+import android.hardware.wifi.common.OuiKeyedData;
 
 /**
  * RTT configuration.
@@ -121,16 +122,22 @@ parcelable RttConfig {
      */
     RttBw bw;
     /**
-     * IEEE 802.11az Non-Trigger-based (non-TB) minimum measurement time in milliseconds.
+     * IEEE 802.11az Non-Trigger-based (non-TB) minimum measurement time in units of 100
+     * microseconds.
+     *
+     * Reference: IEEE Std 802.11az-2022 spec, section 9.4.2.298 Ranging Parameters element.
      */
-    int ntbMinMeasurementTimeMillis;
+    long ntbMinMeasurementTime;
     /**
-     * IEEE 802.11az Non-Trigger-based (non-TB) maximum measurement time in milliseconds.
+     * IEEE 802.11az Non-Trigger-based (non-TB) maximum measurement time in units of 10
+     * milliseconds.
+     *
+     * Reference: IEEE Std 802.11az-2022 spec, section 9.4.2.298 Ranging Parameters element.
      */
-    int ntbMaxMeasurementTimeMillis;
+    long ntbMaxMeasurementTime;
     /**
-     * Multiple transmissions of HE-LTF symbols in an HE Ranging NDP. A value of 1 indicates no
-     * repetition.
+     * Optional vendor-specific parameters. Null value indicates
+     * that no vendor data is provided.
      */
-    int txLtfRepetitionCount;
+    @nullable OuiKeyedData[] vendorData;
 }

@@ -237,8 +237,10 @@ TEST_P(RadioNetworkTest, getUsageSetting) {
                             {RadioError::RADIO_NOT_AVAILABLE, RadioError::INVALID_STATE,
                              RadioError::SIM_ABSENT, RadioError::INTERNAL_ERR, RadioError::NONE});
 
-    ASSERT_TRUE(radioRsp_network->usageSetting == UsageSetting::VOICE_CENTRIC ||
-                radioRsp_network->usageSetting == UsageSetting::DATA_CENTRIC);
+    if (radioRsp_network->rspInfo.error == RadioError::NONE) {
+        ASSERT_TRUE(radioRsp_network->usageSetting == UsageSetting::VOICE_CENTRIC ||
+                    radioRsp_network->usageSetting == UsageSetting::DATA_CENTRIC);
+    }
 }
 
 void RadioNetworkTest::testSetUsageSetting_InvalidValues(std::vector<RadioError> errors) {
@@ -2399,16 +2401,9 @@ TEST_P(RadioNetworkTest, setNullCipherAndIntegrityEnabled) {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
 
-    if (aidl_version >= 3 && deviceSupportsFeature(FEATURE_TELEPHONY_RADIO_ACCESS)) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-                radioRsp_network->rspInfo.error,
-                {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
-    } else {
-        // For aidl_version 2, API is optional
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
-                                     {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
-                                      RadioError::MODEM_ERR, RadioError::REQUEST_NOT_SUPPORTED}));
-    }
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
+                                 {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
+                                  RadioError::MODEM_ERR, RadioError::REQUEST_NOT_SUPPORTED}));
 }
 
 /**
@@ -2440,16 +2435,9 @@ TEST_P(RadioNetworkTest, isNullCipherAndIntegrityEnabled) {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
 
-    if (aidl_version >= 3 && deviceSupportsFeature(FEATURE_TELEPHONY_RADIO_ACCESS)) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-                radioRsp_network->rspInfo.error,
-                {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
-    } else {
-        // For aidl_version 2, API is optional
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
-                                     {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
-                                      RadioError::MODEM_ERR, RadioError::REQUEST_NOT_SUPPORTED}));
-    }
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
+                                 {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
+                                  RadioError::MODEM_ERR, RadioError::REQUEST_NOT_SUPPORTED}));
 }
 
 TEST_P(RadioNetworkTest, isCellularIdentifierTransparencyEnabled) {

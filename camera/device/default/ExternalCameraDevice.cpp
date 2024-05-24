@@ -497,6 +497,9 @@ status_t ExternalCameraDevice::initDefaultCharsKeys(
     const int32_t maxLatency = ANDROID_SYNC_MAX_LATENCY_UNKNOWN;
     UPDATE(ANDROID_SYNC_MAX_LATENCY, &maxLatency, 1);
 
+    const uint8_t sensorReadoutTimestamp = ANDROID_SENSOR_READOUT_TIMESTAMP_NOT_SUPPORTED;
+    UPDATE(ANDROID_SENSOR_READOUT_TIMESTAMP, &sensorReadoutTimestamp, 1);
+
     /* Other sensor/RAW related keys:
      * android.sensor.info.colorFilterArrangement -> no need if we don't do RAW
      * android.sensor.info.physicalSize           -> not available

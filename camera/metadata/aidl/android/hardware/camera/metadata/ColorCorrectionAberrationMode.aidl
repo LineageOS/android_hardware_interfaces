@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.colorCorrection.aberrationMode enumeration values
  * @see ANDROID_COLOR_CORRECTION_ABERRATION_MODE
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

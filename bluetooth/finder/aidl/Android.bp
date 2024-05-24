@@ -33,6 +33,17 @@ aidl_interface {
             apex_available: [
                 "com.android.tethering",
             ],
+            lint: {
+                baseline_filename: "lint-baseline.xml",
+            },
         },
     },
+    versions_with_info: [
+        {
+            version: "1",
+            imports: [],
+        },
+    ],
+    frozen: true,
+
 }

@@ -17,8 +17,11 @@
 package android.hardware.power;
 
 import android.hardware.power.Boost;
+import android.hardware.power.ChannelConfig;
 import android.hardware.power.IPowerHintSession;
 import android.hardware.power.Mode;
+import android.hardware.power.SessionConfig;
+import android.hardware.power.SessionTag;
 
 @VintfStability
 interface IPower {
@@ -103,4 +106,42 @@ interface IPower {
      *         EX_UNSUPPORTED_OPERATION if hint session is not supported.
      */
     long getHintSessionPreferredRate();
+
+    /**
+     * A version of createHintSession that returns an additional bundle of session
+     * data, useful to help the session immediately communicate via an FMQ channel
+     * for more efficient updates.
+     *
+     * @return  the new session if it is supported on this device, otherwise return
+     *          with EX_UNSUPPORTED_OPERATION error if hint session is not
+     *          supported on this device.
+     * @param   tgid The TGID to be associated with this session.
+     * @param   uid The UID to be associated with this session.
+     * @param   threadIds The list of threads to be associated with this session.
+     * @param   durationNanos The desired duration in nanoseconds for this session.
+     * @param   config Extra session metadata to be returned to the caller.
+     */
+    IPowerHintSession createHintSessionWithConfig(in int tgid, in int uid, in int[] threadIds,
+            in long durationNanos, in SessionTag tag, out SessionConfig config);
+
+    /**
+     * Used to get an FMQ channel, per-process. The channel should be unique to
+     * that process, and should return the same ChannelConfig if called multiple
+     * times from that same process.
+     *
+     * @return  the channel config if hint sessions are supported on this device,
+     *          otherwise return with EX_UNSUPPORTED_OPERATION.
+     * @param   tgid The TGID to be associated with this channel.
+     * @param   uid The UID to be associated with this channel.
+     */
+    ChannelConfig getSessionChannel(in int tgid, in int uid);
+
+    /**
+     * Used to close a channel once it is no longer needed by a process, or that
+     * process dies.
+     *
+     * @param   tgid The TGID to be associated with this channel.
+     * @param   uid The UID to be associated with this channel.
+     */
+    oneway void closeSessionChannel(in int tgid, in int uid);
 }

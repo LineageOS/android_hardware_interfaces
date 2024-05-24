@@ -75,6 +75,7 @@ class SecureElementHidlTest : public ::testing::TestWithParam<std::string> {
         se_->init(se_cb_);
         auto res = se_cb_->WaitForCallback(kCallbackNameOnStateChange);
         EXPECT_TRUE(res.no_timeout);
+        ASSERT_TRUE(res.args);
         EXPECT_TRUE(res.args->state_);
     }
 

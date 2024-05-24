@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.sensor.rawBinningFactorUsed enumeration values
  * @see ANDROID_SENSOR_RAW_BINNING_FACTOR_USED
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

@@ -222,10 +222,9 @@ void EvsVideoEmulatedCamera::onCodecOutputAvailable(const int32_t index,
 
     // Lock our output buffer for writing
     uint8_t* pixels = nullptr;
-    int32_t bytesPerStride = 0;
     auto& mapper = ::android::GraphicBufferMapper::get();
     mapper.lock(renderBufferHandle, GRALLOC_USAGE_SW_WRITE_OFTEN | GRALLOC_USAGE_SW_READ_NEVER,
-                ::android::Rect(mWidth, mHeight), (void**)&pixels, nullptr, &bytesPerStride);
+                ::android::Rect(mWidth, mHeight), (void**)&pixels);
 
     // If we failed to lock the pixel buffer, we're about to crash, but log it first
     if (!pixels) {
@@ -245,13 +244,6 @@ void EvsVideoEmulatedCamera::onCodecOutputAvailable(const int32_t index,
     for (size_t i = 0; i < uvSize; ++i) {
         *(pixels++) = *(u_head++);
         *(pixels++) = *(v_head++);
-    }
-
-    const auto status =
-            AMediaCodec_releaseOutputBuffer(mVideoCodec.get(), index, /* render = */ false);
-    if (status != AMEDIA_OK) {
-        LOG(ERROR) << __func__
-                   << ": Received error in releasing output buffer. Error code: " << status;
     }
 
     // Release our output buffer
@@ -306,6 +298,12 @@ void EvsVideoEmulatedCamera::renderOneFrame() {
         return;
     }
     onCodecOutputAvailable(codecOutputputBufferIdx, info);
+    const auto release_status = AMediaCodec_releaseOutputBuffer(
+            mVideoCodec.get(), codecOutputputBufferIdx, /* render = */ false);
+    if (release_status != AMEDIA_OK) {
+        LOG(ERROR) << __func__
+                   << ": Received error in releasing output buffer. Error code: " << release_status;
+    }
 }
 
 void EvsVideoEmulatedCamera::initializeParameters() {

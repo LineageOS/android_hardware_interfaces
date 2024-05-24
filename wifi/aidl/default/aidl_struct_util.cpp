@@ -1085,6 +1085,41 @@ bool convertLegacyLinkLayerStatsToAidl(const legacy_hal::LinkLayerStats& legacy_
     return true;
 }
 
+// TODO (b/324519882): Remove logs after validating the structure size.
+void logAidlLinkLayerStatsSize(StaLinkLayerStats& aidl_stats) {
+    unsigned long expectedMaxRadios = 5;
+    unsigned long expectedMaxLinks = 5;
+    unsigned long expectedMaxChannelStats = 512;
+    unsigned long expectedMaxPeers = 3;
+    unsigned long expectedMaxRateStats = 1024;
+
+    unsigned long maxChannelStats = 0, maxPeers = 0, maxRateStats = 0;
+    for (size_t i = 0; i < aidl_stats.radios.size(); i++) {
+        maxChannelStats =
+                std::max(maxChannelStats, (unsigned long)aidl_stats.radios[i].channelStats.size());
+    }
+    for (size_t i = 0; i < aidl_stats.iface.links.size(); i++) {
+        maxPeers = std::max(maxPeers, (unsigned long)aidl_stats.iface.links[i].peers.size());
+        for (size_t j = 0; j < aidl_stats.iface.links[i].peers.size(); j++) {
+            maxRateStats =
+                    std::max(maxRateStats,
+                             (unsigned long)aidl_stats.iface.links[i].peers[j].rateStats.size());
+        }
+    }
+
+    if (aidl_stats.radios.size() > expectedMaxRadios ||
+        aidl_stats.iface.links.size() > expectedMaxLinks ||
+        maxChannelStats > expectedMaxChannelStats || maxPeers > expectedMaxPeers ||
+        maxRateStats > expectedMaxRateStats) {
+        LOG(INFO) << "StaLinkLayerStats exceeds expected vector size";
+        LOG(INFO) << "  numRadios: " << aidl_stats.radios.size();
+        LOG(INFO) << "  numLinks: " << aidl_stats.iface.links.size();
+        LOG(INFO) << "  maxChannelStats: " << maxChannelStats;
+        LOG(INFO) << "  maxPeers: " << maxPeers;
+        LOG(INFO) << "  maxRateStats: " << maxRateStats;
+    }
+}
+
 bool convertLegacyPeerInfoStatsToAidl(const legacy_hal::WifiPeerInfo& legacy_peer_info_stats,
                                       StaPeerInfo* aidl_peer_info_stats) {
     if (!aidl_peer_info_stats) {
@@ -2741,9 +2776,8 @@ bool convertAidlRttConfigToLegacyV3(const RttConfig& aidl_config,
     if (!convertAidlRttConfigToLegacy(aidl_config, &(legacy_config->rtt_config))) {
         return false;
     }
-    legacy_config->tx_ltf_repetition_count = aidl_config.txLtfRepetitionCount;
-    legacy_config->ntb_min_measurement_time_millis = aidl_config.ntbMinMeasurementTimeMillis;
-    legacy_config->ntb_max_measurement_time_millis = aidl_config.ntbMaxMeasurementTimeMillis;
+    legacy_config->ntb_min_measurement_time = aidl_config.ntbMinMeasurementTime;
+    legacy_config->ntb_max_measurement_time = aidl_config.ntbMaxMeasurementTime;
     return true;
 }
 
@@ -2887,11 +2921,10 @@ bool convertLegacyRttCapabilitiesToAidl(
     aidl_capabilities->bwSupport = convertLegacyRttBwBitmapToAidl(legacy_capabilities.bw_support);
     aidl_capabilities->mcVersion = legacy_capabilities.mc_version;
     // Initialize 11az parameters to default
-    aidl_capabilities->azPreambleSupport = RttPreamble::INVALID;
-    aidl_capabilities->azBwSupport = RttBw::BW_UNSPECIFIED;
+    aidl_capabilities->azPreambleSupport = (int)RttPreamble::INVALID;
+    aidl_capabilities->azBwSupport = (int)RttBw::BW_UNSPECIFIED;
     aidl_capabilities->ntbInitiatorSupported = false;
     aidl_capabilities->ntbResponderSupported = false;
-    aidl_capabilities->maxTxLtfRepetitionCount = 0;
     return true;
 }
 
@@ -2914,12 +2947,11 @@ bool convertLegacyRttCapabilitiesV3ToAidl(
             convertLegacyRttBwBitmapToAidl(legacy_capabilities_v3.rtt_capab.bw_support);
     aidl_capabilities->mcVersion = legacy_capabilities_v3.rtt_capab.mc_version;
     aidl_capabilities->azPreambleSupport =
-            convertLegacyRttPreambleBitmapToAidl(legacy_capabilities_v3.az_preamble_support);
+            (int)convertLegacyRttPreambleBitmapToAidl(legacy_capabilities_v3.az_preamble_support);
     aidl_capabilities->azBwSupport =
-            convertLegacyRttBwBitmapToAidl(legacy_capabilities_v3.az_bw_support);
+            (int)convertLegacyRttBwBitmapToAidl(legacy_capabilities_v3.az_bw_support);
     aidl_capabilities->ntbInitiatorSupported = legacy_capabilities_v3.ntb_initiator_supported;
     aidl_capabilities->ntbResponderSupported = legacy_capabilities_v3.ntb_responder_supported;
-    aidl_capabilities->maxTxLtfRepetitionCount = legacy_capabilities_v3.max_tx_ltf_repetition_count;
     return true;
 }
 
@@ -2994,9 +3026,12 @@ bool convertLegacyVectorOfRttResultToAidl(
         }
         aidl_result.channelFreqMHz = 0;
         aidl_result.packetBw = RttBw::BW_UNSPECIFIED;
-        aidl_result.txLtfRepetitionCount = 0;
-        aidl_result.ntbMinMeasurementTimeMillis = 0;
-        aidl_result.ntbMaxMeasurementTimeMillis = 0;
+        aidl_result.i2rTxLtfRepetitionCount = 0;
+        aidl_result.r2iTxLtfRepetitionCount = 0;
+        aidl_result.ntbMinMeasurementTime = 0;
+        aidl_result.ntbMaxMeasurementTime = 0;
+        aidl_result.numTxSpatialStreams = 0;
+        aidl_result.numRxSpatialStreams = 0;
         aidl_results->push_back(aidl_result);
     }
     return true;
@@ -3017,9 +3052,12 @@ bool convertLegacyVectorOfRttResultV2ToAidl(
         aidl_result.channelFreqMHz =
                 legacy_result->frequency != UNSPECIFIED ? legacy_result->frequency : 0;
         aidl_result.packetBw = convertLegacyRttBwToAidl(legacy_result->packet_bw);
-        aidl_result.txLtfRepetitionCount = 0;
-        aidl_result.ntbMinMeasurementTimeMillis = 0;
-        aidl_result.ntbMaxMeasurementTimeMillis = 0;
+        aidl_result.i2rTxLtfRepetitionCount = 0;
+        aidl_result.r2iTxLtfRepetitionCount = 0;
+        aidl_result.ntbMinMeasurementTime = 0;
+        aidl_result.ntbMaxMeasurementTime = 0;
+        aidl_result.numTxSpatialStreams = 0;
+        aidl_result.numRxSpatialStreams = 0;
         aidl_results->push_back(aidl_result);
     }
     return true;
@@ -3041,9 +3079,12 @@ bool convertLegacyVectorOfRttResultV3ToAidl(
                                              ? legacy_result->rtt_result.frequency
                                              : 0;
         aidl_result.packetBw = convertLegacyRttBwToAidl(legacy_result->rtt_result.packet_bw);
-        aidl_result.txLtfRepetitionCount = legacy_result->tx_ltf_repetition_count;
-        aidl_result.ntbMinMeasurementTimeMillis = legacy_result->ntb_min_measurement_time_millis;
-        aidl_result.ntbMaxMeasurementTimeMillis = legacy_result->ntb_max_measurement_time_millis;
+        aidl_result.i2rTxLtfRepetitionCount = legacy_result->i2r_tx_ltf_repetition_count;
+        aidl_result.r2iTxLtfRepetitionCount = legacy_result->r2i_tx_ltf_repetition_count;
+        aidl_result.ntbMinMeasurementTime = legacy_result->ntb_min_measurement_time;
+        aidl_result.ntbMaxMeasurementTime = legacy_result->ntb_max_measurement_time;
+        aidl_result.numTxSpatialStreams = legacy_result->num_tx_sts;
+        aidl_result.numRxSpatialStreams = legacy_result->num_rx_sts;
         aidl_results->push_back(aidl_result);
     }
     return true;
@@ -3587,13 +3628,13 @@ bool convertTwtCapabilitiesToAidl(legacy_hal::wifi_twt_capabilities legacy_twt_c
     if (legacy_twt_capabs.min_wake_duration_micros > legacy_twt_capabs.max_wake_duration_micros) {
         return false;
     }
-    aidl_twt_capabs->minWakeDurationMicros = legacy_twt_capabs.min_wake_duration_micros;
-    aidl_twt_capabs->maxWakeDurationMicros = legacy_twt_capabs.max_wake_duration_micros;
+    aidl_twt_capabs->minWakeDurationUs = legacy_twt_capabs.min_wake_duration_micros;
+    aidl_twt_capabs->maxWakeDurationUs = legacy_twt_capabs.max_wake_duration_micros;
     if (legacy_twt_capabs.min_wake_interval_micros > legacy_twt_capabs.max_wake_interval_micros) {
         return false;
     }
-    aidl_twt_capabs->minWakeIntervalMicros = legacy_twt_capabs.min_wake_interval_micros;
-    aidl_twt_capabs->maxWakeIntervalMicros = legacy_twt_capabs.max_wake_interval_micros;
+    aidl_twt_capabs->minWakeIntervalUs = legacy_twt_capabs.min_wake_interval_micros;
+    aidl_twt_capabs->maxWakeIntervalUs = legacy_twt_capabs.max_wake_interval_micros;
     return true;
 }
 
@@ -3603,16 +3644,16 @@ bool convertAidlTwtRequestToLegacy(const TwtRequest aidl_twt_request,
         return false;
     }
     legacy_twt_request->mlo_link_id = aidl_twt_request.mloLinkId;
-    if (aidl_twt_request.minWakeDurationMicros > aidl_twt_request.maxWakeDurationMicros) {
+    if (aidl_twt_request.minWakeDurationUs > aidl_twt_request.maxWakeDurationUs) {
         return false;
     }
-    legacy_twt_request->min_wake_duration_micros = aidl_twt_request.minWakeDurationMicros;
-    legacy_twt_request->max_wake_duration_micros = aidl_twt_request.maxWakeDurationMicros;
-    if (aidl_twt_request.minWakeIntervalMicros > aidl_twt_request.maxWakeIntervalMicros) {
+    legacy_twt_request->min_wake_duration_micros = aidl_twt_request.minWakeDurationUs;
+    legacy_twt_request->max_wake_duration_micros = aidl_twt_request.maxWakeDurationUs;
+    if (aidl_twt_request.minWakeIntervalUs > aidl_twt_request.maxWakeIntervalUs) {
         return false;
     }
-    legacy_twt_request->min_wake_interval_micros = aidl_twt_request.minWakeIntervalMicros;
-    legacy_twt_request->max_wake_interval_micros = aidl_twt_request.maxWakeIntervalMicros;
+    legacy_twt_request->min_wake_interval_micros = aidl_twt_request.minWakeIntervalUs;
+    legacy_twt_request->max_wake_interval_micros = aidl_twt_request.maxWakeIntervalUs;
     return true;
 }
 
@@ -3664,8 +3705,8 @@ bool convertLegacyHalTwtSessionToAidl(legacy_hal::wifi_twt_session twt_session,
 
     aidl_twt_session->sessionId = twt_session.session_id;
     aidl_twt_session->mloLinkId = twt_session.mlo_link_id;
-    aidl_twt_session->wakeDurationMicros = twt_session.wake_duration_micros;
-    aidl_twt_session->wakeIntervalMicros = twt_session.wake_interval_micros;
+    aidl_twt_session->wakeDurationUs = twt_session.wake_duration_micros;
+    aidl_twt_session->wakeIntervalUs = twt_session.wake_interval_micros;
     switch (twt_session.negotiation_type) {
         case WIFI_TWT_NEGO_TYPE_INDIVIDUAL:
             aidl_twt_session->negotiationType = TwtSession::TwtNegotiationType::INDIVIDUAL;
@@ -3696,7 +3737,7 @@ bool convertLegacyHalTwtSessionStatsToAidl(legacy_hal::wifi_twt_session_stats tw
     aidl_twt_stats->avgRxPktCount = twt_stats.avg_pkt_num_rx;
     aidl_twt_stats->avgTxPktSize = twt_stats.avg_tx_pkt_size;
     aidl_twt_stats->avgRxPktSize = twt_stats.avg_rx_pkt_size;
-    aidl_twt_stats->avgEospDurationMicros = twt_stats.avg_eosp_dur_us;
+    aidl_twt_stats->avgEospDurationUs = twt_stats.avg_eosp_dur_us;
     aidl_twt_stats->eospCount = twt_stats.eosp_count;
 
     return true;

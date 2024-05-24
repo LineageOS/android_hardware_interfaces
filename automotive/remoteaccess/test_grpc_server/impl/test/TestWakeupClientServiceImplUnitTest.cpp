@@ -43,9 +43,9 @@ constexpr int64_t kTestStartTimeInEpochSeconds = 2345;
 constexpr int64_t kTestPeriodicInSeconds = 123;
 const std::string kTestGrpcAddr = "localhost:50051";
 
-class MyTestWakeupClientServiceImpl final : public TestWakeupClientServiceImpl {
+class MyTestWakeupClientServiceImpl final : public ServiceImpl {
   public:
-    void wakeupApplicationProcessor() override {
+    void wakeupApplicationProcessor([[maybe_unused]] int32_t bootupReason) override {
         // Do nothing.
     }
 };
@@ -54,13 +54,14 @@ class TestWakeupClientServiceImplUnitTest : public ::testing::Test {
   public:
     virtual void SetUp() override {
         mServerThread = std::thread([this] {
+            mService = std::make_unique<MyTestWakeupClientServiceImpl>();
+            ServerBuilder builder;
+            builder.AddListeningPort(kTestGrpcAddr, grpc::InsecureServerCredentials());
+            WakeupClientServiceImpl wakeupClientService(mService.get());
+            builder.RegisterService(&wakeupClientService);
+            mServer = builder.BuildAndStart();
             {
                 std::unique_lock<std::mutex> lock(mLock);
-                mService = std::make_unique<MyTestWakeupClientServiceImpl>();
-                ServerBuilder builder;
-                builder.AddListeningPort(kTestGrpcAddr, grpc::InsecureServerCredentials());
-                builder.RegisterService(mService.get());
-                mServer = builder.BuildAndStart();
                 mServerStartCv.notify_one();
             }
             mServer->Wait();
@@ -124,6 +125,7 @@ class TestWakeupClientServiceImplUnitTest : public ::testing::Test {
                               std::chrono::system_clock::now().time_since_epoch())
                               .count();
         request.mutable_scheduleinfo()->set_clientid(kTestClientId);
+        request.mutable_scheduleinfo()->set_tasktype(ScheduleTaskType::CUSTOM);
         request.mutable_scheduleinfo()->set_scheduleid(scheduleId);
         request.mutable_scheduleinfo()->set_data(kTestData.data(), kTestData.size());
         request.mutable_scheduleinfo()->set_count(count);
@@ -156,6 +158,7 @@ TEST_F(TestWakeupClientServiceImplUnitTest, TestScheduleTask) {
     ScheduleTaskResponse response = {};
 
     request.mutable_scheduleinfo()->set_clientid(kTestClientId);
+    request.mutable_scheduleinfo()->set_tasktype(ScheduleTaskType::CUSTOM);
     request.mutable_scheduleinfo()->set_scheduleid(kTestScheduleId);
     request.mutable_scheduleinfo()->set_data(kTestData.data(), kTestData.size());
     request.mutable_scheduleinfo()->set_count(2);
@@ -191,6 +194,7 @@ TEST_F(TestWakeupClientServiceImplUnitTest, TestScheduleTask_conflictScheduleId)
 
     request.mutable_scheduleinfo()->set_clientid(kTestClientId);
     request.mutable_scheduleinfo()->set_scheduleid(kTestScheduleId);
+    request.mutable_scheduleinfo()->set_tasktype(ScheduleTaskType::CUSTOM);
     request.mutable_scheduleinfo()->set_data(kTestData.data(), kTestData.size());
     request.mutable_scheduleinfo()->set_count(2);
     request.mutable_scheduleinfo()->set_starttimeinepochseconds(getNow() + 1);
@@ -280,7 +284,7 @@ TEST_F(TestWakeupClientServiceImplUnitTest, TestUnscheduleAllTasks) {
     EXPECT_EQ(getRemoteTaskResponses().size(), 0);
 }
 
-TEST_F(TestWakeupClientServiceImplUnitTest, TestGetAllScheduledTasks) {
+TEST_F(TestWakeupClientServiceImplUnitTest, TestGetAllPendingScheduledTasks) {
     std::string scheduleId1 = "scheduleId1";
     std::string scheduleId2 = "scheduleId2";
     int64_t time1 = getNow();
@@ -296,25 +300,26 @@ TEST_F(TestWakeupClientServiceImplUnitTest, TestGetAllScheduledTasks) {
     ASSERT_TRUE(status.ok());
 
     ClientContext context;
-    GetAllScheduledTasksRequest request;
-    GetAllScheduledTasksResponse response;
+    GetAllPendingScheduledTasksRequest request;
+    GetAllPendingScheduledTasksResponse response;
     request.set_clientid("invalid client Id");
-    status = getStub()->GetAllScheduledTasks(&context, request, &response);
+    status = getStub()->GetAllPendingScheduledTasks(&context, request, &response);
 
     ASSERT_TRUE(status.ok());
     EXPECT_EQ(response.allscheduledtasks_size(), 0);
 
     ClientContext context2;
-    GetAllScheduledTasksRequest request2;
-    GetAllScheduledTasksResponse response2;
+    GetAllPendingScheduledTasksRequest request2;
+    GetAllPendingScheduledTasksResponse response2;
     request2.set_clientid(kTestClientId);
-    status = getStub()->GetAllScheduledTasks(&context2, request2, &response2);
+    status = getStub()->GetAllPendingScheduledTasks(&context2, request2, &response2);
 
     ASSERT_TRUE(status.ok());
     ASSERT_EQ(response2.allscheduledtasks_size(), 2);
     for (int i = 0; i < 2; i++) {
         EXPECT_EQ(response2.allscheduledtasks(i).clientid(), kTestClientId);
         if (response2.allscheduledtasks(i).scheduleid() == scheduleId1) {
+            EXPECT_EQ(response2.allscheduledtasks(i).tasktype(), ScheduleTaskType::CUSTOM);
             EXPECT_EQ(response2.allscheduledtasks(i).data(),
                       std::string(kTestData.begin(), kTestData.end()));
             EXPECT_EQ(response2.allscheduledtasks(i).count(), count1);
@@ -322,6 +327,7 @@ TEST_F(TestWakeupClientServiceImplUnitTest, TestGetAllScheduledTasks) {
             EXPECT_EQ(response2.allscheduledtasks(i).periodicinseconds(), periodicInSeconds1);
         } else {
             EXPECT_EQ(response2.allscheduledtasks(i).scheduleid(), scheduleId2);
+            EXPECT_EQ(response2.allscheduledtasks(i).tasktype(), ScheduleTaskType::CUSTOM);
             EXPECT_EQ(response2.allscheduledtasks(i).data(),
                       std::string(kTestData.begin(), kTestData.end()));
             EXPECT_EQ(response2.allscheduledtasks(i).count(), count2);

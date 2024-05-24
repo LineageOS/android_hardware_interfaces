@@ -1591,6 +1591,13 @@ enum CameraMetadataTag {
      */
     ANDROID_SENSOR_RAW_BINNING_FACTOR_USED,
     /**
+     * android.sensor.readoutTimestamp [static, enum, java_public]
+     *
+     * <p>Whether or not the camera device supports readout timestamp and
+     * {@code onReadoutStarted} callback.</p>
+     */
+    ANDROID_SENSOR_READOUT_TIMESTAMP,
+    /**
      * android.sensor.info.activeArraySize [static, int32[], public]
      *
      * <p>The area of the image sensor which corresponds to active pixels after any geometric

@@ -25,3 +25,11 @@ cc_defaults {
         "android.hardware.automotive.vehicle.property-V3-ndk",
     ],
 }
+
+rust_defaults {
+    name: "VehicleHalInterfaceRustDefaults",
+    rustlibs: [
+        "android.hardware.automotive.vehicle-V3-rust",
+        "android.hardware.automotive.vehicle.property-V3-rust",
+    ],
+}

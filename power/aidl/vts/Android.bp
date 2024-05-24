@@ -31,6 +31,11 @@ cc_test {
     srcs: ["VtsHalPowerTargetTest.cpp"],
     shared_libs: [
         "libbinder_ndk",
+        "libfmq",
+    ],
+    static_libs: [
+        "android.hardware.common.fmq-V1-ndk",
+        "android.hardware.common-V2-ndk",
     ],
     test_suites: [
         "general-tests",
