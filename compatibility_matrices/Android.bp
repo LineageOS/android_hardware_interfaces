@@ -92,3 +92,25 @@ vintf_compatibility_matrix {
     ],
 
 }
+
+// Phony target that installs all system compatibility matrix files
+SYSTEM_MATRIX_DEPS = [
+    "framework_compatibility_matrix.5.xml",
+    "framework_compatibility_matrix.6.xml",
+    "framework_compatibility_matrix.7.xml",
+    "framework_compatibility_matrix.8.xml",
+    "framework_compatibility_matrix.202404.xml",
+    "framework_compatibility_matrix.device.xml",
+]
+
+phony {
+    name: "system_compatibility_matrix.xml",
+    required: SYSTEM_MATRIX_DEPS,
+    product_variables: {
+        release_aidl_use_unfrozen: {
+            required: [
+                "framework_compatibility_matrix.202504.xml",
+            ],
+        },
+    },
+}
