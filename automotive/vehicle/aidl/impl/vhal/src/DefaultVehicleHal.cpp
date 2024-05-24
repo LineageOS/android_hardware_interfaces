@@ -24,6 +24,7 @@
 #include <VehicleUtils.h>
 #include <VersionForVehicleProperty.h>
 
+#include <android-base/logging.h>
 #include <android-base/result.h>
 #include <android-base/stringprintf.h>
 #include <android/binder_ibinder.h>
@@ -71,6 +72,7 @@ using ::android::base::StringPrintf;
 
 using ::ndk::ScopedAIBinder_DeathRecipient;
 using ::ndk::ScopedAStatus;
+using ::ndk::ScopedFileDescriptor;
 
 std::string toString(const std::unordered_set<int64_t>& values) {
     std::string str = "";
@@ -103,10 +105,7 @@ DefaultVehicleHal::DefaultVehicleHal(std::unique_ptr<IVehicleHardware> vehicleHa
     : mVehicleHardware(std::move(vehicleHardware)),
       mPendingRequestPool(std::make_shared<PendingRequestPool>(TIMEOUT_IN_NANO)),
       mTestInterfaceVersion(testInterfaceVersion) {
-    if (!getAllPropConfigsFromHardware()) {
-        return;
-    }
-
+    ALOGD("DefaultVehicleHal init");
     IVehicleHardware* vehicleHardwarePtr = mVehicleHardware.get();
     mSubscriptionManager = std::make_shared<SubscriptionManager>(vehicleHardwarePtr);
     mEventBatchingWindow = mVehicleHardware->getPropertyOnChangeEventBatchingWindow();
@@ -319,16 +318,18 @@ void DefaultVehicleHal::setTimeout(int64_t timeoutInNano) {
     mPendingRequestPool = std::make_unique<PendingRequestPool>(timeoutInNano);
 }
 
-int32_t DefaultVehicleHal::getVhalInterfaceVersion() {
+int32_t DefaultVehicleHal::getVhalInterfaceVersion() const {
     if (mTestInterfaceVersion != 0) {
         return mTestInterfaceVersion;
     }
     int32_t myVersion = 0;
-    getInterfaceVersion(&myVersion);
+    // getInterfaceVersion is in-reality a const method.
+    const_cast<DefaultVehicleHal*>(this)->getInterfaceVersion(&myVersion);
     return myVersion;
 }
 
-bool DefaultVehicleHal::getAllPropConfigsFromHardware() {
+bool DefaultVehicleHal::getAllPropConfigsFromHardwareLocked() const {
+    ALOGD("Get all property configs from hardware");
     auto configs = mVehicleHardware->getAllPropertyConfigs();
     std::vector<VehiclePropConfig> filteredConfigs;
     int32_t myVersion = getVhalInterfaceVersion();
@@ -373,22 +374,46 @@ bool DefaultVehicleHal::getAllPropConfigsFromHardware() {
     return true;
 }
 
+const ScopedFileDescriptor* DefaultVehicleHal::getConfigFile() const {
+    std::scoped_lock lockGuard(mConfigInitLock);
+    if (!mConfigInit) {
+        CHECK(getAllPropConfigsFromHardwareLocked())
+                << "Failed to get property configs from hardware";
+        mConfigInit = true;
+    }
+    return mConfigFile.get();
+}
+
+const std::unordered_map<int32_t, VehiclePropConfig>& DefaultVehicleHal::getConfigsByPropId()
+        const {
+    std::scoped_lock lockGuard(mConfigInitLock);
+    if (!mConfigInit) {
+        CHECK(getAllPropConfigsFromHardwareLocked())
+                << "Failed to get property configs from hardware";
+        mConfigInit = true;
+    }
+    return mConfigsByPropId;
+}
+
 ScopedAStatus DefaultVehicleHal::getAllPropConfigs(VehiclePropConfigs* output) {
-    if (mConfigFile != nullptr) {
+    const ScopedFileDescriptor* configFile = getConfigFile();
+    const auto& configsByPropId = getConfigsByPropId();
+    if (configFile != nullptr) {
         output->payloads.clear();
-        output->sharedMemoryFd.set(dup(mConfigFile->get()));
+        output->sharedMemoryFd.set(dup(configFile->get()));
         return ScopedAStatus::ok();
     }
-    output->payloads.reserve(mConfigsByPropId.size());
-    for (const auto& [_, config] : mConfigsByPropId) {
+    output->payloads.reserve(configsByPropId.size());
+    for (const auto& [_, config] : configsByPropId) {
         output->payloads.push_back(config);
     }
     return ScopedAStatus::ok();
 }
 
 Result<const VehiclePropConfig*> DefaultVehicleHal::getConfig(int32_t propId) const {
-    auto it = mConfigsByPropId.find(propId);
-    if (it == mConfigsByPropId.end()) {
+    const auto& configsByPropId = getConfigsByPropId();
+    auto it = configsByPropId.find(propId);
+    if (it == configsByPropId.end()) {
         return Error() << "no config for property, ID: " << propId;
     }
     return &(it->second);
@@ -634,9 +659,11 @@ ScopedAStatus DefaultVehicleHal::setValues(const CallbackType& callback,
 ScopedAStatus DefaultVehicleHal::getPropConfigs(const std::vector<int32_t>& props,
                                                 VehiclePropConfigs* output) {
     std::vector<VehiclePropConfig> configs;
+    const auto& configsByPropId = getConfigsByPropId();
     for (int32_t prop : props) {
-        if (mConfigsByPropId.find(prop) != mConfigsByPropId.end()) {
-            configs.push_back(mConfigsByPropId[prop]);
+        auto it = configsByPropId.find(prop);
+        if (it != configsByPropId.end()) {
+            configs.push_back(it->second);
         } else {
             return ScopedAStatus::fromServiceSpecificErrorWithMessage(
                     toInt(StatusCode::INVALID_ARG),
@@ -665,13 +692,15 @@ bool areaConfigsHaveRequiredAccess(const std::vector<VehicleAreaConfig>& areaCon
 
 VhalResult<void> DefaultVehicleHal::checkSubscribeOptions(
         const std::vector<SubscribeOptions>& options) {
+    const auto& configsByPropId = getConfigsByPropId();
     for (const auto& option : options) {
         int32_t propId = option.propId;
-        if (mConfigsByPropId.find(propId) == mConfigsByPropId.end()) {
+        auto it = configsByPropId.find(propId);
+        if (it == configsByPropId.end()) {
             return StatusError(StatusCode::INVALID_ARG)
                    << StringPrintf("no config for property, ID: %" PRId32, propId);
         }
-        const VehiclePropConfig& config = mConfigsByPropId[propId];
+        const VehiclePropConfig& config = it->second;
         std::vector<VehicleAreaConfig> areaConfigs;
         if (option.areaIds.empty()) {
             areaConfigs = config.areaConfigs;
@@ -744,10 +773,11 @@ ScopedAStatus DefaultVehicleHal::subscribe(const CallbackType& callback,
     }
     std::vector<SubscribeOptions> onChangeSubscriptions;
     std::vector<SubscribeOptions> continuousSubscriptions;
+    const auto& configsByPropId = getConfigsByPropId();
     for (const auto& option : options) {
         int32_t propId = option.propId;
         // We have already validate config exists.
-        const VehiclePropConfig& config = mConfigsByPropId[propId];
+        const VehiclePropConfig& config = configsByPropId.at(propId);
 
         SubscribeOptions optionCopy = option;
         // If areaIds is empty, subscribe to all areas.
@@ -871,7 +901,7 @@ VhalResult<void> DefaultVehicleHal::checkPermissionHelper(
         (areaConfig == nullptr || !hasRequiredAccess(areaConfig->access, accessToTest))) {
         return StatusError(StatusCode::ACCESS_DENIED)
                << StringPrintf("Property %" PRId32 " does not have the following access: %" PRId32,
-                               propId, accessToTest);
+                               propId, static_cast<int32_t>(accessToTest));
     }
     return {};
 }
@@ -936,17 +966,19 @@ binder_status_t DefaultVehicleHal::dump(int fd, const char** args, uint32_t numA
     }
     DumpResult result = mVehicleHardware->dump(options);
     if (result.refreshPropertyConfigs) {
-        getAllPropConfigsFromHardware();
+        std::scoped_lock lockGuard(mConfigInitLock);
+        getAllPropConfigsFromHardwareLocked();
     }
     dprintf(fd, "%s", (result.buffer + "\n").c_str());
     if (!result.callerShouldDumpState) {
         return STATUS_OK;
     }
     dprintf(fd, "Vehicle HAL State: \n");
+    const auto& configsByPropId = getConfigsByPropId();
     {
         std::scoped_lock<std::mutex> lockGuard(mLock);
         dprintf(fd, "Interface version: %" PRId32 "\n", getVhalInterfaceVersion());
-        dprintf(fd, "Containing %zu property configs\n", mConfigsByPropId.size());
+        dprintf(fd, "Containing %zu property configs\n", configsByPropId.size());
         dprintf(fd, "Currently have %zu getValues clients\n", mGetValuesClients.size());
         dprintf(fd, "Currently have %zu setValues clients\n", mSetValuesClients.size());
         dprintf(fd, "Currently have %zu subscribe clients\n", countSubscribeClients());
