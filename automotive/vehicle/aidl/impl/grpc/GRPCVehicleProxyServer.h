@@ -60,6 +60,10 @@ class GrpcVehicleProxyServer : public proto::VehicleServer::Service {
     ::grpc::Status Subscribe(::grpc::ServerContext* context, const proto::SubscribeRequest* request,
                              proto::VehicleHalCallStatus* status) override;
 
+    ::grpc::Status Unsubscribe(::grpc::ServerContext* context,
+                               const proto::UnsubscribeRequest* request,
+                               proto::VehicleHalCallStatus* status) override;
+
     ::grpc::Status CheckHealth(::grpc::ServerContext* context, const ::google::protobuf::Empty*,
                                proto::VehicleHalCallStatus* status) override;
 

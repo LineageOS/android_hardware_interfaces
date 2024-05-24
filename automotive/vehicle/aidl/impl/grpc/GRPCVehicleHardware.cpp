@@ -206,6 +206,25 @@ aidlvhal::StatusCode GRPCVehicleHardware::subscribe(aidlvhal::SubscribeOptions o
     return static_cast<aidlvhal::StatusCode>(protoStatus.status_code());
 }
 
+aidlvhal::StatusCode GRPCVehicleHardware::unsubscribe(int32_t propId, int32_t areaId) {
+    proto::UnsubscribeRequest request;
+    ::grpc::ClientContext context;
+    proto::VehicleHalCallStatus protoStatus;
+    request.set_prop_id(propId);
+    request.set_area_id(areaId);
+    auto grpc_status = mGrpcStub->Unsubscribe(&context, request, &protoStatus);
+    if (!grpc_status.ok()) {
+        if (grpc_status.error_code() == ::grpc::StatusCode::UNIMPLEMENTED) {
+            // This is a legacy sever. Ignore unsubscribe request.
+            LOG(INFO) << __func__ << ": GRPC Unsubscribe is not supported by the server";
+            return aidlvhal::StatusCode::OK;
+        }
+        LOG(ERROR) << __func__ << ": GRPC Unsubscribe Failed: " << grpc_status.error_message();
+        return aidlvhal::StatusCode::INTERNAL_ERROR;
+    }
+    return static_cast<aidlvhal::StatusCode>(protoStatus.status_code());
+}
+
 aidlvhal::StatusCode GRPCVehicleHardware::updateSampleRate(int32_t propId, int32_t areaId,
                                                            float sampleRate) {
     ::grpc::ClientContext context;
