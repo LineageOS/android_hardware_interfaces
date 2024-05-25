@@ -42,10 +42,11 @@ namespace hardware {
 namespace automotive {
 namespace vehicle {
 
-class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehicle::BnVehicle {
+namespace aidlvhal = ::aidl::android::hardware::automotive::vehicle;
+
+class DefaultVehicleHal final : public aidlvhal::BnVehicle {
   public:
-    using CallbackType =
-            std::shared_ptr<aidl::android::hardware::automotive::vehicle::IVehicleCallback>;
+    using CallbackType = std::shared_ptr<aidlvhal::IVehicleCallback>;
 
     explicit DefaultVehicleHal(std::unique_ptr<IVehicleHardware> hardware);
 
@@ -54,26 +55,16 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
 
     ~DefaultVehicleHal();
 
-    ndk::ScopedAStatus getAllPropConfigs(
-            aidl::android::hardware::automotive::vehicle::VehiclePropConfigs* returnConfigs)
-            override;
-    ndk::ScopedAStatus getValues(
-            const CallbackType& callback,
-            const aidl::android::hardware::automotive::vehicle::GetValueRequests& requests)
-            override;
-    ndk::ScopedAStatus setValues(
-            const CallbackType& callback,
-            const aidl::android::hardware::automotive::vehicle::SetValueRequests& requests)
-            override;
-    ndk::ScopedAStatus getPropConfigs(
-            const std::vector<int32_t>& props,
-            aidl::android::hardware::automotive::vehicle::VehiclePropConfigs* returnConfigs)
-            override;
-    ndk::ScopedAStatus subscribe(
-            const CallbackType& callback,
-            const std::vector<aidl::android::hardware::automotive::vehicle::SubscribeOptions>&
-                    options,
-            int32_t maxSharedMemoryFileCount) override;
+    ndk::ScopedAStatus getAllPropConfigs(aidlvhal::VehiclePropConfigs* returnConfigs) override;
+    ndk::ScopedAStatus getValues(const CallbackType& callback,
+                                 const aidlvhal::GetValueRequests& requests) override;
+    ndk::ScopedAStatus setValues(const CallbackType& callback,
+                                 const aidlvhal::SetValueRequests& requests) override;
+    ndk::ScopedAStatus getPropConfigs(const std::vector<int32_t>& props,
+                                      aidlvhal::VehiclePropConfigs* returnConfigs) override;
+    ndk::ScopedAStatus subscribe(const CallbackType& callback,
+                                 const std::vector<aidlvhal::SubscribeOptions>& options,
+                                 int32_t maxSharedMemoryFileCount) override;
     ndk::ScopedAStatus unsubscribe(const CallbackType& callback,
                                    const std::vector<int32_t>& propIds) override;
     ndk::ScopedAStatus returnSharedMemory(const CallbackType& callback,
@@ -86,12 +77,8 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
     // friend class for unit testing.
     friend class DefaultVehicleHalTest;
 
-    using GetValuesClient =
-            GetSetValuesClient<aidl::android::hardware::automotive::vehicle::GetValueResult,
-                               aidl::android::hardware::automotive::vehicle::GetValueResults>;
-    using SetValuesClient =
-            GetSetValuesClient<aidl::android::hardware::automotive::vehicle::SetValueResult,
-                               aidl::android::hardware::automotive::vehicle::SetValueResults>;
+    using GetValuesClient = GetSetValuesClient<aidlvhal::GetValueResult, aidlvhal::GetValueResults>;
+    using SetValuesClient = GetSetValuesClient<aidlvhal::SetValueResult, aidlvhal::SetValueResults>;
 
     // A wrapper for binder lifecycle operations to enable stubbing for test.
     class BinderLifecycleInterface {
@@ -137,27 +124,26 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
     bool mShouldRefreshPropertyConfigs;
     std::unique_ptr<IVehicleHardware> mVehicleHardware;
 
-    // mConfigsByPropId and mConfigFile are only modified during initialization, so no need to
-    // lock guard them.
-    std::unordered_map<int32_t, aidl::android::hardware::automotive::vehicle::VehiclePropConfig>
-            mConfigsByPropId;
-    // Only modified in constructor, so thread-safe.
-    std::unique_ptr<ndk::ScopedFileDescriptor> mConfigFile;
     // PendingRequestPool is thread-safe.
     std::shared_ptr<PendingRequestPool> mPendingRequestPool;
     // SubscriptionManager is thread-safe.
     std::shared_ptr<SubscriptionManager> mSubscriptionManager;
     // ConcurrentQueue is thread-safe.
-    std::shared_ptr<ConcurrentQueue<aidl::android::hardware::automotive::vehicle::VehiclePropValue>>
-            mBatchedEventQueue;
+    std::shared_ptr<ConcurrentQueue<aidlvhal::VehiclePropValue>> mBatchedEventQueue;
     // BatchingConsumer is thread-safe.
-    std::shared_ptr<
-            BatchingConsumer<aidl::android::hardware::automotive::vehicle::VehiclePropValue>>
+    std::shared_ptr<BatchingConsumer<aidlvhal::VehiclePropValue>>
             mPropertyChangeEventsBatchingConsumer;
     // Only set once during initialization.
     std::chrono::nanoseconds mEventBatchingWindow;
     // Only used for testing.
     int32_t mTestInterfaceVersion = 0;
+
+    // mConfigsByPropId and mConfigFile is lazy initialized.
+    mutable std::mutex mConfigInitLock;
+    mutable bool mConfigInit GUARDED_BY(mConfigInitLock) = false;
+    mutable std::unordered_map<int32_t, aidlvhal::VehiclePropConfig> mConfigsByPropId
+            GUARDED_BY(mConfigInitLock);
+    mutable std::unique_ptr<ndk::ScopedFileDescriptor> mConfigFile GUARDED_BY(mConfigInitLock);
 
     std::mutex mLock;
     std::unordered_map<const AIBinder*, std::unique_ptr<OnBinderDiedContext>> mOnBinderDiedContexts
@@ -182,32 +168,23 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
     // A thread to handle onBinderDied or onBinderUnlinked event.
     std::thread mOnBinderDiedUnlinkedHandlerThread;
 
-    android::base::Result<void> checkProperty(
-            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& propValue);
+    android::base::Result<void> checkProperty(const aidlvhal::VehiclePropValue& propValue);
 
     android::base::Result<std::vector<int64_t>> checkDuplicateRequests(
-            const std::vector<aidl::android::hardware::automotive::vehicle::GetValueRequest>&
-                    requests);
+            const std::vector<aidlvhal::GetValueRequest>& requests);
 
     android::base::Result<std::vector<int64_t>> checkDuplicateRequests(
-            const std::vector<aidl::android::hardware::automotive::vehicle::SetValueRequest>&
-                    requests);
-    VhalResult<void> checkSubscribeOptions(
-            const std::vector<aidl::android::hardware::automotive::vehicle::SubscribeOptions>&
-                    options);
+            const std::vector<aidlvhal::SetValueRequest>& requests);
+    VhalResult<void> checkSubscribeOptions(const std::vector<aidlvhal::SubscribeOptions>& options);
 
-    VhalResult<void> checkPermissionHelper(
-            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value,
-            aidl::android::hardware::automotive::vehicle::VehiclePropertyAccess accessToTest) const;
+    VhalResult<void> checkPermissionHelper(const aidlvhal::VehiclePropValue& value,
+                                           aidlvhal::VehiclePropertyAccess accessToTest) const;
 
-    VhalResult<void> checkReadPermission(
-            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
+    VhalResult<void> checkReadPermission(const aidlvhal::VehiclePropValue& value) const;
 
-    VhalResult<void> checkWritePermission(
-            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
+    VhalResult<void> checkWritePermission(const aidlvhal::VehiclePropValue& value) const;
 
-    android::base::Result<const aidl::android::hardware::automotive::vehicle::VehiclePropConfig*>
-    getConfig(int32_t propId) const;
+    android::base::Result<const aidlvhal::VehiclePropConfig*> getConfig(int32_t propId) const;
 
     void onBinderDiedWithContext(const AIBinder* clientId);
 
@@ -219,7 +196,7 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
 
     bool checkDumpPermission();
 
-    bool getAllPropConfigsFromHardware();
+    bool getAllPropConfigsFromHardwareLocked() const REQUIRES(mConfigInitLock);
 
     // The looping handler function to process all onBinderDied or onBinderUnlinked events in
     // mBinderEvents.
@@ -228,19 +205,19 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
     size_t countSubscribeClients();
 
     // Handles the property change events in batch.
-    void handleBatchedPropertyEvents(
-            std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue>&&
-                    batchedEvents);
+    void handleBatchedPropertyEvents(std::vector<aidlvhal::VehiclePropValue>&& batchedEvents);
 
-    int32_t getVhalInterfaceVersion();
+    int32_t getVhalInterfaceVersion() const;
+
+    // Gets mConfigsByPropId, lazy init it if necessary.
+    const std::unordered_map<int32_t, aidlvhal::VehiclePropConfig>& getConfigsByPropId() const;
+    // Gets mConfigFile, lazy init it if necessary.
+    const ndk::ScopedFileDescriptor* getConfigFile() const;
 
     // Puts the property change events into a queue so that they can handled in batch.
     static void batchPropertyChangeEvent(
-            const std::weak_ptr<ConcurrentQueue<
-                    aidl::android::hardware::automotive::vehicle::VehiclePropValue>>&
-                    batchedEventQueue,
-            std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue>&&
-                    updatedValues);
+            const std::weak_ptr<ConcurrentQueue<aidlvhal::VehiclePropValue>>& batchedEventQueue,
+            std::vector<aidlvhal::VehiclePropValue>&& updatedValues);
 
     // Gets or creates a {@code T} object for the client to or from {@code clients}.
     template <class T>
@@ -248,10 +225,8 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
             std::unordered_map<const AIBinder*, std::shared_ptr<T>>* clients,
             const CallbackType& callback, std::shared_ptr<PendingRequestPool> pendingRequestPool);
 
-    static void onPropertyChangeEvent(
-            const std::weak_ptr<SubscriptionManager>& subscriptionManager,
-            std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue>&&
-                    updatedValues);
+    static void onPropertyChangeEvent(const std::weak_ptr<SubscriptionManager>& subscriptionManager,
+                                      std::vector<aidlvhal::VehiclePropValue>&& updatedValues);
 
     static void onPropertySetErrorEvent(
             const std::weak_ptr<SubscriptionManager>& subscriptionManager,
