@@ -40,7 +40,7 @@ cc_test {
 cc_test {
     name: "VehiclePropertyAnnotationCppTest",
     srcs: ["VehiclePropertyAnnotationCppTest.cpp"],
-    header_libs: ["IVehicleGeneratedHeaders-V3"],
+    header_libs: ["IVehicleGeneratedHeaders"],
     defaults: ["VehicleHalInterfaceDefaults"],
     test_suites: ["general-tests"],
 }
