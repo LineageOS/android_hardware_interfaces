@@ -278,7 +278,14 @@ TEST_P(RadioConfigTest, setSimSlotsMapping) {
                     EXPECT_LT(logicalSlotId, slotPortMappingList.size());
                     if (logicalSlotId >= 0 && logicalSlotId < slotPortMappingList.size()) {
                         slotPortMappingList[logicalSlotId].physicalSlotId = i;
-                        slotPortMappingList[logicalSlotId].portId = j;
+                        if (radioRsp_config->simSlotStatus[i].supportedMepMode ==
+                                    MultipleEnabledProfilesMode::MEP_A1 ||
+                            radioRsp_config->simSlotStatus[i].supportedMepMode ==
+                                    MultipleEnabledProfilesMode::MEP_A2) {
+                            slotPortMappingList[logicalSlotId].portId = j + 1;
+                        } else {
+                            slotPortMappingList[logicalSlotId].portId = j;
+                        }
                     }
                 }
             }
