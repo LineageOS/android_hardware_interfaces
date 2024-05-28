@@ -433,6 +433,9 @@ SubscriptionManager::getSubscribedClients(std::vector<VehiclePropValue>&& update
         }
 
         for (const auto& [client, callback] : mClientsByPropIdAreaId[propIdAreaId]) {
+            // if propId is on-change, propIdAreaId will not exist in mContSubConfigsByPropIdArea,
+            // returning an empty ContSubConfigs value for subConfigs i.e. with resolution = 0 and
+            // enableVur = false.
             auto& subConfigs = mContSubConfigsByPropIdArea[propIdAreaId];
             // Clients must be sent different VehiclePropValues with different levels of granularity
             // as requested by the client using resolution.
