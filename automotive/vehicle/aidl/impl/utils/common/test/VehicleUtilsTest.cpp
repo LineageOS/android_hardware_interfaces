@@ -770,6 +770,23 @@ TEST(VehicleUtilsTest, testVhalError) {
     ASSERT_EQ(result.error().message(), "error message: INVALID_ARG");
 }
 
+TEST(VehicleUtilsTest, testPropIdToString) {
+    ASSERT_EQ(propIdToString(toInt(VehicleProperty::PERF_VEHICLE_SPEED)), "PERF_VEHICLE_SPEED");
+}
+
+TEST(VehicleUtilsTest, testStringToPropId) {
+    auto result = stringToPropId("PERF_VEHICLE_SPEED");
+
+    ASSERT_TRUE(result.ok());
+    ASSERT_EQ(result.value(), toInt(VehicleProperty::PERF_VEHICLE_SPEED));
+}
+
+TEST(VehicleUtilsTest, testStringToPropId_InvalidName) {
+    auto result = stringToPropId("PERF_VEHICLE_SPEED12345");
+
+    ASSERT_FALSE(result.ok());
+}
+
 class InvalidPropValueTest : public testing::TestWithParam<InvalidPropValueTestCase> {};
 
 INSTANTIATE_TEST_SUITE_P(InvalidPropValueTests, InvalidPropValueTest,
