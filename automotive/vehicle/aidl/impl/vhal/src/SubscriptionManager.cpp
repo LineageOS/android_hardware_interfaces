@@ -40,6 +40,7 @@ using ::android::base::Result;
 using ::android::base::StringPrintf;
 using ::ndk::ScopedAStatus;
 
+constexpr float EPSILON = 0.0000001;
 constexpr float ONE_SECOND_IN_NANOS = 1'000'000'000.;
 
 SubscribeOptions newSubscribeOptions(int32_t propId, int32_t areaId, float sampleRateHz,
@@ -88,7 +89,7 @@ bool SubscriptionManager::checkResolution(float resolution) {
     }
 
     float log = std::log10(resolution);
-    return log == (int)log;
+    return std::abs(log - std::round(log)) < EPSILON;
 }
 
 void ContSubConfigs::refreshCombinedConfig() {
@@ -433,6 +434,9 @@ SubscriptionManager::getSubscribedClients(std::vector<VehiclePropValue>&& update
         }
 
         for (const auto& [client, callback] : mClientsByPropIdAreaId[propIdAreaId]) {
+            // if propId is on-change, propIdAreaId will not exist in mContSubConfigsByPropIdArea,
+            // returning an empty ContSubConfigs value for subConfigs i.e. with resolution = 0 and
+            // enableVur = false.
             auto& subConfigs = mContSubConfigsByPropIdArea[propIdAreaId];
             // Clients must be sent different VehiclePropValues with different levels of granularity
             // as requested by the client using resolution.
