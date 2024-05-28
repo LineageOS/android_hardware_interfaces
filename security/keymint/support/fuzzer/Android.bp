@@ -57,3 +57,13 @@ cc_fuzz {
         "keymint_fuzzer_defaults",
     ],
 }
+
+cc_fuzz {
+    name: "keymint_authSet_fuzzer",
+    srcs: [
+        "keymint_authSet_fuzzer.cpp",
+    ],
+    defaults: [
+        "keymint_fuzzer_defaults",
+    ],
+}
