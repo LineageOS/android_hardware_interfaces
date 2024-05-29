@@ -2012,7 +2012,7 @@ wifi_error WifiLegacyHal::twtClearStats(const std::string& iface_name, uint8_t c
 }
 
 wifi_error WifiLegacyHal::setScanMode(const std::string& iface_name, bool enable) {
-    return global_func_table_.wifi_set_scan_mode(iface_name.c_str(), enable);
+    return global_func_table_.wifi_set_scan_mode(getIfaceHandle(iface_name), enable);
 }
 
 wifi_error WifiLegacyHal::setDtimConfig(const std::string& iface_name, uint32_t multiplier) {
