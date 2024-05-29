@@ -59,10 +59,12 @@ class GraphicsCompositionTestBase : public ::testing::Test {
 
         EXPECT_TRUE(mComposerClient->setPowerMode(getPrimaryDisplayId(), PowerMode::ON).isOk());
 
+        const auto format = getHasReadbackBuffer() ? mPixelFormat : common::PixelFormat::RGBA_8888;
+
         ASSERT_NO_FATAL_FAILURE(
                 mTestRenderEngine = std::unique_ptr<TestRenderEngine>(new TestRenderEngine(
                         ::android::renderengine::RenderEngineCreationArgs::Builder()
-                                .setPixelFormat(static_cast<int>(common::PixelFormat::RGBA_8888))
+                                .setPixelFormat(static_cast<int>(format))
                                 .setImageCacheSize(TestRenderEngine::sMaxFrameBufferAcquireBuffers)
                                 .setEnableProtectedContext(false)
                                 .setPrecacheToneMapperShaderOnly(false)
