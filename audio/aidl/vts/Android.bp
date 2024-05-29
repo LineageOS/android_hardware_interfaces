@@ -121,6 +121,9 @@ cc_test {
     name: "VtsHalEnvironmentalReverbTargetTest",
     defaults: ["VtsHalAudioEffectTargetTestDefaults"],
     srcs: ["VtsHalEnvironmentalReverbTargetTest.cpp"],
+    shared_libs: [
+        "libaudioutils",
+    ],
 }
 
 cc_test {
