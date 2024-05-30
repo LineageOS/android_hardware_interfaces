@@ -139,7 +139,8 @@ class LeAudioOffloadAudioProvider : public BluetoothAudioProvider {
           direction_configurations,
       const std::vector<std::optional<AseDirectionRequirement>>& requirements,
       std::optional<std::vector<std::optional<AseDirectionConfiguration>>>&
-          valid_direction_configurations);
+          valid_direction_configurations,
+      bool is_exact);
   std::optional<LeAudioAseConfigurationSetting>
   getCapabilitiesMatchedAseConfigurationSettings(
       IBluetoothAudioProvider::LeAudioAseConfigurationSetting& setting,
@@ -149,7 +150,8 @@ class LeAudioOffloadAudioProvider : public BluetoothAudioProvider {
   getRequirementMatchedAseConfigurationSettings(
       IBluetoothAudioProvider::LeAudioAseConfigurationSetting& setting,
       const IBluetoothAudioProvider::LeAudioConfigurationRequirement&
-          requirement);
+          requirement,
+      bool is_exact);
   bool isMatchedQosRequirement(LeAudioAseQosConfiguration setting_qos,
                                AseQosDirectionRequirement requirement_qos);
   std::optional<LeAudioBroadcastConfigurationSetting>
@@ -161,9 +163,11 @@ class LeAudioOffloadAudioProvider : public BluetoothAudioProvider {
       uint8_t direction,
       const IBluetoothAudioProvider::LeAudioAseQosConfigurationRequirement&
           qosRequirement,
-      std::vector<LeAudioAseConfigurationSetting>& ase_configuration_settings);
+      std::vector<LeAudioAseConfigurationSetting>& ase_configuration_settings,
+      bool is_exact);
   bool isSubgroupConfigurationMatchedContext(
       AudioContext requirement_context,
+      IBluetoothAudioProvider::BroadcastQuality quality,
       LeAudioBroadcastSubgroupConfiguration configuration);
   std::vector<IBluetoothAudioProvider::LeAudioAseConfigurationSetting>
   matchWithRequirement(
@@ -171,7 +175,8 @@ class LeAudioOffloadAudioProvider : public BluetoothAudioProvider {
           matched_ase_configuration_settings,
       const std::vector<
           IBluetoothAudioProvider::LeAudioConfigurationRequirement>&
-          in_requirements);
+          in_requirements,
+      bool is_exact);
 };
 
 class LeAudioOffloadOutputAudioProvider : public LeAudioOffloadAudioProvider {
