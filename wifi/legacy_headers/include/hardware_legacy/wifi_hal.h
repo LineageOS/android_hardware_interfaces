@@ -1386,7 +1386,7 @@ typedef struct {
      * @param enable true if current is scan only mode
      * @return Synchronous wifi_error
      */
-    wifi_error (*wifi_set_scan_mode)(const char * ifname, bool enable);
+    wifi_error (*wifi_set_scan_mode)(wifi_interface_handle iface, bool enable);
 
     wifi_error (*wifi_nan_pairing_end)(transaction_id id,
                                     wifi_interface_handle iface,
