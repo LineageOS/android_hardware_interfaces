@@ -19,7 +19,7 @@
 namespace aidl::android::hardware::bluetooth::finder::impl {
 
 ::ndk::ScopedAStatus BluetoothFinder::sendEids(const ::std::vector<Eid>& keys) {
-  keys_.insert(keys_.end(), keys.begin(), keys.end());
+  keys_.assign(keys.begin(), keys.end());
   return ::ndk::ScopedAStatus::ok();
 }
 
