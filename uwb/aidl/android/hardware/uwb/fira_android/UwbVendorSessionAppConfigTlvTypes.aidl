@@ -87,4 +87,12 @@ enum UwbVendorSessionAppConfigTlvTypes {
      * b3 - b7: RFU
      */
     DIAGRAMS_FRAME_REPORTS_FIELDS = 0xE9,
+
+    /**
+     * 1 byte data
+     * 0x0: Omni mode - the ranging antenna is used for both Tx and Rx.
+     * 0x1: Directional mode - the patch antenna is used for both Tx and Rx.
+     * 0x2 - 0xFF: RFU
+     */
+    ANTENNA_MODE = 0xEA,
 }
