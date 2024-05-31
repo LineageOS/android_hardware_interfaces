@@ -26,6 +26,7 @@
 #include "keymint_support/keymint_tags.h"
 
 #include <android-base/logging.h>
+#include <android-base/strings.h>
 #include <android/binder_manager.h>
 #include <android/content/pm/IPackageManagerNative.h>
 #include <cppbor_parse.h>
@@ -1588,7 +1589,7 @@ ErrorCode KeyMintAidlTestBase::GenerateAttestKey(const AuthorizationSet& key_des
     // with any other key purpose, but the original VTS tests incorrectly did exactly that.
     // This means that a device that launched prior to Android T (API level 33) may
     // accept or even require KeyPurpose::SIGN too.
-    if (property_get_int32("ro.board.first_api_level", 0) < __ANDROID_API_T__) {
+    if (get_vsr_api_level() < __ANDROID_API_T__) {
         AuthorizationSet key_desc_plus_sign = key_desc;
         key_desc_plus_sign.push_back(TAG_PURPOSE, KeyPurpose::SIGN);
 
@@ -2335,6 +2336,67 @@ std::optional<int32_t> keymint_feature_value(bool strongbox) {
         }
     }
     return result;
+}
+
+namespace {
+
+std::string TELEPHONY_CMD_GET_IMEI = "cmd phone get-imei ";
+
+/*
+ * Run a shell command and collect the output of it. If any error, set an empty string as the
+ * output.
+ */
+std::string exec_command(const std::string& command) {
+    char buffer[128];
+    std::string result = "";
+
+    FILE* pipe = popen(command.c_str(), "r");
+    if (!pipe) {
+        LOG(ERROR) << "popen failed.";
+        return result;
+    }
+
+    // read till end of process:
+    while (!feof(pipe)) {
+        if (fgets(buffer, 128, pipe) != NULL) {
+            result += buffer;
+        }
+    }
+
+    pclose(pipe);
+    return result;
+}
+
+}  // namespace
+
+/*
+ * Get IMEI using Telephony service shell command. If any error while executing the command
+ * then empty string will be returned as output.
+ */
+std::string get_imei(int slot) {
+    std::string cmd = TELEPHONY_CMD_GET_IMEI + std::to_string(slot);
+    std::string output = exec_command(cmd);
+
+    if (output.empty()) {
+        LOG(ERROR) << "Command failed. Cmd: " << cmd;
+        return "";
+    }
+
+    vector<std::string> out =
+            ::android::base::Tokenize(::android::base::Trim(output), "Device IMEI:");
+
+    if (out.size() != 1) {
+        LOG(ERROR) << "Error in parsing the command output. Cmd: " << cmd;
+        return "";
+    }
+
+    std::string imei = ::android::base::Trim(out[0]);
+    if (imei.compare("null") == 0) {
+        LOG(WARNING) << "Failed to get IMEI from Telephony service: value is null. Cmd: " << cmd;
+        return "";
+    }
+
+    return imei;
 }
 
 }  // namespace test
