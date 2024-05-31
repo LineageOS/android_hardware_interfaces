@@ -2026,7 +2026,7 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationTags) {
  * NewKeyGenerationTest.EcdsaAttestationIdTags
  *
  * Verifies that creation of an attested ECDSA key includes various ID tags in the
- * attestation extension.
+ * attestation extension one by one.
  */
 TEST_P(NewKeyGenerationTest, EcdsaAttestationIdTags) {
     auto challenge = "hello";
@@ -2054,6 +2054,15 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationIdTags) {
     add_attestation_id(&extra_tags, TAG_ATTESTATION_ID_MANUFACTURER, "manufacturer");
     add_attestation_id(&extra_tags, TAG_ATTESTATION_ID_MODEL, "model");
     add_tag_from_prop(&extra_tags, TAG_ATTESTATION_ID_SERIAL, "ro.serialno");
+    string imei = get_imei(0);
+    if (!imei.empty()) {
+        extra_tags.Authorization(TAG_ATTESTATION_ID_IMEI, imei.data(), imei.size());
+    }
+    string second_imei = get_imei(1);
+    if (!second_imei.empty()) {
+        extra_tags.Authorization(TAG_ATTESTATION_ID_SECOND_IMEI, second_imei.data(),
+                                 second_imei.size());
+    }
 
     for (const KeyParameter& tag : extra_tags) {
         SCOPED_TRACE(testing::Message() << "tag-" << tag);
@@ -2088,6 +2097,83 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationIdTags) {
                                               hw_enforced, SecLevel(),
                                               cert_chain_[0].encodedCertificate));
     }
+}
+
+/*
+ * NewKeyGenerationTest.EcdsaAttestationIdAllTags
+ *
+ * Verifies that creation of an attested ECDSA key includes various ID tags in the
+ * attestation extension all together.
+ */
+TEST_P(NewKeyGenerationTest, EcdsaAttestationIdAllTags) {
+    auto challenge = "hello";
+    auto app_id = "foo";
+    auto subject = "cert subj 2";
+    vector<uint8_t> subject_der(make_name_from_str(subject));
+    uint64_t serial_int = 0x1010;
+    vector<uint8_t> serial_blob(build_serial_blob(serial_int));
+    AuthorizationSetBuilder builder = AuthorizationSetBuilder()
+                                              .Authorization(TAG_NO_AUTH_REQUIRED)
+                                              .EcdsaSigningKey(EcCurve::P_256)
+                                              .Digest(Digest::NONE)
+                                              .AttestationChallenge(challenge)
+                                              .AttestationApplicationId(app_id)
+                                              .Authorization(TAG_CERTIFICATE_SERIAL, serial_blob)
+                                              .Authorization(TAG_CERTIFICATE_SUBJECT, subject_der)
+                                              .SetDefaultValidity();
+
+    // Various ATTESTATION_ID_* tags that map to fields in the attestation extension ASN.1 schema.
+    auto extra_tags = AuthorizationSetBuilder();
+    add_attestation_id(&extra_tags, TAG_ATTESTATION_ID_BRAND, "brand");
+    add_attestation_id(&extra_tags, TAG_ATTESTATION_ID_DEVICE, "device");
+    add_attestation_id(&extra_tags, TAG_ATTESTATION_ID_PRODUCT, "name");
+    add_attestation_id(&extra_tags, TAG_ATTESTATION_ID_MANUFACTURER, "manufacturer");
+    add_attestation_id(&extra_tags, TAG_ATTESTATION_ID_MODEL, "model");
+    add_tag_from_prop(&extra_tags, TAG_ATTESTATION_ID_SERIAL, "ro.serialno");
+    string imei = get_imei(0);
+    if (!imei.empty()) {
+        extra_tags.Authorization(TAG_ATTESTATION_ID_IMEI, imei.data(), imei.size());
+    }
+    string second_imei = get_imei(1);
+    if (!second_imei.empty()) {
+        extra_tags.Authorization(TAG_ATTESTATION_ID_SECOND_IMEI, second_imei.data(),
+                                 second_imei.size());
+    }
+    for (const KeyParameter& tag : extra_tags) {
+        builder.push_back(tag);
+    }
+
+    vector<uint8_t> key_blob;
+    vector<KeyCharacteristics> key_characteristics;
+    auto result = GenerateKey(builder, &key_blob, &key_characteristics);
+    if (result == ErrorCode::CANNOT_ATTEST_IDS && !isDeviceIdAttestationRequired()) {
+        // ID attestation was optional till api level 32, from api level 33 it is mandatory.
+        return;
+    }
+    ASSERT_EQ(result, ErrorCode::OK);
+    KeyBlobDeleter deleter(keymint_, key_blob);
+    ASSERT_GT(key_blob.size(), 0U);
+
+    EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
+    ASSERT_GT(cert_chain_.size(), 0);
+    verify_subject_and_serial(cert_chain_[0], serial_int, subject, /* self_signed = */ false);
+
+    AuthorizationSet hw_enforced = HwEnforcedAuthorizations(key_characteristics);
+    AuthorizationSet sw_enforced = SwEnforcedAuthorizations(key_characteristics);
+
+    // The attested key characteristics will not contain APPLICATION_ID_* fields (their
+    // spec definitions all have "Must never appear in KeyCharacteristics"), but the
+    // attestation extension should contain them, so make sure the extra tags are added.
+    for (const KeyParameter& tag : extra_tags) {
+        hw_enforced.push_back(tag);
+    }
+
+    // Verifying the attestation record will check for the specific tag because
+    // it's included in the authorizations.
+    EXPECT_TRUE(verify_attestation_record(AidlVersion(), challenge, app_id, sw_enforced,
+                                          hw_enforced, SecLevel(),
+                                          cert_chain_[0].encodedCertificate))
+            << "failed to verify " << bin2hex(cert_chain_[0].encodedCertificate);
 }
 
 /*
