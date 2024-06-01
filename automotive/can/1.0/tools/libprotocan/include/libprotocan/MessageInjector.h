@@ -22,6 +22,7 @@
 #include <libprotocan/MessageDef.h>
 #include <utils/Mutex.h>
 
+#include <mutex>
 #include <queue>
 
 namespace android::hardware::automotive::protocan {
