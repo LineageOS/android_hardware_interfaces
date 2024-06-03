@@ -24,34 +24,23 @@
 
 namespace aidl::android::hardware::health {
 
-std::unique_ptr<LinkedCallback> LinkedCallback::Make(
-        std::shared_ptr<Health> service, std::shared_ptr<IHealthInfoCallback> callback) {
-    std::unique_ptr<LinkedCallback> ret(new LinkedCallback());
+LinkedCallback* LinkedCallback::Make(std::shared_ptr<Health> service,
+                                     std::shared_ptr<IHealthInfoCallback> callback) {
+    LinkedCallback* ret(new LinkedCallback());
+    // pass ownership of this object to the death recipient
     binder_status_t linkRet =
             AIBinder_linkToDeath(callback->asBinder().get(), service->death_recipient_.get(),
-                                 reinterpret_cast<void*>(ret.get()));
+                                 reinterpret_cast<void*>(ret));
     if (linkRet != ::STATUS_OK) {
         LOG(WARNING) << __func__ << "Cannot link to death: " << linkRet;
         return nullptr;
     }
     ret->service_ = service;
-    ret->callback_ = std::move(callback);
+    ret->callback_ = callback;
     return ret;
 }
 
 LinkedCallback::LinkedCallback() = default;
-
-LinkedCallback::~LinkedCallback() {
-    if (callback_ == nullptr) {
-        return;
-    }
-    auto status =
-            AIBinder_unlinkToDeath(callback_->asBinder().get(), service()->death_recipient_.get(),
-                                   reinterpret_cast<void*>(this));
-    if (status != STATUS_OK && status != STATUS_DEAD_OBJECT) {
-        LOG(WARNING) << __func__ << "Cannot unlink to death: " << ::android::statusToString(status);
-    }
-}
 
 std::shared_ptr<Health> LinkedCallback::service() {
     auto service_sp = service_.lock();
@@ -60,7 +49,10 @@ std::shared_ptr<Health> LinkedCallback::service() {
 }
 
 void LinkedCallback::OnCallbackDied() {
-    service()->unregisterCallback(callback_);
+    auto sCb = callback_.lock();
+    if (sCb) {
+        service()->unregisterCallback(sCb);
+    }
 }
 
 }  // namespace aidl::android::hardware::health
