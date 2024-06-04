@@ -23,7 +23,7 @@
 #include <android-base/logging.h>
 #include <android/hidl/manager/1.2/IServiceManager.h>
 
-#include <automotive/filesystem>
+#include <filesystem>
 #include <fstream>
 #include <regex>
 
@@ -31,7 +31,7 @@ namespace android::hardware::automotive::can::V1_0::implementation {
 
 using IfId = ICanController::BusConfig::InterfaceId;
 using IfIdDisc = ICanController::BusConfig::InterfaceId::hidl_discriminator;
-namespace fs = android::hardware::automotive::filesystem;
+namespace fs = ::std::filesystem;
 
 namespace fsErrors {
 static const std::error_code ok;
