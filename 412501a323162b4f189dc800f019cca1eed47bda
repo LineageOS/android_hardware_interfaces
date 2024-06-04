@@ -24,6 +24,30 @@
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f2002737_cb579536",
+        "filename": "wifi/aidl/default/aidl_struct_util.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 14048
+      },
+      "writtenOn": "2024-06-04T19:02:45Z",
+      "side": 1,
+      "message": "This is more readable. Updated the tegra usage like this.",
+      "parentUuid": "dcd354bf_64d56b7b",
+      "range": {
+        "startLine": 127,
+        "startChar": 36,
+        "endLine": 127,
+        "endChar": 67
+      },
+      "revId": "412501a323162b4f189dc800f019cca1eed47bda",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "61738c9c_3b8d94fb",
@@ -37,6 +61,30 @@
       "writtenOn": "2024-06-04T18:37:51Z",
       "side": 1,
       "message": "ditto",
+      "range": {
+        "startLine": 482,
+        "startChar": 36,
+        "endLine": 482,
+        "endChar": 71
+      },
+      "revId": "412501a323162b4f189dc800f019cca1eed47bda",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8c611c28_25c906f5",
+        "filename": "wifi/aidl/default/aidl_struct_util.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 482,
+      "author": {
+        "id": 14048
+      },
+      "writtenOn": "2024-06-04T19:02:45Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "61738c9c_3b8d94fb",
       "range": {
         "startLine": 482,
         "startChar": 36,
