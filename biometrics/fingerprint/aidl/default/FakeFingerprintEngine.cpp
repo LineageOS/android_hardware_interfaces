@@ -544,6 +544,10 @@ void FakeFingerprintEngine::lockoutTimerExpired(ISessionCallback* cb) {
 
 void FakeFingerprintEngine::waitForFingerDown(ISessionCallback* cb,
                                               const std::future<void>& cancel) {
+    if (mFingerIsDown) {
+        LOG(WARNING) << "waitForFingerDown: mFingerIsDown==true already!";
+    }
+
     while (!mFingerIsDown) {
         if (shouldCancel(cancel)) {
             LOG(ERROR) << "waitForFingerDown, Fail: cancel";
