@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dcd354bf_64d56b7b",
+        "filename": "wifi/aidl/default/aidl_struct_util.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 11883
+      },
+      "writtenOn": "2024-06-04T18:37:51Z",
+      "side": 1,
+      "message": "```suggestion\n    *aidl_feature_set \u0026\u003d ~(uint32_t)(WIFI_FORCE_DISABLE_AIDLCHIPCAPS);\n```\n\nIt\u0027ll probably let you pass WIFI_FORCE_DISABLE_AIDLSTAIFACECAPS :\u003d (1 \u003c\u003c 0) directly, and if needed other flags",
+      "range": {
+        "startLine": 127,
+        "startChar": 36,
+        "endLine": 127,
+        "endChar": 67
+      },
+      "revId": "412501a323162b4f189dc800f019cca1eed47bda",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "61738c9c_3b8d94fb",
+        "filename": "wifi/aidl/default/aidl_struct_util.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 482,
+      "author": {
+        "id": 11883
+      },
+      "writtenOn": "2024-06-04T18:37:51Z",
+      "side": 1,
+      "message": "ditto",
+      "range": {
+        "startLine": 482,
+        "startChar": 36,
+        "endLine": 482,
+        "endChar": 71
+      },
+      "revId": "412501a323162b4f189dc800f019cca1eed47bda",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
