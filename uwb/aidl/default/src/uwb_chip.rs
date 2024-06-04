@@ -71,7 +71,7 @@ impl State {
             let packet_vec: Vec<UciControlPacketHal> = packet.into();
             for hal_packet in packet_vec.into_iter() {
                 serial
-                    .write(&hal_packet.to_vec())
+                    .write(&hal_packet.encode_to_vec().unwrap())
                     .map(|written| written as i32)
                     .map_err(|_| binder::StatusCode::UNKNOWN_ERROR)?;
             }
