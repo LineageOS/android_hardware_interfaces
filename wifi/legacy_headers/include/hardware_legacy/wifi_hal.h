@@ -715,7 +715,7 @@ typedef struct wlan_driver_wake_reason_cnt_t {
 
 /* Wi-Fi coex channel avoidance support */
 
-#define WIFI_COEX_NO_POWER_CAP (int32_t)0x7FFFFFF
+#define WIFI_COEX_NO_POWER_CAP (int32_t)0x7FFFFFFF
 
 typedef enum {
     WIFI_AWARE = 1 << 0,
