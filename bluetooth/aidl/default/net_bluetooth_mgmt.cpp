@@ -173,7 +173,7 @@ int NetBluetoothMgmt::waitHciDev(int hci_interface) {
     // Received [Index Added] event.
     if (ev.opcode == MGMT_EV_INDEX_ADDED && ev.index == hci_interface) {
       ALOGI("hci interface %d added", hci_interface);
-      ret = 0;
+      ret = hci_interface;
       goto end;
     }
   }
@@ -253,9 +253,9 @@ int NetBluetoothMgmt::openHci(int hci_interface) {
   rfkill(1);
 
   // Wait for the HCI interface to complete initialization or to come online.
-  hci_interface = waitHciDev(hci_interface);
-  if (hci_interface < 0) {
-    ALOGE("hci interface not found");
+  int hci = waitHciDev(hci_interface);
+  if (hci < 0) {
+    ALOGE("hci interface %d not found", hci_interface);
     return -1;
   }
 
@@ -268,7 +268,7 @@ int NetBluetoothMgmt::openHci(int hci_interface) {
 
   struct sockaddr_hci hci_addr = {
       .hci_family = AF_BLUETOOTH,
-      .hci_dev = static_cast<uint16_t>(hci_interface),
+      .hci_dev = static_cast<uint16_t>(hci),
       .hci_channel = HCI_CHANNEL_USER,
   };
 
@@ -279,7 +279,7 @@ int NetBluetoothMgmt::openHci(int hci_interface) {
     return -1;
   }
 
-  ALOGI("hci interface %d ready", hci_interface);
+  ALOGI("hci interface %d ready", hci);
   bt_fd_ = fd;
   return fd;
 }
