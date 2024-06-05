@@ -161,6 +161,16 @@ int NetBluetoothMgmt::waitHciDev(int hci_interface) {
       struct mgmt_ev_read_index_list* data =
           (struct mgmt_ev_read_index_list*)ev.data;
 
+      // Prefer the exact hci_interface
+      for (int i = 0; i < data->num_controllers; i++) {
+        if (data->index[i] == hci_interface) {
+          ALOGI("hci interface %d found", data->index[i]);
+          ret = data->index[i];
+          goto end;
+        }
+      }
+
+      // Accept a larger one if we can't find the exact one
       for (int i = 0; i < data->num_controllers; i++) {
         if (data->index[i] >= hci_interface) {
           ALOGI("hci interface %d found", data->index[i]);
