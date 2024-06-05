@@ -352,8 +352,8 @@ TEST_P(ThermalAidlTest, TemperatureThresholdTest) {
 // @VsrTest = VSR-3.2.5-002
 TEST_P(ThermalAidlTest, SkinTemperatureThresholdsTest) {
     auto apiLevel = ::android::base::GetIntProperty<int32_t>("ro.vendor.api_level", 0);
-    if (apiLevel < 35) {
-        GTEST_SKIP() << "Skipping test as the vendor level is below 35: " << apiLevel;
+    if (apiLevel < 202404) {
+        GTEST_SKIP() << "Skipping test as the vendor level is below 202404: " << apiLevel;
     }
     for (const auto& feature : kNonHandheldFeatures) {
         if (::testing::deviceSupportsFeature(feature.c_str())) {
