@@ -23,13 +23,13 @@
 #include <android-base/format.h>
 #include <android-base/logging.h>
 
-#include <automotive/filesystem>
+#include <filesystem>
 #include <fstream>
 #include <regex>
 
 namespace aidl::android::hardware::automotive::can {
 
-namespace fs = ::android::hardware::automotive::filesystem;
+namespace fs = ::std::filesystem;
 
 namespace fsErrors {
 static const std::error_code ok;
