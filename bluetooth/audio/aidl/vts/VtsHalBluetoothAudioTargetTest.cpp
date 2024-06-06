@@ -4177,6 +4177,7 @@ class BluetoothAudioProviderLeAudioBroadcastHardwareAidl
         CodecSpecificCapabilitiesLtv::SupportedSamplingFrequencies();
     sampling_rate.bitmask =
         CodecSpecificCapabilitiesLtv::SupportedSamplingFrequencies::HZ48000 |
+        CodecSpecificCapabilitiesLtv::SupportedSamplingFrequencies::HZ24000 |
         CodecSpecificCapabilitiesLtv::SupportedSamplingFrequencies::HZ16000;
     auto frame_duration =
         CodecSpecificCapabilitiesLtv::SupportedFrameDurations();
