@@ -55,6 +55,30 @@
                 />
             </characteristics>
         </device>
+        <device id='/dev/video11' position='front'>
+            <caps>
+                <!-- list of supported controls -->
+                <supported_controls>
+                    <control name='BRIGHTNESS' min='0' max='255'/>
+                    <control name='CONTRAST' min='0' max='255'/>
+                </supported_controls>
+
+                <stream id='0' width='640'  height='360'  format='RGBA_8888' framerate='30'/>
+            </caps>
+
+            <!-- list of parameters -->
+            <characteristics>
+                <!-- Camera intrinsic calibration matrix. See
+                     https://developer.android.com/reference/android/hardware/camera2/CameraCharacteristics.html#LENS_INTRINSIC_CALIBRATION
+                -->
+                <parameter
+                    name='LENS_INTRINSIC_CALIBRATION'
+                    type='float'
+                    size='5'
+                    value='0.0,0.0,0.0,0.0,0.0'
+                />
+            </characteristics>
+        </device>
     </camera>
     <display>
         <device id='display0' position='driver'>
