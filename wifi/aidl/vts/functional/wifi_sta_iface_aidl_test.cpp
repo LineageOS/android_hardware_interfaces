@@ -148,7 +148,7 @@ TEST_P(WifiStaIfaceAidlTest, GetFeatureSet) {
  * Ensures the APF packet filter is fully supported as required in VSR 14:
  * https://docs.partner.android.com/gms/policies/vsr/vsr-14
  */
-// @VsrTest = 5.3.12
+// @VsrTest = VSR-5.3.12-001|VSR-5.3.12-003|VSR-5.3.12-004|VSR-5.3.12-009
 TEST_P(WifiStaIfaceAidlTest, CheckApfIsSupported) {
     const std::string oem_key1 = getPropertyString("ro.oem.key1");
     if (isTvDevice()) {
