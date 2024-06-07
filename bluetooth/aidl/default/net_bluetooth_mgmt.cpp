@@ -161,6 +161,16 @@ int NetBluetoothMgmt::waitHciDev(int hci_interface) {
       struct mgmt_ev_read_index_list* data =
           (struct mgmt_ev_read_index_list*)ev.data;
 
+      // Prefer the exact hci_interface
+      for (int i = 0; i < data->num_controllers; i++) {
+        if (data->index[i] == hci_interface) {
+          ALOGI("hci interface %d found", data->index[i]);
+          ret = data->index[i];
+          goto end;
+        }
+      }
+
+      // Accept a larger one if we can't find the exact one
       for (int i = 0; i < data->num_controllers; i++) {
         if (data->index[i] >= hci_interface) {
           ALOGI("hci interface %d found", data->index[i]);
@@ -173,7 +183,7 @@ int NetBluetoothMgmt::waitHciDev(int hci_interface) {
     // Received [Index Added] event.
     if (ev.opcode == MGMT_EV_INDEX_ADDED && ev.index == hci_interface) {
       ALOGI("hci interface %d added", hci_interface);
-      ret = 0;
+      ret = hci_interface;
       goto end;
     }
   }
@@ -253,9 +263,9 @@ int NetBluetoothMgmt::openHci(int hci_interface) {
   rfkill(1);
 
   // Wait for the HCI interface to complete initialization or to come online.
-  hci_interface = waitHciDev(hci_interface);
-  if (hci_interface < 0) {
-    ALOGE("hci interface not found");
+  int hci = waitHciDev(hci_interface);
+  if (hci < 0) {
+    ALOGE("hci interface %d not found", hci_interface);
     return -1;
   }
 
@@ -268,7 +278,7 @@ int NetBluetoothMgmt::openHci(int hci_interface) {
 
   struct sockaddr_hci hci_addr = {
       .hci_family = AF_BLUETOOTH,
-      .hci_dev = static_cast<uint16_t>(hci_interface),
+      .hci_dev = static_cast<uint16_t>(hci),
       .hci_channel = HCI_CHANNEL_USER,
   };
 
@@ -279,7 +289,7 @@ int NetBluetoothMgmt::openHci(int hci_interface) {
     return -1;
   }
 
-  ALOGI("hci interface %d ready", hci_interface);
+  ALOGI("hci interface %d ready", hci);
   bt_fd_ = fd;
   return fd;
 }
