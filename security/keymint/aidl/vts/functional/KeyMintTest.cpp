@@ -8683,14 +8683,6 @@ INSTANTIATE_KEYMINT_AIDL_TEST(VsrRequirementTest);
 }  // namespace aidl::android::hardware::security::keymint::test
 
 int main(int argc, char** argv) {
-    std::cout << "Testing ";
-    auto halInstances =
-            aidl::android::hardware::security::keymint::test::KeyMintAidlTestBase::build_params();
-    std::cout << "HAL instances:\n";
-    for (auto& entry : halInstances) {
-        std::cout << "    " << entry << '\n';
-    }
-
     ::testing::InitGoogleTest(&argc, argv);
     for (int i = 1; i < argc; ++i) {
         if (argv[i][0] == '-') {
