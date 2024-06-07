@@ -162,12 +162,13 @@ ScopedAStatus Gnss::close() {
     return ScopedAStatus::ok();
 }
 
-void Gnss::reportLocation(const GnssLocation& location) const {
+void Gnss::reportLocation(const GnssLocation& location) {
     std::unique_lock<std::mutex> lock(mMutex);
     if (sGnssCallback == nullptr) {
         ALOGE("%s: GnssCallback is null.", __func__);
         return;
     }
+    mLastLocation = std::make_shared<GnssLocation>(location);
     auto status = sGnssCallback->gnssLocationCb(location);
     if (!status.isOk()) {
         ALOGE("%s: Unable to invoke gnssLocationCb", __func__);
@@ -359,7 +360,6 @@ ScopedAStatus Gnss::getExtensionGnssNavigationMessage(
 
 ndk::ScopedAStatus Gnss::getExtensionGnssDebug(std::shared_ptr<IGnssDebug>* iGnssDebug) {
     ALOGD("Gnss::getExtensionGnssDebug");
-
     *iGnssDebug = SharedRefBase::make<GnssDebug>();
     return ndk::ScopedAStatus::ok();
 }
@@ -396,6 +396,10 @@ void Gnss::setGnssMeasurementEnabled(const bool enabled) {
 
 void Gnss::setGnssMeasurementInterval(const long intervalMs) {
     mGnssMeasurementIntervalMs = intervalMs;
+}
+
+std::shared_ptr<GnssLocation> Gnss::getLastLocation() const {
+    return mLastLocation;
 }
 
 }  // namespace aidl::android::hardware::gnss
