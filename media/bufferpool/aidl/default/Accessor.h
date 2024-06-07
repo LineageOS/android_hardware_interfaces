@@ -189,7 +189,14 @@ struct Accessor : public BnAccessor {
 private:
     // ConnectionId = pid : (timestamp_created + seqId)
     // in order to guarantee uniqueness for each connection
-    static uint32_t sSeqId;
+    struct ConnectionIdGenerator {
+        int32_t mPid;
+        uint32_t mSeqId;
+        std::mutex mLock;
+
+        ConnectionIdGenerator();
+        ConnectionId getConnectionId();
+    };
 
     const std::shared_ptr<BufferPoolAllocator> mAllocator;
     nsecs_t mScheduleEvictTs;
