@@ -87,18 +87,19 @@ class Gnss : public BnGnss {
     void reportSvStatus() const;
     void setGnssMeasurementEnabled(const bool enabled);
     void setGnssMeasurementInterval(const long intervalMs);
+    std::shared_ptr<GnssLocation> getLastLocation() const;
     std::shared_ptr<GnssConfiguration> mGnssConfiguration;
     std::shared_ptr<GnssPowerIndication> mGnssPowerIndication;
     std::shared_ptr<GnssMeasurementInterface> mGnssMeasurementInterface;
 
   private:
-    void reportLocation(const GnssLocation&) const;
+    void reportLocation(const GnssLocation&);
     void reportSvStatus(const std::vector<IGnssCallback::GnssSvInfo>& svInfoList) const;
+    void reportGnssStatusValue(const IGnssCallback::GnssStatusValue gnssStatusValue) const;
+    void reportNmea() const;
     std::vector<IGnssCallback::GnssSvInfo> filterBlocklistedSatellites(
             std::vector<IGnssCallback::GnssSvInfo> gnssSvInfoList) const;
-    void reportGnssStatusValue(const IGnssCallback::GnssStatusValue gnssStatusValue) const;
     std::unique_ptr<GnssLocation> getLocationFromHW();
-    void reportNmea() const;
 
     static std::shared_ptr<IGnssCallback> sGnssCallback;
 
@@ -109,6 +110,7 @@ class Gnss : public BnGnss {
     std::atomic<bool> mIsNmeaActive;
     std::atomic<bool> mFirstFixReceived;
     std::atomic<bool> mGnssMeasurementEnabled;
+    std::shared_ptr<GnssLocation> mLastLocation;
     std::thread mThread;
     ::android::hardware::gnss::common::ThreadBlocker mThreadBlocker;
 

@@ -20,6 +20,7 @@
 #include "gtest/gtest.h"
 
 #include <cutils/properties.h>
+#include <math.h>
 #include <utils/SystemClock.h>
 
 namespace android {
@@ -56,6 +57,31 @@ void Utils::checkLocationElapsedRealtime(const V1_0::GnssLocation&) {}
 template <>
 void Utils::checkLocationElapsedRealtime(const android::hardware::gnss::GnssLocation& location) {
     checkElapsedRealtime(location.elapsedRealtime);
+}
+
+void Utils::checkPositionDebug(android::hardware::gnss::IGnssDebug::DebugData data) {
+    if (data.position.valid) {
+        ASSERT_TRUE(data.position.latitudeDegrees >= -90 && data.position.latitudeDegrees <= 90);
+        ASSERT_TRUE(data.position.longitudeDegrees >= -180 &&
+                    data.position.longitudeDegrees <= 180);
+        ASSERT_TRUE(data.position.altitudeMeters >= -1000 &&  // Dead Sea: -414m
+                    data.position.altitudeMeters <= 20000);   // Mount Everest: 8850m
+        ASSERT_TRUE(data.position.speedMetersPerSec >= 0 && data.position.speedMetersPerSec <= 600);
+        ASSERT_TRUE(data.position.bearingDegrees >= -360 && data.position.bearingDegrees <= 360);
+        ASSERT_TRUE(data.position.horizontalAccuracyMeters > 0 &&
+                    data.position.horizontalAccuracyMeters <= 20000000);
+        ASSERT_TRUE(data.position.verticalAccuracyMeters > 0 &&
+                    data.position.verticalAccuracyMeters <= 20000);
+        ASSERT_TRUE(data.position.speedAccuracyMetersPerSecond > 0 &&
+                    data.position.speedAccuracyMetersPerSecond <= 500);
+        ASSERT_TRUE(data.position.bearingAccuracyDegrees > 0 &&
+                    data.position.bearingAccuracyDegrees <= 180);
+        ASSERT_TRUE(data.position.ageSeconds >= 0);
+    }
+    ASSERT_TRUE(data.time.timeEstimateMs >= 1483228800000);  // Jan 01 2017 00:00:00 GMT.
+    ASSERT_TRUE(data.time.timeUncertaintyNs > 0);
+    ASSERT_TRUE(data.time.frequencyUncertaintyNsPerSec > 0 &&
+                data.time.frequencyUncertaintyNsPerSec <= 2.0e5);  // 200 ppm
 }
 
 void Utils::checkElapsedRealtime(const ElapsedRealtime& elapsedRealtime) {
@@ -280,6 +306,17 @@ bool Utils::isAutomotiveDevice() {
     char buffer[PROPERTY_VALUE_MAX] = {0};
     property_get("ro.hardware.type", buffer, "");
     return strncmp(buffer, "automotive", PROPERTY_VALUE_MAX) == 0;
+}
+
+double Utils::distanceMeters(double lat1, double lon1, double lat2, double lon2) {
+    double R = 6378.137;  // Radius of earth in KM
+    double dLat = lat2 * M_PI / 180 - lat1 * M_PI / 180;
+    double dLon = lon2 * M_PI / 180 - lon1 * M_PI / 180;
+    double a = sin(dLat / 2) * sin(dLat / 2) +
+               cos(lat1 * M_PI / 180) * cos(lat2 * M_PI / 180) * sin(dLon / 2) * sin(dLon / 2);
+    double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    double d = R * c;
+    return d * 1000;  // meters
 }
 
 }  // namespace common

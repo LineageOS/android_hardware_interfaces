@@ -18,9 +18,14 @@
 
 #include "GnssDebug.h"
 #include <log/log.h>
+#include <utils/SystemClock.h>
+#include "Constants.h"
+#include "Gnss.h"
 #include "MockLocation.h"
 
 namespace aidl::android::hardware::gnss {
+
+using ::android::hardware::gnss::common::kMockTimestamp;
 
 ndk::ScopedAStatus GnssDebug::getDebugData(DebugData* debugData) {
     ALOGD("GnssDebug::getDebugData");
@@ -36,10 +41,94 @@ ndk::ScopedAStatus GnssDebug::getDebugData(DebugData* debugData) {
                                    .speedAccuracyMetersPerSecond = 1,
                                    .bearingAccuracyDegrees = 90,
                                    .ageSeconds = 0.99};
-    TimeDebug timeDebug = {.timeEstimateMs = 1519930775453L,
+    TimeDebug timeDebug = {.timeEstimateMs = static_cast<int64_t>(
+                                   kMockTimestamp + ::android::elapsedRealtimeNano() / 1e6),
                            .timeUncertaintyNs = 1000,
-                           .frequencyUncertaintyNsPerSec = 5.0e4};
-    std::vector<SatelliteData> satelliteDataArrayDebug = {};
+                           .frequencyUncertaintyNsPerSec = 800};
+    SatelliteData satelliteData1 = {
+            .svid = 3,
+            .constellation = GnssConstellationType::GPS,
+            .ephemerisType = SatelliteEphemerisType::EPHEMERIS,
+            .ephemerisSource = SatellitePvt::SatelliteEphemerisSource::SERVER_LONG_TERM,
+            .ephemerisHealth = SatelliteEphemerisHealth::GOOD,
+            .ephemerisAgeSeconds = 12,
+            .serverPredictionIsAvailable = true,
+            .serverPredictionAgeSeconds = 30};
+    SatelliteData satelliteData2 = {
+            .svid = 5,
+            .constellation = GnssConstellationType::GPS,
+            .ephemerisType = SatelliteEphemerisType::EPHEMERIS,
+            .ephemerisSource = SatellitePvt::SatelliteEphemerisSource::SERVER_LONG_TERM,
+            .ephemerisHealth = SatelliteEphemerisHealth::GOOD,
+            .ephemerisAgeSeconds = 12,
+            .serverPredictionIsAvailable = true,
+            .serverPredictionAgeSeconds = 30};
+    SatelliteData satelliteData3 = {
+            .svid = 17,
+            .constellation = GnssConstellationType::GPS,
+            .ephemerisType = SatelliteEphemerisType::EPHEMERIS,
+            .ephemerisSource = SatellitePvt::SatelliteEphemerisSource::SERVER_LONG_TERM,
+            .ephemerisHealth = SatelliteEphemerisHealth::GOOD,
+            .ephemerisAgeSeconds = 12,
+            .serverPredictionIsAvailable = true,
+            .serverPredictionAgeSeconds = 30};
+    SatelliteData satelliteData4 = {
+            .svid = 26,
+            .constellation = GnssConstellationType::GPS,
+            .ephemerisType = SatelliteEphemerisType::EPHEMERIS,
+            .ephemerisSource = SatellitePvt::SatelliteEphemerisSource::SERVER_LONG_TERM,
+            .ephemerisHealth = SatelliteEphemerisHealth::GOOD,
+            .ephemerisAgeSeconds = 12,
+            .serverPredictionIsAvailable = true,
+            .serverPredictionAgeSeconds = 30};
+    SatelliteData satelliteData5 = {
+            .svid = 5,
+            .constellation = GnssConstellationType::GLONASS,
+            .ephemerisType = SatelliteEphemerisType::EPHEMERIS,
+            .ephemerisSource = SatellitePvt::SatelliteEphemerisSource::SERVER_LONG_TERM,
+            .ephemerisHealth = SatelliteEphemerisHealth::GOOD,
+            .ephemerisAgeSeconds = 12,
+            .serverPredictionIsAvailable = true,
+            .serverPredictionAgeSeconds = 30};
+    SatelliteData satelliteData6 = {
+            .svid = 17,
+            .constellation = GnssConstellationType::GLONASS,
+            .ephemerisType = SatelliteEphemerisType::EPHEMERIS,
+            .ephemerisSource = SatellitePvt::SatelliteEphemerisSource::SERVER_LONG_TERM,
+            .ephemerisHealth = SatelliteEphemerisHealth::GOOD,
+            .ephemerisAgeSeconds = 12,
+            .serverPredictionIsAvailable = true,
+            .serverPredictionAgeSeconds = 30};
+    SatelliteData satelliteData7 = {
+            .svid = 18,
+            .constellation = GnssConstellationType::GLONASS,
+            .ephemerisType = SatelliteEphemerisType::EPHEMERIS,
+            .ephemerisSource = SatellitePvt::SatelliteEphemerisSource::SERVER_LONG_TERM,
+            .ephemerisHealth = SatelliteEphemerisHealth::GOOD,
+            .ephemerisAgeSeconds = 12,
+            .serverPredictionIsAvailable = true,
+            .serverPredictionAgeSeconds = 30};
+    SatelliteData satelliteData8 = {
+            .svid = 10,
+            .constellation = GnssConstellationType::GLONASS,
+            .ephemerisType = SatelliteEphemerisType::EPHEMERIS,
+            .ephemerisSource = SatellitePvt::SatelliteEphemerisSource::SERVER_LONG_TERM,
+            .ephemerisHealth = SatelliteEphemerisHealth::GOOD,
+            .ephemerisAgeSeconds = 12,
+            .serverPredictionIsAvailable = true,
+            .serverPredictionAgeSeconds = 30};
+    SatelliteData satelliteData9 = {
+            .svid = 3,
+            .constellation = GnssConstellationType::IRNSS,
+            .ephemerisType = SatelliteEphemerisType::EPHEMERIS,
+            .ephemerisSource = SatellitePvt::SatelliteEphemerisSource::SERVER_LONG_TERM,
+            .ephemerisHealth = SatelliteEphemerisHealth::GOOD,
+            .ephemerisAgeSeconds = 12,
+            .serverPredictionIsAvailable = true,
+            .serverPredictionAgeSeconds = 30};
+    std::vector<SatelliteData> satelliteDataArrayDebug = {
+            satelliteData1, satelliteData2, satelliteData3, satelliteData4, satelliteData5,
+            satelliteData6, satelliteData7, satelliteData8, satelliteData9};
     debugData->position = positionDebug;
     debugData->time = timeDebug;
     debugData->satelliteDataArray = satelliteDataArrayDebug;
