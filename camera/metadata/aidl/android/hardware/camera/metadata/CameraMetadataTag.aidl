@@ -580,25 +580,25 @@ enum CameraMetadataTag {
     /**
      * android.flash.singleStrengthMaxLevel [static, int32, public]
      *
-     * <p>Maximum flash brightness level for manual flash control in SINGLE mode.</p>
+     * <p>Maximum flash brightness level for manual flash control in <code>SINGLE</code> mode.</p>
      */
     ANDROID_FLASH_SINGLE_STRENGTH_MAX_LEVEL,
     /**
      * android.flash.singleStrengthDefaultLevel [static, int32, public]
      *
-     * <p>Default flash brightness level for manual flash control in SINGLE mode.</p>
+     * <p>Default flash brightness level for manual flash control in <code>SINGLE</code> mode.</p>
      */
     ANDROID_FLASH_SINGLE_STRENGTH_DEFAULT_LEVEL,
     /**
      * android.flash.torchStrengthMaxLevel [static, int32, public]
      *
-     * <p>Maximum flash brightness level for manual flash control in TORCH mode</p>
+     * <p>Maximum flash brightness level for manual flash control in <code>TORCH</code> mode</p>
      */
     ANDROID_FLASH_TORCH_STRENGTH_MAX_LEVEL,
     /**
      * android.flash.torchStrengthDefaultLevel [static, int32, public]
      *
-     * <p>Default flash brightness level for manual flash control in TORCH mode</p>
+     * <p>Default flash brightness level for manual flash control in <code>TORCH</code> mode</p>
      */
     ANDROID_FLASH_TORCH_STRENGTH_DEFAULT_LEVEL,
     /**
