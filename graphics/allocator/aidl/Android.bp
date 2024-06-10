@@ -12,7 +12,6 @@ aidl_interface {
     name: "android.hardware.graphics.allocator",
     vendor_available: true,
     double_loadable: true,
-    vndk_use_version: "2",
     srcs: ["android/hardware/graphics/allocator/*.aidl"],
     imports: [
         "android.hardware.common-V2",

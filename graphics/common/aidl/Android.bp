@@ -13,7 +13,6 @@ aidl_interface {
     host_supported: true,
     vendor_available: true,
     double_loadable: true,
-    vndk_use_version: "5",
     srcs: [
         "android/hardware/graphics/common/*.aidl",
     ],
