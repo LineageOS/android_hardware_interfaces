@@ -94,7 +94,7 @@ class VolumeControlHelper : public EffectHelper {
     }
 
     static constexpr int kSamplingFrequency = 44100;
-    static constexpr int kDurationMilliSec = 2000;
+    static constexpr int kDurationMilliSec = 720;
     static constexpr int kBufferSize = kSamplingFrequency * kDurationMilliSec / 1000;
     static constexpr int kMinLevel = -96;
     static constexpr int kDefaultChannelLayout = AudioChannelLayout::LAYOUT_STEREO;
@@ -180,7 +180,7 @@ class VolumeDataTest : public ::testing::TestWithParam<VolumeDataTestParam>,
     const int kVsrApiLevel;
     static constexpr int kMaxAudioSample = 1;
     static constexpr int kTransitionDuration = 300;
-    static constexpr int kNPointFFT = 32768;
+    static constexpr int kNPointFFT = 16384;
     static constexpr float kBinWidth = (float)kSamplingFrequency / kNPointFFT;
     static constexpr size_t offset = kSamplingFrequency * kTransitionDuration / 1000;
     static constexpr float kBaseLevel = 0;

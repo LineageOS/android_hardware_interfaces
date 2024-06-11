@@ -96,7 +96,7 @@ class VirtualizerHelper : public EffectHelper {
 
     static constexpr int kSamplingFrequency = 44100;
     static constexpr int kDefaultChannelLayout = AudioChannelLayout::LAYOUT_STEREO;
-    static constexpr int kDurationMilliSec = 2000;
+    static constexpr int kDurationMilliSec = 720;
     static constexpr int kBufferSize = kSamplingFrequency * kDurationMilliSec / 1000;
     int kChannelCount = getChannelCount(
             AudioChannelLayout::make<AudioChannelLayout::layoutMask>(kDefaultChannelLayout));

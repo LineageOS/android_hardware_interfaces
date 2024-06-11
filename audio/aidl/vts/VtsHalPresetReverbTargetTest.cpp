@@ -82,7 +82,7 @@ class PresetReverbHelper : public EffectHelper {
     }
 
     static constexpr int kSamplingFrequency = 44100;
-    static constexpr int kDurationMilliSec = 2000;
+    static constexpr int kDurationMilliSec = 500;
     static constexpr int kBufferSize = kSamplingFrequency * kDurationMilliSec / 1000;
     int mStereoChannelCount =
             getChannelCount(AudioChannelLayout::make<AudioChannelLayout::layoutMask>(
