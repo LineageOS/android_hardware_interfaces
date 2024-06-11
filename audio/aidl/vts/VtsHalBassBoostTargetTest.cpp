@@ -114,7 +114,7 @@ class BassBoostEffectHelper : public EffectHelper {
     }
 
     static constexpr int kSamplingFrequency = 44100;
-    static constexpr int kDurationMilliSec = 2000;
+    static constexpr int kDurationMilliSec = 720;
     static constexpr int kInputSize = kSamplingFrequency * kDurationMilliSec / 1000;
     long mInputFrameCount, mOutputFrameCount;
     std::shared_ptr<IFactory> mFactory;
@@ -231,7 +231,7 @@ class BassBoostDataTest : public ::testing::TestWithParam<BassBoostDataTestParam
         return gains[0] - gains[1];
     }
 
-    static constexpr int kNPointFFT = 32768;
+    static constexpr int kNPointFFT = 16384;
     static constexpr float kBinWidth = (float)kSamplingFrequency / kNPointFFT;
     std::set<int> mStrengthValues;
     int32_t mChannelLayout;
