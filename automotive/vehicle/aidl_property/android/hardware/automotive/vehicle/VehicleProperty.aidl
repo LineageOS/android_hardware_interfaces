@@ -1757,6 +1757,12 @@ enum VehicleProperty {
      * implemented. If both are available, PER_DISPLAY_BRIGHTNESS is used by
      * AAOS.
      *
+     * If this is supported, PER_DISPLAY_MAX_BRIGHTNESS must be supported to represent the max
+     * display brightness for each display. Otherwise, the max display brightness is by default 1.
+     * The VehicleAreaConfig.maxInt32Value must not be used to represent max display brightness,
+     * because maxInt32Value is defined to be the max value for all the elements inside the integer
+     * value, which includes display port and brightness. So it is not meaningful.
+     *
      * The display port uniquely identifies a physical connector on the device
      * for display output, ranging from 0 to 255.
      *
@@ -5212,6 +5218,27 @@ enum VehicleProperty {
      * @version 3
      */
     CAMERA_SERVICE_CURRENT_STATE = 0x0F4D + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL
+            + VehiclePropertyType.INT32_VEC,
+
+    /**
+     * Property to represent max brightness of the displays which are controlled separately.
+     *
+     * This is only used if PER_DISPLAY_BRIGHTNESS is supported.
+     *
+     * The display port uniquely identifies a physical connector on the device
+     * for display output, ranging from 0 to 255.
+     *
+     * int32Values[0] : display port number
+     * int32Values[1] : max brightness for display port number specified at int32Values[0]
+     * int32Values[2] : display port number
+     * int32Values[3] : max brightness for display port number specified at int32Values[2]
+     * ...
+     *
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
+     * @version 3
+     */
+    PER_DISPLAY_MAX_BRIGHTNESS = 0x0F4E + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL
             + VehiclePropertyType.INT32_VEC,
 
     /***********************************************************************************************
