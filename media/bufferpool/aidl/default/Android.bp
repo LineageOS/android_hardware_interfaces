@@ -29,6 +29,9 @@ cc_library {
     export_include_dirs: [
         "include",
     ],
+    header_libs: [
+        "libbase_headers",
+    ],
     shared_libs: [
         "libbinder_ndk",
         "libcutils",
