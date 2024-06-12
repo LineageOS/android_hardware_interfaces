@@ -2059,7 +2059,7 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationIdTags) {
         extra_tags.Authorization(TAG_ATTESTATION_ID_IMEI, imei.data(), imei.size());
     }
     string second_imei = get_imei(1);
-    if (!second_imei.empty()) {
+    if (!second_imei.empty() && isSecondImeiIdAttestationRequired()) {
         extra_tags.Authorization(TAG_ATTESTATION_ID_SECOND_IMEI, second_imei.data(),
                                  second_imei.size());
     }
@@ -2135,7 +2135,7 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationIdAllTags) {
         extra_tags.Authorization(TAG_ATTESTATION_ID_IMEI, imei.data(), imei.size());
     }
     string second_imei = get_imei(1);
-    if (!second_imei.empty()) {
+    if (!second_imei.empty() && isSecondImeiIdAttestationRequired()) {
         extra_tags.Authorization(TAG_ATTESTATION_ID_SECOND_IMEI, second_imei.data(),
                                  second_imei.size());
     }
