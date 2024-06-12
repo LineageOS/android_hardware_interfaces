@@ -67,7 +67,6 @@ cc_library_static {
     name: "android.hardware.wifi-service-lib",
     defaults: ["android.hardware.wifi-service-cppflags-defaults"],
     proprietary: true,
-    min_sdk_version: "34",
     compile_multilib: "first",
     cppflags: [
         "-Wall",
