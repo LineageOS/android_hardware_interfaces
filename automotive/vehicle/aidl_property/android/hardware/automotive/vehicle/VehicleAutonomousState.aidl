@@ -19,6 +19,9 @@ package android.hardware.automotive.vehicle;
 /**
  * Used to enumerate the various level of automation that can be expressed by the
  * VEHICLE_DRIVING_AUTOMATION_CURRENT_LEVEL property.
+ *
+ * Through the use of VehicleAreaConfig#supportedEnumValues, OEMs may specify they only support a
+ * subset of the enums that are defined here.
  */
 @VintfStability
 @Backing(type="int")

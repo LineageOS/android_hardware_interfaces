@@ -18,6 +18,9 @@ package android.hardware.automotive.vehicle;
 
 /**
  * Used by seat occupancy to enumerate the current occupancy state of the seat.
+ *
+ * Through the use of VehicleAreaConfig#supportedEnumValues, OEMs may specify they only support a
+ * subset of the enums that are defined here.
  */
 @VintfStability
 @Backing(type="int")

@@ -20,6 +20,9 @@ package android.hardware.automotive.vehicle;
  * Used by EV_STOPPING_MODE to enumerate the current state of the stopping mode.
  *
  * This enum may be extended to include more states in the future.
+ *
+ * Through the use of VehicleAreaConfig#supportedEnumValues, OEMs may specify they only support a
+ * subset of the enums that are defined here.
  */
 @VintfStability
 @Backing(type="int")

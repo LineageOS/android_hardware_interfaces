@@ -21,6 +21,9 @@ package android.hardware.automotive.vehicle;
  *
  * Most XXX_LIGHTS_STATE properties will only report ON and OFF states.  Only
  * the HEADLIGHTS_STATE property will report DAYTIME_RUNNING.
+ *
+ * Through the use of VehicleAreaConfig#supportedEnumValues, OEMs may specify they only support a
+ * subset of the enums that are defined here.
  */
 @VintfStability
 @Backing(type="int")

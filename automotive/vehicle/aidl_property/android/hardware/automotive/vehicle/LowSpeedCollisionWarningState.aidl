@@ -18,6 +18,9 @@ package android.hardware.automotive.vehicle;
 
 /**
  * Used to enumerate the state of Low Speed Collision Warning State.
+ *
+ * Through the use of VehicleAreaConfig#supportedEnumValues, OEMs may specify they only support a
+ * subset of the enums that are defined here.
  */
 @VintfStability
 @Backing(type="int")

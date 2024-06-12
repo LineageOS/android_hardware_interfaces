@@ -18,6 +18,9 @@ package android.hardware.automotive.vehicle;
 
 /**
  * Used by ELECTRONIC_TOLL_COLLECTION_CARD_TYPE.
+ *
+ * Through the use of VehicleAreaConfig#supportedEnumValues, OEMs may specify they only support a
+ * subset of the enums that are defined here.
  */
 @VintfStability
 @Backing(type="int")
