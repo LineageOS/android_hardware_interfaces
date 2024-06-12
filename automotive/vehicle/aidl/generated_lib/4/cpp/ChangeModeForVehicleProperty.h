@@ -263,6 +263,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyChangeMode> ChangeModeForVehi
         {VehicleProperty::CLUSTER_HEARTBEAT, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::VEHICLE_DRIVING_AUTOMATION_CURRENT_LEVEL, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::CAMERA_SERVICE_CURRENT_STATE, VehiclePropertyChangeMode::ON_CHANGE},
+        {VehicleProperty::PER_DISPLAY_MAX_BRIGHTNESS, VehiclePropertyChangeMode::STATIC},
         {VehicleProperty::AUTOMATIC_EMERGENCY_BRAKING_ENABLED, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::AUTOMATIC_EMERGENCY_BRAKING_STATE, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::FORWARD_COLLISION_WARNING_ENABLED, VehiclePropertyChangeMode::ON_CHANGE},

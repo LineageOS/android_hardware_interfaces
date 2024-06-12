@@ -262,6 +262,7 @@ std::unordered_map<VehicleProperty, int32_t> VersionForVehicleProperty = {
         {VehicleProperty::CLUSTER_HEARTBEAT, 3},
         {VehicleProperty::VEHICLE_DRIVING_AUTOMATION_CURRENT_LEVEL, 3},
         {VehicleProperty::CAMERA_SERVICE_CURRENT_STATE, 3},
+        {VehicleProperty::PER_DISPLAY_MAX_BRIGHTNESS, 3},
         {VehicleProperty::AUTOMATIC_EMERGENCY_BRAKING_ENABLED, 2},
         {VehicleProperty::AUTOMATIC_EMERGENCY_BRAKING_STATE, 2},
         {VehicleProperty::FORWARD_COLLISION_WARNING_ENABLED, 2},

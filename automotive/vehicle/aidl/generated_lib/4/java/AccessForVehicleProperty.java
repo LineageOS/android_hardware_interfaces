@@ -256,6 +256,7 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.CLUSTER_HEARTBEAT, VehiclePropertyAccess.WRITE),
         Map.entry(VehicleProperty.VEHICLE_DRIVING_AUTOMATION_CURRENT_LEVEL, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.CAMERA_SERVICE_CURRENT_STATE, VehiclePropertyAccess.WRITE),
+        Map.entry(VehicleProperty.PER_DISPLAY_MAX_BRIGHTNESS, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.AUTOMATIC_EMERGENCY_BRAKING_ENABLED, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.AUTOMATIC_EMERGENCY_BRAKING_STATE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.FORWARD_COLLISION_WARNING_ENABLED, VehiclePropertyAccess.READ_WRITE),
