@@ -603,42 +603,55 @@ void SensorsHidlTest::runFlushTest(const std::vector<SensorInfoType>& sensors, b
     EventCallback callback;
     getEnvironment()->registerCallback(&callback);
 
-    for (const SensorInfoType& sensor : sensors) {
-        // Configure and activate the sensor
-        batch(sensor.sensorHandle, sensor.maxDelay, 0 /* maxReportLatencyNs */);
-        activate(sensor.sensorHandle, activateSensor);
+    // 10 sensors per group
+    constexpr size_t kSensorsPerGroup = 10;
+    for (size_t sensorOffset = 0; sensorOffset < sensors.size();
+         sensorOffset += kSensorsPerGroup) {
+        std::vector<SensorInfoType> sensorGroup(
+            sensors.begin() + sensorOffset,
+            sensors.begin() +
+                std::min(sensorOffset + kSensorsPerGroup, sensors.size()));
 
-        // Flush the sensor
-        for (int32_t i = 0; i < flushCalls; i++) {
+        for (const SensorInfoType& sensor : sensorGroup) {
+            // Configure and activate the sensor
+            batch(sensor.sensorHandle, sensor.maxDelay, 0 /* maxReportLatencyNs */);
+            activate(sensor.sensorHandle, activateSensor);
+
+            // Flush the sensor
+            for (int32_t i = 0; i < flushCalls; i++) {
+                SCOPED_TRACE(::testing::Message()
+                             << "Flush " << i << "/" << flushCalls << ": "
+                             << " handle=0x" << std::hex << std::setw(8) << std::setfill('0')
+                             << sensor.sensorHandle << std::dec
+                             << " type=" << static_cast<int>(sensor.type)
+                             << " name=" << sensor.name);
+
+                Result flushResult = flush(sensor.sensorHandle);
+                EXPECT_EQ(flushResult, expectedResponse);
+            }
+        }
+
+        // Wait up to one second for the flush events
+        callback.waitForFlushEvents(sensorGroup, flushCalls,
+                                    std::chrono::milliseconds(1000) /* timeout */);
+
+        // Deactivate all sensors after waiting for flush events so pending flush events are not
+        // abandoned by the HAL.
+        for (const SensorInfoType& sensor : sensorGroup) {
+            activate(sensor.sensorHandle, false);
+        }
+
+        // Check that the correct number of flushes are present for each sensor
+        for (const SensorInfoType& sensor : sensorGroup) {
             SCOPED_TRACE(::testing::Message()
-                         << "Flush " << i << "/" << flushCalls << ": "
                          << " handle=0x" << std::hex << std::setw(8) << std::setfill('0')
                          << sensor.sensorHandle << std::dec
-                         << " type=" << static_cast<int>(sensor.type) << " name=" << sensor.name);
-
-            Result flushResult = flush(sensor.sensorHandle);
-            EXPECT_EQ(flushResult, expectedResponse);
+                         << " type=" << static_cast<int>(sensor.type)
+                         << " name=" << sensor.name);
+            ASSERT_EQ(callback.getFlushCount(sensor.sensorHandle), expectedFlushCount);
         }
     }
-
-    // Wait up to one second for the flush events
-    callback.waitForFlushEvents(sensors, flushCalls, std::chrono::milliseconds(1000) /* timeout */);
-
-    // Deactivate all sensors after waiting for flush events so pending flush events are not
-    // abandoned by the HAL.
-    for (const SensorInfoType& sensor : sensors) {
-        activate(sensor.sensorHandle, false);
-    }
     getEnvironment()->unregisterCallback();
-
-    // Check that the correct number of flushes are present for each sensor
-    for (const SensorInfoType& sensor : sensors) {
-        SCOPED_TRACE(::testing::Message()
-                     << " handle=0x" << std::hex << std::setw(8) << std::setfill('0')
-                     << sensor.sensorHandle << std::dec << " type=" << static_cast<int>(sensor.type)
-                     << " name=" << sensor.name);
-        ASSERT_EQ(callback.getFlushCount(sensor.sensorHandle), expectedFlushCount);
-    }
 }
 
 TEST_P(SensorsHidlTest, FlushSensor) {

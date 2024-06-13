@@ -18,6 +18,9 @@ package android.hardware.automotive.vehicle;
 
 /**
  * Bit flags for fan direction
+ *
+ * Through the use of VehicleAreaConfig#supportedEnumValues, OEMs may specify they only support a
+ * subset of the enums that are defined here.
  */
 @VintfStability
 @Backing(type="int")

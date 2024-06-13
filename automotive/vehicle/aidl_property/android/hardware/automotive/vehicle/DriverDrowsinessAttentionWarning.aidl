@@ -19,6 +19,9 @@ package android.hardware.automotive.vehicle;
 /**
  * Used to enumerate the current warning state of the driver drowsiness and attention monitoring
  * system.
+ *
+ * Through the use of VehicleAreaConfig#supportedEnumValues, OEMs may specify they only support a
+ * subset of the enums that are defined here.
  */
 @VintfStability
 @Backing(type="int")

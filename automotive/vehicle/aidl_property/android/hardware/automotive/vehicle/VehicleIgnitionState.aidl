@@ -16,6 +16,12 @@
 
 package android.hardware.automotive.vehicle;
 
+/**
+ * Used to enumerate the different states the ignition of the vehicle can be in.
+ *
+ * Through the use of VehicleAreaConfig#supportedEnumValues, OEMs may specify they only support a
+ * subset of the enums that are defined here.
+ */
 @VintfStability
 @Backing(type="int")
 enum VehicleIgnitionState {

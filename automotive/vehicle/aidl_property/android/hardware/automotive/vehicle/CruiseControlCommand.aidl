@@ -20,6 +20,9 @@ package android.hardware.automotive.vehicle;
  * Used to enumerate the Cruise Control (CC) commands.
  *
  * This enum could be extended in future releases to include additional feature states.
+ *
+ * Through the use of VehicleAreaConfig#supportedEnumValues, OEMs may specify they only support a
+ * subset of the enums that are defined here.
  */
 @VintfStability
 @Backing(type="int")
