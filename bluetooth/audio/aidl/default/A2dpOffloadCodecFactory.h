@@ -16,22 +16,26 @@
 
 #pragma once
 
+#include <aidl/android/hardware/bluetooth/audio/A2dpConfiguration.h>
+#include <aidl/android/hardware/bluetooth/audio/A2dpConfigurationHint.h>
+#include <aidl/android/hardware/bluetooth/audio/A2dpRemoteCapabilities.h>
+
+#include <memory>
+
 #include "A2dpOffloadCodec.h"
 
 namespace aidl::android::hardware::bluetooth::audio {
 
 class A2dpOffloadCodecFactory {
-  std::vector<const A2dpOffloadCodec*> ranked_codecs_;
-
-  A2dpOffloadCodecFactory();
+  std::vector<std::shared_ptr<const A2dpOffloadCodec>> ranked_codecs_;
 
  public:
   const std::string name;
-  const std::vector<const A2dpOffloadCodec*>& codecs;
+  const std::vector<std::shared_ptr<const A2dpOffloadCodec>>& codecs;
 
-  static const A2dpOffloadCodecFactory* GetInstance();
+  A2dpOffloadCodecFactory();
 
-  const A2dpOffloadCodec* GetCodec(CodecId id) const;
+  std::shared_ptr<const A2dpOffloadCodec> GetCodec(CodecId id) const;
 
   bool GetConfiguration(const std::vector<A2dpRemoteCapabilities>&,
                         const A2dpConfigurationHint& hint,

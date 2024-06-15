@@ -16,7 +16,6 @@
 
 #include <unordered_set>
 
-#include <aidl/Vintf.h>
 #define LOG_TAG "VtsHalVisualizerTest"
 #include <android-base/logging.h>
 #include <android/binder_enums.h>

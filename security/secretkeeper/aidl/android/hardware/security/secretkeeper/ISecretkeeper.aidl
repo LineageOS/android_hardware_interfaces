@@ -17,6 +17,7 @@
 package android.hardware.security.secretkeeper;
 
 import android.hardware.security.authgraph.IAuthGraphKeyExchange;
+import android.hardware.security.secretkeeper.SecretId;
 
 @VintfStability
 /**
@@ -30,19 +31,22 @@ import android.hardware.security.authgraph.IAuthGraphKeyExchange;
  * - A trusted execution environment such as ARM TrustZone.
  * - A completely separate, purpose-built and certified secure CPU.
  *
- * TODO(b/291224769): Extend the HAL interface to include:
- * 1. Dice policy operation - These allow sealing of the secrets with a class of Dice chains.
- * Typical operations are (securely) updating the dice policy sealing the Secrets above. These
- * operations are core to AntiRollback protected secrets - ie, ensuring secrets of a pVM are only
- * accessible to same or higher versions of the images.
- * 2. Maintenance API: This is required for removing the Secretkeeper entries for obsolete pVMs.
  */
 interface ISecretkeeper {
+    const int ERROR_UNKNOWN_KEY_ID = 1;
+    const int ERROR_INTERNAL_ERROR = 2;
+    const int ERROR_REQUEST_MALFORMED = 3;
+
     /**
      * Retrieve the instance of the `IAuthGraphKeyExchange` HAL that should be used for shared
-     * session key establishment.  These keys are used to perform encryption of messages as
+     * session key establishment. These keys are used to perform encryption of messages as
      * described in SecretManagement.cddl, allowing the client and Secretkeeper to have a
-     * cryptographically secure channel.
+     * cryptographically secure channel. In the key exchange protocol the client acts as P1
+     * (source) and Secretkeeper as P2 (sink). The interface returned here can be used to invoke
+     * methods on the sink.
+     *
+     * The client's identity is its DICE chain; Secretkeeper's identity is a
+     * per-boot key pair.
      */
     IAuthGraphKeyExchange getAuthGraphKe();
 
@@ -57,11 +61,11 @@ interface ISecretkeeper {
      * ProtectedRequestPacket & ProtectedResponsePacket using symmetric keys agreed between
      * the client & service. This cryptographic protection is required because the messages are
      * ferried via Android, which is allowed to be outside the TCB of clients (for example protected
-     * Virtual Machines). For this, service (& client) must implement a key exchange protocol, which
-     * is critical for establishing the secure channel.
+     * Virtual Machines). For this, service (& client) must implement the AuthGraph key exchange
+     * protocol to establish a secure channel between them.
      *
-     * If an encrypted response cannot be generated, then a service-specific Binder error using an
-     * error code from ErrorCode.aidl will be returned.
+     * If an encrypted response cannot be generated, then a service-specific Binder error using one
+     * of the ERROR_ codes above will be returned.
      *
      * Secretkeeper database should guarantee the following properties:
      *
@@ -82,4 +86,19 @@ interface ISecretkeeper {
      * @return CBOR-encoded ProtectedResponsePacket. See SecretManagement.cddl for its definition
      */
     byte[] processSecretManagementRequest(in byte[] request);
+
+    /**
+     * Delete the data corresponding to a collection of IDs.
+     *
+     * Note that unlike `processSecretManagementRequest`, the contents of this method are in
+     * plaintext, and no client authentication is required.
+     *
+     * @param Secret identifiers to delete.
+     */
+    void deleteIds(in SecretId[] ids);
+
+    /**
+     * Delete data of all clients.
+     */
+    void deleteAll();
 }

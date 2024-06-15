@@ -366,9 +366,11 @@ Filter::~Filter() {
 ::ndk::ScopedAStatus Filter::stop() {
     ALOGV("%s", __FUNCTION__);
 
-    mFilterCount -= 1;
-    if (mFilterCount == 0) {
-        mDemux->setIptvThreadRunning(false);
+    if (mFilterCount > 0) {
+        mFilterCount -= 1;
+        if (mFilterCount.load() == 0) {
+            mDemux->setIptvThreadRunning(false);
+        }
     }
 
     mFilterThreadRunning = false;

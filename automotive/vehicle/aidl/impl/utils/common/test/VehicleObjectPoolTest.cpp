@@ -267,6 +267,20 @@ TEST_F(VehicleObjectPoolTest, testObtainCopyInt32Values) {
     ASSERT_EQ(*gotValue, prop);
 }
 
+TEST_F(VehicleObjectPoolTest, testObtainCopyInt32ValuesEmptyArray) {
+    VehiclePropValue prop{
+            // INT32_VEC property.
+            .prop = toInt(VehicleProperty::INFO_FUEL_TYPE),
+            .areaId = 2,
+            .timestamp = 3,
+            .value = {.int32Values = {}},
+    };
+    auto gotValue = mValuePool->obtain(prop);
+
+    ASSERT_NE(gotValue, nullptr);
+    ASSERT_EQ(*gotValue, prop);
+}
+
 TEST_F(VehicleObjectPoolTest, testObtainCopyInt64Values) {
     VehiclePropValue prop{
             // INT64_VEC property.

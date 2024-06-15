@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.sync.frameNumber enumeration values
  * @see ANDROID_SYNC_FRAME_NUMBER
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

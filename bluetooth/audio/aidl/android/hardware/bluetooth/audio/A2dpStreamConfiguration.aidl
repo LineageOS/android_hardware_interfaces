@@ -21,7 +21,9 @@ import android.hardware.bluetooth.audio.CodecId;
 @VintfStability
 parcelable A2dpStreamConfiguration {
     /**
-     * Peer MTU (16 bits)
+     * Peer Maximum Transfer Unit (MTU), 16 bits value [Core - 3.A.5.1]
+     * It's the remote device indication of the maximum amount of data that
+     * can be received on the AVDTP Stream Channel.
      */
     int peerMtu;
 
@@ -29,6 +31,7 @@ parcelable A2dpStreamConfiguration {
      * Optional SCMS-T Content Protection header
      * that precedes audio content when enabled [A2DP - 3.2.1-2].
      * The content protection byte is defined by [Assigned Number - 6.3.2].
+     * When the content protection is not enabled, this field should be left `null`.
      */
     @nullable byte[1] cpHeaderScmst;
 

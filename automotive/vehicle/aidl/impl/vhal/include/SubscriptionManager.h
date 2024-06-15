@@ -25,6 +25,8 @@
 #include <android-base/result.h>
 #include <android-base/thread_annotations.h>
 
+#include <cmath>
+#include <limits>
 #include <mutex>
 #include <optional>
 #include <unordered_map>
@@ -39,6 +41,7 @@ namespace vehicle {
 // A structure to represent subscription config for one subscription client.
 struct SubConfig {
     float sampleRateHz;
+    float resolution;
     bool enableVur;
 };
 
@@ -47,14 +50,19 @@ class ContSubConfigs final {
   public:
     using ClientIdType = const AIBinder*;
 
-    void addClient(const ClientIdType& clientId, float sampleRateHz, bool enableVur);
+    void addClient(const ClientIdType& clientId, const SubConfig& subConfig);
     void removeClient(const ClientIdType& clientId);
     float getMaxSampleRateHz() const;
+    float getMinRequiredResolution() const;
     bool isVurEnabled() const;
-    bool isVurEnabledForClient(const ClientIdType& clientId);
+    bool isVurEnabledForClient(const ClientIdType& clientId) const;
+    float getResolutionForClient(const ClientIdType& clientId) const;
 
   private:
     float mMaxSampleRateHz = 0.;
+    // Baseline for resolution is maximum possible float. We want to sanitize to the highest
+    // requested resolution, which is the smallest float value for resolution.
+    float mMinRequiredResolution = std::numeric_limits<float>::max();
     bool mEnableVur;
     std::unordered_map<ClientIdType, SubConfig> mConfigByClient;
 
@@ -117,6 +125,9 @@ class SubscriptionManager final {
     // Checks whether the sample rate is valid.
     static bool checkSampleRateHz(float sampleRateHz);
 
+    // Checks whether the resolution is valid.
+    static bool checkResolution(float resolution);
+
   private:
     // Friend class for testing.
     friend class DefaultVehicleHalTest;
@@ -153,8 +164,8 @@ class SubscriptionManager final {
 
     VhalResult<void> addContinuousSubscriberLocked(const ClientIdType& clientId,
                                                    const PropIdAreaId& propIdAreaId,
-                                                   float sampleRateHz, bool enableVur)
-            REQUIRES(mLock);
+                                                   float sampleRateHz, float resolution,
+                                                   bool enableVur) REQUIRES(mLock);
     VhalResult<void> addOnChangeSubscriberLocked(const PropIdAreaId& propIdAreaId) REQUIRES(mLock);
     // Removes the subscription client for the continuous [propId, areaId].
     VhalResult<void> removeContinuousSubscriberLocked(const ClientIdType& clientId,

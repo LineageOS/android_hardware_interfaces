@@ -15,6 +15,7 @@
  */
 
 package {
+    default_team: "trendy_team_android_sensors",
     // See: http://go/android-license-faq
     // A large-scale-change added 'default_applicable_licenses' to import
     // all of the 'license_kinds' from "hardware_interfaces_license"
@@ -97,12 +98,5 @@ apex {
     prebuilts: [
         "sensors-default.rc", // init rc
         "sensors-default.xml", // vintf fragment
-        "android.hardware.sensor.ambient_temperature.prebuilt.xml",
-        "android.hardware.sensor.barometer.prebuilt.xml",
-        "android.hardware.sensor.gyroscope.prebuilt.xml",
-        "android.hardware.sensor.hinge_angle.prebuilt.xml",
-        "android.hardware.sensor.light.prebuilt.xml",
-        "android.hardware.sensor.proximity.prebuilt.xml",
-        "android.hardware.sensor.relative_humidity.prebuilt.xml",
     ],
 }

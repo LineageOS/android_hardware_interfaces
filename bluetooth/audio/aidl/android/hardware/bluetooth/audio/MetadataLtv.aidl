@@ -30,8 +30,9 @@ union MetadataLtv {
     parcelable StreamingAudioContexts {
         AudioContext values;
     }
-    /* This is an opaque container for passing metadata between the provider and
-     * the remote device. It must not be interpreted by the BT stack.
+    /**
+     * This is an opaque container for passing metadata between the provider and
+     * the remote device. It shall not be inspected by the BT stack.
      */
     parcelable VendorSpecific {
         int companyId;

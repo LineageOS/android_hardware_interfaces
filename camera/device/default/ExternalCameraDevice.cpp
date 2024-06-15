@@ -399,6 +399,10 @@ status_t ExternalCameraDevice::initDefaultCharsKeys(
     const uint8_t hotPixelMode = ANDROID_HOT_PIXEL_MODE_OFF;
     UPDATE(ANDROID_HOT_PIXEL_AVAILABLE_HOT_PIXEL_MODES, &hotPixelMode, 1);
 
+    // android.info
+    const uint8_t bufMgrVer = ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION_HIDL_DEVICE_3_5;
+    UPDATE(ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION, &bufMgrVer, 1);
+
     // android.jpeg
     const int32_t jpegAvailableThumbnailSizes[] = {0,   0,   176, 144, 240, 144, 256,
                                                    144, 240, 160, 256, 154, 240, 180};
@@ -492,6 +496,9 @@ status_t ExternalCameraDevice::initDefaultCharsKeys(
     // android.sync
     const int32_t maxLatency = ANDROID_SYNC_MAX_LATENCY_UNKNOWN;
     UPDATE(ANDROID_SYNC_MAX_LATENCY, &maxLatency, 1);
+
+    const uint8_t sensorReadoutTimestamp = ANDROID_SENSOR_READOUT_TIMESTAMP_NOT_SUPPORTED;
+    UPDATE(ANDROID_SENSOR_READOUT_TIMESTAMP, &sensorReadoutTimestamp, 1);
 
     /* Other sensor/RAW related keys:
      * android.sensor.info.colorFilterArrangement -> no need if we don't do RAW

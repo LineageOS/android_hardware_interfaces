@@ -32,7 +32,6 @@
 
 #include <aidl/android/hardware/audio/effect/IFactory.h>
 
-#include "AudioHalBinderServiceUtil.h"
 #include "EffectFactoryHelper.h"
 #include "TestUtils.h"
 
@@ -295,6 +294,25 @@ TEST_P(EffectFactoryTest, QueryProcess) {
     EXPECT_TRUE(std::all_of(
             processingFilteredBySource.begin(), processingFilteredBySource.end(),
             [&](const auto& proc) { return processingSet.find(proc) != processingSet.end(); }));
+}
+
+// Make sure all effect instances have same HAL version number as IFactory.
+TEST_P(EffectFactoryTest, VersionNumberForAllEffectsEqualsToIFactory) {
+    std::vector<Descriptor> descs;
+    EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, std::nullopt, &descs));
+    EXPECT_NE(descs.size(), 0UL);
+
+    std::vector<std::shared_ptr<IEffect>> effects = createWithDescs(descs);
+    int factoryVersion = 0;
+    EXPECT_IS_OK(mEffectFactory->getInterfaceVersion(&factoryVersion));
+
+    for (const auto& effect : effects) {
+        int effectVersion = 0;
+        EXPECT_NE(nullptr, effect);
+        EXPECT_IS_OK(effect->getInterfaceVersion(&effectVersion));
+        EXPECT_EQ(factoryVersion, effectVersion);
+    }
+    ASSERT_NO_FATAL_FAILURE(destroyEffects(effects));
 }
 
 INSTANTIATE_TEST_SUITE_P(EffectFactoryTest, EffectFactoryTest,

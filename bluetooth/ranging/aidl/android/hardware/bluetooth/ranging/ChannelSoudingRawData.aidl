@@ -21,6 +21,9 @@ import android.hardware.bluetooth.ranging.ModeType;
 
 /**
  * Raw ranging data of Channel Sounding.
+ * See Channel Sounding CR_PR 3.1.10 and Channel Sounding HCI Updates CR_PR 3.1.23 for details.
+ *
+ * Specification: https://www.bluetooth.com/specifications/specs/channel-sounding-cr-pr/
  */
 @VintfStability
 parcelable ChannelSoudingRawData {
@@ -28,6 +31,11 @@ parcelable ChannelSoudingRawData {
      * Procedure counter of the CS procedure.
      */
     int procedureCounter;
+    /**
+     * Frequency Compensation indicates fractional frequency
+     * offset (FFO) value of initiator, in 0.01ppm
+     */
+    int[] frequencyCompensation;
     /**
      * Indicate if the procedure aborted.
      */

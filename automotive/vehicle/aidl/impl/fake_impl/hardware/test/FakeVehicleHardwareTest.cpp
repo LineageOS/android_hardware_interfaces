@@ -506,6 +506,12 @@ TEST_F(FakeVehicleHardwareTest, testGetDefaultValues) {
             continue;
         }
 
+        if (propId == toInt(VehicleProperty::VEHICLE_IN_USE) ||
+            propId == toInt(VehicleProperty::AP_POWER_BOOTUP_REASON)) {
+            // These may be controller by an external power control unit.
+            continue;
+        }
+
         if (isGlobalProp(propId)) {
             if (config.initialValue == RawPropValues{}) {
                 addGetValueRequest(getValueRequests, expectedGetValueResults, requestId++,
@@ -2617,8 +2623,8 @@ TEST_F(FakeVehicleHardwareTest, testDumpSpecificPropertiesInvalidProp) {
     DumpResult result = getHardware()->dump(options);
     ASSERT_FALSE(result.callerShouldDumpState);
     ASSERT_NE(result.buffer, "");
-    ASSERT_THAT(result.buffer, ContainsRegex(StringPrintf("1:.*prop: %s.*\nNo property %d\n",
-                                                          prop1.c_str(), INVALID_PROP_ID)));
+    ASSERT_THAT(result.buffer, ContainsRegex(StringPrintf("1:.*prop: %s.*\nNo property INVALID\n",
+                                                          prop1.c_str())));
 }
 
 TEST_F(FakeVehicleHardwareTest, testDumpSpecificPropertiesNoArg) {
@@ -2701,8 +2707,7 @@ TEST_F(FakeVehicleHardwareTest, testDumpInjectEvent) {
             {"--inject-event", propIdStr, "-i", "1234", "-t", std::to_string(timestamp)});
 
     ASSERT_FALSE(result.callerShouldDumpState);
-    ASSERT_THAT(result.buffer,
-                ContainsRegex(StringPrintf("Event for property: %d injected", prop)));
+    ASSERT_THAT(result.buffer, ContainsRegex("Event for property: ENGINE_OIL_LEVEL injected"));
     ASSERT_TRUE(waitForChangedProperties(prop, 0, /*count=*/1, milliseconds(1000)))
             << "No changed event received for injected event from vehicle bus";
     auto events = getChangedProperties();
@@ -3442,6 +3447,14 @@ TEST_F(FakeVehicleHardwareTest, testSubscribeUnusubscribe_onChange) {
 
     ASSERT_FALSE(waitForChangedProperties(propHvac, areaId, /*count=*/1, milliseconds(100)))
             << "must not receive on change events if the propId, areaId is unsubscribed";
+}
+
+TEST_F(FakeVehicleHardwareTest, testSubscribeContinuous_rate0_mustReturnInvalidArg) {
+    int32_t propSpeed = toInt(VehicleProperty::PERF_VEHICLE_SPEED);
+    int32_t areaId = 0;
+    auto status = getHardware()->subscribe(newSubscribeOptions(propSpeed, areaId, 0));
+
+    ASSERT_EQ(status, StatusCode::INVALID_ARG);
 }
 
 TEST_F(FakeVehicleHardwareTest, testSetHvacTemperatureValueSuggestion) {

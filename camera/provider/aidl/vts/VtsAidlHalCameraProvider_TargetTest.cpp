@@ -283,6 +283,68 @@ TEST_P(CameraAidlTest, getCameraCharacteristics) {
     }
 }
 
+TEST_P(CameraAidlTest, getSessionCharacteristics) {
+    if (flags::feature_combination_query()) {
+        std::vector<std::string> cameraDeviceNames = getCameraDeviceNames(mProvider);
+
+        for (const auto& name : cameraDeviceNames) {
+            std::shared_ptr<ICameraDevice> device;
+            ALOGI("getSessionCharacteristics: Testing camera device %s", name.c_str());
+            ndk::ScopedAStatus ret = mProvider->getCameraDeviceInterface(name, &device);
+            ALOGI("getCameraDeviceInterface returns: %d:%d", ret.getExceptionCode(),
+                  ret.getServiceSpecificError());
+            ASSERT_TRUE(ret.isOk());
+            ASSERT_NE(device, nullptr);
+
+            CameraMetadata meta;
+            openEmptyDeviceSession(name, mProvider, &mSession /*out*/, &meta /*out*/,
+                                   &device /*out*/);
+
+            std::vector<AvailableStream> outputStreams;
+            camera_metadata_t* staticMeta =
+                    reinterpret_cast<camera_metadata_t*>(meta.metadata.data());
+            outputStreams.clear();
+            ASSERT_EQ(Status::OK, getAvailableOutputStreams(staticMeta, outputStreams));
+            ASSERT_NE(0u, outputStreams.size());
+
+            AvailableStream sampleStream = outputStreams[0];
+
+            int32_t streamId = 0;
+            Stream stream = {streamId,
+                             StreamType::OUTPUT,
+                             sampleStream.width,
+                             sampleStream.height,
+                             static_cast<PixelFormat>(sampleStream.format),
+                             static_cast<aidl::android::hardware::graphics::common::BufferUsage>(
+                                     GRALLOC1_CONSUMER_USAGE_VIDEO_ENCODER),
+                             Dataspace::UNKNOWN,
+                             StreamRotation::ROTATION_0,
+                             std::string(),
+                             /*bufferSize*/ 0,
+                             /*groupId*/ -1,
+                             {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT},
+                             RequestAvailableDynamicRangeProfilesMap::
+                                     ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD};
+
+            std::vector<Stream> streams = {stream};
+            StreamConfiguration config;
+            createStreamConfiguration(streams, StreamConfigurationMode::NORMAL_MODE, &config);
+
+            CameraMetadata camera_chars;
+            ret = device->getCameraCharacteristics(&camera_chars);
+            ASSERT_TRUE(ret.isOk());
+
+            CameraMetadata session_chars;
+            ret = device->getSessionCharacteristics(config, &session_chars);
+            ASSERT_TRUE(ret.isOk());
+            verifySessionCharacteristics(session_chars, camera_chars);
+        }
+    } else {
+        ALOGI("getSessionCharacteristics: Test skipped.\n");
+        GTEST_SKIP();
+    }
+}
+
 // Verify that the torch strength level can be set and retrieved successfully.
 TEST_P(CameraAidlTest, turnOnTorchWithStrengthLevel) {
     std::vector<std::string> cameraDeviceNames = getCameraDeviceNames(mProvider);
@@ -531,11 +593,7 @@ TEST_P(CameraAidlTest, constructDefaultRequestSettings) {
             }
 
             if (ret.isOk()) {
-                const camera_metadata_t* metadata = (camera_metadata_t*)rawMetadata.metadata.data();
-                size_t expectedSize = rawMetadata.metadata.size();
-                int result = validate_camera_metadata_structure(metadata, &expectedSize);
-                ASSERT_TRUE((result == 0) || (result == CAMERA_METADATA_VALIDATION_SHIFTED));
-                verifyRequestTemplate(metadata, reqTemplate);
+                validateDefaultRequestMetadata(reqTemplate, rawMetadata);
             } else {
                 ASSERT_EQ(0u, rawMetadata.metadata.size());
             }
@@ -546,24 +604,12 @@ TEST_P(CameraAidlTest, constructDefaultRequestSettings) {
                     ndk::ScopedAStatus ret2 =
                             device->constructDefaultRequestSettings(reqTemplate, &rawMetadata2);
 
-                    // TODO: Do not allow OPERATION_NOT_SUPPORTED once HAL
-                    // implementation is in place.
-                    if (static_cast<Status>(ret2.getServiceSpecificError()) !=
-                        Status::OPERATION_NOT_SUPPORTED) {
-                        ASSERT_EQ(ret.isOk(), ret2.isOk());
-                        ASSERT_EQ(ret.getStatus(), ret2.getStatus());
+                    ASSERT_EQ(ret.isOk(), ret2.isOk());
+                    ASSERT_EQ(ret.getStatus(), ret2.getStatus());
 
-                        ASSERT_EQ(rawMetadata.metadata.size(), rawMetadata2.metadata.size());
-                        if (ret2.isOk()) {
-                            const camera_metadata_t* metadata =
-                                    (camera_metadata_t*)rawMetadata2.metadata.data();
-                            size_t expectedSize = rawMetadata2.metadata.size();
-                            int result =
-                                    validate_camera_metadata_structure(metadata, &expectedSize);
-                            ASSERT_TRUE((result == 0) ||
-                                        (result == CAMERA_METADATA_VALIDATION_SHIFTED));
-                            verifyRequestTemplate(metadata, reqTemplate);
-                        }
+                    ASSERT_EQ(rawMetadata.metadata.size(), rawMetadata2.metadata.size());
+                    if (ret2.isOk()) {
+                        validateDefaultRequestMetadata(reqTemplate, rawMetadata2);
                     }
                 }
             }
@@ -656,7 +702,6 @@ TEST_P(CameraAidlTest, configureConcurrentStreamsAvailableOutputs) {
     for (const auto& cameraDeviceIds : concurrentDeviceCombinations) {
         std::vector<CameraIdAndStreamCombination> cameraIdsAndStreamCombinations;
         std::vector<CameraTestInfo> cameraTestInfos;
-        size_t i = 0;
         for (const auto& id : cameraDeviceIds.combination) {
             CameraTestInfo cti;
             auto it = idToNameMap.find(id);
@@ -707,7 +752,6 @@ TEST_P(CameraAidlTest, configureConcurrentStreamsAvailableOutputs) {
             cameraIdAndStreamCombination.cameraId = id;
             cameraIdAndStreamCombination.streamConfiguration = cti.config;
             cameraIdsAndStreamCombinations.push_back(cameraIdAndStreamCombination);
-            i++;
             cameraTestInfos.push_back(cti);
         }
         // Now verify that concurrent streams are supported
@@ -1572,7 +1616,7 @@ TEST_P(CameraAidlTest, processMultiCaptureRequestPreview) {
 
         std::vector<HalStream> halStreams;
         bool supportsPartialResults = false;
-        bool useHalBufManager = false;
+        std::set<int32_t> halBufManagedStreamIds;
         int32_t partialResultCount = 0;
         Stream previewStream;
         std::shared_ptr<DeviceCb> cb;
@@ -1580,7 +1624,7 @@ TEST_P(CameraAidlTest, processMultiCaptureRequestPreview) {
         configurePreviewStreams(
                 name, mProvider, &previewThreshold, physicalIds, &mSession, &previewStream,
                 &halStreams /*out*/, &supportsPartialResults /*out*/, &partialResultCount /*out*/,
-                &useHalBufManager /*out*/, &cb /*out*/, 0 /*streamConfigCounter*/, true);
+                &halBufManagedStreamIds /*out*/, &cb /*out*/, 0 /*streamConfigCounter*/, true);
         if (mSession == nullptr) {
             // stream combination not supported by HAL, skip test for device
             continue;
@@ -1617,7 +1661,9 @@ TEST_P(CameraAidlTest, processMultiCaptureRequestPreview) {
         size_t k = 0;
         for (const auto& halStream : halStreams) {
             buffer_handle_t buffer_handle;
-            if (useHalBufManager) {
+            bool useHalBufManagerForStream =
+                    halBufManagedStreamIds.find(halStream.id) != halBufManagedStreamIds.end();
+            if (useHalBufManagerForStream) {
                 outputBuffers[k] = {halStream.id,     /*bufferId*/ 0, NativeHandle(),
                                     BufferStatus::OK, NativeHandle(), NativeHandle()};
             } else {
@@ -1721,10 +1767,13 @@ TEST_P(CameraAidlTest, processMultiCaptureRequestPreview) {
         defaultPreviewSettings.unlock(settingsBuffer);
         filteredSettings.unlock(filteredSettingsBuffer);
 
-        if (useHalBufManager) {
-            std::vector<int32_t> streamIds(halStreams.size());
-            for (size_t i = 0; i < streamIds.size(); i++) {
-                streamIds[i] = halStreams[i].id;
+        if (halBufManagedStreamIds.size() != 0) {
+            std::vector<int32_t> streamIds;
+            for (size_t i = 0; i < halStreams.size(); i++) {
+                int32_t streamId = halStreams[i].id;
+                if (halBufManagedStreamIds.find(streamId) != halBufManagedStreamIds.end()) {
+                    streamIds.emplace_back(streamId);
+                }
             }
             verifyBuffersReturned(mSession, streamIds, cb);
         }
@@ -1788,7 +1837,7 @@ TEST_P(CameraAidlTest, processUltraHighResolutionRequest) {
 
         std::vector<HalStream> halStreams;
         bool supportsPartialResults = false;
-        bool useHalBufManager = false;
+        std::set<int32_t> halBufManagedStreamIds;
         int32_t partialResultCount = 0;
         Stream previewStream;
         std::shared_ptr<DeviceCb> cb;
@@ -1800,8 +1849,8 @@ TEST_P(CameraAidlTest, processUltraHighResolutionRequest) {
                         GRALLOC1_CONSUMER_USAGE_CPU_READ);
             previewStream.dataSpace = Dataspace::UNKNOWN;
             configureStreams(name, mProvider, format, &mSession, &previewStream, &halStreams,
-                             &supportsPartialResults, &partialResultCount, &useHalBufManager, &cb,
-                             0, /*maxResolution*/ true);
+                             &supportsPartialResults, &partialResultCount, &halBufManagedStreamIds,
+                             &cb, 0, /*maxResolution*/ true);
             ASSERT_NE(mSession, nullptr);
 
             ::aidl::android::hardware::common::fmq::MQDescriptor<
@@ -1832,7 +1881,9 @@ TEST_P(CameraAidlTest, processUltraHighResolutionRequest) {
             size_t k = 0;
             for (const auto& halStream : halStreams) {
                 buffer_handle_t buffer_handle;
-                if (useHalBufManager) {
+                bool halBufManagerUsed =
+                        halBufManagedStreamIds.find(halStream.id) != halBufManagedStreamIds.end();
+                if (halBufManagerUsed) {
                     outputBuffers[k] = {halStream.id,   0,
                                         NativeHandle(), BufferStatus::OK,
                                         NativeHandle(), NativeHandle()};
@@ -1884,10 +1935,12 @@ TEST_P(CameraAidlTest, processUltraHighResolutionRequest) {
                 ASSERT_FALSE(inflightReq->errorCodeValid);
                 ASSERT_NE(inflightReq->resultOutputBuffers.size(), 0u);
             }
-            if (useHalBufManager) {
-                std::vector<int32_t> streamIds(halStreams.size());
-                for (size_t i = 0; i < streamIds.size(); i++) {
-                    streamIds[i] = halStreams[i].id;
+            if (halBufManagedStreamIds.size()) {
+                std::vector<int32_t> streamIds;
+                for (size_t i = 0; i < halStreams.size(); i++) {
+                    if (contains(halBufManagedStreamIds, halStreams[i].id)) {
+                        streamIds.emplace_back(halStreams[i].id);
+                    }
                 }
                 verifyBuffersReturned(mSession, streamIds, cb);
             }
@@ -1949,7 +2002,7 @@ TEST_P(CameraAidlTest, process10BitDynamicRangeRequest) {
 
         std::vector<HalStream> halStreams;
         bool supportsPartialResults = false;
-        bool useHalBufManager = false;
+        std::set<int32_t> halBufManagedStreamIds;
         int32_t partialResultCount = 0;
         Stream previewStream;
         std::shared_ptr<DeviceCb> cb;
@@ -1960,7 +2013,7 @@ TEST_P(CameraAidlTest, process10BitDynamicRangeRequest) {
             previewStream.dataSpace = getDataspace(PixelFormat::IMPLEMENTATION_DEFINED);
             configureStreams(name, mProvider, PixelFormat::IMPLEMENTATION_DEFINED, &mSession,
                              &previewStream, &halStreams, &supportsPartialResults,
-                             &partialResultCount, &useHalBufManager, &cb, 0,
+                             &partialResultCount, &halBufManagedStreamIds, &cb, 0,
                              /*maxResolution*/ false, profile);
             ASSERT_NE(mSession, nullptr);
 
@@ -1999,7 +2052,7 @@ TEST_P(CameraAidlTest, process10BitDynamicRangeRequest) {
                 auto bufferId = requestId + 1; // Buffer id value 0 is not valid
                 for (const auto& halStream : halStreams) {
                     buffer_handle_t buffer_handle;
-                    if (useHalBufManager) {
+                    if (contains(halBufManagedStreamIds, halStream.id)) {
                         outputBuffers[k] = {halStream.id,   0,
                                             NativeHandle(), BufferStatus::OK,
                                             NativeHandle(), NativeHandle()};
@@ -2065,10 +2118,12 @@ TEST_P(CameraAidlTest, process10BitDynamicRangeRequest) {
                 verify10BitMetadata(mHandleImporter, *inflightReq, profile);
             }
 
-            if (useHalBufManager) {
-                std::vector<int32_t> streamIds(halStreams.size());
-                for (size_t i = 0; i < streamIds.size(); i++) {
-                    streamIds[i] = halStreams[i].id;
+            if (halBufManagedStreamIds.size() != 0) {
+                std::vector<int32_t> streamIds;
+                for (size_t i = 0; i < halStreams.size(); i++) {
+                    if (contains(halBufManagedStreamIds, halStreams[i].id)) {
+                        streamIds.emplace_back(halStreams[i].id);
+                    }
                 }
                 mSession->signalStreamFlush(streamIds, /*streamConfigCounter*/ 0);
                 cb->waitForBuffersReturned();
@@ -2400,11 +2455,11 @@ TEST_P(CameraAidlTest, switchToOffline) {
         std::vector<HalStream> halStreams;
         std::shared_ptr<DeviceCb> cb;
         int32_t jpegBufferSize;
-        bool useHalBufManager;
+        std::set<int32_t> halBufManagedStreamIds;
         configureOfflineStillStream(name, mProvider, &threshold, &mSession /*out*/, &stream /*out*/,
                                     &halStreams /*out*/, &supportsPartialResults /*out*/,
                                     &partialResultCount /*out*/, &cb /*out*/,
-                                    &jpegBufferSize /*out*/, &useHalBufManager /*out*/);
+                                    &jpegBufferSize /*out*/, &halBufManagedStreamIds /*out*/);
 
         auto ret = mSession->constructDefaultRequestSettings(RequestTemplate::STILL_CAPTURE,
                                                              &settings);
@@ -2440,7 +2495,7 @@ TEST_P(CameraAidlTest, switchToOffline) {
             StreamBuffer& outputBuffer = outputBuffers[0];
 
             std::unique_lock<std::mutex> l(mLock);
-            if (useHalBufManager) {
+            if (contains(halBufManagedStreamIds, halStream.id)) {
                 outputBuffer = {halStream.id,  0, NativeHandle(), BufferStatus::OK, NativeHandle(),
                                 NativeHandle()};
             } else {

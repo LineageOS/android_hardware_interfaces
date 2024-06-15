@@ -1,0 +1,50 @@
+package {
+    default_team: "trendy_team_android_media_audio_framework",
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+apex {
+    name: "com.android.hardware.audio",
+    manifest: "manifest.json",
+    file_contexts: "file_contexts",
+    key: "com.android.hardware.key",
+    certificate: ":com.android.hardware.certificate",
+    updatable: false,
+    vendor: true,
+
+    binaries: [
+        "android.hardware.audio.service-aidl.example",
+        "android.hardware.audio.effect.service-aidl.example",
+    ],
+    native_shared_libs: [
+        "libaecsw",
+        "libagc1sw",
+        "libagc2sw",
+        "libbassboostsw",
+        "libbundleaidl",
+        "libdownmixaidl",
+        "libdynamicsprocessingaidl",
+        "libenvreverbsw",
+        "libequalizersw",
+        "libextensioneffect",
+        "libhapticgeneratoraidl",
+        "libloudnessenhanceraidl",
+        "libnssw",
+        "libpreprocessingaidl",
+        "libpresetreverbsw",
+        "libreverbaidl",
+        "libspatializersw",
+        "libvirtualizersw",
+        "libvisualizeraidl",
+        "libvolumesw",
+    ],
+    prebuilts: [
+        "android.hardware.audio.service-aidl.example.rc",
+        "android.hardware.audio.service-aidl.xml",
+    ],
+}

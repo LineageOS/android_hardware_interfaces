@@ -32,6 +32,8 @@
 #include <android-base/result.h>
 #include <android-base/stringprintf.h>
 #include <android-base/thread_annotations.h>
+#include <grpc++/grpc++.h>
+#include <wakeup_client.grpc.pb.h>
 
 #include <memory>
 #include <mutex>
@@ -187,6 +189,10 @@ class FakeVehicleHardware : public IVehicleHardware {
     // Only used during initialization.
     JsonConfigLoader mLoader;
 
+    // Only used during initialization. If not empty, points to an external grpc server that
+    // provides power controlling related properties.
+    std::string mPowerControllerServiceAddress = "";
+
     void init();
     // Stores the initial value to property store.
     void storePropInitialValue(const ConfigDeclaration& config);
@@ -240,6 +246,11 @@ class FakeVehicleHardware : public IVehicleHardware {
     VhalResult<void> synchronizeHvacTemp(int32_t hvacDualOnAreaId,
                                          std::optional<float> newTempC) const;
     std::optional<int32_t> getSyncedAreaIdIfHvacDualOn(int32_t hvacTemperatureSetAreaId) const;
+    ValueResultType getPowerPropFromExternalService(int32_t propId) const;
+    ValueResultType getVehicleInUse(
+            android::hardware::automotive::remoteaccess::PowerController::Stub* clientStub) const;
+    ValueResultType getApPowerBootupReason(
+            android::hardware::automotive::remoteaccess::PowerController::Stub* clientStub) const;
 
     std::unordered_map<int32_t, ConfigDeclaration> loadConfigDeclarations();
 
@@ -256,6 +267,7 @@ class FakeVehicleHardware : public IVehicleHardware {
     std::string dumpSaveProperty(const std::vector<std::string>& options);
     std::string dumpRestoreProperty(const std::vector<std::string>& options);
     std::string dumpInjectEvent(const std::vector<std::string>& options);
+    std::string dumpSubscriptions();
 
     template <typename T>
     android::base::Result<T> safelyParseInt(int index, const std::string& s) {
@@ -294,7 +306,7 @@ class FakeVehicleHardware : public IVehicleHardware {
     void registerRefreshLocked(PropIdAreaId propIdAreaId, VehiclePropertyStore::EventMode eventMode,
                                float sampleRateHz) REQUIRES(mLock);
     void unregisterRefreshLocked(PropIdAreaId propIdAreaId) REQUIRES(mLock);
-    void refreshTimeStampForInterval(int64_t intervalInNanos) EXCLUDES(mLock);
+    void refreshTimestampForInterval(int64_t intervalInNanos) EXCLUDES(mLock);
 
     static aidl::android::hardware::automotive::vehicle::VehiclePropValue createHwInputKeyProp(
             aidl::android::hardware::automotive::vehicle::VehicleHwKeyInputAction action,

@@ -21,6 +21,7 @@ import android.hardware.media.c2.IComponent;
 import android.hardware.media.c2.IComponentInterface;
 import android.hardware.media.c2.IComponentListener;
 import android.hardware.media.c2.IConfigurable;
+import android.hardware.media.c2.IInputSurface;
 import android.hardware.media.c2.StructDescriptor;
 
 /**
@@ -182,4 +183,16 @@ interface IComponentStore {
      *   - `Status::CORRUPTED` - Some unknown error occurred.
      */
     ComponentTraits[] listComponents();
+
+    /**
+     * Creates a persistent input surface that can be used as an input surface
+     * for any IComponent instance
+     *
+     * @return IInputSurface A persistent input surface.
+     * @throws ServiceSpecificException with one of following values:
+     *   - `Status::NO_MEMORY` - Not enough memory to complete this method.
+     *   - `Status::TIMED_OUT` - The operation cannot be finished in a timely manner.
+     *   - `Status::CORRUPTED` - Some unknown error occurred.
+     */
+    IInputSurface createInputSurface();
 }

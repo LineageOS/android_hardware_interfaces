@@ -43,6 +43,8 @@ using ::android::hardware::bluetooth::V1_0::Status;
 
 #define HCI_MINIMUM_HCI_VERSION 5  // Bluetooth Core Specification 3.0 + HS
 #define HCI_MINIMUM_LMP_VERSION 5  // Bluetooth Core Specification 3.0 + HS
+#define HCI_BLUETOOTH4_2_HCI_VERSION 8 // Bluetooth 4.2
+#define HCI_BLUETOOTH4_2_LMP_VERSION 8 // Bluetooth 4.2
 #define NUM_HCI_COMMANDS_BANDWIDTH 1000
 #define NUM_SCO_PACKETS_BANDWIDTH 1000
 #define NUM_ACL_PACKETS_BANDWIDTH 1000
@@ -52,6 +54,7 @@ using ::android::hardware::bluetooth::V1_0::Status;
 #define WAIT_FOR_ACL_DATA_TIMEOUT std::chrono::milliseconds(1000)
 #define INTERFACE_CLOSE_DELAY_MS std::chrono::milliseconds(600)
 
+// { OCF, OGF << 2, Length of command parameters}
 #define COMMAND_HCI_SHOULD_BE_UNKNOWN \
   { 0xff, 0x3B, 0x08, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 }
 #define COMMAND_HCI_READ_LOCAL_VERSION_INFORMATION \
@@ -64,6 +67,10 @@ using ::android::hardware::bluetooth::V1_0::Status;
   { 0x03, 0x0c, 0x00 }
 #define COMMAND_HCI_WRITE_LOCAL_NAME \
   { 0x13, 0x0c, 0xf8 }
+#define COMMAND_HCI_READ_LOCAL_SUPPORTED_FEATURES \
+  { 0x03, 0x04 << 2, 0x00 } // OGF=0x04, OCF=0x0003 / 7.4 INFORMATIONAL PARAMETERS
+#define COMMAND_HCI_LE_READ_LOCAL_SUPPORTED_FEATURES \
+  { 0x03, 0x08 << 2, 0x00 } // OGF=0x08, OCF=0x0003 / 7.8 LE CONTROLLER COMMANDS
 #define HCI_STATUS_SUCCESS 0x00
 #define HCI_STATUS_UNKNOWN_HCI_COMMAND 0x01
 
@@ -85,6 +92,30 @@ using ::android::hardware::bluetooth::V1_0::Status;
 #define EVENT_COMMAND_COMPLETE_FIRST_PARAM_BYTE 6
 #define EVENT_LOCAL_HCI_VERSION_BYTE EVENT_COMMAND_COMPLETE_FIRST_PARAM_BYTE
 #define EVENT_LOCAL_LMP_VERSION_BYTE EVENT_LOCAL_HCI_VERSION_BYTE + 3
+/**
+ * See Bluetooth Spec 5.4, Vol 2, Part C
+ * Link Manager Protocol, 3.3 Feature Mask Definition
+ *
+ * No  | Supported Feature           | Byte | Bit | Page
+ * ...
+ * 38  | LE Supported (Controller)   | 4    | 6   | 0
+ * ...
+ */
+#define EVENT_LOCAL_SUPPORTED_FEATURES_LE_SUPPORTED_BYTE \
+  (EVENT_COMMAND_COMPLETE_FIRST_PARAM_BYTE + 0x04)
+#define EVENT_LOCAL_SUPPORTED_FEATURES_LE_SUPPORTED_BITMASK (0x01 << 6)
+/**
+ * See Bluetooth Spec 5.4, Vol 6, Part B
+ * 4.6 Feature Support
+ *
+ * Bit | Link Layer Feature
+ * ...
+ * 5   | LE Data Packet Length Extension
+ * ...
+ */
+#define EVENT_LOCAL_LE_SUPPORTED_FEATURES_DATA_LENGTH_EXTENSION_BYTE \
+  (EVENT_COMMAND_COMPLETE_FIRST_PARAM_BYTE + 0x00)
+#define EVENT_LOCAL_LE_SUPPORTED_FEATURES_DATA_LENGTH_BITMASK (0x01 << 5)
 
 #define EVENT_CONNECTION_COMPLETE_PARAM_LENGTH 11
 #define EVENT_CONNECTION_COMPLETE_TYPE 11
@@ -209,7 +240,7 @@ class BluetoothHidlTest : public ::testing::TestWithParam<std::string> {
                          std::vector<uint16_t>& acl_handles);
   void handle_no_ops();
   void wait_for_event(bool timeout_is_error);
-  void wait_for_command_complete_event(hidl_vec<uint8_t> cmd);
+  hidl_vec<uint8_t> wait_for_command_complete_event(hidl_vec<uint8_t> cmd);
   int wait_for_completed_packets_event(uint16_t handle);
 
   class BluetoothHciDeathRecipient : public hidl_death_recipient {
@@ -338,17 +369,19 @@ void BluetoothHidlTest::wait_for_event(bool timeout_is_error = true) {
 }
 
 // Wait until a COMMAND_COMPLETE is received.
-void BluetoothHidlTest::wait_for_command_complete_event(hidl_vec<uint8_t> cmd) {
+hidl_vec<uint8_t> BluetoothHidlTest::wait_for_command_complete_event(hidl_vec<uint8_t> cmd) {
   wait_for_event();
   hidl_vec<uint8_t> event = event_queue.front();
   event_queue.pop();
 
-  ASSERT_GT(event.size(),
+  EXPECT_GT(event.size(),
             static_cast<size_t>(EVENT_COMMAND_COMPLETE_STATUS_BYTE));
-  ASSERT_EQ(EVENT_COMMAND_COMPLETE, event[EVENT_CODE_BYTE]);
-  ASSERT_EQ(cmd[0], event[EVENT_COMMAND_COMPLETE_OPCODE_LSBYTE]);
-  ASSERT_EQ(cmd[1], event[EVENT_COMMAND_COMPLETE_OPCODE_LSBYTE + 1]);
-  ASSERT_EQ(HCI_STATUS_SUCCESS, event[EVENT_COMMAND_COMPLETE_STATUS_BYTE]);
+  EXPECT_EQ(EVENT_COMMAND_COMPLETE, event[EVENT_CODE_BYTE]);
+  EXPECT_EQ(cmd[0], event[EVENT_COMMAND_COMPLETE_OPCODE_LSBYTE]);
+  EXPECT_EQ(cmd[1], event[EVENT_COMMAND_COMPLETE_OPCODE_LSBYTE + 1]);
+  EXPECT_EQ(HCI_STATUS_SUCCESS, event[EVENT_COMMAND_COMPLETE_STATUS_BYTE]);
+
+  return event;
 }
 
 // Send the command to read the controller's buffer sizes.
@@ -621,6 +654,36 @@ TEST_P(BluetoothHidlTest, HciVersionTest) {
 
   ASSERT_LE(HCI_MINIMUM_HCI_VERSION, event[EVENT_LOCAL_HCI_VERSION_BYTE]);
   ASSERT_LE(HCI_MINIMUM_LMP_VERSION, event[EVENT_LOCAL_LMP_VERSION_BYTE]);
+}
+
+/**
+ * VSR-5.3.14-007 MUST support Bluetooth 4.2 and Bluetooth LE Data Length Extension.
+ * VSR-5.3.14-008 MUST support Bluetooth Low Energy (BLE).
+ */
+// @VsrTest = 5.3.14-007
+// @VsrTest = 5.3.14-008
+TEST_P(BluetoothHidlTest, Bluetooth4_2) {
+  // Bluetooth 4.2+
+  hidl_vec<uint8_t> cmd = COMMAND_HCI_READ_LOCAL_VERSION_INFORMATION;
+  bluetooth->sendHciCommand(cmd);
+  auto event = wait_for_command_complete_event(cmd);
+
+  EXPECT_LE(HCI_BLUETOOTH4_2_HCI_VERSION, event[EVENT_LOCAL_HCI_VERSION_BYTE]);
+  EXPECT_LE(HCI_BLUETOOTH4_2_LMP_VERSION, event[EVENT_LOCAL_LMP_VERSION_BYTE]);
+
+  // BLE
+  cmd = COMMAND_HCI_READ_LOCAL_SUPPORTED_FEATURES;
+  bluetooth->sendHciCommand(cmd);
+  event = wait_for_command_complete_event(cmd);
+  EXPECT_TRUE(event[EVENT_LOCAL_SUPPORTED_FEATURES_LE_SUPPORTED_BYTE] &
+    EVENT_LOCAL_SUPPORTED_FEATURES_LE_SUPPORTED_BITMASK);
+
+  // BLE Data Length Extension
+  cmd = COMMAND_HCI_LE_READ_LOCAL_SUPPORTED_FEATURES;
+  bluetooth->sendHciCommand(cmd);
+  event = wait_for_command_complete_event(cmd);
+  EXPECT_TRUE(event[EVENT_LOCAL_LE_SUPPORTED_FEATURES_DATA_LENGTH_EXTENSION_BYTE] &
+    EVENT_LOCAL_LE_SUPPORTED_FEATURES_DATA_LENGTH_BITMASK);
 }
 
 // Send an unknown HCI command and wait for the error message.

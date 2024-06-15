@@ -64,7 +64,7 @@ class SoundDose final : public BnSoundDose, public StreamDataProcessorInterface 
 
         // ------------------------------------ MelCallback ----------------------------------------
         void onNewMelValues(const std::vector<float>& mels, size_t offset, size_t length,
-                            audio_port_handle_t deviceId) const override;
+                            audio_port_handle_t deviceId, bool attenuated) const override;
         void onMomentaryExposure(float currentMel, audio_port_handle_t deviceId) const override;
 
         SoundDose& mSoundDose;  // must outlive MelCallback, not owning

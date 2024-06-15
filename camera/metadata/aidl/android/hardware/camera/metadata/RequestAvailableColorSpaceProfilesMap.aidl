@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.request.availableColorSpaceProfilesMap enumeration values
  * @see ANDROID_REQUEST_AVAILABLE_COLOR_SPACE_PROFILES_MAP
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="long")

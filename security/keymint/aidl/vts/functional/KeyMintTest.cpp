@@ -21,6 +21,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <map>
 
 #include <openssl/curve25519.h>
 #include <openssl/ec.h>
@@ -1027,9 +1028,9 @@ TEST_P(NewKeyGenerationTest, RsaWithMissingValidity) {
          * The KeyMint V1 spec required that CERTIFICATE_NOT_{BEFORE,AFTER} be
          * specified for asymmetric key generation. However, this was not
          * checked at the time so we can only be strict about checking this for
-         * implementations of KeyMint version 2 and above.
+         * implementations of KeyMint version 3 and above.
          */
-        GTEST_SKIP() << "Validity strict since KeyMint v2";
+        GTEST_SKIP() << "Validity strict since KeyMint v3";
     }
     // Per RFC 5280 4.1.2.5, an undefined expiration (not-after) field should be set to
     // GeneralizedTime 999912312359559, which is 253402300799000 ms from Jan 1, 1970.
@@ -1063,32 +1064,54 @@ TEST_P(NewKeyGenerationTest, RsaWithMissingValidity) {
 TEST_P(NewKeyGenerationTest, RsaWithSpecifiedValidity) {
     vector<uint8_t> key_blob;
     vector<KeyCharacteristics> key_characteristics;
-    ASSERT_EQ(ErrorCode::OK,
-              GenerateKey(AuthorizationSetBuilder()
-                                  .RsaSigningKey(2048, 65537)
-                                  .Digest(Digest::NONE)
-                                  .Padding(PaddingMode::NONE)
-                                  .Authorization(TAG_CERTIFICATE_NOT_BEFORE,
-                                                 1183806000000 /* 2007-07-07T11:00:00Z */)
-                                  .Authorization(TAG_CERTIFICATE_NOT_AFTER,
-                                                 1916049600000 /* 2030-09-19T12:00:00Z */),
-                          &key_blob, &key_characteristics));
-    ASSERT_GT(cert_chain_.size(), 0);
+    vector<uint64_t> test_vector_not_before_millis = {
+            458046000000,    /* 1984-07-07T11:00:00Z */
+            1183806000000,   /* 2007-07-07T11:00:00Z */
+            1924991999000,   /* 2030-12-31T23:59:59Z */
+            3723753599000,   /* 2087-12-31T23:59:59Z */
+            26223868799000,  /* 2800-12-31T23:59:59Z */
+            45157996799000,  /* 3400-12-31T23:59:59Z */
+            60719587199000,  /* 3894-02-15T23:59:59Z */
+            95302051199000,  /* 4989-12-31T23:59:59Z */
+            86182012799000,  /* 4700-12-31T23:59:59Z */
+            111427574399000, /* 5500-12-31T23:59:59Z */
+            136988668799000, /* 6310-12-31T23:59:59Z */
+            139828895999000, /* 6400-12-31T23:59:59Z */
+            169839503999000, /* 7351-12-31T23:59:59Z */
+            171385804799000, /* 7400-12-31T23:59:59Z */
+            190320019199000, /* 8000-12-31T23:59:59Z */
+            193475692799000, /* 8100-12-31T23:59:59Z */
+            242515209599000, /* 9654-12-31T23:59:59Z */
+            250219065599000, /* 9899-02-15T23:59:59Z */
+    };
+    for (auto notBefore : test_vector_not_before_millis) {
+        uint64_t notAfter = notBefore + 378691200000 /* 12 years milliseconds*/;
+        SCOPED_TRACE(testing::Message() << "notBefore: " << notBefore << " notAfter: " << notAfter);
+        ASSERT_EQ(ErrorCode::OK,
+                  GenerateKey(AuthorizationSetBuilder()
+                                      .RsaSigningKey(2048, 65537)
+                                      .Digest(Digest::NONE)
+                                      .Padding(PaddingMode::NONE)
+                                      .Authorization(TAG_CERTIFICATE_NOT_BEFORE, notBefore)
+                                      .Authorization(TAG_CERTIFICATE_NOT_AFTER, notAfter),
+                              &key_blob, &key_characteristics));
+        ASSERT_GT(cert_chain_.size(), 0);
 
-    X509_Ptr cert(parse_cert_blob(cert_chain_[0].encodedCertificate));
-    ASSERT_TRUE(!!cert.get());
+        X509_Ptr cert(parse_cert_blob(cert_chain_[0].encodedCertificate));
+        ASSERT_TRUE(!!cert.get());
 
-    const ASN1_TIME* not_before = X509_get0_notBefore(cert.get());
-    ASSERT_NE(not_before, nullptr);
-    time_t not_before_time;
-    ASSERT_EQ(ASN1_TIME_to_time_t(not_before, &not_before_time), 1);
-    EXPECT_EQ(not_before_time, 1183806000);
+        const ASN1_TIME* not_before = X509_get0_notBefore(cert.get());
+        ASSERT_NE(not_before, nullptr);
+        int64_t not_before_time;
+        ASSERT_EQ(ASN1_TIME_to_posix(not_before, &not_before_time), 1);
+        EXPECT_EQ(not_before_time, (notBefore / 1000));
 
-    const ASN1_TIME* not_after = X509_get0_notAfter(cert.get());
-    ASSERT_NE(not_after, nullptr);
-    time_t not_after_time;
-    ASSERT_EQ(ASN1_TIME_to_time_t(not_after, &not_after_time), 1);
-    EXPECT_EQ(not_after_time, 1916049600);
+        const ASN1_TIME* not_after = X509_get0_notAfter(cert.get());
+        ASSERT_NE(not_after, nullptr);
+        int64_t not_after_time;
+        ASSERT_EQ(ASN1_TIME_to_posix(not_after, &not_after_time), 1);
+        EXPECT_EQ(not_after_time, (notAfter / 1000));
+    }
 }
 
 /*
@@ -8738,40 +8761,6 @@ TEST_P(EarlyBootKeyTest, DISABLED_FullTest) {
 
 INSTANTIATE_KEYMINT_AIDL_TEST(EarlyBootKeyTest);
 
-using UnlockedDeviceRequiredTest = KeyMintAidlTestBase;
-
-// This may be a problematic test.  It can't be run repeatedly without unlocking the device in
-// between runs... and on most test devices there are no enrolled credentials so it can't be
-// unlocked at all, meaning the only way to get the test to pass again on a properly-functioning
-// device is to reboot it.  For that reason, this is disabled by default.  It can be used as part of
-// a manual test process, which includes unlocking between runs, which is why it's included here.
-// Well, that and the fact that it's the only test we can do without also making calls into the
-// Gatekeeper HAL.  We haven't written any cross-HAL tests, and don't know what all of the
-// implications might be, so that may or may not be a solution.
-TEST_P(UnlockedDeviceRequiredTest, DISABLED_KeysBecomeUnusable) {
-    auto [aesKeyData, hmacKeyData, rsaKeyData, ecdsaKeyData] =
-            CreateTestKeys(TAG_UNLOCKED_DEVICE_REQUIRED, ErrorCode::OK);
-    KeyBlobDeleter aes_deleter(keymint_, aesKeyData.blob);
-    KeyBlobDeleter hmac_deleter(keymint_, hmacKeyData.blob);
-    KeyBlobDeleter rsa_deleter(keymint_, rsaKeyData.blob);
-    KeyBlobDeleter ecdsa_deleter(keymint_, ecdsaKeyData.blob);
-
-    EXPECT_EQ(ErrorCode::OK, UseAesKey(aesKeyData.blob));
-    EXPECT_EQ(ErrorCode::OK, UseHmacKey(hmacKeyData.blob));
-    EXPECT_EQ(ErrorCode::OK, UseRsaKey(rsaKeyData.blob));
-    EXPECT_EQ(ErrorCode::OK, UseEcdsaKey(ecdsaKeyData.blob));
-
-    ErrorCode rc = GetReturnErrorCode(
-            keyMint().deviceLocked(false /* passwordOnly */, {} /* timestampToken */));
-    ASSERT_EQ(ErrorCode::OK, rc);
-    EXPECT_EQ(ErrorCode::DEVICE_LOCKED, UseAesKey(aesKeyData.blob));
-    EXPECT_EQ(ErrorCode::DEVICE_LOCKED, UseHmacKey(hmacKeyData.blob));
-    EXPECT_EQ(ErrorCode::DEVICE_LOCKED, UseRsaKey(rsaKeyData.blob));
-    EXPECT_EQ(ErrorCode::DEVICE_LOCKED, UseEcdsaKey(ecdsaKeyData.blob));
-}
-
-INSTANTIATE_KEYMINT_AIDL_TEST(UnlockedDeviceRequiredTest);
-
 using VsrRequirementTest = KeyMintAidlTestBase;
 
 // @VsrTest = VSR-3.10-008
@@ -8794,12 +8783,97 @@ TEST_P(VsrRequirementTest, Vsr14Test) {
 
 INSTANTIATE_KEYMINT_AIDL_TEST(VsrRequirementTest);
 
+class InstanceTest : public testing::Test {
+  protected:
+    static void SetUpTestSuite() {
+        auto params = ::android::getAidlHalInstanceNames(IKeyMintDevice::descriptor);
+        for (auto& param : params) {
+            ASSERT_TRUE(AServiceManager_isDeclared(param.c_str()))
+                    << "IKeyMintDevice instance " << param << " found but not declared.";
+            ::ndk::SpAIBinder binder(AServiceManager_waitForService(param.c_str()));
+            auto keymint = IKeyMintDevice::fromBinder(binder);
+            ASSERT_NE(keymint, nullptr) << "Failed to get IKeyMintDevice instance " << param;
+
+            KeyMintHardwareInfo info;
+            ASSERT_TRUE(keymint->getHardwareInfo(&info).isOk());
+            ASSERT_EQ(keymints_.count(info.securityLevel), 0)
+                    << "There must be exactly one IKeyMintDevice with security level "
+                    << info.securityLevel;
+
+            keymints_[info.securityLevel] = std::move(keymint);
+        }
+    }
+
+    int32_t AidlVersion(shared_ptr<IKeyMintDevice> keymint) {
+        int32_t version = 0;
+        auto status = keymint->getInterfaceVersion(&version);
+        if (!status.isOk()) {
+            ADD_FAILURE() << "Failed to determine interface version";
+        }
+        return version;
+    }
+
+    static std::map<SecurityLevel, shared_ptr<IKeyMintDevice>> keymints_;
+};
+
+std::map<SecurityLevel, shared_ptr<IKeyMintDevice>> InstanceTest::keymints_;
+
+// @VsrTest = VSR-3.10-017
+// Check that the AIDL version advertised by the HAL service matches
+// the value in the package manager feature version.
+TEST_F(InstanceTest, AidlVersionInFeature) {
+    if (is_gsi_image()) {
+        GTEST_SKIP() << "Versions not required to match under GSI";
+    }
+    if (keymints_.count(SecurityLevel::TRUSTED_ENVIRONMENT) == 1) {
+        auto tee = keymints_.find(SecurityLevel::TRUSTED_ENVIRONMENT)->second;
+        int32_t tee_aidl_version = AidlVersion(tee) * 100;
+        std::optional<int32_t> tee_feature_version = keymint_feature_value(/* strongbox */ false);
+        ASSERT_TRUE(tee_feature_version.has_value());
+        EXPECT_EQ(tee_aidl_version, tee_feature_version.value());
+    }
+    if (keymints_.count(SecurityLevel::STRONGBOX) == 1) {
+        auto sb = keymints_.find(SecurityLevel::STRONGBOX)->second;
+        int32_t sb_aidl_version = AidlVersion(sb) * 100;
+        std::optional<int32_t> sb_feature_version = keymint_feature_value(/* strongbox */ true);
+        ASSERT_TRUE(sb_feature_version.has_value());
+        EXPECT_EQ(sb_aidl_version, sb_feature_version.value());
+    }
+}
+
+// @VsrTest = VSR-3.10-017
+// Check that if package manager advertises support for KeyMint of a particular version, that
+// version is present as a HAL service.
+TEST_F(InstanceTest, FeatureVersionInAidl) {
+    if (is_gsi_image()) {
+        GTEST_SKIP() << "Versions not required to match under GSI";
+    }
+    std::optional<int32_t> tee_feature_version = keymint_feature_value(/* strongbox */ false);
+    if (tee_feature_version.has_value() && tee_feature_version.value() >= 100) {
+        // Feature flag advertises the existence of KeyMint; check it is present.
+        ASSERT_EQ(keymints_.count(SecurityLevel::TRUSTED_ENVIRONMENT), 1);
+        auto tee = keymints_.find(SecurityLevel::TRUSTED_ENVIRONMENT)->second;
+        int32_t tee_aidl_version = AidlVersion(tee) * 100;
+        EXPECT_EQ(tee_aidl_version, tee_feature_version.value());
+    }
+
+    std::optional<int32_t> sb_feature_version = keymint_feature_value(/* strongbox */ true);
+    if (sb_feature_version.has_value() && sb_feature_version.value() >= 100) {
+        // Feature flag advertises the existence of KeyMint; check it is present.
+        ASSERT_EQ(keymints_.count(SecurityLevel::STRONGBOX), 1);
+        auto sb = keymints_.find(SecurityLevel::STRONGBOX)->second;
+        int32_t sb_aidl_version = AidlVersion(sb) * 100;
+        EXPECT_EQ(sb_aidl_version, sb_feature_version.value());
+    }
+}
+
 }  // namespace aidl::android::hardware::security::keymint::test
+
+using aidl::android::hardware::security::keymint::test::KeyMintAidlTestBase;
 
 int main(int argc, char** argv) {
     std::cout << "Testing ";
-    auto halInstances =
-            aidl::android::hardware::security::keymint::test::KeyMintAidlTestBase::build_params();
+    auto halInstances = KeyMintAidlTestBase::build_params();
     std::cout << "HAL instances:\n";
     for (auto& entry : halInstances) {
         std::cout << "    " << entry << '\n';
@@ -8809,12 +8883,10 @@ int main(int argc, char** argv) {
     for (int i = 1; i < argc; ++i) {
         if (argv[i][0] == '-') {
             if (std::string(argv[i]) == "--arm_deleteAllKeys") {
-                aidl::android::hardware::security::keymint::test::KeyMintAidlTestBase::
-                        arm_deleteAllKeys = true;
+                KeyMintAidlTestBase::arm_deleteAllKeys = true;
             }
             if (std::string(argv[i]) == "--dump_attestations") {
-                aidl::android::hardware::security::keymint::test::KeyMintAidlTestBase::
-                        dump_Attestations = true;
+                KeyMintAidlTestBase::dump_Attestations = true;
             } else {
                 std::cout << "NOT dumping attestations" << std::endl;
             }
@@ -8829,8 +8901,7 @@ int main(int argc, char** argv) {
                     std::cerr << "Missing argument for --keyblob_dir\n";
                     return 1;
                 }
-                aidl::android::hardware::security::keymint::test::KeyMintAidlTestBase::keyblob_dir =
-                        std::string(argv[i + 1]);
+                KeyMintAidlTestBase::keyblob_dir = std::string(argv[i + 1]);
                 ++i;
             }
             if (std::string(argv[i]) == "--expect_upgrade") {
@@ -8839,11 +8910,17 @@ int main(int argc, char** argv) {
                     return 1;
                 }
                 std::string arg = argv[i + 1];
-                aidl::android::hardware::security::keymint::test::KeyMintAidlTestBase::
-                        expect_upgrade =
-                                arg == "yes"
-                                        ? true
-                                        : (arg == "no" ? false : std::optional<bool>(std::nullopt));
+                KeyMintAidlTestBase::expect_upgrade =
+                        arg == "yes" ? true
+                                     : (arg == "no" ? false : std::optional<bool>(std::nullopt));
+                if (KeyMintAidlTestBase::expect_upgrade.has_value()) {
+                    std::cout << "expect_upgrade = "
+                              << (KeyMintAidlTestBase::expect_upgrade.value() ? "true" : "false")
+                              << std::endl;
+                } else {
+                    std::cerr << "Error! Option --expect_upgrade " << arg << " unrecognized"
+                              << std::endl;
+                }
                 ++i;
             }
         }

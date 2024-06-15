@@ -84,6 +84,26 @@ bool ShouldCheckMissingHidlHalsInFcm(const std::string& packageAndVersion) {
             "android.hardware.thermal@1.0",
             "android.hardware.thermal@1.1",
             "android.hardware.wifi.offload@1.0",
+
+            // b/279809679 for HALS deprecated in Q
+            "android.hardware.audio.effect@5.0",
+            "android.hardware.audio@5.0",
+            "android.hardware.boot@1.0",
+            "android.hardware.configstore@1.1",
+            "android.hardware.drm@1.0",
+            "android.hardware.drm@1.1",
+            "android.hardware.drm@1.2",
+            "android.hardware.dumpstate@1.0",
+            "android.hardware.health@2.0",
+            "android.hardware.light@2.0",
+            "android.hardware.power@1.0",
+            "android.hardware.power@1.1",
+            "android.hardware.power@1.2",
+            "android.hardware.power@1.3",
+            "android.hardware.vibrator@1.0",
+            "android.hardware.vibrator@1.1",
+            "android.hardware.vibrator@1.2",
+            "android.hardware.vibrator@1.3",
     };
 
     auto package_has_prefix = [&](const std::string& prefix) {

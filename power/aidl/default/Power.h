@@ -17,6 +17,7 @@
 #pragma once
 
 #include <aidl/android/hardware/power/BnPower.h>
+#include "aidl/android/hardware/power/SessionTag.h"
 
 namespace aidl {
 namespace android {
@@ -35,7 +36,14 @@ class Power : public BnPower {
                                          const std::vector<int32_t>& threadIds,
                                          int64_t durationNanos,
                                          std::shared_ptr<IPowerHintSession>* _aidl_return) override;
+    ndk::ScopedAStatus createHintSessionWithConfig(
+            int32_t tgid, int32_t uid, const std::vector<int32_t>& threadIds, int64_t durationNanos,
+            SessionTag tag, SessionConfig* config,
+            std::shared_ptr<IPowerHintSession>* _aidl_return) override;
     ndk::ScopedAStatus getHintSessionPreferredRate(int64_t* outNanoseconds) override;
+    ndk::ScopedAStatus getSessionChannel(int32_t tgid, int32_t uid,
+                                         ChannelConfig* _aidl_return) override;
+    ndk::ScopedAStatus closeSessionChannel(int32_t tgid, int32_t uid) override;
 
   private:
     std::vector<std::shared_ptr<IPowerHintSession>> mPowerHintSessions;

@@ -17,8 +17,10 @@
 package android.hardware.wifi.supplicant;
 
 import android.hardware.wifi.supplicant.P2pDeviceFoundEventParams;
+import android.hardware.wifi.supplicant.P2pGoNegotiationReqEventParams;
 import android.hardware.wifi.supplicant.P2pGroupCapabilityMask;
 import android.hardware.wifi.supplicant.P2pGroupStartedEventParams;
+import android.hardware.wifi.supplicant.P2pInvitationEventParams;
 import android.hardware.wifi.supplicant.P2pPeerClientDisconnectedEventParams;
 import android.hardware.wifi.supplicant.P2pPeerClientJoinedEventParams;
 import android.hardware.wifi.supplicant.P2pProvDiscStatusCode;
@@ -40,7 +42,7 @@ oneway interface ISupplicantP2pIfaceCallback {
     /**
      * Used to indicate that a P2P device has been found.
      * <p>
-     * @deprecated This callback is deprecated from AIDL v2, newer HAL should call
+     * @deprecated This callback is deprecated from AIDL v3, newer HAL should call
      * onDeviceFoundWithParams.
      *
      * @param srcAddress MAC address of the device found. This must either
@@ -88,6 +90,10 @@ oneway interface ISupplicantP2pIfaceCallback {
      * @param srcAddress MAC address of the device that initiated the GO
      *        negotiation request.
      * @param passwordId Type of password.
+     *
+     * <p>
+     * @deprecated This method is deprecated from AIDL v3, newer HALs should use
+     * onGoNegotiationRequestWithParams.
      */
     void onGoNegotiationRequest(in byte[] srcAddress, in WpsDevPasswordId passwordId);
 
@@ -135,6 +141,9 @@ oneway interface ISupplicantP2pIfaceCallback {
      * @param bssid Bssid of the group.
      * @param persistentNetworkId Persistent network Id of the group.
      * @param operatingFrequency Frequency on which the invitation was received.
+     * <p>
+     * @deprecated This method is deprecated from AIDL v3, newer HALs should use
+     * onInvitationReceivedWithParams.
      */
     void onInvitationReceived(in byte[] srcAddress, in byte[] goDeviceAddress, in byte[] bssid,
             in int persistentNetworkId, in int operatingFrequency);
@@ -302,4 +311,18 @@ oneway interface ISupplicantP2pIfaceCallback {
      * @param deviceFoundEventParams Parameters associated with the device found event.
      */
     void onDeviceFoundWithParams(in P2pDeviceFoundEventParams deviceFoundEventParams);
+
+    /**
+     * Used to indicate the reception of a P2P Group Owner negotiation request.
+     *
+     * @param params Parameters associated with the GO negotiation request event.
+     */
+    void onGoNegotiationRequestWithParams(in P2pGoNegotiationReqEventParams params);
+
+    /**
+     * Used to indicate the reception of a P2P invitation.
+     *
+     * @param params Parameters associated with the invitation request event.
+     */
+    void onInvitationReceivedWithParams(in P2pInvitationEventParams params);
 }

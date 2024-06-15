@@ -16,9 +16,12 @@
 
 package android.hardware.automotive.remoteaccess;
 
+import android.hardware.automotive.remoteaccess.TaskType;
+
 @VintfStability
 @JavaDerive(equals=true, toString=true)
 parcelable ScheduleInfo {
+    const int MAX_TASK_DATA_SIZE_IN_BYTES = 10240;
     /**
      * The ID used to identify the client this schedule is for. This must be one of the
      * preconfigured remote access serverless client ID defined in car service resource
@@ -31,8 +34,16 @@ parcelable ScheduleInfo {
      */
     String scheduleId;
     /**
+     * The type for the task.
+     */
+    TaskType taskType;
+    /**
      * The opaque task data that will be sent back to the remote task client app when the task is
      * executed. It is not interpreted/parsed by the Android system.
+     *
+     * <p>This is only used for {@code TaskType.CUSTOM}.
+     *
+     * <p>The data size must be less than {@link MAX_TASK_DATA_SIZE_IN_BYTES}.
      */
     byte[] taskData;
     /**

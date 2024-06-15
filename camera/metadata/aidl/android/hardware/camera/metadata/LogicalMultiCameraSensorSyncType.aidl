@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.logicalMultiCamera.sensorSyncType enumeration values
  * @see ANDROID_LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

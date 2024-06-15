@@ -29,6 +29,10 @@ class ModuleRemoteSubmix : public Module {
     // IModule interfaces
     ndk::ScopedAStatus getMicMute(bool* _aidl_return) override;
     ndk::ScopedAStatus setMicMute(bool in_mute) override;
+    ndk::ScopedAStatus setAudioPortConfig(
+            const ::aidl::android::media::audio::common::AudioPortConfig& in_requested,
+            ::aidl::android::media::audio::common::AudioPortConfig* out_suggested,
+            bool* _aidl_return) override;
 
     // Module interfaces
     ndk::ScopedAStatus createInputStream(
@@ -43,7 +47,8 @@ class ModuleRemoteSubmix : public Module {
                     offloadInfo,
             std::shared_ptr<StreamOut>* result) override;
     ndk::ScopedAStatus populateConnectedDevicePort(
-            ::aidl::android::media::audio::common::AudioPort* audioPort) override;
+            ::aidl::android::media::audio::common::AudioPort* audioPort,
+            int32_t nextPortId) override;
     ndk::ScopedAStatus checkAudioPatchEndpointsMatch(
             const std::vector<::aidl::android::media::audio::common::AudioPortConfig*>& sources,
             const std::vector<::aidl::android::media::audio::common::AudioPortConfig*>& sinks)
@@ -52,7 +57,7 @@ class ModuleRemoteSubmix : public Module {
     ndk::ScopedAStatus onMasterVolumeChanged(float volume) override;
     int32_t getNominalLatencyMs(
             const ::aidl::android::media::audio::common::AudioPortConfig& portConfig) override;
-    // TODO(b/307586684): Report proper minimum stream buffer size by overriding 'setAudioPatch'.
+    binder_status_t dump(int fd, const char** args, uint32_t numArgs) override;
 };
 
 }  // namespace aidl::android::hardware::audio::core

@@ -2010,6 +2010,13 @@ TEST_P(EvsHidlTest, CameraUseStreamConfigToDisplay) {
 
     // Test each reported camera
     for (auto&& cam: cameraInfo) {
+        bool isLogicalCam = false;
+        getPhysicalCameraIds(cam.v1.cameraId, isLogicalCam);
+        if (isLogicalCam) {
+            LOG(INFO) << "Skip a logical device " << cam.v1.cameraId;
+            continue;
+        }
+
         // Request exclusive access to the EVS display
         sp<IEvsDisplay_1_0> pDisplay = pEnumerator->openDisplay();
         ASSERT_NE(pDisplay, nullptr);

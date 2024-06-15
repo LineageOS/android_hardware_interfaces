@@ -45,8 +45,8 @@ parcelable SubscribeOptions {
      *
      * This value indicates the resolution at which continuous property updates should be sent to
      * the platform. For example, if resolution is 0.01, the subscribed property value should be
-     * rounded to two decimal places. If the incoming resolution value is not an integer multiple of
-     * 10, VHAL should return a StatusCode::INVALID_ARG.
+     * rounded to two decimal places. If the incoming resolution value is not an integer power of
+     * 10 (i.e. 10^-2, 10^-1, 10^2, etc.), VHAL should return a StatusCode::INVALID_ARG.
      */
     float resolution = 0.0f;
 

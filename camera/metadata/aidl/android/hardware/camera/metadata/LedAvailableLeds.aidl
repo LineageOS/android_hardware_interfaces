@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.led.availableLeds enumeration values
  * @see ANDROID_LED_AVAILABLE_LEDS
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

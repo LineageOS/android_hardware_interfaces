@@ -1,5 +1,5 @@
 <compatibility-matrix version="1.0" type="framework" level="7">
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.atrace</name>
         <version>1.0</version>
         <interface>
@@ -7,7 +7,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.audio</name>
         <version>6.0</version>
         <version>7.0-1</version>
@@ -16,7 +16,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.audio.effect</name>
         <version>6.0</version>
         <version>7.0</version>
@@ -25,7 +25,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
          <name>android.hardware.authsecret</name>
          <version>1</version>
          <interface>
@@ -33,7 +33,7 @@
              <instance>default</instance>
          </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.authsecret</name>
         <version>1.0</version>
         <interface>
@@ -41,7 +41,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.automotive.audiocontrol</name>
         <version>1-2</version>
         <interface>
@@ -49,7 +49,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.automotive.can</name>
         <version>1.0</version>
         <interface>
@@ -61,7 +61,7 @@
             <regex-instance>.*</regex-instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.automotive.evs</name>
         <interface>
             <name>IEvsEnumerator</name>
@@ -69,7 +69,7 @@
             <regex-instance>[a-z]+/[0-9]+</regex-instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.automotive.evs</name>
         <version>1.0-1</version>
         <interface>
@@ -78,7 +78,7 @@
             <regex-instance>[a-z]+/[0-9]+</regex-instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.automotive.occupant_awareness</name>
         <version>1</version>
         <interface>
@@ -86,14 +86,14 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.automotive.vehicle</name>
         <interface>
             <name>IVehicle</name>
             <regex-instance>.*</regex-instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.automotive.vehicle</name>
         <version>2.0</version>
         <interface>
@@ -101,7 +101,7 @@
             <regex-instance>.*</regex-instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.biometrics.face</name>
         <version>1.0</version>
         <interface>
@@ -109,7 +109,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.biometrics.face</name>
         <version>2</version>
         <interface>
@@ -117,7 +117,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.biometrics.fingerprint</name>
         <version>2.1-3</version>
         <interface>
@@ -125,7 +125,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.biometrics.fingerprint</name>
         <version>2</version>
         <interface>
@@ -133,7 +133,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.bluetooth</name>
         <version>1.0-1</version>
         <interface>
@@ -141,7 +141,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.bluetooth.audio</name>
         <version>2</version>
         <interface>
@@ -149,7 +149,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.boot</name>
         <version>1.2</version>
         <interface>
@@ -157,7 +157,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.broadcastradio</name>
         <version>1.0-1</version>
         <interface>
@@ -165,7 +165,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.broadcastradio</name>
         <version>2.0</version>
         <interface>
@@ -173,7 +173,7 @@
             <regex-instance>.*</regex-instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.camera.provider</name>
         <version>2.4-7</version>
         <interface>
@@ -181,7 +181,7 @@
             <regex-instance>[^/]+/[0-9]+</regex-instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.camera.provider</name>
         <version>1</version>
         <interface>
@@ -189,7 +189,7 @@
             <regex-instance>[^/]+/[0-9]+</regex-instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.cas</name>
         <version>1.1-2</version>
         <interface>
@@ -197,7 +197,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.confirmationui</name>
         <version>1.0</version>
         <interface>
@@ -205,14 +205,14 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.contexthub</name>
         <interface>
             <name>IContextHub</name>
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.drm</name>
         <version>1</version>
         <interface>
@@ -220,7 +220,7 @@
             <regex-instance>.*</regex-instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.drm</name>
         <version>1.3-4</version>
         <interface>
@@ -232,14 +232,14 @@
             <regex-instance>.*</regex-instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.dumpstate</name>
         <interface>
             <name>IDumpstateDevice</name>
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.gatekeeper</name>
         <version>1.0</version>
         <interface>
@@ -247,7 +247,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.gnss</name>
         <version>2.0-1</version>
         <interface>
@@ -255,7 +255,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.gnss</name>
         <version>2</version>
         <interface>
@@ -263,7 +263,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.graphics.allocator</name>
         <!-- New, non-Go devices should use 4.0 or the AIDL hal. -->
         <version>2.0</version>
@@ -274,7 +274,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.graphics.allocator</name>
         <version>1</version>
         <interface>
@@ -285,7 +285,7 @@
     <!-- Either the AIDL or the HIDL composer HAL must exist on the device.
          If the HIDL composer HAL exists, it must be at least version 2.1.
          See DeviceManifestTest.ComposerHal -->
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.graphics.composer</name>
         <version>2.1-4</version>
         <interface>
@@ -293,7 +293,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.graphics.composer3</name>
         <version>1</version>
         <interface>
@@ -301,7 +301,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.graphics.mapper</name>
         <!-- New, non-Go devices should use 4.0, tested in vts_treble_vintf_vendor_test -->
         <version>2.1</version>
@@ -312,7 +312,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.health</name>
         <version>1</version>
         <interface>
@@ -320,7 +320,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.health.storage</name>
         <version>1</version>
         <interface>
@@ -328,7 +328,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.identity</name>
         <version>1-4</version>
         <interface>
@@ -336,14 +336,14 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.net.nlinterceptor</name>
         <interface>
             <name>IInterceptor</name>
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.oemlock</name>
         <version>1</version>
         <interface>
@@ -351,7 +351,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.ir</name>
         <version>1</version>
         <interface>
@@ -359,7 +359,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.input.processor</name>
         <version>1</version>
         <interface>
@@ -367,7 +367,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.keymaster</name>
         <version>3.0</version>
         <version>4.0-1</version>
@@ -376,7 +376,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.keymaster</name>
         <version>4.0-1</version>
         <interface>
@@ -384,7 +384,7 @@
             <instance>strongbox</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.security.keymint</name>
         <version>1-2</version>
         <interface>
@@ -393,7 +393,7 @@
             <instance>strongbox</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.security.keymint</name>
         <version>1-2</version>
         <interface>
@@ -402,7 +402,7 @@
             <instance>strongbox</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.light</name>
         <version>1-2</version>
         <interface>
@@ -410,7 +410,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.media.c2</name>
         <version>1.0-2</version>
         <interface>
@@ -420,7 +420,7 @@
             <regex-instance>vendor[0-9]*_software</regex-instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.media.c2</name>
         <version>1.0</version>
         <interface>
@@ -429,7 +429,7 @@
             <instance>software</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.media.omx</name>
         <version>1.0</version>
         <interface>
@@ -441,7 +441,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.memtrack</name>
         <version>1</version>
         <interface>
@@ -449,7 +449,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.neuralnetworks</name>
         <version>1.0-3</version>
         <interface>
@@ -457,7 +457,7 @@
             <regex-instance>.*</regex-instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.neuralnetworks</name>
         <version>1-4</version>
         <interface>
@@ -465,7 +465,7 @@
             <regex-instance>.*</regex-instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.nfc</name>
         <version>1.2</version>
         <interface>
@@ -473,14 +473,14 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.nfc</name>
         <interface>
             <name>INfc</name>
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.oemlock</name>
         <version>1.0</version>
         <interface>
@@ -488,7 +488,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.power</name>
         <version>2-3</version>
         <interface>
@@ -496,14 +496,14 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.power.stats</name>
         <interface>
             <name>IPowerStats</name>
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.radio.config</name>
         <version>1</version>
         <interface>
@@ -511,7 +511,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.radio.data</name>
         <version>1</version>
         <interface>
@@ -521,7 +521,7 @@
             <instance>slot3</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.radio.messaging</name>
         <version>1</version>
         <interface>
@@ -531,7 +531,7 @@
             <instance>slot3</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.radio.modem</name>
         <version>1</version>
         <interface>
@@ -541,7 +541,7 @@
             <instance>slot3</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.radio.network</name>
         <version>1</version>
         <interface>
@@ -551,7 +551,7 @@
             <instance>slot3</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.radio.sim</name>
         <version>1</version>
         <interface>
@@ -561,7 +561,7 @@
             <instance>slot3</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.radio.voice</name>
         <version>1</version>
         <interface>
@@ -571,7 +571,7 @@
             <instance>slot3</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.radio</name>
         <version>1.2</version>
         <interface>
@@ -580,7 +580,7 @@
             <instance>slot2</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.renderscript</name>
         <version>1.0</version>
         <interface>
@@ -588,7 +588,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.rebootescrow</name>
         <version>1</version>
         <interface>
@@ -596,7 +596,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.secure_element</name>
         <version>1.0-2</version>
         <interface>
@@ -605,7 +605,7 @@
             <regex-instance>SIM[1-9][0-9]*</regex-instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.security.secureclock</name>
         <version>1</version>
         <interface>
@@ -613,7 +613,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.security.sharedsecret</name>
         <version>1</version>
         <interface>
@@ -622,14 +622,14 @@
             <instance>strongbox</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.sensors</name>
         <interface>
             <name>ISensors</name>
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.sensors</name>
         <version>1.0</version>
         <version>2.0-1</version>
@@ -638,7 +638,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.soundtrigger</name>
         <version>2.3</version>
         <interface>
@@ -646,7 +646,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
          <name>android.hardware.soundtrigger3</name>
          <version>1</version>
          <interface>
@@ -654,7 +654,7 @@
              <instance>default</instance>
          </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.tetheroffload.config</name>
         <version>1.0</version>
         <interface>
@@ -662,7 +662,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.tetheroffload.control</name>
         <version>1.1</version>
         <interface>
@@ -670,7 +670,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.thermal</name>
         <version>2.0</version>
         <interface>
@@ -678,7 +678,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.tv.cec</name>
         <version>1.0-1</version>
         <interface>
@@ -686,7 +686,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.tv.input</name>
         <version>1.0</version>
         <interface>
@@ -694,7 +694,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.tv.tuner</name>
         <version>1.0-1</version>
         <interface>
@@ -702,7 +702,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.tv.tuner</name>
         <version>1</version>
         <interface>
@@ -710,7 +710,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.usb</name>
         <version>1.0-3</version>
         <interface>
@@ -718,14 +718,14 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.usb</name>
         <interface>
             <name>IUsb</name>
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.usb.gadget</name>
         <version>1.0-2</version>
         <interface>
@@ -733,7 +733,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.vibrator</name>
         <version>1-2</version>
         <interface>
@@ -741,7 +741,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.vibrator</name>
         <version>1-2</version>
         <interface>
@@ -749,7 +749,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.weaver</name>
         <version>1.0</version>
         <interface>
@@ -757,7 +757,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.weaver</name>
         <version>1</version>
         <interface>
@@ -765,7 +765,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl">
         <name>android.hardware.wifi</name>
         <version>1.3-6</version>
         <interface>
@@ -773,7 +773,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.uwb</name>
         <version>1</version>
         <interface>
@@ -781,7 +781,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.wifi.hostapd</name>
         <version>1</version>
         <interface>
@@ -789,7 +789,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl">
         <name>android.hardware.wifi.supplicant</name>
         <interface>
             <name>ISupplicant</name>

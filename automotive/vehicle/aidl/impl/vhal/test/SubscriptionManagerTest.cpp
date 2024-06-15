@@ -520,6 +520,14 @@ TEST_F(SubscriptionManagerTest, testCheckSampleRateHzInvalidZero) {
     ASSERT_FALSE(SubscriptionManager::checkSampleRateHz(0));
 }
 
+TEST_F(SubscriptionManagerTest, testCheckResolutionValid) {
+    ASSERT_TRUE(SubscriptionManager::checkResolution(1.0));
+}
+
+TEST_F(SubscriptionManagerTest, testCheckResolutionInvalid) {
+    ASSERT_FALSE(SubscriptionManager::checkResolution(2.0));
+}
+
 TEST_F(SubscriptionManagerTest, testSubscribe_enableVur) {
     std::vector<SubscribeOptions> options = {{
             .propId = 0,
@@ -639,6 +647,102 @@ TEST_F(SubscriptionManagerTest, testSubscribe_enableVur_filterUnchangedEvents) {
             << "Must not filter out property events if VUR is not enabled";
     ASSERT_TRUE(clients.find(client2) == clients.end())
             << "Must filter out property events if VUR is enabled";
+}
+
+TEST_F(SubscriptionManagerTest, testSubscribe_enableVur_filterUnchangedEvents_withResolution) {
+    SpAIBinder binder1 = ndk::SharedRefBase::make<PropertyCallback>()->asBinder();
+    std::shared_ptr<IVehicleCallback> client1 = IVehicleCallback::fromBinder(binder1);
+    SpAIBinder binder2 = ndk::SharedRefBase::make<PropertyCallback>()->asBinder();
+    std::shared_ptr<IVehicleCallback> client2 = IVehicleCallback::fromBinder(binder2);
+    SubscribeOptions client1Option = {
+            .propId = 0,
+            .areaIds = {0},
+            .sampleRate = 10.0,
+            .resolution = 0.01,
+            .enableVariableUpdateRate = false,
+    };
+    auto result = getManager()->subscribe(client1, {client1Option}, true);
+    ASSERT_TRUE(result.ok()) << "failed to subscribe: " << result.error().message();
+
+    ASSERT_THAT(getHardware()->getSubscribeOptions(), UnorderedElementsAre(client1Option));
+
+    getHardware()->clearSubscribeOptions();
+    SubscribeOptions client2Option = {
+            .propId = 0,
+            .areaIds = {0, 1},
+            .sampleRate = 20.0,
+            .resolution = 0.1,
+            .enableVariableUpdateRate = true,
+    };
+
+    result = getManager()->subscribe(client2, {client2Option}, true);
+    ASSERT_TRUE(result.ok()) << "failed to subscribe: " << result.error().message();
+
+    ASSERT_THAT(getHardware()->getSubscribeOptions(),
+                UnorderedElementsAre(
+                        SubscribeOptions{
+                                .propId = 0,
+                                .areaIds = {0},
+                                .sampleRate = 20.0,
+                                .resolution = 0.01,
+                                // This is enabled for client2, but disabled for client1.
+                                .enableVariableUpdateRate = false,
+                        },
+                        SubscribeOptions{
+                                .propId = 0,
+                                .areaIds = {1},
+                                .sampleRate = 20.0,
+                                .resolution = 0.1,
+                                .enableVariableUpdateRate = true,
+                        }));
+
+    std::vector<VehiclePropValue> propertyEvents = {{
+                                                            .prop = 0,
+                                                            .areaId = 0,
+                                                            .value = {.floatValues = {1.0}},
+                                                            .timestamp = 1,
+                                                    },
+                                                    {
+                                                            .prop = 0,
+                                                            .areaId = 1,
+                                                            .value = {.floatValues = {1.0}},
+                                                            .timestamp = 1,
+                                                    }};
+    auto clients =
+            getManager()->getSubscribedClients(std::vector<VehiclePropValue>(propertyEvents));
+
+    ASSERT_THAT(clients[client1], UnorderedElementsAre(propertyEvents[0]));
+    ASSERT_THAT(clients[client2], UnorderedElementsAre(propertyEvents[0], propertyEvents[1]));
+
+    clients = getManager()->getSubscribedClients({{
+            .prop = 0,
+            .areaId = 0,
+            .value = {.floatValues = {1.01}},
+            .timestamp = 2,
+    }});
+
+    ASSERT_FALSE(clients.find(client1) == clients.end())
+            << "Must not filter out property events if VUR is not enabled";
+    ASSERT_TRUE(clients.find(client2) == clients.end())
+            << "Must filter out property events if VUR is enabled and change is too small";
+    ASSERT_TRUE(abs(clients[client1][0].value.floatValues[0] - 1.01) < 0.0000001)
+            << "Expected property value == 1.01, instead got "
+            << clients[client1][0].value.floatValues[0];
+
+    clients = getManager()->getSubscribedClients({{
+            .prop = 0,
+            .areaId = 1,
+            .value = {.floatValues = {1.06}},
+            .timestamp = 3,
+    }});
+
+    ASSERT_TRUE(clients.find(client1) == clients.end())
+            << "Must not get property events for an areaId that the client hasn't subscribed to";
+    ASSERT_FALSE(clients.find(client2) == clients.end())
+            << "Must get property events significant changes";
+    ASSERT_TRUE(abs(clients[client2][0].value.floatValues[0] - 1.1) < 0.0000001)
+            << "Expected property value == 1.1, instead got "
+            << clients[client2][0].value.floatValues[0];
 }
 
 TEST_F(SubscriptionManagerTest, testSubscribe_enableVur_mustNotFilterStatusChange) {

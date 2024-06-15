@@ -13,6 +13,7 @@
 // limitations under the License.
 
 package {
+    default_team: "trendy_team_virtualization",
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
@@ -24,10 +25,11 @@ aidl_interface {
         "android.hardware.security.authgraph-V1",
     ],
     stability: "vintf",
-    frozen: false,
+    frozen: true,
     backend: {
         java: {
-            enabled: false,
+            enabled: true,
+            platform_apis: true,
         },
         ndk: {
             enabled: true,
@@ -40,6 +42,13 @@ aidl_interface {
             ],
         },
     },
+    versions_with_info: [
+        {
+            version: "1",
+            imports: ["android.hardware.security.authgraph-V1"],
+        },
+    ],
+
 }
 
 // cc_defaults that includes the latest Secretkeeper AIDL library.

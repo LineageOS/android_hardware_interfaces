@@ -1,1 +1,4 @@
 .vscode/
+
+# Vim temporary files
+**/*.swp

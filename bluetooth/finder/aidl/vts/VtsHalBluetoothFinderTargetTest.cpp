@@ -18,6 +18,7 @@
 #include <aidl/Vintf.h>
 #include <aidl/android/hardware/bluetooth/finder/IBluetoothFinder.h>
 #include <android-base/logging.h>
+#include <android-base/properties.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
 #include <binder/IServiceManager.h>
@@ -69,6 +70,12 @@ ScopedAStatus BluetoothFinderTest::setPoweredOffFinderMode(bool enable) {
 
 ScopedAStatus BluetoothFinderTest::getPoweredOffFinderMode(bool* status) {
   return bluetooth_finder->getPoweredOffFinderMode(status);
+}
+
+TEST_P(BluetoothFinderTest, PropertyIsSet) {
+  ASSERT_EQ(
+      android::base::GetProperty("ro.bluetooth.finder.supported", "false"),
+      "true");
 }
 
 TEST_P(BluetoothFinderTest, SendEidsSingle) {

@@ -89,12 +89,12 @@ interface ICameraDeviceSession {
      * with processCaptureResult (and its respective releaseFence has been
      * signaled) the framework may free or reuse it at any time.
      *
-     * This method wil only be called by the framework if
+     * This method must only be called by the framework if
      * ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION is either not advertised or is
      * ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION_AIDL. If the value of
      * ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION is
      * ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION_SESSION_CONFIGURABLE, configureStreamsV2
-     * will be called instead.
+     * must be called instead.
      *
      * ------------------------------------------------------------------------
      *

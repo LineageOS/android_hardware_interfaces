@@ -1,0 +1,28 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+rust_binary {
+    name: "android.hardware.bluetooth.lmp_event-service.default",
+    relative_install_path: "hw",
+    init_rc: ["lmp_event-default.rc"],
+    vintf_fragments: [":manifest_android.hardware.bluetooth.lmp_event-service.default.xml"],
+    vendor: true,
+    rustlibs: [
+        "liblogger",
+        "liblog_rust",
+        "libbinder_rs",
+        "android.hardware.bluetooth.lmp_event-V1-rust",
+    ],
+    srcs: [ "src/main.rs" ],
+}
+
+filegroup {
+    name: "manifest_android.hardware.bluetooth.lmp_event-service.default.xml",
+    srcs: [ "lmp_event-default.xml" ],
+}

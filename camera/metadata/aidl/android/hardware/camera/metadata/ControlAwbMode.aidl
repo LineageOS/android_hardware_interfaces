@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.control.awbMode enumeration values
  * @see ANDROID_CONTROL_AWB_MODE
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

@@ -22,3 +22,8 @@ ndk::ScopedAStatus RadioConfigIndication::simSlotsStatusChanged(
         RadioIndicationType /*type*/, const std::vector<SimSlotStatus>& /*slotStatus*/) {
     return ndk::ScopedAStatus::ok();
 }
+
+ndk::ScopedAStatus RadioConfigIndication::onSimultaneousCallingSupportChanged(
+        const std::vector<int32_t>& /*enabledLogicalSlots*/) {
+    return ndk::ScopedAStatus::ok();
+}

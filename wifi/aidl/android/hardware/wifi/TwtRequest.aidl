@@ -28,17 +28,23 @@ parcelable TwtRequest {
     /**
      * Minimum TWT wake duration in microseconds.
      */
-    int minWakeDurationMicros;
+    int minWakeDurationUs;
     /**
      * Maximum TWT wake duration in microseconds.
+     *
+     * As per IEEE 802.11ax spec, section 9.4.2.199 TWT element, the maximum wake duration is
+     * 65280 microseconds.
      */
-    int maxWakeDurationMicros;
+    int maxWakeDurationUs;
     /**
      * Minimum TWT wake interval in microseconds.
      */
-    int minWakeIntervalMicros;
+    long minWakeIntervalUs;
     /**
      * Maximum TWT wake interval in microseconds.
+     *
+     * As per IEEE 802.11ax spec, section 9.4.2.199 TWT element, the maximum wake interval is
+     * 65535 * 2^31 microseconds.
      */
-    int maxWakeIntervalMicros;
+    long maxWakeIntervalUs;
 }

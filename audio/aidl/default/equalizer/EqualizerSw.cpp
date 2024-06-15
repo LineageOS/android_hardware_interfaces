@@ -198,10 +198,6 @@ std::shared_ptr<EffectContext> EqualizerSw::createContext(const Parameter::Commo
     return mContext;
 }
 
-std::shared_ptr<EffectContext> EqualizerSw::getContext() {
-    return mContext;
-}
-
 RetCode EqualizerSw::releaseContext() {
     if (mContext) {
         mContext.reset();

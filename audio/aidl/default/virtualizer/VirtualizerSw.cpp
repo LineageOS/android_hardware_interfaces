@@ -203,10 +203,6 @@ std::shared_ptr<EffectContext> VirtualizerSw::createContext(const Parameter::Com
     return mContext;
 }
 
-std::shared_ptr<EffectContext> VirtualizerSw::getContext() {
-    return mContext;
-}
-
 RetCode VirtualizerSw::releaseContext() {
     if (mContext) {
         mContext.reset();

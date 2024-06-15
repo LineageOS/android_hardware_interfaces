@@ -13,6 +13,7 @@
 // limitations under the License.
 
 package {
+    default_team: "trendy_team_android_media_codec_framework",
     // See: http://go/android-license-faq
     // A large-scale-change added 'default_applicable_licenses' to import
     // all of the 'license_kinds' from "hardware_interfaces_license"
@@ -26,6 +27,9 @@ aidl_interface {
     vendor_available: true,
     double_loadable: true,
     srcs: ["android/hardware/media/bufferpool2/*.aidl"],
+    headers: [
+        "HardwareBuffer_aidl",
+    ],
     imports: [
         "android.hardware.common-V2",
         "android.hardware.common.fmq-V1",
@@ -44,10 +48,13 @@ aidl_interface {
                 "//apex_available:platform",
                 "com.android.media.swcodec",
             ],
+            additional_shared_libraries: [
+                "libnativewindow",
+            ],
             min_sdk_version: "29",
         },
         rust: {
-            enabled: true,
+            enabled: false,
         },
     },
     versions_with_info: [
@@ -58,6 +65,14 @@ aidl_interface {
                 "android.hardware.common.fmq-V1",
             ],
         },
+        {
+            version: "2",
+            imports: [
+                "android.hardware.common-V2",
+                "android.hardware.common.fmq-V1",
+            ],
+        },
+
     ],
     frozen: true,
 

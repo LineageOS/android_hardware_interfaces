@@ -21,6 +21,10 @@ import android.hardware.common.NativeHandle;
 import android.hardware.media.c2.IComponentInterface;
 import android.hardware.media.c2.IConfigurable;
 import android.hardware.media.c2.IGraphicBufferAllocator;
+import android.hardware.media.c2.IInputSink;
+import android.hardware.media.c2.IInputSurface;
+import android.hardware.media.c2.IInputSurfaceConnection;
+import android.hardware.media.c2.IPooledGraphicBufferAllocator;
 import android.hardware.media.c2.WorkBundle;
 import android.os.ParcelFileDescriptor;
 
@@ -54,20 +58,36 @@ interface IComponent {
      * graphic blocks. the waitable fd is used to create a specific type of
      * C2Fence which can be used for waiting until to allocate is not blocked.
      */
-    parcelable C2AidlGbAllocator {
-        IGraphicBufferAllocator igba;
+    parcelable GbAllocator {
         ParcelFileDescriptor waitableFd;
+        IGraphicBufferAllocator igba;
     }
+
+    /**
+     * C2AIDL allocator interface based on media.bufferpool2 along with a waitable fd.
+     *
+     * The interface is used from a specific type of C2BlockPool to allocate
+     * graphic blocks. the waitable fd is used to create a specific type of
+     * C2Fence which can be used for waiting until to allocate is not blocked.
+     * receiverId is id of receiver IConnection of media.bufferpool2.
+     */
+    parcelable PooledGbAllocator {
+        ParcelFileDescriptor waitableFd;
+        long receiverId;
+        IPooledGraphicBufferAllocator ipgba;
+    }
+
 
     /**
      * Allocator for C2BlockPool.
      *
      * C2BlockPool will use a C2Allocator which is specified by an id.
-     * or C2AIDL allocator interface directly.
+     * Based on allocator id, allocator is specified.
      */
-    union BlockPoolAllocator {
+    parcelable BlockPoolAllocator {
         int allocatorId;
-        C2AidlGbAllocator allocator;
+        @nullable GbAllocator gbAllocator;
+        @nullable PooledGbAllocator pooledGbAllocator;
     }
 
     /**
@@ -308,4 +328,32 @@ interface IComponent {
      *   - `Status::CORRUPTED` - Some unknown error occurred.
      */
     void stop();
+
+    /**
+     * Starts using an input surface.
+     *
+     * The component must be in running state.
+     *
+     * @param inputSurface Input surface to connect to.
+     * @return connection `IInputSurfaceConnection` object, which can be used to
+     *     query and configure properties of the connection. This cannot be
+     *     null.
+     * @throws ServiceSpecificException with one of the following values:
+     *   - `Status::CANNOT_DO` - The component does not support an input surface.
+     *   - `Status::BAD_STATE` - The component is not in running state.
+     *   - `Status::DUPLICATE` - The component is already connected to an input surface.
+     *   - `Status::REFUSED`   - The input surface is already in use.
+     *   - `Status::NO_MEMORY` - Not enough memory to start the component.
+     *   - `Status::TIMED_OUT` - The operation cannot be finished in a timely manner.
+     *   - `Status::CORRUPTED` - Some unknown error occurred.
+     */
+    IInputSurfaceConnection connectToInputSurface(in IInputSurface inputSurface);
+
+    /**
+     * Returns an @ref IInputSink instance that has the component as the
+     * underlying implementation.
+     *
+     * @return sink `IInputSink` instance.
+     */
+    IInputSink asInputSink();
 }

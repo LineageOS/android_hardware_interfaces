@@ -20,6 +20,7 @@
 
 #include <fingerprint.sysprop.h>
 
+#include "Fingerprint.h"
 #include "util/CancellationSignal.h"
 #include "util/Util.h"
 
@@ -45,7 +46,7 @@ ndk::ScopedAStatus FakeFingerprintEngineUdfps::onPointerDownImpl(int32_t /*point
     BEGIN_OP(0);
     // verify whetehr touch coordinates/area matching sensor location ?
     mPointerDownTime = Util::getSystemNanoTime();
-    if (FingerprintHalProperties::control_illumination().value_or(false)) {
+    if (Fingerprint::cfg().get<bool>("control_illumination")) {
         fingerDownAction();
     }
     return ndk::ScopedAStatus::ok();

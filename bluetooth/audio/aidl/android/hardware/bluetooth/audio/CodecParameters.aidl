@@ -35,24 +35,29 @@ parcelable CodecParameters {
     int bitdepth;
 
     /**
-     * Encoding parameters:
-     *
-     * - Bitrate limits on a frame basis, defined in bits per second.
-     *   The encoder bitrate mode can be encoded following this rule:
-     *     . minBitrate equals to maxBitrate for constant bitrate
-     *     . minBitrate set to 0, for VBR with peak bitrate at maxBitratre value.
-     *     . minBitrate greater than 0, for ABR, the bitrate of the stream varies
-     *       between minBitrate to maxBitrate according to link quality.
-     *   The 0 value for both means "undefined" or "don't care".
-     *
-     * - Low-latency configuration privileged
-     * - Lossless effort indication. The 'False' value can be used as "don't care"
+     * Bitrate limits on a frame basis, defined in bits per second.
+     * The encoder bitrate mode can be encoded following this rule:
+     *   . minBitrate equals to maxBitrate for constant bitrate
+     *   . minBitrate set to 0, for VBR with peak bitrate at maxBitratre value.
+     *   . minBitrate greater than 0, for ABR, the bitrate of the stream varies
+     *     between minBitrate to maxBitrate according to link quality.
+     * The 0 value for both means "undefined" or "don't care".
      */
     int minBitrate;
     int maxBitrate;
 
-    boolean lowLatency;
-    boolean lossless;
+    /**
+     * Low-latency configuration. The interpretation is vendor specific.
+     * When returned to the client, the assessment of the low latency configuration is left
+     * to the vendor's discretion. When set by the client, it indicates that we are entering
+     * a low-latency context (e.g. gaming), and such a configuration should be privileged.
+     */
+    boolean lowLatency = false;
+
+    /**
+     * Lossless effort indication. The 'False' value can be used as "don't care"
+     */
+    boolean lossless = false;
 
     /**
      * Vendor specific parameters, inserted in the Vendor Specific HCI Command

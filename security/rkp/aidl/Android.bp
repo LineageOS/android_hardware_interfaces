@@ -25,6 +25,9 @@ aidl_interface {
                 "//apex_available:platform",
                 "com.android.rkpd",
             ],
+            lint: {
+                baseline_filename: "lint-baseline.xml",
+            },
         },
         rust: {
             enabled: true,

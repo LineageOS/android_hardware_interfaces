@@ -422,6 +422,14 @@ void ClientManager::Impl::cleanUp(bool clearCache) {
     return ::ndk::ScopedAStatus::ok();
 }
 
+::ndk::ScopedAStatus ClientManager::registerPassiveSender(
+        const std::shared_ptr<IAccessor>& in_bufferPool, Registration* _aidl_return) {
+    // TODO
+    (void) in_bufferPool;
+    (void) _aidl_return;
+    return ::ndk::ScopedAStatus::fromServiceSpecificError(ResultStatus::NOT_FOUND);
+}
+
 // Methods for local use.
 std::shared_ptr<ClientManager> ClientManager::sInstance;
 std::mutex ClientManager::sInstanceLock;

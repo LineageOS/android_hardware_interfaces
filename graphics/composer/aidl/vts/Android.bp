@@ -15,6 +15,7 @@
  */
 
 package {
+    default_team: "trendy_team_android_core_graphics_stack",
     // See: http://go/android-license-faq
     // A large-scale-change added 'default_applicable_licenses' to import
     // all of the 'license_kinds' from "hardware_interfaces_license"
@@ -55,6 +56,7 @@ cc_test {
         "libhidlbase",
         "libprocessgroup",
         "libvndksupport",
+        "server_configurable_flags",
     ],
     header_libs: [
         "android.hardware.graphics.composer3-command-buffer",
@@ -73,6 +75,7 @@ cc_test {
         "libshaders",
         "libsync",
         "libtonemap",
+        "libsurfaceflinger_common",
     ],
     cflags: [
         "-Wconversion",

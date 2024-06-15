@@ -20,7 +20,10 @@ aidl_interface {
     ],
     imports: [
         "android.hardware.common-V2",
-        "android.hardware.media.bufferpool2-V1",
+        "android.hardware.media.bufferpool2-V2",
+    ],
+    include_dirs: [
+        "frameworks/native/aidl/gui",
     ],
     stability: "vintf",
     backend: {
@@ -42,11 +45,19 @@ aidl_interface {
             ],
         },
         rust: {
-            min_sdk_version: "31",
-            enabled: true,
-            additional_rustlibs: [
-                "libnativewindow_rs",
-            ],
+            // No users, and no rust implementation of android.os.Surface yet
+            enabled: false,
         },
     },
+    versions_with_info: [
+        {
+            version: "1",
+            imports: [
+                "android.hardware.common-V2",
+                "android.hardware.media.bufferpool2-V2",
+            ],
+        },
+    ],
+    frozen: true,
+
 }

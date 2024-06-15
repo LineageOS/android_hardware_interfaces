@@ -157,8 +157,11 @@ ndk::ScopedAStatus LeAudioOffloadAudioProvider::setCodecPriority(
 bool LeAudioOffloadAudioProvider::isMatchedValidCodec(CodecId cfg_codec,
                                                       CodecId req_codec) {
   auto priority = codec_priority_map_.find(cfg_codec);
-  if (priority != codec_priority_map_.end() && priority->second == -1)
+  if (priority != codec_priority_map_.end() &&
+      priority->second ==
+          LeAudioOffloadAudioProvider::CODEC_PRIORITY_DISABLED) {
     return false;
+  }
   return cfg_codec == req_codec;
 }
 
@@ -222,8 +225,8 @@ bool LeAudioOffloadAudioProvider::isMatchedOctetsPerCodecFrame(
     CodecSpecificConfigurationLtv::OctetsPerCodecFrame& cfg_octets,
     CodecSpecificCapabilitiesLtv::SupportedOctetsPerCodecFrame&
         capability_octets) {
-  return cfg_octets.value >= capability_octets.minimum &&
-         cfg_octets.value <= capability_octets.maximum;
+  return cfg_octets.value >= capability_octets.min &&
+         cfg_octets.value <= capability_octets.max;
 }
 
 bool LeAudioOffloadAudioProvider::isCapabilitiesMatchedCodecConfiguration(
@@ -568,7 +571,7 @@ ndk::ScopedAStatus LeAudioOffloadAudioProvider::getLeAudioAseQosConfiguration(
 
   for (auto& setting : ase_configuration_settings) {
     // Context matching
-    if (setting.audioContext != in_qosRequirement.contextType) continue;
+    if (setting.audioContext != in_qosRequirement.audioContext) continue;
 
     // Match configuration flags
     // Currently configuration flags are not populated, ignore.

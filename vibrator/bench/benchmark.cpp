@@ -118,6 +118,7 @@ class VibratorEffectsBench : public VibratorBench<I> {
         });
 
         if (!supported) {
+            state->SkipWithMessage("performApi returned UNSUPPORTED_OPERATION");
             return;
         }
 
@@ -140,16 +141,17 @@ class VibratorEffectsBench : public VibratorBench<I> {
     }
 };
 
-#define BENCHMARK_WRAPPER(fixt, test, code) \
-    BENCHMARK_DEFINE_F(fixt, test)          \
-    /* NOLINTNEXTLINE */                    \
-    (State & state) {                       \
-        if (!mVibrator) {                   \
-            return;                         \
-        }                                   \
-                                            \
-        code                                \
-    }                                       \
+#define BENCHMARK_WRAPPER(fixt, test, code)           \
+    BENCHMARK_DEFINE_F(fixt, test)                    \
+    /* NOLINTNEXTLINE */                              \
+    (State & state) {                                 \
+        if (!mVibrator) {                             \
+            state.SkipWithMessage("HAL unavailable"); \
+            return;                                   \
+        }                                             \
+                                                      \
+        code                                          \
+    }                                                 \
     BENCHMARK_REGISTER_F(fixt, test)->Apply(fixt::DefaultConfig)->Apply(fixt::DefaultArgs)
 
 using VibratorBench_V1_0 = VibratorBench<V1_0::IVibrator>;
@@ -186,6 +188,7 @@ BENCHMARK_WRAPPER(VibratorBench_V1_0, setAmplitude, {
     uint8_t amplitude = UINT8_MAX;
 
     if (!mVibrator->supportsAmplitudeControl()) {
+        state.SkipWithMessage("Amplitude control unavailable");
         return;
     }
 
@@ -227,6 +230,7 @@ BENCHMARK_WRAPPER(VibratorBench_V1_3, setExternalControl, {
     bool enable = true;
 
     if (!mVibrator->supportsExternalControl()) {
+        state.SkipWithMessage("external control unavailable");
         return;
     }
 
@@ -240,6 +244,7 @@ BENCHMARK_WRAPPER(VibratorBench_V1_3, setExternalControl, {
 
 BENCHMARK_WRAPPER(VibratorBench_V1_3, supportsExternalAmplitudeControl, {
     if (!mVibrator->supportsExternalControl()) {
+        state.SkipWithMessage("external control unavailable");
         return;
     }
 
@@ -256,12 +261,14 @@ BENCHMARK_WRAPPER(VibratorBench_V1_3, setExternalAmplitude, {
     uint8_t amplitude = UINT8_MAX;
 
     if (!mVibrator->supportsExternalControl()) {
+        state.SkipWithMessage("external control unavailable");
         return;
     }
 
     mVibrator->setExternalControl(true);
 
     if (!mVibrator->supportsAmplitudeControl()) {
+        state.SkipWithMessage("amplitude control unavailable");
         return;
     }
 
@@ -328,6 +335,7 @@ BENCHMARK_WRAPPER(VibratorBench_Aidl, setAmplitude, {
     int32_t capabilities = 0;
     mVibrator->getCapabilities(&capabilities);
     if ((capabilities & Aidl::IVibrator::CAP_AMPLITUDE_CONTROL) == 0) {
+        state.SkipWithMessage("amplitude control unavailable");
         return;
     }
 
@@ -345,6 +353,7 @@ BENCHMARK_WRAPPER(VibratorBench_Aidl, setExternalControl, {
     int32_t capabilities = 0;
     mVibrator->getCapabilities(&capabilities);
     if ((capabilities & Aidl::IVibrator::CAP_EXTERNAL_CONTROL) == 0) {
+        state.SkipWithMessage("external control unavailable");
         return;
     }
 
@@ -361,6 +370,7 @@ BENCHMARK_WRAPPER(VibratorBench_Aidl, setExternalAmplitude, {
     mVibrator->getCapabilities(&capabilities);
     if ((capabilities & Aidl::IVibrator::CAP_EXTERNAL_CONTROL) == 0 ||
         (capabilities & Aidl::IVibrator::CAP_EXTERNAL_AMPLITUDE_CONTROL) == 0) {
+        state.SkipWithMessage("external amplitude control unavailable");
         return;
     }
 
@@ -423,6 +433,7 @@ BENCHMARK_WRAPPER(VibratorEffectsBench_Aidl, alwaysOnEnable, {
     int32_t capabilities = 0;
     mVibrator->getCapabilities(&capabilities);
     if ((capabilities & Aidl::IVibrator::CAP_ALWAYS_ON_CONTROL) == 0) {
+        state.SkipWithMessage("always on control unavailable");
         return;
     }
 
@@ -433,6 +444,7 @@ BENCHMARK_WRAPPER(VibratorEffectsBench_Aidl, alwaysOnEnable, {
     std::vector<Aidl::Effect> supported;
     mVibrator->getSupportedAlwaysOnEffects(&supported);
     if (std::find(supported.begin(), supported.end(), effect) == supported.end()) {
+        state.SkipWithMessage("always on effects unavailable");
         return;
     }
 
@@ -448,6 +460,7 @@ BENCHMARK_WRAPPER(VibratorEffectsBench_Aidl, alwaysOnDisable, {
     int32_t capabilities = 0;
     mVibrator->getCapabilities(&capabilities);
     if ((capabilities & Aidl::IVibrator::CAP_ALWAYS_ON_CONTROL) == 0) {
+        state.SkipWithMessage("always on control unavailable");
         return;
     }
 
@@ -458,6 +471,7 @@ BENCHMARK_WRAPPER(VibratorEffectsBench_Aidl, alwaysOnDisable, {
     std::vector<Aidl::Effect> supported;
     mVibrator->getSupportedAlwaysOnEffects(&supported);
     if (std::find(supported.begin(), supported.end(), effect) == supported.end()) {
+        state.SkipWithMessage("always on effects unavailable");
         return;
     }
 
@@ -481,6 +495,7 @@ BENCHMARK_WRAPPER(VibratorEffectsBench_Aidl, perform, {
     std::vector<Aidl::Effect> supported;
     mVibrator->getSupportedEffects(&supported);
     if (std::find(supported.begin(), supported.end(), effect) == supported.end()) {
+        state.SkipWithMessage("effects unavailable");
         return;
     }
 
@@ -527,6 +542,7 @@ BENCHMARK_WRAPPER(VibratorPrimitivesBench_Aidl, getPrimitiveDuration, {
     int32_t capabilities = 0;
     mVibrator->getCapabilities(&capabilities);
     if ((capabilities & Aidl::IVibrator::CAP_COMPOSE_EFFECTS) == 0) {
+        state.SkipWithMessage("compose effects unavailable");
         return;
     }
 
@@ -536,6 +552,7 @@ BENCHMARK_WRAPPER(VibratorPrimitivesBench_Aidl, getPrimitiveDuration, {
     std::vector<Aidl::CompositePrimitive> supported;
     mVibrator->getSupportedPrimitives(&supported);
     if (std::find(supported.begin(), supported.end(), primitive) == supported.end()) {
+        state.SkipWithMessage("supported primitives unavailable");
         return;
     }
 
@@ -548,6 +565,7 @@ BENCHMARK_WRAPPER(VibratorPrimitivesBench_Aidl, compose, {
     int32_t capabilities = 0;
     mVibrator->getCapabilities(&capabilities);
     if ((capabilities & Aidl::IVibrator::CAP_COMPOSE_EFFECTS) == 0) {
+        state.SkipWithMessage("compose effects unavailable");
         return;
     }
 
@@ -559,6 +577,7 @@ BENCHMARK_WRAPPER(VibratorPrimitivesBench_Aidl, compose, {
     std::vector<Aidl::CompositePrimitive> supported;
     mVibrator->getSupportedPrimitives(&supported);
     if (std::find(supported.begin(), supported.end(), effect.primitive) == supported.end()) {
+        state.SkipWithMessage("supported primitives unavailable");
         return;
     }
 

@@ -56,6 +56,9 @@ class Frontend;
 class TimeFilter;
 class Tuner;
 
+const int IPTV_PLAYBACK_TIMEOUT = 20;            // ms
+const int IPTV_PLAYBACK_BUFFER_TIMEOUT = 20000;  // ms
+
 class DvrPlaybackCallback : public BnDvrCallback {
   public:
     virtual ::ndk::ScopedAStatus onPlaybackStatus(PlaybackStatus status) override {
@@ -103,8 +106,7 @@ class Demux : public BnDemux {
     void setIsRecording(bool isRecording);
     bool isRecording();
     void startFrontendInputLoop();
-    void readIptvThreadLoop(dtv_plugin* interface, dtv_streamer* streamer, size_t size,
-                            int timeout_ms, int buffer_timeout);
+    void frontendIptvInputThreadLoop(dtv_plugin* interface, dtv_streamer* streamer, void* buf);
 
     /**
      * A dispatcher to read and dispatch input data to all the started filters.
@@ -128,6 +130,10 @@ class Demux : public BnDemux {
      * Setter for IPTV Reading thread
      */
     void setIptvThreadRunning(bool isIptvThreadRunning);
+    /**
+     * Stops IPTV playback reading thread.
+     */
+    void stopIptvFrontendInput();
 
   private:
     // Tuner service
@@ -206,7 +212,8 @@ class Demux : public BnDemux {
     /**
      * Controls IPTV reading thread status
      */
-    bool mIsIptvReadThreadRunning;
+    bool mIsIptvReadThreadRunning = false;
+    std::atomic<bool> mIsIptvReadThreadTerminated = false;
     std::mutex mIsIptvThreadRunningMutex;
     std::condition_variable mIsIptvThreadRunningCv;
 

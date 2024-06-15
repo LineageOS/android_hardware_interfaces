@@ -27,6 +27,8 @@
 #include <linux/rtnetlink.h>
 #include <net/if.h>
 
+#include <algorithm>
+#include <iterator>
 #include <sstream>
 
 namespace android::netdevice {

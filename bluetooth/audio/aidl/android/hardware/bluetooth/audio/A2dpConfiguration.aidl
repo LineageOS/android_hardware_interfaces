@@ -26,6 +26,7 @@ import android.hardware.bluetooth.audio.CodecParameters;
 parcelable A2dpConfiguration {
     /**
      * Remote Stream Endpoint Identifier
+     * This matches `A2dpRemoteCapabilities.seid` given by the framework.
      */
     int remoteSeid;
 
@@ -35,7 +36,7 @@ parcelable A2dpConfiguration {
      * `configuration`. Using `id.a2dp`, the format is given by the `Codec
      * Specific Information Elements` [A2DP - 4.3-6.2], and using `id.vendor`,
      * by `Vendor Specific Value` [A2DP - 4.7.2].
-     * In any case, this byte array is limited by the framework to 128 Bytes.
+     * In any case, this byte array must be limited to 128 bytes.
      */
     CodecId id;
     CodecParameters parameters;

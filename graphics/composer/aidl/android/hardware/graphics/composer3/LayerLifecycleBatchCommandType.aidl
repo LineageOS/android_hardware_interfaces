@@ -32,8 +32,8 @@ enum LayerLifecycleBatchCommandType {
      */
     CREATE = 1,
     /**
-     * This indicates that the current LayerCommand should also destroyes the layer,
-     * after processing the other attributes in the LayerCommand.
+     * This indicates that the current LayerCommand should also destroy the layer,
+     * before processing the other attributes in the LayerCommand.
      */
     DESTROY = 2,
 }

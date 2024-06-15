@@ -32,7 +32,7 @@ union CodecId {
 
     /**
      * Vendor Codec:
-     * id       16 bits - Assigned by BT Sig
+     * id       16 bits - Vendor identifier, assigned by BT Sig [Assigned Numbers - 7.1]
      * codecId  16 bits - Assigned by the vendor
      */
     parcelable Vendor {

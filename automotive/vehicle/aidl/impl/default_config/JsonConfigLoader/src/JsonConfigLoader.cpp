@@ -37,6 +37,7 @@ namespace jsonconfigloader_impl {
 using ::aidl::android::hardware::automotive::vehicle::AccessForVehicleProperty;
 using ::aidl::android::hardware::automotive::vehicle::AutomaticEmergencyBrakingState;
 using ::aidl::android::hardware::automotive::vehicle::BlindSpotWarningState;
+using ::aidl::android::hardware::automotive::vehicle::CameraServiceState;
 using ::aidl::android::hardware::automotive::vehicle::ChangeModeForVehicleProperty;
 using ::aidl::android::hardware::automotive::vehicle::CrossTrafficMonitoringWarningState;
 using ::aidl::android::hardware::automotive::vehicle::CruiseControlCommand;
@@ -63,9 +64,11 @@ using ::aidl::android::hardware::automotive::vehicle::LaneCenteringAssistState;
 using ::aidl::android::hardware::automotive::vehicle::LaneDepartureWarningState;
 using ::aidl::android::hardware::automotive::vehicle::LaneKeepAssistState;
 using ::aidl::android::hardware::automotive::vehicle::LocationCharacterization;
+using ::aidl::android::hardware::automotive::vehicle::LowSpeedAutomaticEmergencyBrakingState;
 using ::aidl::android::hardware::automotive::vehicle::LowSpeedCollisionWarningState;
 using ::aidl::android::hardware::automotive::vehicle::RawPropValues;
 using ::aidl::android::hardware::automotive::vehicle::VehicleAirbagLocation;
+using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerBootupReason;
 using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReport;
 using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReq;
 using ::aidl::android::hardware::automotive::vehicle::VehicleAreaConfig;
@@ -258,6 +261,8 @@ JsonValueParser::JsonValueParser() {
             std::make_unique<ConstantParser<ImpactSensorLocation>>();
     mConstantParsersByType["EmergencyLaneKeepAssistState"] =
             std::make_unique<ConstantParser<EmergencyLaneKeepAssistState>>();
+    mConstantParsersByType["CameraServiceState"] =
+            std::make_unique<ConstantParser<CameraServiceState>>();
     mConstantParsersByType["CruiseControlType"] =
             std::make_unique<ConstantParser<CruiseControlType>>();
     mConstantParsersByType["CruiseControlState"] =
@@ -297,6 +302,10 @@ JsonValueParser::JsonValueParser() {
             std::make_unique<ConstantParser<ElectronicStabilityControlState>>();
     mConstantParsersByType["CrossTrafficMonitoringWarningState"] =
             std::make_unique<ConstantParser<CrossTrafficMonitoringWarningState>>();
+    mConstantParsersByType["LowSpeedAutomaticEmergencyBrakingState"] =
+            std::make_unique<ConstantParser<LowSpeedAutomaticEmergencyBrakingState>>();
+    mConstantParsersByType["VehicleApPowerBootupReason"] =
+            std::make_unique<ConstantParser<VehicleApPowerBootupReason>>();
     mConstantParsersByType["Constants"] = std::make_unique<LocalVariableParser>();
 #ifdef ENABLE_VEHICLE_HAL_TEST_PROPERTIES
     mConstantParsersByType["TestVendorProperty"] =
@@ -484,10 +493,11 @@ bool JsonConfigParser::tryParseJsonArrayToVariable(const Json::Value& parentJson
 }
 
 template <class T>
-void JsonConfigParser::parseAccessChangeMode(
-        const Json::Value& parentJsonNode, const std::string& fieldName, int propId,
-        const std::string& propStr, const std::unordered_map<VehicleProperty, T>& defaultMap,
-        T* outPtr, std::vector<std::string>* errors) {
+void JsonConfigParser::parseAccessChangeMode(const Json::Value& parentJsonNode,
+                                             const std::string& fieldName,
+                                             const std::string& propStr,
+                                             const T* defaultAccessChangeModeValuePtr, T* outPtr,
+                                             std::vector<std::string>* errors) {
     if (!parentJsonNode.isObject()) {
         errors->push_back("Node: " + parentJsonNode.toStyledString() + " is not an object");
         return;
@@ -501,12 +511,11 @@ void JsonConfigParser::parseAccessChangeMode(
         *outPtr = static_cast<T>(result.value());
         return;
     }
-    auto it = defaultMap.find(static_cast<VehicleProperty>(propId));
-    if (it == defaultMap.end()) {
+    if (defaultAccessChangeModeValuePtr == NULL) {
         errors->push_back("No " + fieldName + " specified for property: " + propStr);
         return;
     }
-    *outPtr = it->second;
+    *outPtr = *defaultAccessChangeModeValuePtr;
     return;
 }
 
@@ -543,6 +552,7 @@ void JsonConfigParser::parseAreas(const Json::Value& parentJsonNode, const std::
     if (!parentJsonNode.isMember(fieldName)) {
         return;
     }
+    std::string propStr = parentJsonNode["property"].toStyledString();
     const Json::Value& jsonValue = parentJsonNode[fieldName];
 
     if (!jsonValue.isArray()) {
@@ -558,6 +568,8 @@ void JsonConfigParser::parseAreas(const Json::Value& parentJsonNode, const std::
         }
         VehicleAreaConfig areaConfig = {};
         areaConfig.areaId = areaId;
+        parseAccessChangeMode(jsonAreaConfig, "access", propStr, &(config->config.access),
+                              &areaConfig.access, errors);
         tryParseJsonValueToVariable(jsonAreaConfig, "minInt32Value", /*optional=*/true,
                                     &areaConfig.minInt32Value, errors);
         tryParseJsonValueToVariable(jsonAreaConfig, "maxInt32Value", /*optional=*/true,
@@ -605,12 +617,21 @@ std::optional<ConfigDeclaration> JsonConfigParser::parseEachProperty(
 
     configDecl.config.prop = propId;
     std::string propStr = propJsonValue["property"].toStyledString();
-
-    parseAccessChangeMode(propJsonValue, "access", propId, propStr, AccessForVehicleProperty,
+    VehiclePropertyAccess* defaultAccessMode = NULL;
+    auto itAccess = AccessForVehicleProperty.find(static_cast<VehicleProperty>(propId));
+    if (itAccess != AccessForVehicleProperty.end()) {
+        defaultAccessMode = &itAccess->second;
+    }
+    VehiclePropertyChangeMode* defaultChangeMode = NULL;
+    auto itChangeMode = ChangeModeForVehicleProperty.find(static_cast<VehicleProperty>(propId));
+    if (itChangeMode != ChangeModeForVehicleProperty.end()) {
+        defaultChangeMode = &itChangeMode->second;
+    }
+    parseAccessChangeMode(propJsonValue, "access", propStr, defaultAccessMode,
                           &configDecl.config.access, errors);
 
-    parseAccessChangeMode(propJsonValue, "changeMode", propId, propStr,
-                          ChangeModeForVehicleProperty, &configDecl.config.changeMode, errors);
+    parseAccessChangeMode(propJsonValue, "changeMode", propStr, defaultChangeMode,
+                          &configDecl.config.changeMode, errors);
 
     tryParseJsonValueToVariable(propJsonValue, "configString", /*optional=*/true,
                                 &configDecl.config.configString, errors);
@@ -628,19 +649,21 @@ std::optional<ConfigDeclaration> JsonConfigParser::parseEachProperty(
 
     parseAreas(propJsonValue, "areas", &configDecl, errors);
 
-    if (errors->size() != initialErrorCount) {
-        return std::nullopt;
-    }
-
     // If there is no area config, by default we allow variable update rate, so we have to add
     // a global area config.
     if (configDecl.config.areaConfigs.size() == 0) {
         VehicleAreaConfig areaConfig = {
                 .areaId = 0,
+                .access = configDecl.config.access,
                 .supportVariableUpdateRate = true,
         };
         configDecl.config.areaConfigs.push_back(std::move(areaConfig));
     }
+
+    if (errors->size() != initialErrorCount) {
+        return std::nullopt;
+    }
+
     return configDecl;
 }
 

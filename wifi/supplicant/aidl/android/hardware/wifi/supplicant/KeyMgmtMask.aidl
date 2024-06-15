@@ -71,4 +71,8 @@ enum KeyMgmtMask {
      * FILS shared key authentication with sha-384
      */
     FILS_SHA384 = 1 << 19,
+    /**
+     * Pre-Association Security Negotiation (PASN) Key management
+     */
+    PASN = 1 << 25,
 }

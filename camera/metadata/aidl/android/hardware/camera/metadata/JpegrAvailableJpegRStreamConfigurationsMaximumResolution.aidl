@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.jpegr.availableJpegRStreamConfigurationsMaximumResolution enumeration values
  * @see ANDROID_JPEGR_AVAILABLE_JPEG_R_STREAM_CONFIGURATIONS_MAXIMUM_RESOLUTION
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

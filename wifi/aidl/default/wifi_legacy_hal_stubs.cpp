@@ -188,6 +188,7 @@ bool initHalFuncTableWithStubs(wifi_hal_fn* hal_fn) {
     populateStubFor(&hal_fn->wifi_twt_session_resume);
     populateStubFor(&hal_fn->wifi_twt_session_teardown);
     populateStubFor(&hal_fn->wifi_twt_session_get_stats);
+    populateStubFor(&hal_fn->wifi_virtual_interface_create_with_vendor_data);
     return true;
 }
 

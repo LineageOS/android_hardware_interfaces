@@ -22,7 +22,6 @@
 #include <android-base/logging.h>
 
 #include "A2dpOffloadAudioProvider.h"
-#include "A2dpOffloadCodecFactory.h"
 #include "A2dpSoftwareAudioProvider.h"
 #include "BluetoothAudioProvider.h"
 #include "HearingAidAudioProvider.h"
@@ -53,7 +52,8 @@ ndk::ScopedAStatus BluetoothAudioProviderFactory::openProvider(
       provider = ndk::SharedRefBase::make<A2dpSoftwareEncodingAudioProvider>();
       break;
     case SessionType::A2DP_HARDWARE_OFFLOAD_ENCODING_DATAPATH:
-      provider = ndk::SharedRefBase::make<A2dpOffloadEncodingAudioProvider>();
+      provider = ndk::SharedRefBase::make<A2dpOffloadEncodingAudioProvider>(
+          a2dp_offload_codec_factory_);
       break;
     case SessionType::HEARING_AID_SOFTWARE_ENCODING_DATAPATH:
       provider = ndk::SharedRefBase::make<HearingAidAudioProvider>();
@@ -82,7 +82,8 @@ ndk::ScopedAStatus BluetoothAudioProviderFactory::openProvider(
       provider = ndk::SharedRefBase::make<A2dpSoftwareDecodingAudioProvider>();
       break;
     case SessionType::A2DP_HARDWARE_OFFLOAD_DECODING_DATAPATH:
-      provider = ndk::SharedRefBase::make<A2dpOffloadDecodingAudioProvider>();
+      provider = ndk::SharedRefBase::make<A2dpOffloadDecodingAudioProvider>(
+          a2dp_offload_codec_factory_);
       break;
     case SessionType::HFP_SOFTWARE_ENCODING_DATAPATH:
       provider = ndk::SharedRefBase::make<HfpSoftwareOutputAudioProvider>();
@@ -158,10 +159,16 @@ ndk::ScopedAStatus BluetoothAudioProviderFactory::getProviderInfo(
 
   if (session_type == SessionType::A2DP_HARDWARE_OFFLOAD_ENCODING_DATAPATH ||
       session_type == SessionType::A2DP_HARDWARE_OFFLOAD_DECODING_DATAPATH) {
+    if (!kEnableA2dpCodecExtensibility) {
+      // Implementing getProviderInfo equates supporting
+      // A2dp codec extensibility.
+      return ndk::ScopedAStatus::fromStatus(STATUS_UNKNOWN_TRANSACTION);
+    }
+
     auto& provider_info = _aidl_return->emplace();
 
-    provider_info.name = A2dpOffloadCodecFactory::GetInstance()->name;
-    for (auto codec : A2dpOffloadCodecFactory::GetInstance()->codecs)
+    provider_info.name = a2dp_offload_codec_factory_.name;
+    for (auto codec : a2dp_offload_codec_factory_.codecs)
       provider_info.codecInfos.push_back(codec->info);
   }
 

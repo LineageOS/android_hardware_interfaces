@@ -17,6 +17,7 @@
 package android.hardware.media.bufferpool2;
 
 import android.hardware.common.NativeHandle;
+import android.hardware.HardwareBuffer;
 
 /**
  * Generic buffer for fast recycling for media/stagefright.
@@ -26,10 +27,14 @@ import android.hardware.common.NativeHandle;
  * by a buffer pool, and are recycled to the buffer pool when they are
  * no longer referenced by the clients.
  *
+ * Initially all buffers in media HAL should be NativeHandle(actually native_handle_t).
+ * HardwareBuffer(actually AHardwareBuffer) for GraphicBuffer is added from V2.
+ *
  * E.g. ion or gralloc buffer
  */
 @VintfStability
 parcelable Buffer {
     int id;
-    NativeHandle buffer;
+    @nullable NativeHandle buffer;
+    @nullable HardwareBuffer hwbBuffer;
 }

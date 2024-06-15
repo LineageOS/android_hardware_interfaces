@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <functional>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -188,7 +189,7 @@ class Module : public BnModule {
     // If the module is unable to populate the connected device port correctly, the returned error
     // code must correspond to the errors of `IModule.connectedExternalDevice` method.
     virtual ndk::ScopedAStatus populateConnectedDevicePort(
-            ::aidl::android::media::audio::common::AudioPort* audioPort);
+            ::aidl::android::media::audio::common::AudioPort* audioPort, int32_t nextPortId);
     // If the module finds that the patch endpoints configurations are not matched, the returned
     // error code must correspond to the errors of `IModule.setAudioPatch` method.
     virtual ndk::ScopedAStatus checkAudioPatchEndpointsMatch(
@@ -210,6 +211,7 @@ class Module : public BnModule {
         const int32_t rawSizeFrames =
                 aidl::android::hardware::audio::common::frameCountFromDurationMs(latencyMs,
                                                                                  sampleRateHz);
+        if (latencyMs >= 5) return rawSizeFrames;
         int32_t powerOf2 = 1;
         while (powerOf2 < rawSizeFrames) powerOf2 <<= 1;
         return powerOf2;
@@ -227,12 +229,16 @@ class Module : public BnModule {
     std::set<int32_t> findConnectedPortConfigIds(int32_t portConfigId);
     ndk::ScopedAStatus findPortIdForNewStream(
             int32_t in_portConfigId, ::aidl::android::media::audio::common::AudioPort** port);
+    // Note: does not assign an ID to the config.
+    bool generateDefaultPortConfig(const ::aidl::android::media::audio::common::AudioPort& port,
+                                   ::aidl::android::media::audio::common::AudioPortConfig* config);
     std::vector<AudioRoute*> getAudioRoutesForAudioPortImpl(int32_t portId);
     Configuration& getConfig();
     const ConnectedDevicePorts& getConnectedDevicePorts() const { return mConnectedDevicePorts; }
     bool getMasterMute() const { return mMasterMute; }
     bool getMasterVolume() const { return mMasterVolume; }
     bool getMicMute() const { return mMicMute; }
+    const ModuleDebug& getModuleDebug() const { return mDebug; }
     const Patches& getPatches() const { return mPatches; }
     std::set<int32_t> getRoutableAudioPortIds(int32_t portId,
                                               std::vector<AudioRoute*>* routes = nullptr);
@@ -243,6 +249,12 @@ class Module : public BnModule {
     template <typename C>
     std::set<int32_t> portIdsFromPortConfigIds(C portConfigIds);
     void registerPatch(const AudioPatch& patch);
+    ndk::ScopedAStatus setAudioPortConfigImpl(
+            const ::aidl::android::media::audio::common::AudioPortConfig& in_requested,
+            const std::function<bool(const ::aidl::android::media::audio::common::AudioPort& port,
+                                     ::aidl::android::media::audio::common::AudioPortConfig*
+                                             config)>& fillPortConfig,
+            ::aidl::android::media::audio::common::AudioPortConfig* out_suggested, bool* applied);
     ndk::ScopedAStatus updateStreamsConnectedState(const AudioPatch& oldPatch,
                                                    const AudioPatch& newPatch);
 };

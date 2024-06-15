@@ -21,6 +21,7 @@
 #include <aidl/Vintf.h>
 #include <aidl/android/hardware/wifi/BnWifi.h>
 #include <aidl/android/hardware/wifi/BnWifiRttControllerEventCallback.h>
+#include <android-base/logging.h>
 #include <android/binder_manager.h>
 #include <android/binder_status.h>
 #include <binder/IServiceManager.h>
@@ -42,6 +43,10 @@ using aidl::android::hardware::wifi::WifiChannelInfo;
 using aidl::android::hardware::wifi::WifiChannelWidthInMhz;
 using aidl::android::hardware::wifi::WifiStatusCode;
 
+namespace {
+const auto& kTestVendorDataOptional = generateOuiKeyedDataListOptional(5);
+}
+
 class WifiRttControllerAidlTest : public testing::TestWithParam<std::string> {
   public:
     void SetUp() override {
@@ -50,6 +55,7 @@ class WifiRttControllerAidlTest : public testing::TestWithParam<std::string> {
         stopWifiService(getInstanceName());
         wifi_rtt_controller_ = getWifiRttController();
         ASSERT_NE(nullptr, wifi_rtt_controller_.get());
+        ASSERT_TRUE(wifi_rtt_controller_->getInterfaceVersion(&interface_version_).isOk());
 
         // Check RTT support before we run the test.
         RttCapabilities caps = {};
@@ -82,6 +88,7 @@ class WifiRttControllerAidlTest : public testing::TestWithParam<std::string> {
     }
 
     std::shared_ptr<IWifiRttController> wifi_rtt_controller_;
+    int interface_version_;
 
   private:
     const char* getInstanceName() { return GetParam().c_str(); }
@@ -151,6 +158,48 @@ TEST_P(WifiRttControllerAidlTest, EnableResponder) {
     RttResponder responder = {};
     EXPECT_TRUE(wifi_rtt_controller_->getResponderInfo(&responder).isOk());
     EXPECT_TRUE(wifi_rtt_controller_->enableResponder(cmdId, channelInfo, 10, responder).isOk());
+}
+
+/*
+ * Request80211azNtbRangeMeasurement
+ * Tests the two sided 11az non-trigger based ranging - 802.11az NTB FTM protocol.
+ */
+TEST_P(WifiRttControllerAidlTest, Request80211azNtbRangeMeasurement) {
+    if (interface_version_ < 2) {
+        GTEST_SKIP() << "Request80211azNtbRangeMeasurement is available as of RttController V2";
+    }
+
+    RttCapabilities caps = getCapabilities();
+    if (!caps.ntbInitiatorSupported) {
+        GTEST_SKIP() << "Skipping 11az NTB RTT since driver/fw does not support";
+    }
+
+    RttConfig config;
+    config.addr = {{0x00, 0x01, 0x02, 0x03, 0x04, 0x05}};
+    config.type = RttType::TWO_SIDED_11AZ_NTB;
+    config.peer = RttPeerType::AP;
+    config.channel.width = WifiChannelWidthInMhz::WIDTH_80;
+    config.channel.centerFreq = 5180;
+    config.channel.centerFreq0 = 5210;
+    config.channel.centerFreq1 = 0;
+    config.bw = RttBw::BW_20MHZ;
+    config.preamble = RttPreamble::HT;
+    config.mustRequestLci = false;
+    config.mustRequestLcr = false;
+    config.numFramesPerBurst = 8;
+    config.numRetriesPerRttFrame = 0;
+    config.numRetriesPerFtmr = 0;
+    // 11az non-trigger based minimum measurement time in units of 100 microseconds.
+    config.ntbMinMeasurementTime = 2500;
+    // 11az non-trigger based maximum measurement time in units of 10 milliseconds.
+    config.ntbMaxMeasurementTime = 1500;
+
+    int cmdId = 55;
+    std::vector<RttConfig> configs = {config};
+    EXPECT_TRUE(wifi_rtt_controller_->rangeRequest(cmdId, configs).isOk());
+
+    // Sleep for 2 seconds to wait for driver/firmware to complete RTT.
+    sleep(2);
 }
 
 /*
@@ -226,6 +275,10 @@ TEST_P(WifiRttControllerAidlTest, RangeRequest) {
     config.numRetriesPerRttFrame = 3;
     config.numRetriesPerFtmr = 3;
     config.burstDuration = 9;
+    if (interface_version_ >= 2) {
+        LOG(INFO) << "Including vendor data in Rtt Config";
+        config.vendorData = kTestVendorDataOptional;
+    }
 
     int cmdId = 55;
     std::vector<RttConfig> configs = {config};

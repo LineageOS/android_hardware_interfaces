@@ -29,6 +29,7 @@
 
 #include "wifi_aidl_test_utils.h"
 
+using aidl::android::hardware::wifi::CachedScanData;
 using aidl::android::hardware::wifi::IWifi;
 using aidl::android::hardware::wifi::IWifiStaIface;
 using aidl::android::hardware::wifi::MacAddress;
@@ -39,6 +40,8 @@ using aidl::android::hardware::wifi::StaLinkLayerStats;
 using aidl::android::hardware::wifi::StaRoamingCapabilities;
 using aidl::android::hardware::wifi::StaRoamingConfig;
 using aidl::android::hardware::wifi::StaRoamingState;
+using aidl::android::hardware::wifi::TwtCapabilities;
+using aidl::android::hardware::wifi::TwtRequest;
 using aidl::android::hardware::wifi::WifiBand;
 using aidl::android::hardware::wifi::WifiDebugRxPacketFateReport;
 using aidl::android::hardware::wifi::WifiDebugTxPacketFateReport;
@@ -50,6 +53,7 @@ class WifiStaIfaceAidlTest : public testing::TestWithParam<std::string> {
         stopWifiService(getInstanceName());
         wifi_sta_iface_ = getWifiStaIface(getInstanceName());
         ASSERT_NE(nullptr, wifi_sta_iface_.get());
+        ASSERT_TRUE(wifi_sta_iface_->getInterfaceVersion(&interface_version_).isOk());
     }
 
     void TearDown() override { stopWifiService(getInstanceName()); }
@@ -68,22 +72,24 @@ class WifiStaIfaceAidlTest : public testing::TestWithParam<std::string> {
     }
 
     std::shared_ptr<IWifiStaIface> wifi_sta_iface_;
+    int interface_version_;
 
-    // Checks if the MdnsOffloadManagerService is installed.
-    bool isMdnsOffloadServicePresent() {
-        int status =
-                // --query-flags MATCH_SYSTEM_ONLY(1048576) will only return matched service
-                // installed on system or system_ext partition. The MdnsOffloadManagerService should
-                // be installed on system_ext partition.
-                // NOLINTNEXTLINE(cert-env33-c)
-                system("pm query-services --query-flags 1048576"
-                       " com.android.tv.mdnsoffloadmanager/"
-                       "com.android.tv.mdnsoffloadmanager.MdnsOffloadManagerService"
-                       " | egrep -q mdnsoffloadmanager");
-        return status == 0;
+    // Checks if the mDNS Offload is supported by any NIC.
+    bool isMdnsOffloadPresentInNIC() {
+        return testing::deviceSupportsFeature("com.google.android.tv.mdns_offload");
     }
 
-    // Detected panel TV device by using ro.oem.key1 property.
+    bool doesDeviceSupportFullNetworkingUnder2w() {
+        return testing::deviceSupportsFeature("com.google.android.tv.full_networking_under_2w");
+    }
+
+    // Detect TV devices.
+    bool isTvDevice() {
+        return testing::deviceSupportsFeature("android.software.leanback") ||
+               testing::deviceSupportsFeature("android.hardware.type.television");
+    }
+
+    // Detect Panel TV devices by using ro.oem.key1 property.
     // https://docs.partner.android.com/tv/build/platform/props-vars/ro-oem-key1
     bool isPanelTvDevice() {
         const std::string oem_key1 = getPropertyString("ro.oem.key1");
@@ -144,10 +150,23 @@ TEST_P(WifiStaIfaceAidlTest, GetFeatureSet) {
  */
 // @VsrTest = 5.3.12
 TEST_P(WifiStaIfaceAidlTest, CheckApfIsSupported) {
-    // Flat panel TV devices that support MDNS offload do not have to implement APF if the WiFi
-    // chipset does not have sufficient RAM to do so.
-    if (isPanelTvDevice() && isMdnsOffloadServicePresent()) {
-        GTEST_SKIP() << "Panel TV supports mDNS offload. It is not required to support APF";
+    const std::string oem_key1 = getPropertyString("ro.oem.key1");
+    if (isTvDevice()) {
+        // Flat panel TV devices that support MDNS offload do not have to implement APF if the WiFi
+        // chipset does not have sufficient RAM to do so.
+        if (isPanelTvDevice() && isMdnsOffloadPresentInNIC()) {
+            GTEST_SKIP() << "Panel TV supports mDNS offload. It is not required to support APF";
+        }
+        // For TV devices declaring the
+        // com.google.android.tv.full_networking_under_2w feature, this indicates
+        // the device can meet the <= 2W standby power requirement while
+        // continuously processing network packets on the CPU, even in standby mode.
+        // In these cases, APF support is strongly recommended rather than being
+        // mandatory.
+        if (doesDeviceSupportFullNetworkingUnder2w()) {
+            GTEST_SKIP() << "TV Device meets the <= 2W standby power demand requirement. It is not "
+                            "required to support APF.";
+        }
     }
     int vendor_api_level = property_get_int32("ro.vendor.api_level", 0);
     // Before VSR 14, APF support is optional.
@@ -157,14 +176,18 @@ TEST_P(WifiStaIfaceAidlTest, CheckApfIsSupported) {
         }
         StaApfPacketFilterCapabilities apf_caps = {};
         EXPECT_TRUE(wifi_sta_iface_->getApfPacketFilterCapabilities(&apf_caps).isOk());
-    } else {
-        EXPECT_TRUE(isFeatureSupported(IWifiStaIface::FeatureSetMask::APF));
-        StaApfPacketFilterCapabilities apf_caps = {};
-        EXPECT_TRUE(wifi_sta_iface_->getApfPacketFilterCapabilities(&apf_caps).isOk());
-        // The APF version must be 4 and the usable memory must be at least
-        // 1024 bytes.
-        EXPECT_EQ(apf_caps.version, 4);
-        EXPECT_GE(apf_caps.maxLength, 1024);
+        return;
+    }
+
+    EXPECT_TRUE(isFeatureSupported(IWifiStaIface::FeatureSetMask::APF));
+    StaApfPacketFilterCapabilities apf_caps = {};
+    EXPECT_TRUE(wifi_sta_iface_->getApfPacketFilterCapabilities(&apf_caps).isOk());
+    EXPECT_GE(apf_caps.version, 4);
+    // Based on VSR-14 the usable memory must be at least 1024 bytes.
+    EXPECT_GE(apf_caps.maxLength, 1024);
+    if (vendor_api_level >= __ANDROID_API_V__) {
+        // Based on VSR-15 the usable memory must be at least 2000 bytes.
+        EXPECT_GE(apf_caps.maxLength, 2000);
     }
 }
 
@@ -298,6 +321,21 @@ TEST_P(WifiStaIfaceAidlTest, RoamingControl) {
 }
 
 /*
+ * RoamingModeControl
+ */
+TEST_P(WifiStaIfaceAidlTest, RoamingModeControl) {
+    if (interface_version_ < 2) {
+        GTEST_SKIP() << "Roaming mode control is available as of sta_iface V2";
+    }
+    if (!isFeatureSupported(IWifiStaIface::FeatureSetMask::ROAMING_MODE_CONTROL)) {
+        GTEST_SKIP() << "Roaming mode control is not supported.";
+    }
+
+    // Enable aggressive roaming.
+    EXPECT_TRUE(wifi_sta_iface_->setRoamingState(StaRoamingState::AGGRESSIVE).isOk());
+}
+
+/*
  * EnableNDOffload
  */
 TEST_P(WifiStaIfaceAidlTest, EnableNDOffload) {
@@ -322,6 +360,108 @@ TEST_P(WifiStaIfaceAidlTest, PacketFateMonitoring) {
         EXPECT_TRUE(wifi_sta_iface_->getDebugRxPacketFates(&rx_reports).isOk());
         EXPECT_TRUE(wifi_sta_iface_->getDebugTxPacketFates(&tx_reports).isOk());
     }
+}
+
+/*
+ * CachedScanData
+ */
+TEST_P(WifiStaIfaceAidlTest, CachedScanData) {
+    if (!isFeatureSupported(IWifiStaIface::FeatureSetMask::CACHED_SCAN_DATA)) {
+        GTEST_SKIP() << "Cached scan data is not supported.";
+    }
+
+    // Retrieve cached scan data.
+    CachedScanData cached_scan_data = {};
+    EXPECT_TRUE(wifi_sta_iface_->getCachedScanData(&cached_scan_data).isOk());
+
+    if (cached_scan_data.cachedScanResults.size() > 0) {
+        EXPECT_GT(cached_scan_data.cachedScanResults[0].frequencyMhz, 0);
+    }
+}
+
+TEST_P(WifiStaIfaceAidlTest, TwtGetCapabilities) {
+    if (interface_version_ < 2) {
+        GTEST_SKIP() << "TwtGetCapabilities is available as of sta_iface V2";
+    }
+
+    TwtCapabilities twt_capabilities = {};
+    auto status = wifi_sta_iface_->twtGetCapabilities(&twt_capabilities);
+    if (checkStatusCode(&status, WifiStatusCode::ERROR_NOT_SUPPORTED)) {
+        GTEST_SKIP() << "twtGetCapabilities() is not supported by the vendor";
+    }
+    EXPECT_TRUE(status.isOk());
+    if (!twt_capabilities.isTwtRequesterSupported) {
+        GTEST_SKIP() << "TWT is not supported";
+    }
+
+    EXPECT_GT(twt_capabilities.minWakeDurationUs, 0);
+    EXPECT_GT(twt_capabilities.maxWakeDurationUs, 0);
+    EXPECT_GT(twt_capabilities.minWakeIntervalUs, 0);
+    EXPECT_GT(twt_capabilities.maxWakeIntervalUs, 0);
+}
+
+TEST_P(WifiStaIfaceAidlTest, TwtSessionSetup) {
+    if (interface_version_ < 2) {
+        GTEST_SKIP() << "TwtSessionSetup is available as of sta_iface V2";
+    }
+
+    TwtCapabilities twt_capabilities = {};
+    auto status = wifi_sta_iface_->twtGetCapabilities(&twt_capabilities);
+    if (checkStatusCode(&status, WifiStatusCode::ERROR_NOT_SUPPORTED)) {
+        GTEST_SKIP() << "twtGetCapabilities() is not supported by the vendor";
+    }
+    EXPECT_TRUE(status.isOk());
+    if (!twt_capabilities.isTwtRequesterSupported) {
+        GTEST_SKIP() << "TWT is not supported";
+    }
+
+    TwtRequest twtRequest;
+    twtRequest.mloLinkId = 0;
+    twtRequest.minWakeDurationUs = twt_capabilities.minWakeDurationUs;
+    twtRequest.maxWakeDurationUs = twt_capabilities.maxWakeDurationUs;
+    twtRequest.minWakeIntervalUs = twt_capabilities.minWakeIntervalUs;
+    twtRequest.maxWakeIntervalUs = twt_capabilities.maxWakeIntervalUs;
+    EXPECT_TRUE(wifi_sta_iface_->twtSessionSetup(1, twtRequest).isOk());
+}
+
+TEST_P(WifiStaIfaceAidlTest, TwtSessionGetStats) {
+    if (interface_version_ < 2) {
+        GTEST_SKIP() << "TwtSessionGetStats is available as of sta_iface V2";
+    }
+
+    TwtCapabilities twt_capabilities = {};
+    auto status = wifi_sta_iface_->twtGetCapabilities(&twt_capabilities);
+    if (checkStatusCode(&status, WifiStatusCode::ERROR_NOT_SUPPORTED)) {
+        GTEST_SKIP() << "twtGetCapabilities() is not supported by the vendor";
+    }
+    EXPECT_TRUE(status.isOk());
+    if (!twt_capabilities.isTwtRequesterSupported) {
+        GTEST_SKIP() << "TWT is not supported";
+    }
+
+    // Expecting a IWifiStaIfaceEventCallback.onTwtFailure() with INVALID_PARAMS
+    // as the error code.
+    EXPECT_TRUE(wifi_sta_iface_->twtSessionGetStats(1, 10).isOk());
+}
+
+TEST_P(WifiStaIfaceAidlTest, TwtSessionTeardown) {
+    if (interface_version_ < 2) {
+        GTEST_SKIP() << "TwtSessionTeardown is available as of sta_iface V3";
+    }
+
+    TwtCapabilities twt_capabilities = {};
+    auto status = wifi_sta_iface_->twtGetCapabilities(&twt_capabilities);
+    if (checkStatusCode(&status, WifiStatusCode::ERROR_NOT_SUPPORTED)) {
+        GTEST_SKIP() << "twtGetCapabilities() is not supported by the vendor";
+    }
+    EXPECT_TRUE(status.isOk());
+    if (!twt_capabilities.isTwtRequesterSupported) {
+        GTEST_SKIP() << "TWT is not supported";
+    }
+
+    // Expecting a IWifiStaIfaceEventCallback.onTwtFailure() with INVALID_PARAMS
+    // as  the error code.
+    EXPECT_TRUE(wifi_sta_iface_->twtSessionTeardown(1, 10).isOk());
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiStaIfaceAidlTest);

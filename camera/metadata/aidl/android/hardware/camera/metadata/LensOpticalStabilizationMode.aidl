@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.lens.opticalStabilizationMode enumeration values
  * @see ANDROID_LENS_OPTICAL_STABILIZATION_MODE
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

@@ -257,11 +257,6 @@ static uint8_t GetBitpool(const A2dpBits& configuration, int bitrate) {
  * SBC Class implementation
  */
 
-const A2dpOffloadCodecSbc* A2dpOffloadCodecSbc::GetInstance() {
-  static A2dpOffloadCodecSbc instance;
-  return &instance;
-}
-
 A2dpOffloadCodecSbc::A2dpOffloadCodecSbc()
     : A2dpOffloadCodec(info_),
       info_({.id = CodecId(CodecId::A2dp::SBC), .name = "SBC"}) {

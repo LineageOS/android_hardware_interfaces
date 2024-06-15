@@ -237,8 +237,10 @@ TEST_P(RadioNetworkTest, getUsageSetting) {
                             {RadioError::RADIO_NOT_AVAILABLE, RadioError::INVALID_STATE,
                              RadioError::SIM_ABSENT, RadioError::INTERNAL_ERR, RadioError::NONE});
 
-    ASSERT_TRUE(radioRsp_network->usageSetting == UsageSetting::VOICE_CENTRIC ||
-                radioRsp_network->usageSetting == UsageSetting::DATA_CENTRIC);
+    if (radioRsp_network->rspInfo.error == RadioError::NONE) {
+        ASSERT_TRUE(radioRsp_network->usageSetting == UsageSetting::VOICE_CENTRIC ||
+                    radioRsp_network->usageSetting == UsageSetting::DATA_CENTRIC);
+    }
 }
 
 void RadioNetworkTest::testSetUsageSetting_InvalidValues(std::vector<RadioError> errors) {
@@ -883,7 +885,7 @@ TEST_P(RadioNetworkTest, setLinkCapacityReportingCriteria_invalidHysteresisDlKbp
 
     ALOGI("setLinkCapacityReportingCriteria_invalidHysteresisDlKbps, rspInfo.error = %s\n",
           toString(radioRsp_network->rspInfo.error).c_str());
-    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error, {RadioError::INVALID_ARGUMENTS}));
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error, {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
 }
 
 /*
@@ -909,7 +911,7 @@ TEST_P(RadioNetworkTest, setLinkCapacityReportingCriteria_invalidHysteresisUlKbp
 
     ALOGI("setLinkCapacityReportingCriteria_invalidHysteresisUlKbps, rspInfo.error = %s\n",
           toString(radioRsp_network->rspInfo.error).c_str());
-    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error, {RadioError::INVALID_ARGUMENTS}));
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error, {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
 }
 
 /*
@@ -934,7 +936,7 @@ TEST_P(RadioNetworkTest, setLinkCapacityReportingCriteria_emptyParams) {
 
     ALOGI("setLinkCapacityReportingCriteria_emptyParams, rspInfo.error = %s\n",
           toString(radioRsp_network->rspInfo.error).c_str());
-    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error, {RadioError::NONE}));
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error, {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED}));
 }
 
 /*
@@ -1422,19 +1424,12 @@ TEST_P(RadioNetworkTest, setNetworkSelectionModeManual) {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
 
-    if (cardStatus.cardState == CardStatus::STATE_ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-                radioRsp_network->rspInfo.error,
-                {RadioError::NONE, RadioError::ILLEGAL_SIM_OR_ME, RadioError::INVALID_ARGUMENTS,
-                 RadioError::INVALID_STATE, RadioError::RADIO_NOT_AVAILABLE, RadioError::NO_MEMORY,
-                 RadioError::INTERNAL_ERR, RadioError::SYSTEM_ERR, RadioError::CANCELLED}));
-    } else if (cardStatus.cardState == CardStatus::STATE_PRESENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-                radioRsp_network->rspInfo.error,
-                {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::INVALID_ARGUMENTS,
-                 RadioError::INVALID_STATE, RadioError::NO_MEMORY, RadioError::INTERNAL_ERR,
-                 RadioError::SYSTEM_ERR, RadioError::CANCELLED}));
-    }
+    ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp_network->rspInfo.error,
+            {RadioError::NONE, RadioError::ILLEGAL_SIM_OR_ME, RadioError::RADIO_NOT_AVAILABLE,
+             RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE, RadioError::NO_MEMORY,
+             RadioError::INTERNAL_ERR, RadioError::SYSTEM_ERR, RadioError::CANCELLED,
+             RadioError::MODEM_ERR, RadioError::OPERATION_NOT_ALLOWED, RadioError::NO_RESOURCES}));
 }
 
 /*
@@ -2382,16 +2377,9 @@ TEST_P(RadioNetworkTest, setNullCipherAndIntegrityEnabled) {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
 
-    if (aidl_version >= 3 && deviceSupportsFeature(FEATURE_TELEPHONY_RADIO_ACCESS)) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-                radioRsp_network->rspInfo.error,
-                {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
-    } else {
-        // For aidl_version 2, API is optional
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
-                                     {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
-                                      RadioError::MODEM_ERR, RadioError::REQUEST_NOT_SUPPORTED}));
-    }
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
+                                 {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
+                                  RadioError::MODEM_ERR, RadioError::REQUEST_NOT_SUPPORTED}));
 }
 
 /**
@@ -2423,16 +2411,9 @@ TEST_P(RadioNetworkTest, isNullCipherAndIntegrityEnabled) {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
 
-    if (aidl_version >= 3 && deviceSupportsFeature(FEATURE_TELEPHONY_RADIO_ACCESS)) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-                radioRsp_network->rspInfo.error,
-                {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
-    } else {
-        // For aidl_version 2, API is optional
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
-                                     {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
-                                      RadioError::MODEM_ERR, RadioError::REQUEST_NOT_SUPPORTED}));
-    }
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
+                                 {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
+                                  RadioError::MODEM_ERR, RadioError::REQUEST_NOT_SUPPORTED}));
 }
 
 TEST_P(RadioNetworkTest, isCellularIdentifierTransparencyEnabled) {

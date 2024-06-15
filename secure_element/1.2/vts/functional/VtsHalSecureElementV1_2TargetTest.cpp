@@ -73,6 +73,7 @@ class SecureElementHidlTest : public ::testing::TestWithParam<std::string> {
         se_->init_1_1(se_cb_);
         auto res = se_cb_->WaitForCallback(kCallbackNameOnStateChange);
         EXPECT_TRUE(res.no_timeout);
+        ASSERT_TRUE(res.args);
         EXPECT_TRUE(res.args->state_);
         EXPECT_NE(res.args->reason_, "");
     }
@@ -93,10 +94,12 @@ TEST_P(SecureElementHidlTest, Reset) {
 
     auto res = se_cb_->WaitForCallback(kCallbackNameOnStateChange);
     EXPECT_TRUE(res.no_timeout);
+    ASSERT_TRUE(res.args);
     EXPECT_FALSE(res.args->state_);
 
     res = se_cb_->WaitForCallback(kCallbackNameOnStateChange);
     EXPECT_TRUE(res.no_timeout);
+    ASSERT_TRUE(res.args);
     EXPECT_TRUE(res.args->state_);
 }
 

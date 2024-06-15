@@ -28,7 +28,7 @@ aidl_interface {
         "android/hardware/security/authgraph/*.aidl",
     ],
     stability: "vintf",
-    frozen: false,
+    frozen: true,
     backend: {
         java: {
             platform_apis: true,
@@ -44,6 +44,13 @@ aidl_interface {
             ],
         },
     },
+    versions_with_info: [
+        {
+            version: "1",
+            imports: [],
+        },
+    ],
+
 }
 
 // cc_defaults that includes the latest Authgraph AIDL library.

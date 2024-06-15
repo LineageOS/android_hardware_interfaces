@@ -16,6 +16,7 @@
 
 package android.hardware.power;
 
+import android.hardware.power.SessionConfig;
 import android.hardware.power.SessionHint;
 import android.hardware.power.SessionMode;
 import android.hardware.power.WorkDuration;
@@ -91,4 +92,11 @@ interface IPowerHintSession {
      * @param enabled True to enable the mode, false to disable it
      */
     oneway void setMode(SessionMode type, boolean enabled);
+
+    /**
+     * This method provides direct access to a session's config data.
+     *
+     * @return  the config data for this session
+     */
+    SessionConfig getSessionConfig();
 }

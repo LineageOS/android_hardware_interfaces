@@ -39,6 +39,7 @@ class RadioConfigResponse : public BnRadioConfigResponse {
     PhoneCapability phoneCap;
     bool modemReducedFeatureSet1;
     std::vector<SimSlotStatus> simSlotStatus;
+    std::vector<int32_t> currentEnabledLogicalSlots;
 
     virtual ndk::ScopedAStatus getSimSlotsStatusResponse(
             const RadioResponseInfo& info, const std::vector<SimSlotStatus>& slotStatus) override;
@@ -47,6 +48,9 @@ class RadioConfigResponse : public BnRadioConfigResponse {
 
     virtual ndk::ScopedAStatus getPhoneCapabilityResponse(
             const RadioResponseInfo& info, const PhoneCapability& phoneCapability) override;
+
+    virtual ndk::ScopedAStatus getSimultaneousCallingSupportResponse(
+            const RadioResponseInfo& info, const std::vector<int32_t>& enabledLogicalSlots) override;
 
     virtual ndk::ScopedAStatus setPreferredDataModemResponse(
             const RadioResponseInfo& info) override;
@@ -71,6 +75,9 @@ class RadioConfigIndication : public BnRadioConfigIndication {
 
     virtual ndk::ScopedAStatus simSlotsStatusChanged(
             RadioIndicationType type, const std::vector<SimSlotStatus>& slotStatus) override;
+
+    virtual ndk::ScopedAStatus onSimultaneousCallingSupportChanged(
+            const std::vector<int32_t>& /*enabledLogicalSlots*/) override;
 };
 
 // The main test class for Radio AIDL Config.

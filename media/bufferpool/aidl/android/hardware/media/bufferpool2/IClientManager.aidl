@@ -40,7 +40,8 @@ interface IClientManager {
     /**
      * Sets up a buffer receiving communication node for the specified
      * buffer pool. A manager must create a IConnection to the buffer
-     * pool if it does not already have a connection.
+     * pool if it does not already have a connection. To transfer buffers
+     * using the interface, the sender must initiates transfer.
      *
      * @param bufferPool a buffer pool which is specified with the IAccessor.
      *     The specified buffer pool is the owner of received buffers.
@@ -52,4 +53,21 @@ interface IClientManager {
      *     ResultStatus::CRITICAL_ERROR   - Other errors.
      */
     Registration registerSender(in IAccessor bufferPool);
+
+    /**
+     * Sets up a buffer receiving communication node for the specified
+     * buffer pool. A manager must create a IConnection to the buffer
+     * pool if it does not already have a connection. To transfer buffers
+     * using the interface, the receiver must initiates transfer(on demand).
+     *
+     * @param bufferPool a buffer pool which is specified with the IAccessor.
+     *     The specified buffer pool is the owner of received buffers.
+     * @return the Id of the communication node to the buffer pool.
+     *     This id is used in FMQ to notify IAccessor that a buffer has been
+     *     sent to that connection during transfers.
+     * @throws ServiceSpecificException with one of the following values:
+     *     ResultStatus::NO_MEMORY        - Memory allocation failure occurred.
+     *     ResultStatus::CRITICAL_ERROR   - Other errors.
+     */
+    Registration registerPassiveSender(in IAccessor bufferPool);
 }

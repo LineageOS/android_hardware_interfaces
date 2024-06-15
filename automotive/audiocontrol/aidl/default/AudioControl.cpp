@@ -244,15 +244,15 @@ ndk::ScopedAStatus AudioControl::onDevicesToMuteChange(
 template <typename aidl_type>
 static inline std::string toString(const std::vector<aidl_type>& in_values) {
     return std::accumulate(std::begin(in_values), std::end(in_values), std::string{},
-                           [](std::string& ls, const aidl_type& rs) {
-                               return ls += (ls.empty() ? "" : ",") + rs.toString();
+                           [](const std::string& ls, const aidl_type& rs) {
+                               return ls + (ls.empty() ? "" : ",") + rs.toString();
                            });
 }
 template <typename aidl_enum_type>
 static inline std::string toEnumString(const std::vector<aidl_enum_type>& in_values) {
     return std::accumulate(std::begin(in_values), std::end(in_values), std::string{},
-                           [](std::string& ls, const aidl_enum_type& rs) {
-                               return ls += (ls.empty() ? "" : ",") + toString(rs);
+                           [](const std::string& ls, const aidl_enum_type& rs) {
+                               return ls + (ls.empty() ? "" : ",") + toString(rs);
                            });
 }
 

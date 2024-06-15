@@ -191,4 +191,20 @@ oneway interface IRadioConfig {
      * This is available when android.hardware.telephony.subscription is defined.
      */
     void setSimSlotsMapping(in int serial, in SlotPortMapping[] slotMap);
+
+    /**
+     * Get the set of logical slots where simultaneous cellular calling is currently possible. This
+     * does not include simultaneous calling availability over other non-cellular transports, such
+     * as IWLAN.
+     *
+     * Get the set of slots that currently support simultaneous cellular calling. When a new
+     * cellular call is placed/received, if another slot is active and handing a call, both the
+     * active slot and proposed slot must be in this list in order to support simultaneous cellular
+     * calling for both of those slots.
+     *
+     * @param serial Serial number of request
+     *
+     * This is available when android.hardware.telephony is defined.
+     */
+    void getSimultaneousCallingSupport(in int serial);
 }

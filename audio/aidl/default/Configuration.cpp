@@ -110,6 +110,9 @@ static AudioPortConfig createDynamicPortConfig(int32_t id, int32_t portId, int32
     AudioPortConfig config;
     config.id = id;
     config.portId = portId;
+    config.format = AudioFormatDescription{};
+    config.channelMask = AudioChannelLayout{};
+    config.sampleRate = Int{.value = 0};
     config.gain = AudioGainConfig();
     config.flags = isInput ? AudioIoFlags::make<AudioIoFlags::Tag::input>(flags)
                            : AudioIoFlags::make<AudioIoFlags::Tag::output>(flags);

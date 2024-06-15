@@ -147,10 +147,6 @@ std::shared_ptr<EffectContext> LoudnessEnhancerSw::createContext(const Parameter
     return mContext;
 }
 
-std::shared_ptr<EffectContext> LoudnessEnhancerSw::getContext() {
-    return mContext;
-}
-
 RetCode LoudnessEnhancerSw::releaseContext() {
     if (mContext) {
         mContext.reset();

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <mutex>
+
 #define LOG_TAG "AHAL_SubmixRoute"
 #include <android-base/logging.h>
 #include <media/AidlConversionCppNdk.h>
@@ -23,8 +25,64 @@
 #include "SubmixRoute.h"
 
 using aidl::android::hardware::audio::common::getChannelCount;
+using aidl::android::media::audio::common::AudioDeviceAddress;
 
 namespace aidl::android::hardware::audio::core::r_submix {
+
+// static
+SubmixRoute::RoutesMonitor SubmixRoute::getRoutes(bool tryLock) {
+    static std::mutex submixRoutesLock;
+    static RoutesMap submixRoutes;
+    return !tryLock ? RoutesMonitor(submixRoutesLock, submixRoutes)
+                    : RoutesMonitor(submixRoutesLock, submixRoutes, tryLock);
+}
+
+// static
+std::shared_ptr<SubmixRoute> SubmixRoute::findOrCreateRoute(const AudioDeviceAddress& deviceAddress,
+                                                            const AudioConfig& pipeConfig) {
+    auto routes = getRoutes();
+    auto routeItr = routes->find(deviceAddress);
+    if (routeItr != routes->end()) {
+        return routeItr->second;
+    }
+    auto route = std::make_shared<SubmixRoute>();
+    if (::android::OK != route->createPipe(pipeConfig)) {
+        LOG(ERROR) << __func__ << ": create pipe failed";
+        return nullptr;
+    }
+    routes->emplace(deviceAddress, route);
+    return route;
+}
+
+// static
+std::shared_ptr<SubmixRoute> SubmixRoute::findRoute(const AudioDeviceAddress& deviceAddress) {
+    auto routes = getRoutes();
+    auto routeItr = routes->find(deviceAddress);
+    if (routeItr != routes->end()) {
+        return routeItr->second;
+    }
+    return nullptr;
+}
+
+// static
+void SubmixRoute::removeRoute(const AudioDeviceAddress& deviceAddress) {
+    getRoutes()->erase(deviceAddress);
+}
+
+// static
+std::string SubmixRoute::dumpRoutes() {
+    auto routes = getRoutes(true /*tryLock*/);
+    std::string result;
+    if (routes->empty()) result.append(" <Empty>");
+    for (const auto& r : *(routes.operator->())) {
+        result.append(" - ")
+                .append(r.first.toString())
+                .append(": ")
+                .append(r.second->dump())
+                .append("\n");
+    }
+    return result;
+}
 
 // Verify a submix input or output stream can be opened.
 bool SubmixRoute::isStreamConfigValid(bool isInput, const AudioConfig& streamConfig) {
@@ -44,6 +102,7 @@ bool SubmixRoute::isStreamConfigValid(bool isInput, const AudioConfig& streamCon
 // Compare this stream config with existing pipe config, returning false if they do *not*
 // match, true otherwise.
 bool SubmixRoute::isStreamConfigCompatible(const AudioConfig& streamConfig) {
+    std::lock_guard guard(mLock);
     if (streamConfig.channelLayout != mPipeConfig.channelLayout) {
         LOG(ERROR) << __func__ << ": channel count mismatch, stream channels = "
                    << streamConfig.channelLayout.toString()
@@ -162,17 +221,14 @@ void SubmixRoute::closeStream(bool isInput) {
         LOG(FATAL) << __func__ << ": Negotiation for the source failed, index = " << index;
         return ::android::BAD_INDEX;
     }
-    LOG(VERBOSE) << __func__ << ": created pipe";
-
-    mPipeConfig = streamConfig;
-    mPipeConfig.frameCount = sink->maxFrames();
-
-    LOG(VERBOSE) << __func__ << ": Pipe frame size : " << mPipeConfig.frameSize
-                 << ", pipe frames : " << mPipeConfig.frameCount;
+    LOG(VERBOSE) << __func__ << ": Pipe frame size : " << streamConfig.frameSize
+                 << ", pipe frames : " << sink->maxFrames();
 
     // Save references to the source and sink.
     {
         std::lock_guard guard(mLock);
+        mPipeConfig = streamConfig;
+        mPipeConfig.frameCount = sink->maxFrames();
         mSink = std::move(sink);
         mSource = std::move(source);
     }
@@ -181,15 +237,15 @@ void SubmixRoute::closeStream(bool isInput) {
 }
 
 // Release references to the sink and source.
-void SubmixRoute::releasePipe() {
+AudioConfig SubmixRoute::releasePipe() {
     std::lock_guard guard(mLock);
     mSink.clear();
     mSource.clear();
+    return mPipeConfig;
 }
 
 ::android::status_t SubmixRoute::resetPipe() {
-    releasePipe();
-    return createPipe(mPipeConfig);
+    return createPipe(releasePipe());
 }
 
 void SubmixRoute::standby(bool isInput) {
@@ -218,6 +274,25 @@ void SubmixRoute::exitStandby(bool isInput) {
             mStreamOutStandbyTransition = true;
         }
     }
+}
+
+std::string SubmixRoute::dump() NO_THREAD_SAFETY_ANALYSIS {
+    const bool isLocked = mLock.try_lock();
+    std::string result = std::string(isLocked ? "" : "! ")
+                                 .append("Input ")
+                                 .append(mStreamInOpen ? "open" : "closed")
+                                 .append(mStreamInStandby ? ", standby" : ", active")
+                                 .append(", refcount: ")
+                                 .append(std::to_string(mInputRefCount))
+                                 .append(", framesRead: ")
+                                 .append(mSource ? std::to_string(mSource->framesRead()) : "<null>")
+                                 .append("; Output ")
+                                 .append(mStreamOutOpen ? "open" : "closed")
+                                 .append(mStreamOutStandby ? ", standby" : ", active")
+                                 .append(", framesWritten: ")
+                                 .append(mSink ? std::to_string(mSink->framesWritten()) : "<null>");
+    if (isLocked) mLock.unlock();
+    return result;
 }
 
 }  // namespace aidl::android::hardware::audio::core::r_submix

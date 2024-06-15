@@ -22,33 +22,33 @@ package android.hardware.bluetooth.audio;
 @VintfStability
 parcelable ConfigurationFlags {
     const int NONE = 0x0000;
-    /*
+    /**
      * Set for the lossless configurations
      */
     const int LOSSLESS = 0x0001;
-    /*
+    /**
      * Set for the low latency configurations
      */
     const int LOW_LATENCY = 0x0002;
-    /*
+    /**
      * When set, asymmetric configuration for SINK and SOURCE can be used.
      * e.g. in GAMING mode stream for 32kHz and back channel for 16 kHz
      */
-    const int ALLOW_ASYMMETRIC_CONFIGURATIONS = 0x0003;
-    /*
+    const int ALLOW_ASYMMETRIC_CONFIGURATIONS = 0x0004;
+    /**
      * Set for the spatial audio configurations
      */
-    const int SPATIAL_AUDIO = 0x0004;
-    /*
+    const int SPATIAL_AUDIO = 0x0008;
+    /**
      * When set, BluetoothAudioProvider requests to receive ASE metadata.
      * In such case onSinkAseMetadataChanged() and onSourceAseMetadataChanged
      * will be called.
      */
-    const int PROVIDE_ASE_METADATA = 0x0005;
-    /*
+    const int PROVIDE_ASE_METADATA = 0x0010;
+    /**
      * Set for mono microphone configurations
      */
-    const int MONO_MIC_CONFIGURATION = 0x0006;
+    const int MONO_MIC_CONFIGURATION = 0x0020;
 
     int bitmask;
 }

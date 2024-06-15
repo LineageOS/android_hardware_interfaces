@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "AHAL_BluetoothPortProxy"
+#define LOG_TAG "AHAL_BluetoothAudioPort"
 
 #include <android-base/logging.h>
 #include <android-base/stringprintf.h>
@@ -254,12 +254,7 @@ bool BluetoothAudioPortAidl::inUse() const {
     return (mCookie != ::aidl::android::hardware::bluetooth::audio::kObserversCookieUndefined);
 }
 
-bool BluetoothAudioPortAidl::getPreferredDataIntervalUs(size_t* interval_us) const {
-    if (!interval_us) {
-        LOG(ERROR) << __func__ << ": bad input arg";
-        return false;
-    }
-
+bool BluetoothAudioPortAidl::getPreferredDataIntervalUs(size_t& interval_us) const {
     if (!inUse()) {
         LOG(ERROR) << __func__ << ": BluetoothAudioPortAidl is not in use";
         return false;
@@ -272,16 +267,11 @@ bool BluetoothAudioPortAidl::getPreferredDataIntervalUs(size_t* interval_us) con
         return false;
     }
 
-    *interval_us = hal_audio_cfg.get<AudioConfiguration::pcmConfig>().dataIntervalUs;
+    interval_us = hal_audio_cfg.get<AudioConfiguration::pcmConfig>().dataIntervalUs;
     return true;
 }
 
-bool BluetoothAudioPortAidl::loadAudioConfig(PcmConfiguration* audio_cfg) const {
-    if (!audio_cfg) {
-        LOG(ERROR) << __func__ << ": bad input arg";
-        return false;
-    }
-
+bool BluetoothAudioPortAidl::loadAudioConfig(PcmConfiguration& audio_cfg) {
     if (!inUse()) {
         LOG(ERROR) << __func__ << ": BluetoothAudioPortAidl is not in use";
         return false;
@@ -293,11 +283,22 @@ bool BluetoothAudioPortAidl::loadAudioConfig(PcmConfiguration* audio_cfg) const 
         LOG(ERROR) << __func__ << ": unsupported audio cfg tag";
         return false;
     }
-    *audio_cfg = hal_audio_cfg.get<AudioConfiguration::pcmConfig>();
+    audio_cfg = hal_audio_cfg.get<AudioConfiguration::pcmConfig>();
     LOG(VERBOSE) << __func__ << debugMessage() << ", state*=" << getState() << ", PcmConfig=["
-                 << audio_cfg->toString() << "]";
-    if (audio_cfg->channelMode == ChannelMode::UNKNOWN) {
+                 << audio_cfg.toString() << "]";
+    if (audio_cfg.channelMode == ChannelMode::UNKNOWN) {
         return false;
+    }
+    return true;
+}
+
+bool BluetoothAudioPortAidlOut::loadAudioConfig(PcmConfiguration& audio_cfg) {
+    if (!BluetoothAudioPortAidl::loadAudioConfig(audio_cfg)) return false;
+    // WAR to support Mono / 16 bits per sample as the Bluetooth stack requires
+    if (audio_cfg.channelMode == ChannelMode::MONO && audio_cfg.bitsPerSample == 16) {
+        mIsStereoToMono = true;
+        audio_cfg.channelMode = ChannelMode::STEREO;
+        LOG(INFO) << __func__ << ": force channels = to be AUDIO_CHANNEL_OUT_STEREO";
     }
     return true;
 }
@@ -435,7 +436,7 @@ bool BluetoothAudioPortAidl::suspend() {
                 retval = condWaitState(BluetoothStreamState::SUSPENDING);
             } else {
                 LOG(ERROR) << __func__ << debugMessage() << ", state=" << getState()
-                           << " Hal fails";
+                           << " failure to suspend stream";
             }
         }
     }

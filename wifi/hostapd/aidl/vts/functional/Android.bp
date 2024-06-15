@@ -1,4 +1,5 @@
 package {
+    default_team: "trendy_team_fwk_wifi_hal",
     // See: http://go/android-license-faq
     // A large-scale-change added 'default_applicable_licenses' to import
     // all of the 'license_kinds' from "hardware_interfaces_license"
@@ -20,7 +21,7 @@ cc_test {
         "libvndksupport",
     ],
     static_libs: [
-        "android.hardware.wifi.hostapd-V1-ndk",
+        "android.hardware.wifi.hostapd-V2-ndk",
         "VtsHalWifiV1_0TargetTestUtil",
         "VtsHalWifiV1_5TargetTestUtil",
         "VtsHalWifiV1_6TargetTestUtil",

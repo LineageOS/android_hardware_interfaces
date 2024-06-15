@@ -56,6 +56,7 @@ constexpr uint64_t kOpHandleSentinel = 0xFFFFFFFFFFFFFFFF;
 
 const string FEATURE_KEYSTORE_APP_ATTEST_KEY = "android.hardware.keystore.app_attest_key";
 const string FEATURE_STRONGBOX_KEYSTORE = "android.hardware.strongbox_keystore";
+const string FEATURE_HARDWARE_KEYSTORE = "android.hardware.hardware_keystore";
 
 // RAII class to ensure that a keyblob is deleted regardless of how a test exits.
 class KeyBlobDeleter {
@@ -444,6 +445,7 @@ void check_maced_pubkey(const MacedPublicKey& macedPubKey, bool testMode,
 void p256_pub_key(const vector<uint8_t>& coseKeyData, EVP_PKEY_Ptr* signingKey);
 void device_id_attestation_check_acceptable_error(Tag tag, const ErrorCode& result);
 bool check_feature(const std::string& name);
+std::optional<int32_t> keymint_feature_value(bool strongbox);
 
 AuthorizationSet HwEnforcedAuthorizations(const vector<KeyCharacteristics>& key_characteristics);
 AuthorizationSet SwEnforcedAuthorizations(const vector<KeyCharacteristics>& key_characteristics);

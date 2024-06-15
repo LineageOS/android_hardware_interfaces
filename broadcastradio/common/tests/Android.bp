@@ -86,4 +86,7 @@ cc_test {
     ],
     static_libs: ["android.hardware.broadcastradio@common-utils-lib"],
     test_suites: ["general-tests"],
+    shared_libs: [
+        "libbase",
+    ],
 }

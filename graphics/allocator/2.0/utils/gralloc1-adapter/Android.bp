@@ -1,4 +1,5 @@
 package {
+    default_team: "trendy_team_android_core_graphics_stack",
     // See: http://go/android-license-faq
     // A large-scale-change added 'default_applicable_licenses' to import
     // all of the 'license_kinds' from "hardware_interfaces_license"
@@ -11,9 +12,15 @@ cc_library_static {
     name: "libgralloc1-adapter",
     defaults: ["hidl_defaults"],
     vendor: true,
-    srcs: ["gralloc1-adapter.cpp", "Gralloc1On0Adapter.cpp"],
+    srcs: [
+        "gralloc1-adapter.cpp",
+        "Gralloc1On0Adapter.cpp",
+    ],
     include_dirs: ["system/core/libsync/include"],
     export_include_dirs: ["."],
     whole_static_libs: ["libgrallocusage"],
-    shared_libs: ["libhardware", "liblog"],
+    shared_libs: [
+        "libhardware",
+        "liblog",
+    ],
 }

@@ -1,0 +1,9 @@
+package: "com.android.btaudio.hal.flags"
+container: "system"
+
+flag {
+    name: "dsa_lea"
+    namespace: "pixel_bluetooth"
+    description: "Flag for DSA Over LEA"
+    bug: "270987427"
+}

@@ -42,6 +42,7 @@ class RadioConfig : public aidl::android::hardware::radio::config::BnRadioConfig
     ::ndk::ScopedAStatus getHalDeviceCapabilities(int32_t serial) override;
     ::ndk::ScopedAStatus getNumOfLiveModems(int32_t serial) override;
     ::ndk::ScopedAStatus getPhoneCapability(int32_t serial) override;
+    ::ndk::ScopedAStatus getSimultaneousCallingSupport(int32_t serial) override;
     ::ndk::ScopedAStatus getSimSlotsStatus(int32_t serial) override;
     ::ndk::ScopedAStatus setNumOfLiveModems(int32_t serial, int8_t numOfLiveModems) override;
     ::ndk::ScopedAStatus setPreferredDataModem(int32_t serial, int8_t modemId) override;

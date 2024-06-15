@@ -67,7 +67,8 @@ union Spatializer {
     Spatialization.Mode spatializationMode;
 
     /**
-     * Head tracking sensor ID.
+     * Identifies the head tracking sensor using its unique sensor ID.
+     * The value corresponds to android.hardware.sensors.SensorInfo.sensorHandle.
      */
     int headTrackingSensorId;
 

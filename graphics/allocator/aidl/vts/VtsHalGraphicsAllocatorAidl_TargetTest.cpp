@@ -144,7 +144,8 @@ class GraphicsTestsBase {
             auto status = mAllocator->getIMapperLibrarySuffix(&mapperSuffix);
             ASSERT_TRUE(status.isOk());
             std::string lib_name = "mapper." + mapperSuffix + ".so";
-            void* so = android_load_sphal_library(lib_name.c_str(), RTLD_LOCAL | RTLD_NOW);
+            void* so = AServiceManager_openDeclaredPassthroughHal("mapper", mapperSuffix.c_str(),
+                                                                  RTLD_LOCAL | RTLD_NOW);
             ASSERT_NE(nullptr, so) << "Failed to load " << lib_name;
             auto loadIMapper = (AIMapper_loadIMapperFn)dlsym(so, "AIMapper_loadIMapper");
             ASSERT_NE(nullptr, loadIMapper) << "AIMapper_locaIMapper missing from " << lib_name;

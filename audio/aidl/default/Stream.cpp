@@ -16,14 +16,14 @@
 
 #include <pthread.h>
 
+#define ATRACE_TAG ATRACE_TAG_AUDIO
 #define LOG_TAG "AHAL_Stream"
+#include <Utils.h>
 #include <android-base/logging.h>
 #include <android/binder_ibinder_platform.h>
 #include <utils/SystemClock.h>
+#include <utils/Trace.h>
 
-#include <Utils.h>
-
-#include "core-impl/Module.h"
 #include "core-impl/Stream.h"
 
 using aidl::android::hardware::audio::common::AudioOffloadMetadata;
@@ -180,17 +180,20 @@ StreamInWorkerLogic::Status StreamInWorkerLogic::cycle() {
     StreamDescriptor::Reply reply{};
     reply.status = STATUS_BAD_VALUE;
     switch (command.getTag()) {
-        case Tag::halReservedExit:
-            if (const int32_t cookie = command.get<Tag::halReservedExit>();
-                cookie == (mContext->getInternalCommandCookie() ^ getTid())) {
+        case Tag::halReservedExit: {
+            const int32_t cookie = command.get<Tag::halReservedExit>();
+            if (cookie == (mContext->getInternalCommandCookie() ^ getTid())) {
                 mDriver->shutdown();
                 setClosed();
-                // This is an internal command, no need to reply.
-                return Status::EXIT;
             } else {
                 LOG(WARNING) << __func__ << ": EXIT command has a bad cookie: " << cookie;
             }
-            break;
+            if (cookie != 0) {  // This is an internal command, no need to reply.
+                return Status::EXIT;
+            } else {
+                break;
+            }
+        }
         case Tag::getStatus:
             populateReply(&reply, mIsConnected);
             break;
@@ -309,6 +312,7 @@ StreamInWorkerLogic::Status StreamInWorkerLogic::cycle() {
 }
 
 bool StreamInWorkerLogic::read(size_t clientSize, StreamDescriptor::Reply* reply) {
+    ATRACE_CALL();
     StreamContext::DataMQ* const dataMQ = mContext->getDataMQ();
     const size_t byteCount = std::min({clientSize, dataMQ->availableToWrite(), mDataBufferSize});
     const bool isConnected = mIsConnected;
@@ -400,17 +404,20 @@ StreamOutWorkerLogic::Status StreamOutWorkerLogic::cycle() {
     reply.status = STATUS_BAD_VALUE;
     using Tag = StreamDescriptor::Command::Tag;
     switch (command.getTag()) {
-        case Tag::halReservedExit:
-            if (const int32_t cookie = command.get<Tag::halReservedExit>();
-                cookie == (mContext->getInternalCommandCookie() ^ getTid())) {
+        case Tag::halReservedExit: {
+            const int32_t cookie = command.get<Tag::halReservedExit>();
+            if (cookie == (mContext->getInternalCommandCookie() ^ getTid())) {
                 mDriver->shutdown();
                 setClosed();
-                // This is an internal command, no need to reply.
-                return Status::EXIT;
             } else {
                 LOG(WARNING) << __func__ << ": EXIT command has a bad cookie: " << cookie;
             }
-            break;
+            if (cookie != 0) {  // This is an internal command, no need to reply.
+                return Status::EXIT;
+            } else {
+                break;
+            }
+        }
         case Tag::getStatus:
             populateReply(&reply, mIsConnected);
             break;
@@ -577,6 +584,7 @@ StreamOutWorkerLogic::Status StreamOutWorkerLogic::cycle() {
 }
 
 bool StreamOutWorkerLogic::write(size_t clientSize, StreamDescriptor::Reply* reply) {
+    ATRACE_CALL();
     StreamContext::DataMQ* const dataMQ = mContext->getDataMQ();
     const size_t readByteCount = dataMQ->availableToRead();
     const size_t frameSize = mContext->getFrameSize();

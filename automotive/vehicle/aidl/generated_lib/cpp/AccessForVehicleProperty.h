@@ -22,8 +22,7 @@
 
 // clang-format off
 
-#ifndef android_hardware_automotive_vehicle_aidl_generated_lib_AccessForVehicleProperty_H_
-#define android_hardware_automotive_vehicle_aidl_generated_lib_AccessForVehicleProperty_H_
+#pragma once
 
 #include <aidl/android/hardware/automotive/vehicle/VehicleProperty.h>
 #include <aidl/android/hardware/automotive/vehicle/VehiclePropertyAccess.h>
@@ -125,6 +124,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyAccess> AccessForVehiclePrope
         {VehicleProperty::DISPLAY_BRIGHTNESS, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::PER_DISPLAY_BRIGHTNESS, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::VALET_MODE_ENABLED, VehiclePropertyAccess::READ_WRITE},
+        {VehicleProperty::HEAD_UP_DISPLAY_ENABLED, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::HW_KEY_INPUT, VehiclePropertyAccess::READ},
         {VehicleProperty::HW_KEY_INPUT_V2, VehiclePropertyAccess::READ},
         {VehicleProperty::HW_MOTION_INPUT, VehiclePropertyAccess::READ},
@@ -204,6 +204,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyAccess> AccessForVehiclePrope
         {VehicleProperty::ULTRASONICS_SENSOR_FIELD_OF_VIEW, VehiclePropertyAccess::READ},
         {VehicleProperty::ULTRASONICS_SENSOR_DETECTION_RANGE, VehiclePropertyAccess::READ},
         {VehicleProperty::ULTRASONICS_SENSOR_SUPPORTED_RANGES, VehiclePropertyAccess::READ},
+        {VehicleProperty::ULTRASONICS_SENSOR_MEASURED_DISTANCE, VehiclePropertyAccess::READ},
         {VehicleProperty::OBD2_LIVE_FRAME, VehiclePropertyAccess::READ},
         {VehicleProperty::OBD2_FREEZE_FRAME, VehiclePropertyAccess::READ},
         {VehicleProperty::OBD2_FREEZE_FRAME_INFO, VehiclePropertyAccess::READ},
@@ -261,6 +262,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyAccess> AccessForVehiclePrope
         {VehicleProperty::VEHICLE_IN_USE, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::CLUSTER_HEARTBEAT, VehiclePropertyAccess::WRITE},
         {VehicleProperty::VEHICLE_DRIVING_AUTOMATION_CURRENT_LEVEL, VehiclePropertyAccess::READ},
+        {VehicleProperty::CAMERA_SERVICE_CURRENT_STATE, VehiclePropertyAccess::WRITE},
         {VehicleProperty::AUTOMATIC_EMERGENCY_BRAKING_ENABLED, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::AUTOMATIC_EMERGENCY_BRAKING_STATE, VehiclePropertyAccess::READ},
         {VehicleProperty::FORWARD_COLLISION_WARNING_ENABLED, VehiclePropertyAccess::READ_WRITE},
@@ -298,6 +300,8 @@ std::unordered_map<VehicleProperty, VehiclePropertyAccess> AccessForVehiclePrope
         {VehicleProperty::LOW_SPEED_COLLISION_WARNING_STATE, VehiclePropertyAccess::READ},
         {VehicleProperty::CROSS_TRAFFIC_MONITORING_ENABLED, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::CROSS_TRAFFIC_MONITORING_WARNING_STATE, VehiclePropertyAccess::READ},
+        {VehicleProperty::LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_ENABLED, VehiclePropertyAccess::READ_WRITE},
+        {VehicleProperty::LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_STATE, VehiclePropertyAccess::READ},
 };
 
 }  // namespace vehicle
@@ -305,5 +309,3 @@ std::unordered_map<VehicleProperty, VehiclePropertyAccess> AccessForVehiclePrope
 }  // namespace hardware
 }  // namespace android
 }  // aidl
-
-#endif  // android_hardware_automotive_vehicle_aidl_generated_lib_AccessForVehicleProperty_H_

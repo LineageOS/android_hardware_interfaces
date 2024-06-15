@@ -119,7 +119,8 @@ void SoundDose::onNewMelValues(const std::vector<float>& mels, size_t offset, si
 void SoundDose::MelCallback::onNewMelValues(const std::vector<float>& mels, size_t offset,
                                             size_t length,
                                             audio_port_handle_t deviceId
-                                            __attribute__((__unused__))) const {
+                                            __attribute__((__unused__)),
+                                            bool attenuated __attribute__((__unused__))) const {
     mSoundDose.onNewMelValues(mels, offset, length, deviceId);
 }
 

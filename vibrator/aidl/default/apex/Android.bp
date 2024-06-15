@@ -1,4 +1,5 @@
 package {
+    default_team: "trendy_team_haptics_framework",
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 

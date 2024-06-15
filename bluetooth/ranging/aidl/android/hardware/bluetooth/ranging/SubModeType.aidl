@@ -17,10 +17,10 @@
 package android.hardware.bluetooth.ranging;
 
 @VintfStability
-@Backing(type="int")
+@Backing(type="byte")
 enum SubModeType {
     ONE = 0x01,
     TWO = 0x02,
     THREE = 0x03,
-    UNUSED = 0xff,
+    UNUSED = 0xffu8,
 }

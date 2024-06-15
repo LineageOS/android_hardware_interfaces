@@ -19,11 +19,10 @@ ExplicitKeyDiceCertChain = [
     * DiceChainEntry
 ]
 
-DiceCertChainInitialPayload = {
-    -4670552 : bstr .cbor PubKeyEd25519 /
-               bstr .cbor PubKeyECDSA256 /
-               bstr .cbor PubKeyECDSA384 ; subjectPublicKey
-}
+; Encoded in accordance with Core Deterministic Encoding Requirements [RFC 8949 s4.2.1]
+DiceCertChainInitialPayload = bstr .cbor PubKeyEd25519
+                            / bstr .cbor PubKeyECDSA256
+                            / bstr .cbor PubKeyECDSA384 ; subjectPublicKey
 
 ; INCLUDE generateCertificateRequestV2.cddl for: PubKeyEd25519, PubKeyECDSA256, PubKeyECDSA384,
 ;                                                DiceChainEntry

@@ -87,11 +87,16 @@ TEST_P(ThreadNetworkAidl, Close) {
 }
 
 TEST_P(ThreadNetworkAidl, Reset) {
+    ndk::ScopedAStatus status;
     std::shared_ptr<ThreadChipCallback> callback =
             ndk::SharedRefBase::make<ThreadChipCallback>([](auto /* data */) {});
 
     EXPECT_TRUE(thread_chip->open(callback).isOk());
-    EXPECT_TRUE(thread_chip->hardwareReset().isOk());
+    status = thread_chip->hardwareReset();
+    EXPECT_TRUE(status.isOk() || (status.getExceptionCode() == EX_UNSUPPORTED_OPERATION));
+    if (status.getExceptionCode() == EX_UNSUPPORTED_OPERATION) {
+        GTEST_SKIP() << "Hardware reset is not supported";
+    }
 }
 
 TEST_P(ThreadNetworkAidl, SendSpinelFrame) {

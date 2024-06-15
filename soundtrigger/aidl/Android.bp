@@ -1,4 +1,5 @@
 package {
+    default_team: "trendy_team_android_media_audio_framework",
     // See: http://go/android-license-faq
     // A large-scale-change added 'default_applicable_licenses' to import
     // all of the 'license_kinds' from "hardware_interfaces_license"
@@ -34,12 +35,17 @@ aidl_interface {
             sdk_version: "module_current",
         },
     },
-    frozen: false,
+    frozen: true,
     versions_with_info: [
         {
             version: "1",
             imports: ["android.media.soundtrigger.types-V1"],
         },
+        {
+            version: "2",
+            imports: ["android.media.soundtrigger.types-V2"],
+        },
+
         // IMPORTANT: Update latest_android_hardware_soundtrigger3 every time
         // you add the latest frozen version to versions_with_info
     ],

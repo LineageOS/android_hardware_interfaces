@@ -24,6 +24,7 @@
 #include <utils/Log.h>
 
 #include "hdlc_interface.hpp"
+#include "socket_interface.hpp"
 #include "spi_interface.hpp"
 
 namespace aidl {
@@ -43,6 +44,8 @@ ThreadChip::ThreadChip(char* url) : mUrl(), mRxFrameBuffer(), mCallback(nullptr)
         mSpinelInterface = std::make_shared<ot::Posix::SpiInterface>(mUrl);
     } else if (ot::Posix::HdlcInterface::IsInterfaceNameMatch(interfaceName)) {
         mSpinelInterface = std::make_shared<ot::Posix::HdlcInterface>(mUrl);
+    } else if (SocketInterface::IsInterfaceNameMatch(interfaceName)) {
+        mSpinelInterface = std::make_shared<SocketInterface>(mUrl);
     } else {
         ALOGE("The interface \"%s\" is not supported", interfaceName);
         exit(EXIT_FAILURE);

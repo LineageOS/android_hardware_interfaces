@@ -33,14 +33,12 @@ struct SbcParameters : public CodecParameters {
 class A2dpOffloadCodecSbc : public A2dpOffloadCodec {
   CodecInfo info_;
 
-  A2dpOffloadCodecSbc();
-
   A2dpStatus ParseConfiguration(const std::vector<uint8_t>& configuration,
                                 CodecParameters* codec_parameters,
                                 SbcParameters* sbc_parameters) const;
 
  public:
-  static const A2dpOffloadCodecSbc* GetInstance();
+  A2dpOffloadCodecSbc();
 
   A2dpStatus ParseConfiguration(
       const std::vector<uint8_t>& configuration,

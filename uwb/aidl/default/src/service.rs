@@ -6,7 +6,7 @@ use tokio::runtime::Runtime;
 use std::env;
 use std::panic;
 
-use log::Level;
+use log::LevelFilter;
 
 mod uwb;
 mod uwb_chip;
@@ -14,7 +14,7 @@ mod uwb_chip;
 fn main() -> anyhow::Result<()> {
     logger::init(
         logger::Config::default()
-            .with_min_level(Level::Debug)
+            .with_max_level(LevelFilter::Debug)
             .with_tag_on_device("android.hardware.uwb"),
     );
 

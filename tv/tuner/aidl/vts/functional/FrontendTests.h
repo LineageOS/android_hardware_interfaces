@@ -27,6 +27,7 @@
 
 #include "DvrTests.h"
 #include "VtsHalTvTunerTestConfigurations.h"
+#include "utils/IpStreamer.h"
 
 #define WAIT_TIMEOUT 3000000000
 #define INVALID_ID -1

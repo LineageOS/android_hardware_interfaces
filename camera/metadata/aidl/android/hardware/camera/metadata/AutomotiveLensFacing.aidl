@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.automotive.lens.facing enumeration values
  * @see ANDROID_AUTOMOTIVE_LENS_FACING
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

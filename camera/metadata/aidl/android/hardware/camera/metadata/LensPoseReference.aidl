@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.lens.poseReference enumeration values
  * @see ANDROID_LENS_POSE_REFERENCE
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

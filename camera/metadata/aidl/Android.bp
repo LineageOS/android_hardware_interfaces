@@ -1,4 +1,5 @@
 package {
+    default_team: "trendy_team_camera_framework",
     // See: http://go/android-license-faq
     // A large-scale-change added 'default_applicable_licenses' to import
     // all of the 'license_kinds' from "hardware_interfaces_license"
@@ -11,7 +12,7 @@ aidl_interface {
     name: "android.hardware.camera.metadata",
     vendor_available: true,
     srcs: ["android/hardware/camera/metadata/*.aidl"],
-    frozen: false,
+    frozen: true,
     stability: "vintf",
     backend: {
         cpp: {
@@ -31,6 +32,10 @@ aidl_interface {
         },
         {
             version: "2",
+            imports: [],
+        },
+        {
+            version: "3",
             imports: [],
         },
 

@@ -19,20 +19,22 @@
 #include <vector>
 
 #include <aidl/android/hardware/audio/effect/BnEffect.h>
+#include <system/audio_effects/effect_visualizer.h>
 #include "effect-impl/EffectImpl.h"
 
 namespace aidl::android::hardware::audio::effect {
 
 class VisualizerSwContext final : public EffectContext {
   public:
-    static const int kMinCaptureSize = 0x80;
-    static const int kMaxCaptureSize = 0x400;
-    static const int kMaxLatencyMs = 3000;
-    static const int kMaxCaptureBufSize = 0xffff;
+    // need align the min/max capture size to VISUALIZER_CAPTURE_SIZE_MIN and
+    // VISUALIZER_CAPTURE_SIZE_MAX because of limitation in audio_utils fixedfft.
+    static constexpr int32_t kMinCaptureSize = VISUALIZER_CAPTURE_SIZE_MIN;
+    static constexpr int32_t kMaxCaptureSize = VISUALIZER_CAPTURE_SIZE_MAX;
+    static constexpr int32_t kMaxLatencyMs = 3000;
     VisualizerSwContext(int statusDepth, const Parameter::Common& common)
         : EffectContext(statusDepth, common) {
         LOG(DEBUG) << __func__;
-        mCaptureSampleBuffer.resize(kMaxCaptureBufSize);
+        mCaptureSampleBuffer.resize(kMaxCaptureSize);
         fill(mCaptureSampleBuffer.begin(), mCaptureSampleBuffer.end(), 0x80);
     }
 
@@ -72,21 +74,23 @@ class VisualizerSw final : public EffectImpl {
     }
 
     ndk::ScopedAStatus getDescriptor(Descriptor* _aidl_return) override;
-    ndk::ScopedAStatus setParameterSpecific(const Parameter::Specific& specific) override;
-    ndk::ScopedAStatus getParameterSpecific(const Parameter::Id& id,
-                                            Parameter::Specific* specific) override;
+    ndk::ScopedAStatus setParameterSpecific(const Parameter::Specific& specific)
+            REQUIRES(mImplMutex) override;
+    ndk::ScopedAStatus getParameterSpecific(const Parameter::Id& id, Parameter::Specific* specific)
+            REQUIRES(mImplMutex) override;
 
-    std::shared_ptr<EffectContext> createContext(const Parameter::Common& common) override;
-    std::shared_ptr<EffectContext> getContext() override;
-    RetCode releaseContext() override;
+    std::shared_ptr<EffectContext> createContext(const Parameter::Common& common)
+            REQUIRES(mImplMutex) override;
+    RetCode releaseContext() REQUIRES(mImplMutex) override;
 
-    IEffect::Status effectProcessImpl(float* in, float* out, int samples) override;
+    IEffect::Status effectProcessImpl(float* in, float* out, int samples)
+            REQUIRES(mImplMutex) override;
     std::string getEffectName() override { return kEffectName; }
 
   private:
     static const std::vector<Range::VisualizerRange> kRanges;
-    std::shared_ptr<VisualizerSwContext> mContext;
+    std::shared_ptr<VisualizerSwContext> mContext GUARDED_BY(mImplMutex);
     ndk::ScopedAStatus getParameterVisualizer(const Visualizer::Tag& tag,
-                                              Parameter::Specific* specific);
+                                              Parameter::Specific* specific) REQUIRES(mImplMutex);
 };
 }  // namespace aidl::android::hardware::audio::effect

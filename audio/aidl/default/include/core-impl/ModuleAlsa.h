@@ -33,7 +33,8 @@ class ModuleAlsa : public Module {
   protected:
     // Extension methods of 'Module'.
     ndk::ScopedAStatus populateConnectedDevicePort(
-            ::aidl::android::media::audio::common::AudioPort* audioPort) override;
+            ::aidl::android::media::audio::common::AudioPort* audioPort,
+            int32_t nextPortId) override;
 };
 
 }  // namespace aidl::android::hardware::audio::core

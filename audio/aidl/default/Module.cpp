@@ -93,32 +93,6 @@ bool hasDynamicProfilesOnly(const std::vector<AudioProfile>& profiles) {
     return std::all_of(profiles.begin(), profiles.end(), isDynamicProfile);
 }
 
-// Note: does not assign an ID to the config.
-bool generateDefaultPortConfig(const AudioPort& port, AudioPortConfig* config) {
-    const bool allowDynamicConfig = port.ext.getTag() == AudioPortExt::device;
-    *config = {};
-    config->portId = port.id;
-    for (const auto& profile : port.profiles) {
-        if (isDynamicProfile(profile)) continue;
-        config->format = profile.format;
-        config->channelMask = *profile.channelMasks.begin();
-        config->sampleRate = Int{.value = *profile.sampleRates.begin()};
-        config->flags = port.flags;
-        config->ext = port.ext;
-        return true;
-    }
-    if (allowDynamicConfig) {
-        config->format = AudioFormatDescription{};
-        config->channelMask = AudioChannelLayout{};
-        config->sampleRate = Int{.value = 0};
-        config->flags = port.flags;
-        config->ext = port.ext;
-        return true;
-    }
-    LOG(ERROR) << __func__ << ": port " << port.id << " only has dynamic profiles";
-    return false;
-}
-
 bool findAudioProfile(const AudioPort& port, const AudioFormatDescription& format,
                       AudioProfile* profile) {
     if (auto profilesIt =
@@ -204,10 +178,11 @@ ndk::ScopedAStatus Module::createStreamContext(
     }
     auto& configs = getConfig().portConfigs;
     auto portConfigIt = findById<AudioPortConfig>(configs, in_portConfigId);
+    const int32_t nominalLatencyMs = getNominalLatencyMs(*portConfigIt);
     // Since this is a private method, it is assumed that
     // validity of the portConfigId has already been checked.
-    const int32_t minimumStreamBufferSizeFrames = calculateBufferSizeFrames(
-            getNominalLatencyMs(*portConfigIt), portConfigIt->sampleRate.value().value);
+    const int32_t minimumStreamBufferSizeFrames =
+            calculateBufferSizeFrames(nominalLatencyMs, portConfigIt->sampleRate.value().value);
     if (in_bufferSizeFrames < minimumStreamBufferSizeFrames) {
         LOG(ERROR) << __func__ << ": insufficient buffer size " << in_bufferSizeFrames
                    << ", must be at least " << minimumStreamBufferSizeFrames;
@@ -246,7 +221,7 @@ ndk::ScopedAStatus Module::createStreamContext(
                 std::make_unique<StreamContext::CommandMQ>(1, true /*configureEventFlagWord*/),
                 std::make_unique<StreamContext::ReplyMQ>(1, true /*configureEventFlagWord*/),
                 portConfigIt->format.value(), portConfigIt->channelMask.value(),
-                portConfigIt->sampleRate.value().value, flags, getNominalLatencyMs(*portConfigIt),
+                portConfigIt->sampleRate.value().value, flags, nominalLatencyMs,
                 portConfigIt->ext.get<AudioPortExt::mix>().handle,
                 std::make_unique<StreamContext::DataMQ>(frameSize * in_bufferSizeFrames),
                 asyncCallback, outEventCallback, mSoundDose.getInstance(), params);
@@ -330,6 +305,29 @@ ndk::ScopedAStatus Module::findPortIdForNewStream(int32_t in_portConfigId, Audio
     }
     *port = &(*portIt);
     return ndk::ScopedAStatus::ok();
+}
+
+bool Module::generateDefaultPortConfig(const AudioPort& port, AudioPortConfig* config) {
+    const bool allowDynamicConfig = port.ext.getTag() == AudioPortExt::device;
+    for (const auto& profile : port.profiles) {
+        if (isDynamicProfile(profile)) continue;
+        config->format = profile.format;
+        config->channelMask = *profile.channelMasks.begin();
+        config->sampleRate = Int{.value = *profile.sampleRates.begin()};
+        config->flags = port.flags;
+        config->ext = port.ext;
+        return true;
+    }
+    if (allowDynamicConfig) {
+        config->format = AudioFormatDescription{};
+        config->channelMask = AudioChannelLayout{};
+        config->sampleRate = Int{.value = 0};
+        config->flags = port.flags;
+        config->ext = port.ext;
+        return true;
+    }
+    LOG(ERROR) << __func__ << ": port " << port.id << " only has dynamic profiles";
+    return false;
 }
 
 void Module::populateConnectedProfiles() {
@@ -621,10 +619,11 @@ ndk::ScopedAStatus Module::connectExternalDevice(const AudioPort& in_templateIdA
 
     std::vector<AudioRoute*> routesToMixPorts = getAudioRoutesForAudioPortImpl(templateId);
     std::set<int32_t> routableMixPortIds = getRoutableAudioPortIds(templateId, &routesToMixPorts);
+    const int32_t nextPortId = getConfig().nextPortId++;
     if (!mDebug.simulateDeviceConnections) {
         // Even if the device port has static profiles, the HAL module might need to update
         // them, or abort the connection process.
-        RETURN_STATUS_IF_ERROR(populateConnectedDevicePort(&connectedPort));
+        RETURN_STATUS_IF_ERROR(populateConnectedDevicePort(&connectedPort, nextPortId));
     } else if (hasDynamicProfilesOnly(connectedPort.profiles)) {
         auto& connectedProfiles = getConfig().connectedProfiles;
         if (auto connectedProfilesIt = connectedProfiles.find(templateId);
@@ -648,7 +647,7 @@ ndk::ScopedAStatus Module::connectExternalDevice(const AudioPort& in_templateIdA
         }
     }
 
-    connectedPort.id = getConfig().nextPortId++;
+    connectedPort.id = nextPortId;
     auto [connectedPortsIt, _] =
             mConnectedDevicePorts.insert(std::pair(connectedPort.id, std::set<int32_t>()));
     LOG(DEBUG) << __func__ << ": template port " << templateId << " external device connected, "
@@ -1039,6 +1038,18 @@ ndk::ScopedAStatus Module::setAudioPatch(const AudioPatch& in_requested, AudioPa
 
 ndk::ScopedAStatus Module::setAudioPortConfig(const AudioPortConfig& in_requested,
                                               AudioPortConfig* out_suggested, bool* _aidl_return) {
+    auto generate = [this](const AudioPort& port, AudioPortConfig* config) {
+        return generateDefaultPortConfig(port, config);
+    };
+    return setAudioPortConfigImpl(in_requested, generate, out_suggested, _aidl_return);
+}
+
+ndk::ScopedAStatus Module::setAudioPortConfigImpl(
+        const AudioPortConfig& in_requested,
+        const std::function<bool(const ::aidl::android::media::audio::common::AudioPort& port,
+                                 ::aidl::android::media::audio::common::AudioPortConfig* config)>&
+                fillPortConfig,
+        AudioPortConfig* out_suggested, bool* applied) {
     LOG(DEBUG) << __func__ << ": requested " << in_requested.toString();
     auto& configs = getConfig().portConfigs;
     auto existing = configs.end();
@@ -1067,7 +1078,8 @@ ndk::ScopedAStatus Module::setAudioPortConfig(const AudioPortConfig& in_requeste
         *out_suggested = *existing;
     } else {
         AudioPortConfig newConfig;
-        if (generateDefaultPortConfig(*portIt, &newConfig)) {
+        newConfig.portId = portIt->id;
+        if (fillPortConfig(*portIt, &newConfig)) {
             *out_suggested = newConfig;
         } else {
             LOG(ERROR) << __func__ << ": unable generate a default config for port " << portId;
@@ -1172,17 +1184,17 @@ ndk::ScopedAStatus Module::setAudioPortConfig(const AudioPortConfig& in_requeste
     if (existing == configs.end() && requestedIsValid && requestedIsFullySpecified) {
         out_suggested->id = getConfig().nextPortId++;
         configs.push_back(*out_suggested);
-        *_aidl_return = true;
+        *applied = true;
         LOG(DEBUG) << __func__ << ": created new port config " << out_suggested->toString();
     } else if (existing != configs.end() && requestedIsValid) {
         *existing = *out_suggested;
-        *_aidl_return = true;
+        *applied = true;
         LOG(DEBUG) << __func__ << ": updated port config " << out_suggested->toString();
     } else {
         LOG(DEBUG) << __func__ << ": not applied; existing config ? " << (existing != configs.end())
                    << "; requested is valid? " << requestedIsValid << ", fully specified? "
                    << requestedIsFullySpecified;
-        *_aidl_return = false;
+        *applied = false;
     }
     return ndk::ScopedAStatus::ok();
 }
@@ -1534,7 +1546,7 @@ bool Module::isMmapSupported() {
     return mIsMmapSupported.value();
 }
 
-ndk::ScopedAStatus Module::populateConnectedDevicePort(AudioPort* audioPort) {
+ndk::ScopedAStatus Module::populateConnectedDevicePort(AudioPort* audioPort, int32_t) {
     if (audioPort->ext.getTag() != AudioPortExt::device) {
         LOG(ERROR) << __func__ << ": not a device port: " << audioPort->toString();
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);

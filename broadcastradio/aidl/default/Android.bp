@@ -26,11 +26,11 @@ package {
 cc_defaults {
     name: "BroadcastRadioHalDefaults",
     static_libs: [
+        "android.hardware.broadcastradio-V2-ndk",
         "android.hardware.broadcastradio@common-utils-aidl-lib-V2",
         "android.hardware.broadcastradio@common-utils-lib",
     ],
     shared_libs: [
-        "android.hardware.broadcastradio-V2-ndk",
         "libbase",
         "libbinder_ndk",
         "liblog",

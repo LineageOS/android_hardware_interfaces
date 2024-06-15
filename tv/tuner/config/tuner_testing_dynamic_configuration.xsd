@@ -162,6 +162,7 @@
         <xs:attribute name="connectToCicamId" type="xs:nonNegativeInteger" use="optional"/>
         <xs:attribute name="removeOutputPid" type="xs:nonNegativeInteger" use="optional"/>
         <xs:attribute name="endFrequency" type="xs:nonNegativeInteger" use="optional"/>
+        <xs:attribute name="supportBlindScan" type="xs:boolean" use="optional"/>
     </xs:complexType>
 
     <!-- FILTER SESSION -->

@@ -37,6 +37,7 @@ cc_test {
         "FrontendTests.cpp",
         "LnbTests.cpp",
         "VtsHalTvTunerTargetTest.cpp",
+        "utils/IpStreamer.cpp",
     ],
     generated_headers: [
         "tuner_testing_dynamic_configuration_V1_0_enums",

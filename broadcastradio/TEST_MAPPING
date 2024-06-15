@@ -1,0 +1,18 @@
+{
+  "presubmit": [
+    {
+      "name": "broadcastradio_utils_aidl_test"
+    },
+    {
+      "name": "DefaultBroadcastRadioHalTestCase"
+    },
+    {
+      "name": "android.hardware.broadcastradio@common-utils-tests"
+    }
+  ],
+  "auto-presubmit": [
+    {
+      "name": "VtsHalBroadcastradioAidlTargetTest"
+    }
+  ]
+}

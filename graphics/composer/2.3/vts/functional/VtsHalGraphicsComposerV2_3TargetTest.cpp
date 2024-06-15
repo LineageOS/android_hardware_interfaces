@@ -274,6 +274,8 @@ TEST_P(GraphicsComposerHidlTest, GetReadbackBufferAttributes_2_3) {
  * Test IComposerClient::getClientTargetSupport_2_3
  */
 TEST_P(GraphicsComposerHidlTest, GetClientTargetSupport_2_3) {
+    ASSERT_NO_FATAL_FAILURE(
+            mComposerClient->setPowerMode_2_2(mPrimaryDisplay, IComposerClient::PowerMode::ON));
     std::vector<V2_1::Config> configs = mComposerClient->getDisplayConfigs(mPrimaryDisplay);
     for (auto config : configs) {
         int32_t width = mComposerClient->getDisplayAttribute(mPrimaryDisplay, config,

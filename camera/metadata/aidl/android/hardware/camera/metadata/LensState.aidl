@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.lens.state enumeration values
  * @see ANDROID_LENS_STATE
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

@@ -34,7 +34,7 @@ using aidl::android::media::audio::common::AudioProfile;
 
 namespace aidl::android::hardware::audio::core {
 
-ndk::ScopedAStatus ModuleAlsa::populateConnectedDevicePort(AudioPort* audioPort) {
+ndk::ScopedAStatus ModuleAlsa::populateConnectedDevicePort(AudioPort* audioPort, int32_t) {
     auto deviceProfile = alsa::getDeviceProfile(*audioPort);
     if (!deviceProfile.has_value()) {
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);

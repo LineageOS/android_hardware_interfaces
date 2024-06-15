@@ -15,6 +15,7 @@
 //
 
 package {
+    default_team: "trendy_team_android_sensors",
     // See: http://go/android-license-faq
     // A large-scale-change added 'default_applicable_licenses' to import
     // all of the 'license_kinds' from "hardware_interfaces_license"
@@ -44,11 +45,6 @@ cc_library_static {
     srcs: [
         "HalProxyAidl.cpp",
         "ConvertUtils.cpp",
-    ],
-    visibility: [
-        ":__subpackages__",
-        "//hardware/interfaces/sensors/aidl/multihal:__subpackages__",
-        "//hardware/interfaces/tests/extension/sensors:__subpackages__",
     ],
     static_libs: [
         "android.hardware.sensors@1.0-convert",

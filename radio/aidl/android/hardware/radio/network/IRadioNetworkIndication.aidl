@@ -231,16 +231,24 @@ oneway interface IRadioNetworkIndication {
 
     /*
      * Indicates that a new ciphering or integrity algorithm was used for a particular voice,
-     * signaling, or data connection attempt for a given PLMN and/or access network. Due to
-     * power concerns, once a connection type has been reported on, follow-up reports about that
-     * connection type are only generated if there is any change to the previously reported
-     * encryption or integrity. Thus the AP is only to be notified when there is new information.
-     * List is reset upon rebooting thus info about initial connections is always passed to the
-     * AP after a reboot. List is also reset if the SIM is changed or if there has been a change
-     * in the access network.
+     * signaling, or data connection for a given PLMN and/or access network. Due to power
+     * concerns, once a connection type has been reported on, follow-up reports about that
+     * connection type are only generated if there is any change to the most-recently reported
+     * encryption or integrity, or if the value of SecurityAlgorithmUpdate#isUnprotectedEmergency
+     * changes. A change only in cell ID should not trigger an update, as the design is intended
+     * to be agnostic to dual connectivity ("secondary serving cells").
      *
-     * Note: a change only in cell ID should not trigger an update, as the design is intended to
-     * be agnostic to dual connectivity ("secondary serving cells").
+     * Sample scenario to further clarify "most-recently reported":
+     *
+     * 1. Modem reports user is connected to a null-ciphered 3G network.
+     * 2. User then moves and connects to a well-ciphered 5G network, and modem reports this.
+     * 3. User returns to original location and reconnects to the null-ciphered 3G network. Modem
+     *    should report this as it's different than the most-recently reported data from step (2).
+     *
+     * State is reset when (1) RadioState is transitioned to ON from any other state (e.g. radio
+     * is turned on during device boot, or modem boot), and (2) when CardState is transitioned
+     * to PRESENT from any other state (e.g. when SIM is inserted), or (3) if there is a change in
+     * access network (PLMN).
      *
      * @param type Type of radio indication
      * @param securityAlgorithmUpdate SecurityAlgorithmUpdate encapsulates details of security

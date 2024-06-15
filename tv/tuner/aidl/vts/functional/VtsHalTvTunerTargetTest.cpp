@@ -48,6 +48,7 @@ void TunerFilterAidlTest::configSingleFilterInDemuxTest(FilterConfig filterConf,
     ASSERT_TRUE(mFrontendTests.setFrontendCallback());
     ASSERT_TRUE(mDemuxTests.openDemux(demux, demuxId));
     ASSERT_TRUE(mDemuxTests.setDemuxFrontendDataSource(feId));
+    mFrontendTests.setDemux(demux);
     mFilterTests.setDemux(demux);
     ASSERT_TRUE(mFilterTests.openFilterInDemux(filterConf.type, filterConf.bufferSize));
     ASSERT_TRUE(mFilterTests.getNewlyOpenedFilterId_64bit(filterId));
@@ -1111,6 +1112,10 @@ TEST_P(TunerRecordAidlTest, RecordDataFlowWithTsRecordFilterTest) {
     if (!record.support) {
         return;
     }
+    // Recording is not currently supported for IPTV frontend
+    if (frontendMap[live.frontendId].type == FrontendType::IPTV) {
+        return;
+    }
     auto record_configs = generateRecordConfigurations();
     for (auto& configuration : record_configs) {
         record = configuration;
@@ -1123,6 +1128,10 @@ TEST_P(TunerRecordAidlTest, AttachFiltersToRecordTest) {
     description("Attach a single filter to the record dvr test.");
     // TODO use parameterized tests
     if (!record.support) {
+        return;
+    }
+    // Recording is not currently supported for IPTV frontend
+    if (frontendMap[live.frontendId].type == FrontendType::IPTV) {
         return;
     }
     auto record_configs = generateRecordConfigurations();
@@ -1155,6 +1164,10 @@ TEST_P(TunerRecordAidlTest, LnbRecordDataFlowWithTsRecordFilterTest) {
 TEST_P(TunerRecordAidlTest, SetStatusCheckIntervalHintToRecordTest) {
     description("Set status check interval hint to record test.");
     if (!record.support) {
+        return;
+    }
+    // Recording is not currently supported for IPTV frontend
+    if (frontendMap[live.frontendId].type == FrontendType::IPTV) {
         return;
     }
     auto record_configs = generateRecordConfigurations();
@@ -1194,9 +1207,17 @@ TEST_P(TunerFrontendAidlTest, BlindScanFrontend) {
     if (!scan.hasFrontendConnection) {
         return;
     }
+    // Blind scan is not applicable for IPTV frontend
+    if (frontendMap[live.frontendId].type == FrontendType::IPTV) {
+        return;
+    }
     vector<ScanHardwareConnections> scan_configs = generateScanConfigurations();
     for (auto& configuration : scan_configs) {
         scan = configuration;
+        // Skip test if the frontend implementation doesn't support blind scan
+        if (!frontendMap[scan.frontendId].supportBlindScan) {
+            continue;
+        }
         mFrontendTests.scanTest(frontendMap[scan.frontendId], FrontendScanType::SCAN_BLIND);
     }
 }
@@ -1218,9 +1239,17 @@ TEST_P(TunerFrontendAidlTest, BlindScanFrontendWithEndFrequency) {
     if (!scan.hasFrontendConnection) {
         return;
     }
+    // Blind scan is not application for IPTV frontend
+    if (frontendMap[live.frontendId].type == FrontendType::IPTV) {
+        return;
+    }
     vector<ScanHardwareConnections> scan_configs = generateScanConfigurations();
     for (auto& configuration : scan_configs) {
         scan = configuration;
+        // Skip test if the frontend implementation doesn't support blind scan
+        if (!frontendMap[scan.frontendId].supportBlindScan) {
+            continue;
+        }
         mFrontendTests.scanTest(frontendMap[scan.frontendId], FrontendScanType::SCAN_BLIND);
     }
 }

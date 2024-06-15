@@ -25,9 +25,6 @@
       "name": "VehiclePropertyAnnotationJavaTest"
     },
     {
-      "name": "FakeVehicleHardwareTest"
-    },
-    {
       "name": "FakeVehicleHalValueGeneratorsTest"
     },
     {
@@ -43,6 +40,9 @@
   "auto-presubmit": [
     {
       "name": "VtsHalAutomotiveVehicle_TargetTest"
+    },
+    {
+      "name": "FakeVehicleHardwareTest"
     },
     {
       "name": "CarServiceUnitTest",

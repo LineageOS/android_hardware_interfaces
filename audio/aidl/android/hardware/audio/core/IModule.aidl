@@ -928,7 +928,10 @@ interface IModule {
      * using 'connectExternalDevice' method. 'disconnectExternalDevice' method will be called
      * soon after this method with the same 'portId'.
      *
-     * @param portId The ID of the audio port that is about to disconnect
+     * Note: This method is called after the external device is disconnected. The system does
+     * not try to predict the disconnection event.
+     *
+     * @param portId The ID of the audio port corresponding to the disconnected device
      * @throws EX_ILLEGAL_ARGUMENT In the following cases:
      *                             - If the port can not be found by the ID.
      *                             - If this is not a connected device port.

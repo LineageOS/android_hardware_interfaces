@@ -1,4 +1,5 @@
 package {
+    default_team: "trendy_team_android_media_audio_framework",
     // See: http://go/android-license-faq
     // A large-scale-change added 'default_applicable_licenses' to import
     // all of the 'license_kinds' from "hardware_interfaces_license"
@@ -118,8 +119,6 @@ cc_library {
 cc_binary {
     name: "android.hardware.audio.service-aidl.example",
     relative_install_path: "hw",
-    init_rc: ["android.hardware.audio.service-aidl.example.rc"],
-    vintf_fragments: ["android.hardware.audio.service-aidl.xml"],
     defaults: [
         "aidlaudioservice_defaults",
         "latest_android_hardware_audio_core_sounddose_ndk_shared",
@@ -146,6 +145,7 @@ cc_binary {
         "-Wthread-safety",
         "-DBACKEND_NDK",
     ],
+    installable: false, //installed in apex com.android.hardware.audio
 }
 
 cc_test {
@@ -204,6 +204,7 @@ cc_defaults {
     vendor: true,
     shared_libs: [
         "libaudioaidlcommon",
+        "libaudioutils",
         "libbase",
         "libbinder_ndk",
         "libcutils",
@@ -229,6 +230,7 @@ cc_defaults {
 filegroup {
     name: "effectCommonFile",
     srcs: [
+        "EffectContext.cpp",
         "EffectThread.cpp",
         "EffectImpl.cpp",
     ],
@@ -237,10 +239,9 @@ filegroup {
 cc_binary {
     name: "android.hardware.audio.effect.service-aidl.example",
     relative_install_path: "hw",
-    init_rc: ["android.hardware.audio.effect.service-aidl.example.rc"],
-    vintf_fragments: ["android.hardware.audio.effect.service-aidl.xml"],
     defaults: ["aidlaudioeffectservice_defaults"],
     shared_libs: [
+        "libapexsupport",
         "libtinyxml2",
     ],
     srcs: [
@@ -248,6 +249,7 @@ cc_binary {
         "EffectFactory.cpp",
         "EffectMain.cpp",
     ],
+    installable: false, //installed in apex com.android.hardware.audio
 }
 
 cc_library_headers {
@@ -255,4 +257,17 @@ cc_library_headers {
     export_include_dirs: ["include"],
     vendor_available: true,
     host_supported: true,
+}
+
+prebuilt_etc {
+    name: "android.hardware.audio.service-aidl.example.rc",
+    src: "android.hardware.audio.service-aidl.example.rc",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "android.hardware.audio.service-aidl.xml",
+    src: "android.hardware.audio.service-aidl.xml",
+    sub_dir: "vintf",
+    installable: false,
 }

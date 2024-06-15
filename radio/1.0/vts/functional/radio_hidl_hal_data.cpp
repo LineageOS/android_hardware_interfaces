@@ -16,6 +16,7 @@
 
 #include <android-base/logging.h>
 #include <android/hardware/radio/1.2/IRadio.h>
+#include <gtest/gtest.h>
 #include <radio_hidl_hal_utils_v1_0.h>
 
 using namespace ::android::hardware::radio::V1_0;
@@ -72,11 +73,16 @@ TEST_P(RadioHidlTest, getDataRegistrationState) {
             CellIdentityTdscdma cit = cellIdentities.cellIdentityTdscdma[0];
             hidl_mcc = cit.mcc;
             hidl_mnc = cit.mnc;
-        } else {
+        } else if (cellInfoType == CellInfoType::CDMA) {
             // CellIndentityCdma has no mcc and mnc.
             EXPECT_EQ(CellInfoType::CDMA, cellInfoType);
             EXPECT_EQ(1, cellIdentities.cellIdentityCdma.size());
             checkMccMnc = false;
+        } else {
+            // This test can be skipped for newer networks if a new RAT (e.g. 5g) that was not
+            // supported in this version is added to the response from a modem that supports a new
+            // version of this interface.
+            GTEST_SKIP() << "Exempt from 1.0 test: camped on a new network:" << (int)cellInfoType;
         }
 
         // Check only one CellIdentity is size 1, and others must be 0.

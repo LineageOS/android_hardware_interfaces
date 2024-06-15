@@ -80,7 +80,9 @@ class Util {
             if (ParseInt(seq, &val)) {
                 res.push_back(val);
             } else {
-                LOG(WARNING) << "Invalid int sequence:" + str + " seq:" + seq;
+                if (!str.empty()) {
+                    LOG(WARNING) << "Invalid int sequence:" + str + " seq:" + seq;
+                }
                 res.clear();
                 break;
             }

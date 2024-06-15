@@ -87,12 +87,13 @@ ndk::ScopedAStatus ModuleUsb::createOutputStream(StreamContext&& context,
                                               offloadInfo);
 }
 
-ndk::ScopedAStatus ModuleUsb::populateConnectedDevicePort(AudioPort* audioPort) {
+ndk::ScopedAStatus ModuleUsb::populateConnectedDevicePort(AudioPort* audioPort,
+                                                          int32_t nextPortId) {
     if (!isUsbDevicePort(*audioPort)) {
         LOG(ERROR) << __func__ << ": port id " << audioPort->id << " is not a usb device port";
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
-    return ModuleAlsa::populateConnectedDevicePort(audioPort);
+    return ModuleAlsa::populateConnectedDevicePort(audioPort, nextPortId);
 }
 
 ndk::ScopedAStatus ModuleUsb::checkAudioPatchEndpointsMatch(

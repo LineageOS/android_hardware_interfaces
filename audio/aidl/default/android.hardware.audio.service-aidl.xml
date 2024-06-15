@@ -31,4 +31,9 @@
     <fqname>IModule/usb</fqname>
   </hal>
   -->
+  <hal format="aidl">
+    <name>android.hardware.audio.effect</name>
+    <version>2</version>
+    <fqname>IFactory/default</fqname>
+  </hal>
 </manifest>

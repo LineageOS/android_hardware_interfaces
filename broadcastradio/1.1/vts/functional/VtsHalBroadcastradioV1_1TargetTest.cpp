@@ -73,10 +73,6 @@ static constexpr ProgramType kStandardProgramTypes[] = {
     ProgramType::AM,  ProgramType::FM,   ProgramType::AM_HD, ProgramType::FM_HD,
     ProgramType::DAB, ProgramType::DRMO, ProgramType::SXM};
 
-static void printSkipped(std::string msg) {
-    std::cout << "[  SKIPPED ] " << msg << std::endl;
-}
-
 struct TunerCallbackMock : public ITunerCallback {
     TunerCallbackMock() { EXPECT_CALL(*this, hardwareFailure()).Times(0); }
 
@@ -106,7 +102,6 @@ class BroadcastRadioHalTest
     bool getProgramList(std::function<void(const hidl_vec<ProgramInfo>& list)> cb);
 
     Class radioClass;
-    bool skipped = false;
 
     sp<IBroadcastRadio> mRadioModule;
     sp<ITuner> mTuner;
@@ -137,9 +132,7 @@ void BroadcastRadioHalTest::SetUp() {
     ASSERT_TRUE(onConnect.waitForCall(kConnectModuleTimeout));
 
     if (connectResult == Result::INVALID_ARGUMENTS) {
-        printSkipped("This device class is not supported.");
-        skipped = true;
-        return;
+        GTEST_SKIP() << "This device class is not supported.";
     }
     ASSERT_EQ(connectResult, Result::OK);
     ASSERT_NE(nullptr, mRadioModule.get());
@@ -285,8 +278,6 @@ bool BroadcastRadioHalTest::getProgramList(
  * might fail.
  */
 TEST_P(BroadcastRadioHalTest, OpenTunerTwice) {
-    if (skipped) return;
-
     ASSERT_TRUE(openTuner());
 
     auto secondTuner = mTuner;
@@ -306,7 +297,6 @@ TEST_P(BroadcastRadioHalTest, OpenTunerTwice) {
  *  - getProgramInformation_1_1 returns the same selector as returned in tuneComplete_1_1 call.
  */
 TEST_P(BroadcastRadioHalTest, TuneFromProgramList) {
-    if (skipped) return;
     ASSERT_TRUE(openTuner());
 
     ProgramInfo firstProgram;
@@ -320,8 +310,7 @@ TEST_P(BroadcastRadioHalTest, TuneFromProgramList) {
     } while (nextBand());
     if (HasFailure()) return;
     if (!foundAny) {
-        printSkipped("Program list is empty.");
-        return;
+        GTEST_SKIP() << "Program list is empty.";
     }
 
     ProgramInfo infoCb;
@@ -356,7 +345,6 @@ TEST_P(BroadcastRadioHalTest, TuneFromProgramList) {
  *    identifier for program types other than VENDORn.
  */
 TEST_P(BroadcastRadioHalTest, TuneFailsForPrimaryVendor) {
-    if (skipped) return;
     ASSERT_TRUE(openTuner());
 
     for (auto ptype : kStandardProgramTypes) {
@@ -377,7 +365,6 @@ TEST_P(BroadcastRadioHalTest, TuneFailsForPrimaryVendor) {
  *  - tuneByProgramSelector fails with INVALID_ARGUMENT when unknown program type is passed.
  */
 TEST_P(BroadcastRadioHalTest, TuneFailsForUnknownProgram) {
-    if (skipped) return;
     ASSERT_TRUE(openTuner());
 
     // Program type is 1-based, so 0 will be always invalid.
@@ -393,7 +380,6 @@ TEST_P(BroadcastRadioHalTest, TuneFailsForUnknownProgram) {
  *  - cancelAnnouncement succeeds either when there is an announcement or there is none.
  */
 TEST_P(BroadcastRadioHalTest, CancelAnnouncement) {
-    if (skipped) return;
     ASSERT_TRUE(openTuner());
 
     auto hidlResult = mTuner->cancelAnnouncement();
@@ -407,8 +393,6 @@ TEST_P(BroadcastRadioHalTest, CancelAnnouncement) {
  * - getImage call handles argument 0 gracefully.
  */
 TEST_P(BroadcastRadioHalTest, GetNoImage) {
-    if (skipped) return;
-
     size_t len = 0;
     auto hidlResult =
         mRadioModule->getImage(0, [&](hidl_vec<uint8_t> rawImage) { len = rawImage.size(); });
@@ -425,7 +409,6 @@ TEST_P(BroadcastRadioHalTest, GetNoImage) {
  * - images are available for getImage call.
  */
 TEST_P(BroadcastRadioHalTest, OobImagesOnly) {
-    if (skipped) return;
     ASSERT_TRUE(openTuner());
 
     std::vector<int> imageIds;
@@ -446,8 +429,7 @@ TEST_P(BroadcastRadioHalTest, OobImagesOnly) {
     } while (nextBand());
 
     if (imageIds.size() == 0) {
-        printSkipped("No images found");
-        return;
+        GTEST_SKIP() << "No images found";
     }
 
     for (auto id : imageIds) {
@@ -469,7 +451,6 @@ TEST_P(BroadcastRadioHalTest, OobImagesOnly) {
  * - setAnalogForced results either with INVALID_STATE, or isAnalogForced replying the same.
  */
 TEST_P(BroadcastRadioHalTest, AnalogForcedSwitch) {
-    if (skipped) return;
     ASSERT_TRUE(openTuner());
 
     bool forced;
@@ -584,7 +565,6 @@ static void verifyIdentifier(const ProgramIdentifier& id) {
  * - values of ProgramIdentifier match their definitions at IdentifierType.
  */
 TEST_P(BroadcastRadioHalTest, VerifyIdentifiersFormat) {
-    if (skipped) return;
     ASSERT_TRUE(openTuner());
 
     do {

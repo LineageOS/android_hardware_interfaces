@@ -149,7 +149,9 @@ TEST_P(BootloaderStateTest, VbmetaDigest) {
                                                  digest512.data());
 
     ASSERT_TRUE((attestedVbmetaDigest_ == digest256) || (attestedVbmetaDigest_ == digest512))
-            << "Attested digest does not match computed digest.";
+            << "Attested vbmeta digest (" << bin2hex(attestedVbmetaDigest_)
+            << ") does not match computed digest (sha256: " << bin2hex(digest256)
+            << ", sha512: " << bin2hex(digest512) << ").";
 }
 
 INSTANTIATE_KEYMINT_AIDL_TEST(BootloaderStateTest);

@@ -43,6 +43,7 @@ using ::android::AidlMessageQueue;
 
 #define WAIT_FOR_EVENT_TIMEOUT 5
 #define DEFAULT_ID INT32_MIN
+#define VERIFY_SIDEBAND_STREAM_HANDLE 1
 
 namespace VtsHalTvInputTargetTest {
 

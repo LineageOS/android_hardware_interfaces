@@ -15,6 +15,7 @@
  */
 
 package {
+    default_team: "trendy_team_android_core_graphics_stack",
     // See: http://go/android-license-faq
     // A large-scale-change added 'default_applicable_licenses' to import
     // all of the 'license_kinds' from "hardware_interfaces_license"
@@ -31,7 +32,7 @@ aidl_interface {
         enabled: true,
         support_system_process: true,
     },
-    frozen: false,
+    frozen: true,
     vndk_use_version: "1",
     srcs: [
         "android/hardware/graphics/composer3/*.aidl",
@@ -68,6 +69,13 @@ aidl_interface {
         },
         {
             version: "2",
+            imports: [
+                "android.hardware.graphics.common-V5",
+                "android.hardware.common-V2",
+            ],
+        },
+        {
+            version: "3",
             imports: [
                 "android.hardware.graphics.common-V5",
                 "android.hardware.common-V2",

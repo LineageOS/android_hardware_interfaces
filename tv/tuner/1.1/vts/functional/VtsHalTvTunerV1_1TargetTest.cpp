@@ -35,6 +35,7 @@ void TunerFilterHidlTest::configSingleFilterInDemuxTest(FilterConfig1_1 filterCo
     ASSERT_TRUE(mFrontendTests.setFrontendCallback());
     ASSERT_TRUE(mDemuxTests.openDemux(demux, demuxId));
     ASSERT_TRUE(mDemuxTests.setDemuxFrontendDataSource(feId));
+    mFrontendTests.setDemux(demux);
     mFilterTests.setDemux(demux);
     ASSERT_TRUE(mFilterTests.openFilterInDemux(filterConf.config1_0.type,
                                                filterConf.config1_0.bufferSize));

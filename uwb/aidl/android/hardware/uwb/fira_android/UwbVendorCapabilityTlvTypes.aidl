@@ -154,6 +154,11 @@ enum UwbVendorCapabilityTlvTypes {
      */
     CCC_PRIORITIZED_CHANNEL_LIST = 0xAA,
 
+    /**
+     * Short (2-octet) value to indicate the UWBS Max Clock Skew PPM value.
+     */
+    CCC_SUPPORTED_UWBS_MAX_PPM = 0xAB,
+
     /*********************************************
      * RADAR specific
      ********************************************/

@@ -27,6 +27,7 @@
 #include <cutils/properties.h>
 
 #include "supplicant_test_utils.h"
+#include "wifi_aidl_test_utils.h"
 
 using aidl::android::hardware::wifi::supplicant::BnSupplicantP2pIfaceCallback;
 using aidl::android::hardware::wifi::supplicant::DebugLevel;
@@ -35,14 +36,22 @@ using aidl::android::hardware::wifi::supplicant::IfaceType;
 using aidl::android::hardware::wifi::supplicant::ISupplicant;
 using aidl::android::hardware::wifi::supplicant::ISupplicantP2pIface;
 using aidl::android::hardware::wifi::supplicant::MiracastMode;
+using aidl::android::hardware::wifi::supplicant::P2pAddGroupConfigurationParams;
+using aidl::android::hardware::wifi::supplicant::P2pConnectInfo;
+using aidl::android::hardware::wifi::supplicant::P2pCreateGroupOwnerInfo;
 using aidl::android::hardware::wifi::supplicant::P2pDeviceFoundEventParams;
+using aidl::android::hardware::wifi::supplicant::P2pDiscoveryInfo;
+using aidl::android::hardware::wifi::supplicant::P2pExtListenInfo;
 using aidl::android::hardware::wifi::supplicant::P2pFrameTypeMask;
+using aidl::android::hardware::wifi::supplicant::P2pGoNegotiationReqEventParams;
 using aidl::android::hardware::wifi::supplicant::P2pGroupCapabilityMask;
 using aidl::android::hardware::wifi::supplicant::P2pGroupStartedEventParams;
+using aidl::android::hardware::wifi::supplicant::P2pInvitationEventParams;
 using aidl::android::hardware::wifi::supplicant::P2pPeerClientDisconnectedEventParams;
 using aidl::android::hardware::wifi::supplicant::P2pPeerClientJoinedEventParams;
 using aidl::android::hardware::wifi::supplicant::P2pProvDiscStatusCode;
 using aidl::android::hardware::wifi::supplicant::P2pProvisionDiscoveryCompletedEventParams;
+using aidl::android::hardware::wifi::supplicant::P2pScanType;
 using aidl::android::hardware::wifi::supplicant::P2pStatusCode;
 using aidl::android::hardware::wifi::supplicant::SupplicantStatusCode;
 using aidl::android::hardware::wifi::supplicant::WpsConfigMethods;
@@ -67,6 +76,7 @@ const uint32_t kTestNetworkId = 7;
 const uint32_t kTestGroupFreq = 0;
 const bool kTestGroupPersistent = false;
 const bool kTestGroupIsJoin = false;
+const auto& kTestVendorDataOptional = generateOuiKeyedDataListOptional(5);
 
 }  // namespace
 
@@ -204,6 +214,14 @@ class SupplicantP2pIfaceCallback : public BnSupplicantP2pIfaceCallback {
             const P2pDeviceFoundEventParams& /* deviceFoundEventParams */) override {
         return ndk::ScopedAStatus::ok();
     }
+    ::ndk::ScopedAStatus onGoNegotiationRequestWithParams(
+            const P2pGoNegotiationReqEventParams& /* goNegotiationReqEventParams */) override {
+        return ndk::ScopedAStatus::ok();
+    }
+    ::ndk::ScopedAStatus onInvitationReceivedWithParams(
+            const P2pInvitationEventParams& /* invitationEventParams */) override {
+        return ndk::ScopedAStatus::ok();
+    }
 };
 
 class SupplicantP2pIfaceAidlTest : public testing::TestWithParam<std::string> {
@@ -212,6 +230,7 @@ class SupplicantP2pIfaceAidlTest : public testing::TestWithParam<std::string> {
         initializeService();
         supplicant_ = getSupplicant(GetParam().c_str());
         ASSERT_NE(supplicant_, nullptr);
+        ASSERT_TRUE(supplicant_->getInterfaceVersion(&interface_version_).isOk());
         ASSERT_TRUE(supplicant_
                         ->setDebugParams(DebugLevel::EXCESSIVE,
                                          true,  // show timestamps
@@ -237,6 +256,7 @@ class SupplicantP2pIfaceAidlTest : public testing::TestWithParam<std::string> {
    protected:
     std::shared_ptr<ISupplicant> supplicant_;
     std::shared_ptr<ISupplicantP2pIface> p2p_iface_;
+    int interface_version_;
 };
 
 /*
@@ -519,6 +539,43 @@ TEST_P(SupplicantP2pIfaceAidlTest, AddGroupWithConfig_FailureInvalidFrequency) {
 }
 
 /*
+ * CreateGroupOwner
+ */
+TEST_P(SupplicantP2pIfaceAidlTest, CreateGroupOwner) {
+    if (interface_version_ < 3) {
+        GTEST_SKIP() << "createGroupOwner is available as of Supplicant V3";
+    }
+
+    P2pCreateGroupOwnerInfo info;
+    info.persistent = false;
+    info.persistentNetworkId = kTestNetworkId;
+    info.vendorData = kTestVendorDataOptional;
+
+    EXPECT_TRUE(p2p_iface_->createGroupOwner(info).isOk());
+}
+
+/*
+ * AddGroupWithConfigurationParams
+ */
+TEST_P(SupplicantP2pIfaceAidlTest, AddGroupWithConfigurationParams) {
+    if (interface_version_ < 3) {
+        GTEST_SKIP() << "addGroupWithConfigurationParams is available as of Supplicant V3";
+    }
+
+    P2pAddGroupConfigurationParams params;
+    params.ssid = kTestSsid;
+    params.passphrase = kTestPassphrase;
+    params.isPersistent = kTestGroupPersistent;
+    params.frequencyMHzOrBand = kTestGroupFreq;
+    params.goInterfaceAddress = vecToArrayMacAddr(kTestZeroMacAddr);
+    params.joinExistingGroup = kTestGroupIsJoin;
+    params.keyMgmtMask = 0;
+    params.vendorData = kTestVendorDataOptional;
+
+    EXPECT_TRUE(p2p_iface_->addGroupWithConfigurationParams(params).isOk());
+}
+
+/*
  * Find
  */
 TEST_P(SupplicantP2pIfaceAidlTest, Find) {
@@ -537,6 +594,34 @@ TEST_P(SupplicantP2pIfaceAidlTest, FindSocialChannelsOnly) {
  */
 TEST_P(SupplicantP2pIfaceAidlTest, FindSpecificFrequency) {
     EXPECT_TRUE(p2p_iface_->findOnSpecificFrequency(2412, kTestFindTimeout).isOk());
+}
+
+/*
+ * FindWithParams
+ */
+TEST_P(SupplicantP2pIfaceAidlTest, FindWithParams) {
+    if (interface_version_ < 3) {
+        GTEST_SKIP() << "findWithParams is available as of Supplicant V3";
+    }
+
+    P2pDiscoveryInfo discoveryParams;
+    discoveryParams.timeoutInSec = kTestFindTimeout;
+    discoveryParams.vendorData = kTestVendorDataOptional;
+
+    discoveryParams.scanType = P2pScanType::FULL;
+    EXPECT_TRUE(p2p_iface_->findWithParams(discoveryParams).isOk());
+    EXPECT_TRUE(p2p_iface_->stopFind().isOk());
+    sleep(1);
+
+    discoveryParams.scanType = P2pScanType::SOCIAL;
+    EXPECT_TRUE(p2p_iface_->findWithParams(discoveryParams).isOk());
+    EXPECT_TRUE(p2p_iface_->stopFind().isOk());
+    sleep(1);
+
+    discoveryParams.scanType = P2pScanType::SPECIFIC_FREQ;
+    discoveryParams.frequencyMhz = 2412;
+    EXPECT_TRUE(p2p_iface_->findWithParams(discoveryParams).isOk());
+    EXPECT_TRUE(p2p_iface_->stopFind().isOk());
 }
 
 /*
@@ -563,6 +648,27 @@ TEST_P(SupplicantP2pIfaceAidlTest, Connect) {
                         ->connect(kTestMacAddr, WpsProvisionMethod::PBC, kTestConnectPin, true,
                                   false, kTestConnectGoIntent, &pin)
                         .isOk());
+}
+
+/*
+ * ConnectWithParams
+ */
+TEST_P(SupplicantP2pIfaceAidlTest, ConnectWithParams) {
+    if (interface_version_ < 3) {
+        GTEST_SKIP() << "connectWithParams is available as of Supplicant V3";
+    }
+
+    P2pConnectInfo connectInfo;
+    connectInfo.peerAddress = vecToArrayMacAddr(kTestMacAddr);
+    connectInfo.provisionMethod = WpsProvisionMethod::PBC;
+    connectInfo.preSelectedPin = kTestConnectPin;
+    connectInfo.joinExistingGroup = true;
+    connectInfo.persistent = false;
+    connectInfo.goIntent = kTestConnectGoIntent;
+    connectInfo.vendorData = kTestVendorDataOptional;
+
+    std::string pin;
+    EXPECT_TRUE(p2p_iface_->connectWithParams(connectInfo, &pin).isOk());
 }
 
 /*
@@ -622,6 +728,22 @@ TEST_P(SupplicantP2pIfaceAidlTest, ConfigureExtListen) {
     EXPECT_TRUE(
         p2p_iface_->configureExtListen(extListenPeriod, extListenInterval)
             .isOk());
+}
+
+/*
+ * ConfigureExtListenWithParams
+ */
+TEST_P(SupplicantP2pIfaceAidlTest, ConfigureExtListenWithParams) {
+    if (interface_version_ < 3) {
+        GTEST_SKIP() << "configureExtListenWithParams is available as of Supplicant V3";
+    }
+
+    P2pExtListenInfo info;
+    info.periodMs = 400;
+    info.intervalMs = 400;
+    info.vendorData = kTestVendorDataOptional;
+
+    EXPECT_TRUE(p2p_iface_->configureExtListenWithParams(info).isOk());
 }
 
 /*

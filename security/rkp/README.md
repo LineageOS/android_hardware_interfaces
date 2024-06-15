@@ -210,7 +210,7 @@ The following describes which certificate types may be request based on the RKP 
    describes an RKP VM. If there are further certificates without the RKP VM
    marker, then the chain does not describe an RKP VM.
 
-   Implementations must include the first RPK VM marker as early as possible
+   Implementations must include the first RKP VM marker as early as possible
    after the point of divergence between TEE and non-TEE components in the DICE
    chain, prior to loading the Android Bootloader (ABL).
 2. "widevine" or "keymint": If there are no certificates with the RKP VM
