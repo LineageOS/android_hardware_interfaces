@@ -90,15 +90,18 @@ void GnssNavigationMessageInterface::stop() {
     ALOGD("stop");
     mIsActive = false;
     mThreadBlocker.notify();
-    for (auto iter = mThreads.begin(); iter != mThreads.end(); ++iter) {
+    for (auto iter = mThreads.begin(); iter != mThreads.end();) {
         if (iter->joinable()) {
-            mFutures.push_back(std::async(std::launch::async, [this, iter] {
-                iter->join();
-                mThreads.erase(iter);
-            }));
-        } else {
-            mThreads.erase(iter);
+            // Store the thread object by value
+            std::thread threadToMove = std::move(*iter);
+
+            mFutures.push_back(std::async(std::launch::async,
+                                          [threadToMove = std::move(threadToMove)]() mutable {
+                                              ALOGD("joining thread");
+                                              threadToMove.join();
+                                          }));
         }
+        iter = mThreads.erase(iter);
     }
 }
 
