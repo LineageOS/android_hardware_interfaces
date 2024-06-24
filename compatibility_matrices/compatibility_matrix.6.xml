@@ -450,7 +450,7 @@
     </hal>
     <hal format="hidl">
         <name>android.hardware.radio</name>
-        <version>1.6</version>
+        <version>1.5-6</version>
         <interface>
             <name>IRadio</name>
             <instance>slot1</instance>
