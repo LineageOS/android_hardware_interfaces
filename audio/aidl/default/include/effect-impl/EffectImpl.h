@@ -89,6 +89,11 @@ class EffectImpl : public BnEffect, public EffectThread {
     void process() override;
 
   protected:
+    // current Hal version
+    int mVersion = 0;
+    // Use kEventFlagNotEmpty for V1 HAL, kEventFlagDataMqNotEmpty for V2 and above
+    int mDataMqNotEmptyEf = aidl::android::hardware::audio::effect::kEventFlagDataMqNotEmpty;
+
     State mState GUARDED_BY(mImplMutex) = State::INIT;
 
     IEffect::Status status(binder_status_t status, size_t consumed, size_t produced);
@@ -107,6 +112,11 @@ class EffectImpl : public BnEffect, public EffectThread {
     virtual ndk::ScopedAStatus commandImpl(CommandId id) REQUIRES(mImplMutex);
 
     RetCode notifyEventFlag(uint32_t flag);
+
+    std::string getEffectNameWithVersion() {
+        return getEffectName() + "V" + std::to_string(mVersion);
+    }
+
     ::android::hardware::EventFlag* mEventFlag;
 };
 }  // namespace aidl::android::hardware::audio::effect
