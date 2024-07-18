@@ -51,6 +51,7 @@ cc_defaults {
     // Lists all dependencies that can *not* be expected on the device.
     static_libs: [
         "VtsHalHidlTestUtils",
+        "libhidlbase",
         "libhidl-gen-utils",
     ],
 
@@ -71,6 +72,14 @@ cc_defaults {
         "-O0",
         "-g",
     ],
+
+    target: {
+        android: {
+            shared_libs: [
+                "libvndksupport",
+            ],
+        },
+    },
 
     require_root: true,
 }
