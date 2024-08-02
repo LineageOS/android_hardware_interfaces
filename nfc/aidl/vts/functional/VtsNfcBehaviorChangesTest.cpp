@@ -16,6 +16,10 @@
 
 #define LOG_TAG "nfc_behavior_changes_test"
 
+#include <aidl/Gtest.h>
+#include <aidl/Vintf.h>
+#include <aidl/android/hardware/nfc/BnNfc.h>
+#include <aidl/android/hardware/nfc/INfc.h>
 #include <android-base/logging.h>
 #include <android-base/stringprintf.h>
 #include <android/binder_process.h>
@@ -30,6 +34,9 @@
 #include "nfa_api.h"
 #include "nfa_ee_api.h"
 
+using aidl::android::hardware::nfc::INfc;
+using android::getAidlHalInstanceNames;
+using android::PrintInstanceNameToString;
 using android::base::StringPrintf;
 
 static SyncEvent sNfaEnableEvent;  // event for NFA_Enable()
@@ -162,7 +169,7 @@ tNFA_STATUS static nfaObserveModeEnable(bool enable) {
     return status;
 }
 
-class NfcBehaviorChanges : public testing::Test {
+class NfcBehaviorChanges : public testing::TestWithParam<std::string> {
   protected:
     void SetUp() override {
         tNFA_STATUS status = NFA_STATUS_OK;
@@ -202,13 +209,18 @@ class NfcBehaviorChanges : public testing::Test {
  *
  * @VsrTest = GMS-VSR-3.2.8-001
  */
-TEST_F(NfcBehaviorChanges, ObserveModeEnableDisable) {
+TEST_P(NfcBehaviorChanges, ObserveModeEnableDisable) {
     tNFA_STATUS status = nfaObserveModeEnable(true);
     ASSERT_EQ(status, NFA_STATUS_OK);
 
     status = nfaObserveModeEnable(false);
     ASSERT_EQ(status, NFA_STATUS_OK);
 }
+
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(NfcBehaviorChanges);
+INSTANTIATE_TEST_SUITE_P(Nfc, NfcBehaviorChanges,
+                         testing::ValuesIn(::android::getAidlHalInstanceNames(INfc::descriptor)),
+                         ::android::PrintInstanceNameToString);
 
 int main(int argc, char** argv) {
     testing::InitGoogleTest(&argc, argv);
