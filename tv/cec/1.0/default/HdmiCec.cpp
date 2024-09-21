@@ -317,8 +317,16 @@ Return<SendMessageResult> HdmiCec::sendMessage(const CecMessage& message) {
     };
     for (size_t i = 0; i < message.body.size(); ++i) {
         legacyMessage.body[i] = static_cast<unsigned char>(message.body[i]);
+
     }
-    return static_cast<SendMessageResult>(mDevice->send_message(mDevice, &legacyMessage));
+
+    if (mDevice->send_message(mDevice, &legacyMessage) >= 0) {
+        return SendMessageResult::SUCCESS;
+    } else if (message.body.size() == 0) { // Polling message: report NACK on failure
+        return SendMessageResult::NACK;
+    } else {
+        return SendMessageResult::FAIL;
+    }
 }
 
 Return<void> HdmiCec::setCallback(const sp<IHdmiCecCallback>& callback) {
