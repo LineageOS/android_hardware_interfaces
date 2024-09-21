@@ -317,8 +317,14 @@ Return<SendMessageResult> HdmiCec::sendMessage(const CecMessage& message) {
     };
     for (size_t i = 0; i < message.body.size(); ++i) {
         legacyMessage.body[i] = static_cast<unsigned char>(message.body[i]);
+
     }
-    return static_cast<SendMessageResult>(mDevice->send_message(mDevice, &legacyMessage));
+    int retval = mDevice->send_message(mDevice, &legacyMessage);
+    if (retval != static_cast<int>(SendMessageResult::SUCCESS) && message.body.size() == 0) {
+        return SendMessageResult::NACK;
+    } else {
+        return static_cast<SendMessageResult>(retval);
+    }
 }
 
 Return<void> HdmiCec::setCallback(const sp<IHdmiCecCallback>& callback) {
