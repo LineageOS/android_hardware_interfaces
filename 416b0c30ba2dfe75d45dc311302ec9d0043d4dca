@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ddd71235_201a1581",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 14048
+      },
+      "writtenOn": "2024-10-21T02:32:12Z",
+      "side": 1,
+      "message": "Verified on foster. Prebuilt hwc from the R era fails without this revert.",
+      "revId": "416b0c30ba2dfe75d45dc311302ec9d0043d4dca",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
