@@ -17,6 +17,7 @@
 #ifndef ANDROID_HARDWARE_CAMERA_PROVIDER_V2_4_LEGACYCAMERAPROVIDER_H
 #define ANDROID_HARDWARE_CAMERA_PROVIDER_V2_4_LEGACYCAMERAPROVIDER_H
 
+#include <set>
 #include <android/hardware/camera/provider/2.4/ICameraProvider.h>
 #include "hardware/camera_common.h"
 #include "utils/Mutex.h"
@@ -84,6 +85,7 @@ protected:
     int mNumberOfLegacyCameras;
     std::map<std::string, camera_device_status_t> mCameraStatusMap; // camera id -> status
     std::map<std::string, bool> mOpenLegacySupported; // camera id -> open_legacy HAL1.0 supported
+    std::set<int> mLegacyCameras; // non-external cameras
     SortedVector<std::string> mCameraIds; // the "0"/"1" legacy camera Ids
     // (cameraId string, hidl device name) pairs
     SortedVector<std::pair<std::string, std::string>> mCameraDeviceNames;
