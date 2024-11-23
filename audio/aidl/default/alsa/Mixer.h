@@ -54,6 +54,7 @@ class Mixer {
     enum Control {
         MASTER_SWITCH,
         MASTER_VOLUME,
+        HW_SWITCH,
         HW_VOLUME,
         MIC_SWITCH,
         MIC_GAIN,
@@ -79,6 +80,8 @@ class Mixer {
     int setMixerControlPercent(struct mixer_ctl* ctl, const std::vector<int>& percents)
             REQUIRES(mMixerAccess);
     int setMixerControlValue(struct mixer_ctl* ctl, int value) REQUIRES(mMixerAccess);
+    int setMixerControlValue(struct mixer_ctl* ctl, const std::vector<int>& values)
+            REQUIRES(mMixerAccess);
 
     // Since ALSA functions do not use internal locking, enforce thread safety at our level.
     std::mutex mMixerAccess;
