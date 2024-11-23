@@ -45,6 +45,7 @@ const std::map<Mixer::Control, std::vector<Mixer::ControlNamesAndExpectedCtlType
         Mixer::kPossibleControls = {
                 {Mixer::MASTER_SWITCH, {{"Master Playback Switch", MIXER_CTL_TYPE_BOOL}}},
                 {Mixer::MASTER_VOLUME, {{"Master Playback Volume", MIXER_CTL_TYPE_INT}}},
+                {Mixer::HW_SWITCH, {{"PCM Playback Switch", MIXER_CTL_TYPE_BOOL}}},
                 {Mixer::HW_VOLUME,
                  {{"Headphone Playback Volume", MIXER_CTL_TYPE_INT},
                   {"Headset Playback Volume", MIXER_CTL_TYPE_INT},
@@ -81,6 +82,9 @@ std::ostream& operator<<(std::ostream& s, Mixer::Control c) {
             break;
         case Mixer::Control::MASTER_VOLUME:
             s << "master volume";
+            break;
+        case Mixer::Control::HW_SWITCH:
+            s << "switch";
             break;
         case Mixer::Control::HW_VOLUME:
             s << "volume";
@@ -162,6 +166,13 @@ ndk::ScopedAStatus Mixer::setVolumes(const std::vector<float>& volumes) {
             volumes.begin(), volumes.end(), std::back_inserter(percents),
             [](float volume) -> int { return std::floor(std::clamp(volume, 0.0f, 1.0f) * 100); });
     std::lock_guard l(mMixerAccess);
+    do {
+        struct mixer_ctl* mctl_mute;
+        if (!findControl(Mixer::HW_SWITCH, &mctl_mute).isOk()) break;
+        if (int err = setMixerControlValue(mctl, percents); err != 0) {
+            LOG(ERROR) << __func__ << ": failed to set mute, err=" << err;
+        }
+    } while (0);
     if (int err = setMixerControlPercent(mctl, percents); err != 0) {
         LOG(ERROR) << __func__ << ": failed to set volume, err=" << err;
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
@@ -288,6 +299,17 @@ int Mixer::setMixerControlValue(struct mixer_ctl* ctl, int value) {
     const unsigned int n = mixer_ctl_get_num_values(ctl);
     for (unsigned int id = 0; id < n; id++) {
         if (int error = mixer_ctl_set_value(ctl, id, value); error != 0) {
+            return error;
+        }
+    }
+    return 0;
+}
+
+int Mixer::setMixerControlValue(struct mixer_ctl* ctl, const std::vector<int>& values) {
+    const unsigned int n = mixer_ctl_get_num_values(ctl);
+    for (unsigned int id = 0; id < n; id++) {
+        if (int error = mixer_ctl_set_value(ctl, id, id < values.size() ? values[id] : 0);
+            error != 0) {
             return error;
         }
     }
