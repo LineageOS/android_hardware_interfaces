@@ -30,13 +30,14 @@ namespace aidl::android::hardware::audio::core::primary {
 
 class PrimaryMixer : public alsa::Mixer {
   public:
-    static constexpr int kAlsaCard = 0;
-    static constexpr int kAlsaDevice = 0;
-
     static PrimaryMixer& getInstance();
+    static int getAlsaCard();
+    static int getAlsaDevice();
 
   private:
-    PrimaryMixer() : alsa::Mixer(kAlsaCard) {}
+    PrimaryMixer();
+    static int AlsaCard;
+    static int AlsaDevice;
 };
 
 }  // namespace aidl::android::hardware::audio::core::primary
