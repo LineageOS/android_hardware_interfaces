@@ -25,6 +25,8 @@
 #include "core-impl/StreamPrimary.h"
 #include "core-impl/Telephony.h"
 
+#include "primary/PrimaryMixer.h"
+
 using aidl::android::hardware::audio::common::SinkMetadata;
 using aidl::android::hardware::audio::common::SourceMetadata;
 using aidl::android::media::audio::common::AudioOffloadInfo;
@@ -33,6 +35,35 @@ using aidl::android::media::audio::common::AudioPortConfig;
 using aidl::android::media::audio::common::MicrophoneInfo;
 
 namespace aidl::android::hardware::audio::core {
+
+namespace {
+
+static constexpr char kEnableMasterMixerControlProp[] =
+        "persist.vendor.audio.primary.enable_master_mixer_control";
+
+}  // namespace
+
+ModulePrimary::ModulePrimary(std::unique_ptr<Configuration>&& config)
+    : Module(Type::DEFAULT, std::move(config)) {
+    mEnableMasterMixerControl =
+            ::android::base::GetBoolProperty(kEnableMasterMixerControlProp, false);
+}
+
+ndk::ScopedAStatus ModulePrimary::onMasterMuteChanged(bool mute) {
+    if (!mEnableMasterMixerControl) {
+        LOG(VERBOSE) << __func__ << ": do nothing and return ok";
+        return ndk::ScopedAStatus::ok();
+    }
+    return primary::PrimaryMixer::getInstance().setMasterMute(mute);
+}
+
+ndk::ScopedAStatus ModulePrimary::onMasterVolumeChanged(float volume) {
+    if (!mEnableMasterMixerControl) {
+        LOG(VERBOSE) << __func__ << ": do nothing and return ok";
+        return ndk::ScopedAStatus::ok();
+    }
+    return primary::PrimaryMixer::getInstance().setMasterVolume(volume);
+}
 
 ndk::ScopedAStatus ModulePrimary::getTelephony(std::shared_ptr<ITelephony>* _aidl_return) {
     if (!mTelephony) {
