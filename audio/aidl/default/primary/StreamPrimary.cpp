@@ -93,13 +93,13 @@ StreamPrimary::StreamPrimary(StreamContext* context, const Metadata& metadata)
 
 std::vector<alsa::DeviceProfile> StreamPrimary::getDeviceProfiles() {
     static const std::vector<alsa::DeviceProfile> kBuiltInSource{
-            alsa::DeviceProfile{.card = primary::PrimaryMixer::kAlsaCard,
-                                .device = primary::PrimaryMixer::kAlsaDevice,
+            alsa::DeviceProfile{.card = primary::PrimaryMixer::getAlsaCard(),
+                                .device = primary::PrimaryMixer::getAlsaDevice(),
                                 .direction = PCM_IN,
                                 .isExternal = false}};
     static const std::vector<alsa::DeviceProfile> kBuiltInSink{
-            alsa::DeviceProfile{.card = primary::PrimaryMixer::kAlsaCard,
-                                .device = primary::PrimaryMixer::kAlsaDevice,
+            alsa::DeviceProfile{.card = primary::PrimaryMixer::getAlsaCard(),
+                                .device = primary::PrimaryMixer::getAlsaDevice(),
                                 .direction = PCM_OUT,
                                 .isExternal = false}};
     return mIsInput ? kBuiltInSource : kBuiltInSink;
