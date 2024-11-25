@@ -19,6 +19,7 @@
 #define LOG_TAG "AHAL_ModulePrimary"
 #include <Utils.h>
 #include <android-base/logging.h>
+#include <android-base/properties.h>
 
 #include "core-impl/ModulePrimary.h"
 #include "core-impl/StreamPrimary.h"
@@ -63,7 +64,8 @@ int32_t ModulePrimary::getNominalLatencyMs(const AudioPortConfig&) {
     // the virtual Android device implementation to pass CTS. Hardware implementations
     // should have significantly lower latency.
     static constexpr int32_t kLatencyMs = 85;
-    return kLatencyMs;
+    static constexpr char kLatencyMsProp[] = "persist.vendor.audio.primary.latency_ms";
+    return ::android::base::GetIntProperty(kLatencyMsProp, kLatencyMs);
 }
 
 }  // namespace aidl::android::hardware::audio::core
