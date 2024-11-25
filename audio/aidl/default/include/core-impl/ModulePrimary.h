@@ -22,8 +22,7 @@ namespace aidl::android::hardware::audio::core {
 
 class ModulePrimary final : public Module {
   public:
-    ModulePrimary(std::unique_ptr<Configuration>&& config)
-        : Module(Type::DEFAULT, std::move(config)) {}
+    ModulePrimary(std::unique_ptr<Configuration>&& config);
 
   protected:
     ndk::ScopedAStatus getTelephony(std::shared_ptr<ITelephony>* _aidl_return) override;
@@ -42,8 +41,12 @@ class ModulePrimary final : public Module {
     int32_t getNominalLatencyMs(
             const ::aidl::android::media::audio::common::AudioPortConfig& portConfig) override;
 
+    ndk::ScopedAStatus onMasterMuteChanged(bool mute) override;
+    ndk::ScopedAStatus onMasterVolumeChanged(float volume) override;
+
   private:
     ChildInterface<ITelephony> mTelephony;
+    bool mEnableMasterMixerControl;
 };
 
 }  // namespace aidl::android::hardware::audio::core
