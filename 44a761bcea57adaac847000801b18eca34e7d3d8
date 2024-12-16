@@ -52,6 +52,24 @@
       "parentUuid": "32aa8243_9805208e",
       "revId": "44a761bcea57adaac847000801b18eca34e7d3d8",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fbbb5664_6727f6e4",
+        "filename": "camera/provider/2.4/default/LegacyCameraProviderImpl_2_4.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 21290
+      },
+      "writtenOn": "2024-12-16T16:17:35Z",
+      "side": 1,
+      "message": "That\u0027s not a problem, you can patch the camera libraries to use a different property or add the 2 lines to sync the two props to your init scripts. I agree that it\u0027s not worth the Soong complexity to let the name of the property be variable. A common name makes it consistent between devices.",
+      "parentUuid": "bb35b5b7_c3ddbcb3",
+      "revId": "44a761bcea57adaac847000801b18eca34e7d3d8",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
