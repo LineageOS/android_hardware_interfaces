@@ -17,6 +17,9 @@
 #define LOG_TAG "CamPrvdr@2.4-legacy"
 //#define LOG_NDEBUG 0
 #include <android/log.h>
+#include <android-base/parseint.h>
+#include <android-base/properties.h>
+#include <android-base/strings.h>
 
 #include "LegacyCameraProviderImpl_2_4.h"
 #include "CameraDevice_1_0.h"
@@ -25,9 +28,12 @@
 #include "CameraDevice_3_5.h"
 #include "CameraProvider_2_4.h"
 #include <cutils/properties.h>
+#include <numeric>
 #include <regex>
 #include <string.h>
 #include <utils/Trace.h>
+
+#define CAMERA_REMAP_IDS_PROPERTY "vendor.camera.remapid"
 
 namespace android {
 namespace hardware {
@@ -265,6 +271,34 @@ LegacyCameraProviderImpl_2_4::LegacyCameraProviderImpl_2_4() :
 
 LegacyCameraProviderImpl_2_4::~LegacyCameraProviderImpl_2_4() {}
 
+static std::vector<int> getLegacyCameraIdMap(int numberOfCameras) {
+    // Initialize identity mapping
+    std::vector<int> cameraIdMap(numberOfCameras);
+    std::iota(std::begin(cameraIdMap), std::end(cameraIdMap), 0);
+
+    // Return if property for remap is not defined or is empty
+    std::string remapProp = base::GetProperty(CAMERA_REMAP_IDS_PROPERTY, "");
+    if (remapProp.empty()) {
+        ALOGD("%s: camera IDs remapping property '%s' is empty", __func__,
+              CAMERA_REMAP_IDS_PROPERTY);
+        return cameraIdMap;
+    }
+
+    // Split camera IDs that are separated by space
+    std::vector<std::string> idRemap = base::Split(remapProp, " ");
+
+    for (int n = 0; n < numberOfCameras; n++) {
+        int mappedId;
+
+        // Replace n-th camera ID in the map if it is defined
+        if (n < idRemap.size() && base::ParseInt(idRemap[n], &mappedId)) {
+            cameraIdMap[n] = mappedId;
+        }
+    }
+
+    return cameraIdMap;
+}
+
 bool LegacyCameraProviderImpl_2_4::initialize() {
     camera_module_t *rawModule;
     int err = hw_get_module(CAMERA_HARDWARE_MODULE_ID,
@@ -313,8 +347,17 @@ bool LegacyCameraProviderImpl_2_4::initialize() {
     }
 
     mNumberOfLegacyCameras = mModule->getNumberOfCameras();
-    for (int i = 0; i < mNumberOfLegacyCameras; i++) {
+
+    // Get camera IDs map
+    auto cameraIdMap = getLegacyCameraIdMap(mNumberOfLegacyCameras);
+
+    for (int n = 0; n < mNumberOfLegacyCameras; n++) {
+        int i = cameraIdMap[n];
         mLegacyCameras.insert(i);
+
+        if (n != i) {
+            ALOGI("%s: Camera %d ID remapped to %d", __func__, n, i);
+        }
 
         struct camera_info info;
         auto rc = mModule->getCameraInfo(i, &info);
