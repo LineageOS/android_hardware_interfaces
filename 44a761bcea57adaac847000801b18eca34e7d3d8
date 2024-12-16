@@ -16,6 +16,24 @@
       "message": "Can\u0027t we just agree on a common property key instead of setting a custom one (and related Soong hooks)? Would make the patch smaller",
       "revId": "44a761bcea57adaac847000801b18eca34e7d3d8",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "32aa8243_9805208e",
+        "filename": "camera/provider/2.4/default/LegacyCameraProviderImpl_2_4.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 32245
+      },
+      "writtenOn": "2024-12-16T16:06:41Z",
+      "side": 1,
+      "message": "Cera, [16 Dec 2024 20:12:35]\nLook at the pyxis change... The property name is OEM defined...\nI don\u0027t want to hardwire Xiaomi specific change to hardware_interfaces\n\nCera, [16 Dec 2024 20:13:03]\nAnd also it allows to opt-out by not defining it",
+      "parentUuid": "a15b5bcb_03eadbe3",
+      "revId": "44a761bcea57adaac847000801b18eca34e7d3d8",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
