@@ -34,6 +34,24 @@
       "parentUuid": "a15b5bcb_03eadbe3",
       "revId": "44a761bcea57adaac847000801b18eca34e7d3d8",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bb35b5b7_c3ddbcb3",
+        "filename": "camera/provider/2.4/default/LegacyCameraProviderImpl_2_4.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 30475
+      },
+      "writtenOn": "2024-12-16T16:13:13Z",
+      "side": 1,
+      "message": "Exactly, 2 reasons:\n1. to be vendor agnostic\n2. to be opt-in to avoid potential issues with other devices",
+      "parentUuid": "32aa8243_9805208e",
+      "revId": "44a761bcea57adaac847000801b18eca34e7d3d8",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
