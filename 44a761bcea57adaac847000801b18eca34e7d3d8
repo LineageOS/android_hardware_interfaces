@@ -70,6 +70,24 @@
       "parentUuid": "bb35b5b7_c3ddbcb3",
       "revId": "44a761bcea57adaac847000801b18eca34e7d3d8",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ea550e92_cfda86ba",
+        "filename": "camera/provider/2.4/default/LegacyCameraProviderImpl_2_4.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 30475
+      },
+      "writtenOn": "2024-12-16T16:36:14Z",
+      "side": 1,
+      "message": "And are you able to properly synchronize? IMHO not. Flow is following:\n\n1. android.hardware.camera.provider@2.4-service loads android.hardware.camera.provider@2.4-legacy.so and call LegacyCameraProviderImpl_2_4::initialize()\n2. During LegacyCameraProviderImpl_2_4::initialize() the camera.qcom.default.so is loaded\n3. During load the camera.qcom.default.so sets the property\n4. After load camera.qcom.default.so LegacyCameraProviderImpl_2_4::initialize() gets the property value and use it\n\nIMHO you will not be able to sync HAL reliable specific property to common one between steps 3 and 4.\n\nYou can do either:\n1. to have specific soong variable like TARGET_CAMERA_OVERRIDE_FORMAT_FROM_RESERVED\n2. to have device specific function hook like libudfpshandler but this would also require soong change\n3. synchronization point between steps 3 and 4 -\u003e busy-loop that would wait for common remap property to be set... this affects all devices because all of them have to set it at least to empty value\n\nIMHO the option 1 is the most simple.",
+      "parentUuid": "fbbb5664_6727f6e4",
+      "revId": "44a761bcea57adaac847000801b18eca34e7d3d8",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
