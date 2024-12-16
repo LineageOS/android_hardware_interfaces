@@ -10,7 +10,10 @@ package {
 
 cc_library_shared {
     name: "android.hardware.camera.provider@2.4-legacy",
-    defaults: ["hidl_defaults"],
+    defaults: [
+        "hidl_defaults",
+        "camera_ids_remap_property_defaults",
+    ],
     proprietary: true,
     srcs: ["LegacyCameraProviderImpl_2_4.cpp"],
     shared_libs: [
@@ -31,6 +34,7 @@ cc_library_shared {
         "camera.device@3.3-impl",
         "camera.device@3.4-impl",
         "camera.device@3.5-impl",
+        "libbase",
         "libcamera_metadata",
         "libcutils",
         "libhardware",
