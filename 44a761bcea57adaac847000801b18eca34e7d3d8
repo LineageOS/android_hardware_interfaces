@@ -196,6 +196,24 @@
       "parentUuid": "8bca162b_0bcdf767",
       "revId": "44a761bcea57adaac847000801b18eca34e7d3d8",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "32f132cc_90e67161",
+        "filename": "camera/provider/2.4/default/LegacyCameraProviderImpl_2_4.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 25732
+      },
+      "writtenOn": "2024-12-18T11:06:47Z",
+      "side": 1,
+      "message": "Yes",
+      "parentUuid": "d80df396_b1571c59",
+      "revId": "44a761bcea57adaac847000801b18eca34e7d3d8",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
