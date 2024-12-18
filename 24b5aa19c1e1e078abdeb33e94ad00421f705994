@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d9ea79e3_4f6f3303",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 30475
+      },
+      "writtenOn": "2024-12-18T11:24:00Z",
+      "side": 1,
+      "message": "Common remapping property verified on Pyxis",
+      "revId": "24b5aa19c1e1e078abdeb33e94ad00421f705994",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
