@@ -33,6 +33,24 @@
       "message": "remove this?",
       "revId": "24b5aa19c1e1e078abdeb33e94ad00421f705994",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2fe00dbb_03d01ba5",
+        "filename": "camera/provider/2.4/default/LegacyCameraProviderImpl_2_4.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 30475
+      },
+      "writtenOn": "2024-12-18T11:45:12Z",
+      "side": 1,
+      "message": "I\u0027m using base::ParseInt",
+      "parentUuid": "28e8bdbb_af815dc8",
+      "revId": "24b5aa19c1e1e078abdeb33e94ad00421f705994",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
