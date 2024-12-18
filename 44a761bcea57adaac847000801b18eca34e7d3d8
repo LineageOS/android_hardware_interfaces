@@ -178,6 +178,24 @@
       "parentUuid": "25160b63_cde35ae3",
       "revId": "44a761bcea57adaac847000801b18eca34e7d3d8",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d80df396_b1571c59",
+        "filename": "camera/provider/2.4/default/LegacyCameraProviderImpl_2_4.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 30475
+      },
+      "writtenOn": "2024-12-18T10:27:38Z",
+      "side": 1,
+      "message": "Seba, `vendor.camera.remapids` needs to be labelled as `u:object_r:vendor_camera_prop:s0`.\n\nShould I put it into `android_device_lineage_sepolicy/common/vendor/property_contexts` ?",
+      "parentUuid": "8bca162b_0bcdf767",
+      "revId": "44a761bcea57adaac847000801b18eca34e7d3d8",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
