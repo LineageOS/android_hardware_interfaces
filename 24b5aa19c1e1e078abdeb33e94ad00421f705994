@@ -16,6 +16,23 @@
       "message": "Common remapping property verified on Pyxis",
       "revId": "24b5aa19c1e1e078abdeb33e94ad00421f705994",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "28e8bdbb_af815dc8",
+        "filename": "camera/provider/2.4/default/LegacyCameraProviderImpl_2_4.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 21290
+      },
+      "writtenOn": "2024-12-18T11:32:47Z",
+      "side": 1,
+      "message": "remove this?",
+      "revId": "24b5aa19c1e1e078abdeb33e94ad00421f705994",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
