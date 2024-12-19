@@ -16,6 +16,23 @@
       "message": "abandoned wrong one lol",
       "revId": "2a6684e39f5f88041973dded8281442cd56e9a13",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "12282a4c_a7a9a99e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 34519
+      },
+      "writtenOn": "2024-12-19T05:16:43Z",
+      "side": 1,
+      "message": "Tested and verified now boots Pixel 6 series devices",
+      "revId": "2a6684e39f5f88041973dded8281442cd56e9a13",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ],
   "submitRequirementResults": []
