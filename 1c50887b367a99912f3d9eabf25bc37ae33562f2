@@ -1,0 +1,67 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4f224445_d81ba4c1",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 21290
+      },
+      "writtenOn": "2024-12-20T12:43:58Z",
+      "side": 1,
+      "message": "I don\u0027t really like that the mapping must be total, a partial mapping would make much more sense (for example something like this: \"1:4,6:3\" would remap id 1 to 4 and 6 to 3 while leaving others untouched).\nBut i guess that is infeasible if you want to patch the proprietary camera hal instead of listening for the property.",
+      "revId": "1c50887b367a99912f3d9eabf25bc37ae33562f2",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c8a35dea_a3ec6371",
+        "filename": "camera/provider/2.4/default/LegacyCameraProviderImpl_2_4.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 282,
+      "author": {
+        "id": 21290
+      },
+      "writtenOn": "2024-12-20T12:43:58Z",
+      "side": 1,
+      "message": "```suggestion\n        ALOGD(\"%s: camera IDs remapping property \u0027%s\u0027 is empty\", __func__,\n```\nThis should be at most debug logging imo.",
+      "range": {
+        "startLine": 282,
+        "startChar": 8,
+        "endLine": 282,
+        "endChar": 13
+      },
+      "revId": "1c50887b367a99912f3d9eabf25bc37ae33562f2",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "08d9cc28_90f07b1b",
+        "filename": "camera/provider/2.4/default/LegacyCameraProviderImpl_2_4.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 294,
+      "author": {
+        "id": 21290
+      },
+      "writtenOn": "2024-12-20T12:43:58Z",
+      "side": 1,
+      "message": "```suggestion\n        if (n \u003c idRemap.size() \u0026\u0026 base::ParseInt(idRemap[n], \u0026mappedId))\n```\nWhy did you add n as the minimum value? Is that necessary? i.e. why shouldn\u0027t one be able to map 0-\u003e4 and 4-\u003e0?",
+      "range": {
+        "startLine": 294,
+        "startChar": 12,
+        "endLine": 294,
+        "endChar": 73
+      },
+      "revId": "1c50887b367a99912f3d9eabf25bc37ae33562f2",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
