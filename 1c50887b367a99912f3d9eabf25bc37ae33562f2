@@ -18,6 +18,24 @@
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e9eeec3a_3912ff2a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 30475
+      },
+      "writtenOn": "2024-12-20T15:05:05Z",
+      "side": 1,
+      "message": "The value is provided by HAL... If it is partial (I didn\u0027t see any case till now) then identity is used for the rest...\n\nE.g. Number of cameras is 8 and property value is \"0 1 20 16\" then camera IDs are mapped like this: 0-\u003e0, 1-\u003e1, 2-\u003e20, 3-\u003e16, 4-\u003e4, 5-\u003e5, 6-\u003e6, 7-\u003e7",
+      "parentUuid": "4f224445_d81ba4c1",
+      "revId": "1c50887b367a99912f3d9eabf25bc37ae33562f2",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c8a35dea_a3ec6371",
