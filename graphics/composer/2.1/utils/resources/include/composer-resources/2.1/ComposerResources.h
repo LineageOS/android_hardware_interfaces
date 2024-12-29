@@ -40,7 +40,9 @@ namespace hal {
 // wrapper for IMapper to import buffers and sideband streams
 class ComposerHandleImporter {
   public:
+#ifndef OLD_MAPPER
     ComposerHandleImporter();
+#endif
     bool init();
 
     Error importBuffer(const native_handle_t* rawHandle, const native_handle_t** outBufferHandle);
@@ -49,7 +51,11 @@ class ComposerHandleImporter {
     void freeStream(const native_handle_t* streamHandle);
 
   private:
+#ifndef OLD_MAPPER
     GraphicBufferMapper& mMapper;
+#else
+    sp<mapper::V2_0::IMapper> mMapper2;
+#endif
 };
 
 class ComposerHandleCache {
