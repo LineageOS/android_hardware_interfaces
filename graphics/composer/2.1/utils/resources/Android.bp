@@ -30,6 +30,7 @@ cc_library {
     vendor_available: true,
     shared_libs: [
         "android.hardware.graphics.composer@2.1",
+        "android.hardware.graphics.mapper@2.0",
         "libcutils",
         "libhardware", // TODO remove hwcomposer2.h dependency
         "libhidlbase",
@@ -54,4 +55,5 @@ cc_library {
     srcs: [
         "ComposerResources.cpp",
     ],
+    cflags: ["-DOLD_MAPPER"],
 }

@@ -27,10 +27,19 @@ namespace composer {
 namespace V2_1 {
 namespace hal {
 
+#ifndef OLD_MAPPER
 ComposerHandleImporter::ComposerHandleImporter() : mMapper{GraphicBufferMapper::get()} {}
+#endif
 
 bool ComposerHandleImporter::init() {
+#ifndef OLD_MAPPER
     return true;
+#else
+    mMapper2 = mapper::V2_0::IMapper::getService();
+    ALOGE_IF(!mMapper2, "failed to get mapper 2.0 service");
+
+    return mMapper2 != nullptr;
+#endif
 }
 
 Error ComposerHandleImporter::importBuffer(const native_handle_t* rawHandle,
@@ -40,17 +49,39 @@ Error ComposerHandleImporter::importBuffer(const native_handle_t* rawHandle,
         return Error::NONE;
     }
 
+#ifndef OLD_MAPPER
     status_t status = mMapper.importBufferNoValidate(rawHandle, outBufferHandle);
     if (status == STATUS_OK) {
         return Error::NONE;
     } else {
         return Error::NO_RESOURCES;
     }
+#else
+    const native_handle_t* bufferHandle = NULL;
+    if (mMapper2) {
+        mapper::V2_0::Error error;
+        mMapper2->importBuffer(rawHandle, [&](const auto& tmpError, const auto& tmpBufferHandle) {
+            error = tmpError;
+            bufferHandle = static_cast<const native_handle_t*>(tmpBufferHandle);
+        });
+        if (error != mapper::V2_0::Error::NONE) {
+            return Error::NO_RESOURCES;
+        }
+    }
+
+    *outBufferHandle = bufferHandle;
+    return Error::NONE;
+#endif
 }
 
 void ComposerHandleImporter::freeBuffer(const native_handle_t* bufferHandle) {
     if (bufferHandle) {
+#ifndef OLD_MAPPER
         mMapper.freeBuffer(bufferHandle);
+#else
+        if (mMapper2)
+            mMapper2->freeBuffer(static_cast<void*>(const_cast<native_handle_t*>(bufferHandle)));
+#endif
     }
 }
 
