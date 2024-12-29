@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2cb8b934_a28e98d4",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 14048
+      },
+      "writtenOn": "2024-12-29T05:33:26Z",
+      "side": 1,
+      "message": "Compiles, but does not resolve issue. The same stack trace happens, even though the calls into libui are ifdef\u0027ed out.",
+      "revId": "509a26afd297cff0fb029bbc569ab1714cd14b53",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
