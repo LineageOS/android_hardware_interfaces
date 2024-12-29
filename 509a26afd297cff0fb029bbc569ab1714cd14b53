@@ -16,6 +16,24 @@
       "message": "Compiles, but does not resolve issue. The same stack trace happens, even though the calls into libui are ifdef\u0027ed out.",
       "revId": "509a26afd297cff0fb029bbc569ab1714cd14b53",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "712c9912_ff644380",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 13648
+      },
+      "writtenOn": "2024-12-29T09:03:57Z",
+      "side": 1,
+      "message": "Just fork it to a nvidia repo and move on.",
+      "parentUuid": "2cb8b934_a28e98d4",
+      "revId": "509a26afd297cff0fb029bbc569ab1714cd14b53",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
