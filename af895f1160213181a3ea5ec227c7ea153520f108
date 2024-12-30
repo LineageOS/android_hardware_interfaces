@@ -16,6 +16,24 @@
       "message": "Ping... any other changes requested or is there anything preventing this to be merged?",
       "revId": "af895f1160213181a3ea5ec227c7ea153520f108",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "52a58b48_fe51231a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 13648
+      },
+      "writtenOn": "2024-12-30T18:49:16Z",
+      "side": 1,
+      "message": "Considering that this all started because of Xiaomi, I am wondering if couldn\u0027t this be forked to hw/xiaomi. Note that hw/samsung also contains modified camera provider service.",
+      "parentUuid": "b6e39d19_58c9cb14",
+      "revId": "af895f1160213181a3ea5ec227c7ea153520f108",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
