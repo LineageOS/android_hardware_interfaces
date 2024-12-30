@@ -70,6 +70,24 @@
       "parentUuid": "38fd64db_0fc2b42e",
       "revId": "af895f1160213181a3ea5ec227c7ea153520f108",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f0659888_8a7a71ca",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 30475
+      },
+      "writtenOn": "2024-12-30T19:21:51Z",
+      "side": 1,
+      "message": "I\u0027m not sure if this is only Xiaomi specific... maybe other vendors also use some kind of camera IDs remapping.",
+      "parentUuid": "52a58b48_fe51231a",
+      "revId": "af895f1160213181a3ea5ec227c7ea153520f108",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
