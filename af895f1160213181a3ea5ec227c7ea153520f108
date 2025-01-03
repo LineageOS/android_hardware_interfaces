@@ -105,6 +105,29 @@
       "message": "@bgcngm@gmail.com ping",
       "revId": "af895f1160213181a3ea5ec227c7ea153520f108",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3bad7195_67491275",
+        "filename": "camera/provider/2.4/default/LegacyCameraProviderImpl_2_4.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 26313
+      },
+      "writtenOn": "2025-01-03T16:12:38Z",
+      "side": 1,
+      "message": "perseus uses a shorter prop by default(camera.xiaomi.remapid), so it won\u0027t be possible to use the new one due to the 1-bit shift.\nI tested the camera with vendor.camera.remapid, and it works fine.",
+      "range": {
+        "startLine": 36,
+        "startChar": 35,
+        "endLine": 36,
+        "endChar": 57
+      },
+      "revId": "af895f1160213181a3ea5ec227c7ea153520f108",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
