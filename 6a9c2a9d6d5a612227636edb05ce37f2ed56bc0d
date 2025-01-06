@@ -22,6 +22,30 @@
       },
       "revId": "6a9c2a9d6d5a612227636edb05ce37f2ed56bc0d",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2d4f319c_e6437bd0",
+        "filename": "camera/provider/2.4/default/LegacyCameraProviderImpl_2_4.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 359,
+      "author": {
+        "id": 11883
+      },
+      "writtenOn": "2025-01-06T13:10:46Z",
+      "side": 1,
+      "message": "Fix applied.",
+      "parentUuid": "b388b9e3_487b0575",
+      "range": {
+        "startLine": 357,
+        "startChar": 0,
+        "endLine": 359,
+        "endChar": 0
+      },
+      "revId": "6a9c2a9d6d5a612227636edb05ce37f2ed56bc0d",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
