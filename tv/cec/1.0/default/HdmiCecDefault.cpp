@@ -190,7 +190,12 @@ Return<SendMessageResult> HdmiCecDefault::sendMessage(const CecMessage& message)
         int ret = ioctl(mHdmiCecPorts[i]->mCecFd, CEC_TRANSMIT, &cecMsg);
 
         if (ret) {
-            LOG(ERROR) << "Send message failed, Error = " << strerror(errno);
+            const char* errMsg = strerror(errno);
+            // Hybrid HDMI + Handheld devices exist, don't spam if the device isn't
+            // actively connected to HDMI.
+            if (strcmp(errMsg, "Machine is not on the network") != 0) {
+                LOG(ERROR) << "Send message failed, Error = " << errMsg;
+            }
             continue;
         }
 
