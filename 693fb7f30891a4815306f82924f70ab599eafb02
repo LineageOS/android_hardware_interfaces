@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f9ef84cf_69559794",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 11883
+      },
+      "writtenOn": "2025-02-14T15:00:42Z",
+      "side": 1,
+      "message": "https://cs.android.com/android/platform/superproject/main/+/main:hardware/interfaces/tv/cec/1.1/default/HdmiCecMock.cpp;drc\u003da60b8c1f6f5539de4c8f464c1eaa11242ffb8729;l\u003d172\n\nWhy don\u0027t you early fail like in the new 1.1 hal?",
+      "revId": "693fb7f30891a4815306f82924f70ab599eafb02",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
