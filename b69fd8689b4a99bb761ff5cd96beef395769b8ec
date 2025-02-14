@@ -51,6 +51,23 @@
       "message": "Update commit msg to reflect the actual change then",
       "revId": "b69fd8689b4a99bb761ff5cd96beef395769b8ec",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ccccc600_986d49b9",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 14048
+      },
+      "writtenOn": "2025-02-14T21:21:49Z",
+      "side": 1,
+      "message": "No. This will always nack on polling messages. It needs to actually attempt to send the message.",
+      "revId": "b69fd8689b4a99bb761ff5cd96beef395769b8ec",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
