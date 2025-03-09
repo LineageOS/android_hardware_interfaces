@@ -87,6 +87,18 @@ interface IWifiChip {
          * Chip supports voip mode setting.
          */
         SET_VOIP_MODE = 1 << 9,
+        /**
+         * Chip supports Wi-Fi 7 MLO SoftAp.
+         */
+        MLO_SAP = 1 << 10,
+        /**
+         * Chip supports multiple Wi-Fi 7 multi-link devices (MLD) on SoftAp.
+         * When this feature flag is enabled, it is an indication that the chip can
+         * support Bridged-SoftAp in 11be with separate MLD MAC addresses.
+         * When this feature is disabled, then only one MLD address can be used in 11be mode
+         * (if supported), this includes use of MLO if MLO_SAP flag is set to True.
+         */
+        MULTIPLE_MLD_ON_SAP = 1 << 11,
     }
 
     /**
@@ -429,6 +441,9 @@ interface IWifiChip {
      * reached the maximum allowed (specified in |ChipIfaceCombination|) number
      * of ifaces of the AP type.
      *
+     * @deprecated This method is deprecated from AIDL v3, newer HALs should use
+     * createApOrBridgedApIfaceWithParams.
+     *
      * @return AIDL interface object representing the iface if
      *         successful, null otherwise.
      * @throws ServiceSpecificException with one of the following values:
@@ -445,6 +460,9 @@ interface IWifiChip {
      * may fail (code: |WifiStatusCode.ERROR_NOT_AVAILABLE|) if we've already
      * reached the maximum allowed (specified in |ChipIfaceCombination|) number
      * of ifaces of the AP type.
+     *
+     * @deprecated This method is deprecated from AIDL v3, newer HALs should use
+     * createApOrBridgedApIfaceWithParams.
      *
      * @return AIDL interface object representing the iface if
      *         successful, null otherwise.
@@ -1173,6 +1191,9 @@ interface IWifiChip {
      * reached the maximum allowed (specified in |ChipIfaceCombination|) number
      * of ifaces of the AP or AP_BRIDGED type.
      *
+     * @deprecated This method is deprecated from AIDL v3, newer HALs should use
+     * createApOrBridgedApIfaceWithParams.
+     *
      * @param  iface IfaceConcurrencyType to be created. Takes one of
                |IfaceConcurrencyType.AP| or |IfaceConcurrencyType.AP_BRIDGED|
      * @param  vendorData Vendor-provided configuration data as a list of |OuiKeyedData|.
@@ -1206,4 +1227,42 @@ interface IWifiChip {
      *         |WifiStatusCode.ERROR_UNKNOWN|
      */
     void setVoipMode(in VoipMode mode);
+
+    /**
+     * Parameters for setting up access point (AP) interfaces.
+     */
+    @VintfStability
+    parcelable ApIfaceParams {
+        /**
+         * IfaceConcurrencyType to be created. Takes one of
+         * |IfaceConcurrencyType.AP| or |IfaceConcurrencyType.AP_BRIDGED|
+         */
+        IfaceConcurrencyType ifaceType;
+        /**
+         * Whether the current iface will be operated on Multi-links on the one MLD device (MLO).
+         */
+        boolean usesMlo;
+        /**
+         * Optional vendor-specific configuration parameters.
+         */
+        @nullable OuiKeyedData[] vendorData;
+    }
+
+    /**
+     * Create an AP or bridged AP iface on the chip based on ApIfaceParamss.
+     *
+     * Depending on the mode the chip is configured in, the interface creation
+     * may fail (code: |WifiStatusCode.ERROR_NOT_AVAILABLE|) if we've already
+     * reached the maximum allowed (specified in |ChipIfaceCombination|) number
+     * of ifaces of the AP type.
+     *
+     * @return AIDL interface object representing the iface if
+     *         successful, null otherwise.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+     *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+     *         |WifiStatusCode.ERROR_NOT_AVAILABLE|
+     */
+    @PropagateAllowBlocking
+    IWifiApIface createApOrBridgedApIfaceWithParams(in ApIfaceParams params);
 }

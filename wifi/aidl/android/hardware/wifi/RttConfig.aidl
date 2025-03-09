@@ -19,6 +19,7 @@ package android.hardware.wifi;
 import android.hardware.wifi.RttBw;
 import android.hardware.wifi.RttPeerType;
 import android.hardware.wifi.RttPreamble;
+import android.hardware.wifi.RttSecureConfig;
 import android.hardware.wifi.RttType;
 import android.hardware.wifi.WifiChannelInfo;
 import android.hardware.wifi.common.OuiKeyedData;
@@ -140,4 +141,8 @@ parcelable RttConfig {
      * that no vendor data is provided.
      */
     @nullable OuiKeyedData[] vendorData;
+    /**
+     * Secure Ranging configuration
+     */
+    @nullable RttSecureConfig secureConfig;
 }

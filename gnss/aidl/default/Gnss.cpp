@@ -25,6 +25,7 @@
 #include "DeviceFileReader.h"
 #include "FixLocationParser.h"
 #include "GnssAntennaInfo.h"
+#include "GnssAssistanceInterface.h"
 #include "GnssBatching.h"
 #include "GnssConfiguration.h"
 #include "GnssDebug.h"
@@ -122,10 +123,13 @@ ScopedAStatus Gnss::start() {
             std::this_thread::sleep_for(std::chrono::milliseconds(TTFF_MILLIS));
             mFirstFixReceived = true;
         }
+        int reportGnssCount = 0;
         do {
             if (!mIsActive) {
+                ALOGD("Do not report location. mIsActive is false");
                 break;
             }
+            reportGnssCount += 1;
             if (!mGnssMeasurementEnabled || mMinIntervalMs <= mGnssMeasurementIntervalMs) {
                 this->reportSvStatus();
             }
@@ -140,6 +144,7 @@ ScopedAStatus Gnss::start() {
                 this->reportLocation(location);
             }
         } while (mIsActive && mThreadBlocker.wait_for(std::chrono::milliseconds(mMinIntervalMs)));
+        ALOGD("reportGnssCount: %d", reportGnssCount);
     });
     return ScopedAStatus::ok();
 }
@@ -387,6 +392,14 @@ ndk::ScopedAStatus Gnss::getExtensionMeasurementCorrections(
 
     *iMeasurementCorrections =
             SharedRefBase::make<measurement_corrections::MeasurementCorrectionsInterface>();
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Gnss::getExtensionGnssAssistanceInterface(
+        std::shared_ptr<gnss_assistance::IGnssAssistanceInterface>* iGnssAssistanceInterface) {
+    ALOGD("Gnss::getExtensionGnssAssistanceInterface");
+
+    *iGnssAssistanceInterface = SharedRefBase::make<gnss_assistance::GnssAssistanceInterface>();
     return ndk::ScopedAStatus::ok();
 }
 

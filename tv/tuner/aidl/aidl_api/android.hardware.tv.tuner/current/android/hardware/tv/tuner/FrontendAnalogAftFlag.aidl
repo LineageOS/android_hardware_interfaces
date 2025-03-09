@@ -35,7 +35,7 @@ package android.hardware.tv.tuner;
 /* @hide */
 @Backing(type="int") @VintfStability
 enum FrontendAnalogAftFlag {
-  UNDEFINED = 0,
-  AFT_TRUE = 1,
-  AFT_FALSE = 2,
+  UNDEFINED,
+  AFT_TRUE,
+  AFT_FALSE,
 }

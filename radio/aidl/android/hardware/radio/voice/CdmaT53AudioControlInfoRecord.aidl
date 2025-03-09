@@ -23,6 +23,8 @@ package android.hardware.radio.voice;
 @VintfStability
 @JavaDerive(toString=true)
 parcelable CdmaT53AudioControlInfoRecord {
+    /** @deprecated Legacy CDMA is unsupported. */
     byte upLink;
+    /** @deprecated Legacy CDMA is unsupported. */
     byte downLink;
 }

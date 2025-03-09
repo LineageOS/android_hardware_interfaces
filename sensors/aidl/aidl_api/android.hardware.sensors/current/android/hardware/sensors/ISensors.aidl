@@ -44,28 +44,28 @@ interface ISensors {
   int registerDirectChannel(in android.hardware.sensors.ISensors.SharedMemInfo mem);
   void setOperationMode(in android.hardware.sensors.ISensors.OperationMode mode);
   void unregisterDirectChannel(in int channelHandle);
-  const int ERROR_NO_MEMORY = -12;
-  const int ERROR_BAD_VALUE = -22;
+  const int ERROR_NO_MEMORY = (-12) /* -12 */;
+  const int ERROR_BAD_VALUE = (-22) /* -22 */;
   const int WAKE_LOCK_TIMEOUT_SECONDS = 1;
-  const int EVENT_QUEUE_FLAG_BITS_READ_AND_PROCESS = 1;
-  const int EVENT_QUEUE_FLAG_BITS_EVENTS_READ = 2;
-  const int WAKE_LOCK_QUEUE_FLAG_BITS_DATA_WRITTEN = 1;
-  const int DIRECT_REPORT_SENSOR_EVENT_OFFSET_SIZE_FIELD = 0;
-  const int DIRECT_REPORT_SENSOR_EVENT_OFFSET_SIZE_REPORT_TOKEN = 4;
-  const int DIRECT_REPORT_SENSOR_EVENT_OFFSET_SIZE_SENSOR_TYPE = 8;
-  const int DIRECT_REPORT_SENSOR_EVENT_OFFSET_SIZE_ATOMIC_COUNTER = 12;
-  const int DIRECT_REPORT_SENSOR_EVENT_OFFSET_SIZE_TIMESTAMP = 16;
-  const int DIRECT_REPORT_SENSOR_EVENT_OFFSET_SIZE_DATA = 24;
-  const int DIRECT_REPORT_SENSOR_EVENT_OFFSET_SIZE_RESERVED = 88;
+  const int EVENT_QUEUE_FLAG_BITS_READ_AND_PROCESS = (1 << 0) /* 1 */;
+  const int EVENT_QUEUE_FLAG_BITS_EVENTS_READ = (1 << 1) /* 2 */;
+  const int WAKE_LOCK_QUEUE_FLAG_BITS_DATA_WRITTEN = (1 << 0) /* 1 */;
+  const int DIRECT_REPORT_SENSOR_EVENT_OFFSET_SIZE_FIELD = 0x0;
+  const int DIRECT_REPORT_SENSOR_EVENT_OFFSET_SIZE_REPORT_TOKEN = 0x4;
+  const int DIRECT_REPORT_SENSOR_EVENT_OFFSET_SIZE_SENSOR_TYPE = 0x8;
+  const int DIRECT_REPORT_SENSOR_EVENT_OFFSET_SIZE_ATOMIC_COUNTER = 0xC;
+  const int DIRECT_REPORT_SENSOR_EVENT_OFFSET_SIZE_TIMESTAMP = 0x10;
+  const int DIRECT_REPORT_SENSOR_EVENT_OFFSET_SIZE_DATA = 0x18;
+  const int DIRECT_REPORT_SENSOR_EVENT_OFFSET_SIZE_RESERVED = 0x58;
   const int DIRECT_REPORT_SENSOR_EVENT_TOTAL_LENGTH = 104;
-  const int RUNTIME_SENSORS_HANDLE_BASE = 1593835520;
-  const int RUNTIME_SENSORS_HANDLE_END = 1610612735;
+  const int RUNTIME_SENSORS_HANDLE_BASE = 0x5F000000;
+  const int RUNTIME_SENSORS_HANDLE_END = 0x5FFFFFFF;
   @Backing(type="int") @VintfStability
   enum RateLevel {
-    STOP = 0,
-    NORMAL = 1,
-    FAST = 2,
-    VERY_FAST = 3,
+    STOP,
+    NORMAL,
+    FAST,
+    VERY_FAST,
   }
   @Backing(type="int") @VintfStability
   enum OperationMode {
@@ -85,7 +85,7 @@ interface ISensors {
     @Backing(type="int") @VintfStability
     enum SharedMemType {
       ASHMEM = 1,
-      GRALLOC = 2,
+      GRALLOC,
     }
   }
 }

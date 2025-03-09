@@ -35,6 +35,6 @@ package android.hardware.tv.tuner;
 /* @hide */
 @Backing(type="int") @VintfStability
 enum LnbTone {
-  NONE = 0,
-  CONTINUOUS = 1,
+  NONE,
+  CONTINUOUS,
 }

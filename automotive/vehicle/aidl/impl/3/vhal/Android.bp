@@ -1,0 +1,96 @@
+/*
+ * Copyright (C) 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package {
+    default_team: "trendy_team_aaos_framework",
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+cc_binary {
+    name: "android.hardware.automotive.vehicle@V3-default-service",
+    vendor: true,
+    defaults: [
+        "FakeVehicleHardwareDefaults-V3",
+        "VehicleHalDefaults-V3",
+        "android-automotive-large-parcelable-defaults",
+    ],
+    vintf_fragments: ["vhal-default-service-v3.xml"],
+    init_rc: ["vhal-default-service-v3.rc"],
+    relative_install_path: "hw",
+    srcs: ["src/VehicleService.cpp"],
+    static_libs: [
+        "DefaultVehicleHal-V3",
+        "FakeVehicleHardware-V3",
+        "VehicleHalUtils-V3",
+    ],
+    header_libs: [
+        "IVehicleHardware-V3",
+    ],
+    shared_libs: [
+        "libbinder_ndk",
+    ],
+}
+
+cc_library {
+    name: "DefaultVehicleHal-V3",
+    vendor: true,
+    defaults: [
+        "VehicleHalDefaults-V3",
+    ],
+    local_include_dirs: ["include"],
+    export_include_dirs: ["include"],
+    srcs: [
+        "src/ConnectedClient.cpp",
+        "src/DefaultVehicleHal.cpp",
+        "src/SubscriptionManager.cpp",
+        // A target to check whether the file
+        // android.hardware.automotive.vehicle-types-meta.json needs update.
+        // The output is just an empty cpp file and not actually used.
+        ":check_generated_enum_metadata_json",
+    ],
+    static_libs: [
+        "VehicleHalUtils-V3",
+    ],
+    header_libs: [
+        "IVehicleHardware-V3",
+        "IVehicleGeneratedHeaders-V3-default",
+    ],
+    shared_libs: [
+        "libbinder_ndk",
+    ],
+}
+
+cc_fuzz {
+    name: "android.hardware.automotive.vehicle-default-service_fuzzer-V3",
+    vendor: true,
+    defaults: [
+        "FakeVehicleHardwareDefaults-V3",
+        "VehicleHalDefaults-V3",
+        "android-automotive-large-parcelable-defaults",
+        "service_fuzzer_defaults",
+    ],
+    static_libs: [
+        "DefaultVehicleHal-V3",
+        "FakeVehicleHardware-V3",
+        "VehicleHalUtils-V3",
+    ],
+    srcs: ["src/fuzzer.cpp"],
+    fuzz_config: {
+        cc: [
+            "keithmok@google.com",
+        ],
+    },
+}

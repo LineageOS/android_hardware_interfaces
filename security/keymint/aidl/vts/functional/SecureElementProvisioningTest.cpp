@@ -114,10 +114,22 @@ class SecureElementProvisioningTest : public testing::Test {
         const auto& vbKey = rot->asArray()->get(pos++);
         ASSERT_TRUE(vbKey);
         ASSERT_TRUE(vbKey->asBstr());
-        if (get_vsr_api_level() >= __ANDROID_API_V__) {
-            // The attestation should contain the SHA-256 hash of the verified boot
-            // key.  However, this not was checked for earlier versions of the KeyMint
-            // HAL so only be strict for VSR-V and above.
+        if (get_vsr_api_level() > __ANDROID_API_V__) {
+            // The Verified Boot key field should be exactly 32 bytes since it
+            // contains the SHA-256 hash of the key on locked devices or 32 bytes
+            // of zeroes on unlocked devices. This wasn't checked for earlier
+            // versions of the KeyMint HAL, so only only be strict for VSR-16+.
+            ASSERT_EQ(vbKey->asBstr()->value().size(), 32);
+        } else if (get_vsr_api_level() == __ANDROID_API_V__) {
+            // The Verified Boot key field should be:
+            //   - Exactly 32 bytes on locked devices since it should contain
+            //     the SHA-256 hash of the key, or
+            //   - Up to 32 bytes of zeroes on unlocked devices (behaviour on
+            //     unlocked devices isn't specified in the HAL interface
+            //     specification).
+            // Thus, we can't check for strict equality in case unlocked devices
+            // report values with less than 32 bytes. This wasn't checked for
+            // earlier versions of the KeyMint HAL, so only check on VSR-15.
             ASSERT_LE(vbKey->asBstr()->value().size(), 32);
         }
 

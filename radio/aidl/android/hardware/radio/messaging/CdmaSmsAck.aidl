@@ -20,10 +20,12 @@ package android.hardware.radio.messaging;
 @VintfStability
 @JavaDerive(toString=true)
 parcelable CdmaSmsAck {
+    /** @deprecated Legacy CDMA is unsupported. */
     boolean errorClass;
     /**
      * SMS cause code as defined in N.S00005, 6.5.2.125.
      * Currently, only 35 (resource shortage) and 39 (other terminal problem) are reported.
+     * @deprecated Legacy CDMA is unsupported.
      */
     int smsCauseCode;
 }

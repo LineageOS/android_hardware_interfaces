@@ -20,8 +20,10 @@
 
 #include <android/hardware/contexthub/BnContextHub.h>
 #include <android/hardware/contexthub/BnContextHubCallback.h>
+#include <android/hardware/contexthub/BnEndpointCallback.h>
 #include <android/hardware/contexthub/IContextHub.h>
 #include <android/hardware/contexthub/IContextHubCallback.h>
+#include <android/hardware/contexthub/IEndpointCallback.h>
 #include <binder/IServiceManager.h>
 #include <binder/ProcessState.h>
 #include <log/log.h>
@@ -34,18 +36,25 @@ using ::android::sp;
 using ::android::String16;
 using ::android::binder::Status;
 using ::android::hardware::contexthub::AsyncEventType;
+using ::android::hardware::contexthub::BnEndpointCallback;
 using ::android::hardware::contexthub::ContextHubInfo;
 using ::android::hardware::contexthub::ContextHubMessage;
+using ::android::hardware::contexthub::EndpointId;
+using ::android::hardware::contexthub::EndpointInfo;
 using ::android::hardware::contexthub::ErrorCode;
 using ::android::hardware::contexthub::HostEndpointInfo;
+using ::android::hardware::contexthub::HubInfo;
 using ::android::hardware::contexthub::IContextHub;
 using ::android::hardware::contexthub::IContextHubCallbackDefault;
+using ::android::hardware::contexthub::Message;
 using ::android::hardware::contexthub::MessageDeliveryStatus;
 using ::android::hardware::contexthub::NanoappBinary;
 using ::android::hardware::contexthub::NanoappInfo;
 using ::android::hardware::contexthub::NanoappRpcService;
 using ::android::hardware::contexthub::NanSessionRequest;
 using ::android::hardware::contexthub::NanSessionStateUpdate;
+using ::android::hardware::contexthub::Reason;
+using ::android::hardware::contexthub::Service;
 using ::android::hardware::contexthub::Setting;
 using ::android::hardware::contexthub::vts_utils::kNonExistentAppId;
 using ::android::hardware::contexthub::vts_utils::waitForCallback;
@@ -61,7 +70,13 @@ class ContextHubAidl : public testing::TestWithParam<std::tuple<std::string, int
         contextHub = android::waitForDeclaredService<IContextHub>(
                 String16(std::get<0>(GetParam()).c_str()));
         ASSERT_NE(contextHub, nullptr);
+
+        // Best effort enable test mode - this may not be supported on older HALS, so we
+        // ignore the return value.
+        contextHub->setTestMode(/* enable= */ true);
     }
+
+    virtual void TearDown() override { contextHub->setTestMode(/* enable= */ false); }
 
     uint32_t getHubId() { return std::get<1>(GetParam()); }
 
@@ -463,6 +478,290 @@ TEST_P(ContextHubAidl, TestSendMessageDeliveryStatusToHub) {
     } else {
         EXPECT_TRUE(status.isOk());
     }
+}
+
+class TestEndpointCallback : public BnEndpointCallback {
+  public:
+    Status onEndpointStarted(const std::vector<EndpointInfo>& /* endpointInfos */) override {
+        return Status::ok();
+    }
+
+    Status onEndpointStopped(const std::vector<EndpointId>& /* endpointIds */,
+                             Reason /* reason */) override {
+        return Status::ok();
+    }
+
+    Status onMessageReceived(int32_t /* sessionId */, const Message& message) override {
+        mMessages.push_back(message);
+        return Status::ok();
+    }
+
+    Status onMessageDeliveryStatusReceived(int32_t /* sessionId */,
+                                           const MessageDeliveryStatus& /* msgStatus */) override {
+        return Status::ok();
+    }
+
+    Status onEndpointSessionOpenRequest(
+            int32_t /* sessionId */, const EndpointId& /* destination */,
+            const EndpointId& /* initiator */,
+            const std::optional<String16>& /* serviceDescriptor */) override {
+        return Status::ok();
+    }
+
+    Status onCloseEndpointSession(int32_t /* sessionId */, Reason /* reason */) override {
+        return Status::ok();
+    }
+
+    Status onEndpointSessionOpenComplete(int32_t /* sessionId */) override {
+        mWasOnEndpointSessionOpenCompleteCalled = true;
+        return Status::ok();
+    }
+
+    std::vector<Message> getMessages() { return mMessages; }
+
+    bool wasOnEndpointSessionOpenCompleteCalled() {
+        return mWasOnEndpointSessionOpenCompleteCalled;
+    }
+    void resetWasOnEndpointSessionOpenCompleteCalled() {
+        mWasOnEndpointSessionOpenCompleteCalled = false;
+    }
+
+  private:
+    std::vector<Message> mMessages;
+    bool mWasOnEndpointSessionOpenCompleteCalled = false;
+};
+
+TEST_P(ContextHubAidl, RegisterEndpoint) {
+    EndpointInfo endpointInfo;
+    endpointInfo.id.id = 1;
+    endpointInfo.id.hubId = 0xCAFECAFECAFECAFE;
+    endpointInfo.type = EndpointInfo::EndpointType::NATIVE;
+    endpointInfo.name = String16("Test host endpoint 1");
+    endpointInfo.version = 42;
+
+    Status status = contextHub->registerEndpoint(endpointInfo);
+    if (status.exceptionCode() == Status::EX_UNSUPPORTED_OPERATION ||
+        status.transactionError() == android::UNKNOWN_TRANSACTION) {
+        GTEST_SKIP() << "Not supported -> old API; or not implemented";
+    } else {
+        EXPECT_TRUE(status.isOk());
+    }
+}
+
+TEST_P(ContextHubAidl, RegisterEndpointSameNameFailure) {
+    EndpointInfo endpointInfo;
+    endpointInfo.id.id = 2;
+    endpointInfo.id.hubId = 0xCAFECAFECAFECAFE;
+    endpointInfo.type = EndpointInfo::EndpointType::NATIVE;
+    endpointInfo.name = String16("Test host endpoint 2");
+    endpointInfo.version = 42;
+
+    EndpointInfo endpointInfo2;
+    endpointInfo2.id.id = 3;
+    endpointInfo2.id.hubId = 0xCAFECAFECAFECAFE;
+    endpointInfo2.type = EndpointInfo::EndpointType::NATIVE;
+    endpointInfo2.name = String16("Test host endpoint 2");
+    endpointInfo2.version = 42;
+
+    Status status = contextHub->registerEndpoint(endpointInfo);
+    if (status.exceptionCode() == Status::EX_UNSUPPORTED_OPERATION ||
+        status.transactionError() == android::UNKNOWN_TRANSACTION) {
+        GTEST_SKIP() << "Not supported -> old API; or not implemented";
+    } else {
+        EXPECT_TRUE(status.isOk());
+    }
+
+    EXPECT_FALSE(contextHub->registerEndpoint(endpointInfo2).isOk());
+}
+
+TEST_P(ContextHubAidl, RegisterEndpointSameIdFailure) {
+    EndpointInfo endpointInfo;
+    endpointInfo.id.id = 4;
+    endpointInfo.id.hubId = 0xCAFECAFECAFECAFE;
+    endpointInfo.type = EndpointInfo::EndpointType::NATIVE;
+    endpointInfo.name = String16("Test host endpoint 4");
+    endpointInfo.version = 42;
+
+    EndpointInfo endpointInfo2;
+    endpointInfo2.id.id = 4;
+    endpointInfo2.id.hubId = 0xCAFECAFECAFECAFE;
+    endpointInfo2.type = EndpointInfo::EndpointType::NATIVE;
+    endpointInfo2.name = String16("Test host endpoint - same ID test");
+    endpointInfo2.version = 42;
+
+    Status status = contextHub->registerEndpoint(endpointInfo);
+    if (status.exceptionCode() == Status::EX_UNSUPPORTED_OPERATION ||
+        status.transactionError() == android::UNKNOWN_TRANSACTION) {
+        GTEST_SKIP() << "Not supported -> old API; or not implemented";
+    } else {
+        EXPECT_TRUE(status.isOk());
+    }
+
+    EXPECT_FALSE(contextHub->registerEndpoint(endpointInfo2).isOk());
+}
+
+TEST_P(ContextHubAidl, UnregisterEndpoint) {
+    EndpointInfo endpointInfo;
+    endpointInfo.id.id = 6;
+    endpointInfo.id.hubId = 0xCAFECAFECAFECAFE;
+    endpointInfo.type = EndpointInfo::EndpointType::NATIVE;
+    endpointInfo.name = String16("Test host endpoint 6");
+    endpointInfo.version = 42;
+
+    Status status = contextHub->registerEndpoint(endpointInfo);
+    if (status.exceptionCode() == Status::EX_UNSUPPORTED_OPERATION ||
+        status.transactionError() == android::UNKNOWN_TRANSACTION) {
+        GTEST_SKIP() << "Not supported -> old API; or not implemented";
+    } else {
+        EXPECT_TRUE(status.isOk());
+    }
+
+    EXPECT_TRUE(contextHub->unregisterEndpoint(endpointInfo).isOk());
+}
+
+TEST_P(ContextHubAidl, UnregisterEndpointNonexistent) {
+    EndpointInfo endpointInfo;
+    endpointInfo.id.id = 100;
+    endpointInfo.id.hubId = 0xCAFECAFECAFECAFE;
+    endpointInfo.type = EndpointInfo::EndpointType::NATIVE;
+    endpointInfo.name = String16("Test host endpoint 100");
+    endpointInfo.version = 42;
+
+    Status status = contextHub->unregisterEndpoint(endpointInfo);
+    if (status.exceptionCode() == Status::EX_UNSUPPORTED_OPERATION ||
+        status.transactionError() == android::UNKNOWN_TRANSACTION) {
+        GTEST_SKIP() << "Not supported -> old API; or not implemented";
+    } else {
+        EXPECT_FALSE(status.isOk());
+    }
+}
+
+TEST_P(ContextHubAidl, RegisterCallback) {
+    auto cb = sp<TestEndpointCallback>::make();
+    Status status = contextHub->registerEndpointCallback(cb);
+    if (status.exceptionCode() == Status::EX_UNSUPPORTED_OPERATION ||
+        status.transactionError() == android::UNKNOWN_TRANSACTION) {
+        GTEST_SKIP() << "Not supported -> old API; or not implemented";
+    } else {
+        EXPECT_TRUE(status.isOk());
+    }
+}
+
+TEST_P(ContextHubAidl, OpenEndpointSessionInvalidRange) {
+    auto cb = sp<TestEndpointCallback>::make();
+    Status status = contextHub->registerEndpointCallback(cb);
+    if (status.exceptionCode() == Status::EX_UNSUPPORTED_OPERATION ||
+        status.transactionError() == android::UNKNOWN_TRANSACTION) {
+        GTEST_SKIP() << "Not supported -> old API; or not implemented";
+    } else {
+        EXPECT_TRUE(status.isOk());
+    }
+
+    // Register the endpoint
+    EndpointInfo initiatorEndpoint;
+    initiatorEndpoint.id.id = 7;
+    initiatorEndpoint.id.hubId = 0xCAFECAFECAFECAFE;
+    initiatorEndpoint.type = EndpointInfo::EndpointType::NATIVE;
+    initiatorEndpoint.name = String16("Test host endpoint 7");
+    initiatorEndpoint.version = 42;
+    EXPECT_TRUE(contextHub->registerEndpoint(initiatorEndpoint).isOk());
+
+    // Find the destination, if it exists
+    std::vector<EndpointInfo> endpoints;
+    EXPECT_TRUE(contextHub->getEndpoints(&endpoints).isOk());
+    const EndpointInfo* destinationEndpoint = nullptr;
+    for (const EndpointInfo& endpoint : endpoints) {
+        for (const Service& service : endpoint.services) {
+            if (service.serviceDescriptor == String16("ECHO")) {
+                destinationEndpoint = &endpoint;
+                break;
+            }
+        }
+    }
+    if (destinationEndpoint == nullptr) {
+        return;  // no echo service endpoint -> just return
+    }
+
+    // Request the range
+    constexpr int32_t requestedRange = 100;
+    std::vector<int32_t> range;
+    ASSERT_TRUE(contextHub->requestSessionIdRange(requestedRange, &range).isOk());
+    EXPECT_EQ(range.size(), 2);
+    EXPECT_GE(range[1] - range[0] + 1, requestedRange);
+
+    // Open the session
+    cb->resetWasOnEndpointSessionOpenCompleteCalled();
+    int32_t sessionId = range[1] + 10;  // invalid
+    EXPECT_FALSE(contextHub
+                         ->openEndpointSession(sessionId, destinationEndpoint->id,
+                                               initiatorEndpoint.id,
+                                               /* in_serviceDescriptor= */ String16("ECHO"))
+                         .isOk());
+    EXPECT_FALSE(cb->wasOnEndpointSessionOpenCompleteCalled());
+}
+
+TEST_P(ContextHubAidl, OpenEndpointSessionAndSendMessageEchoesBack) {
+    auto cb = sp<TestEndpointCallback>::make();
+    Status status = contextHub->registerEndpointCallback(cb);
+    if (status.exceptionCode() == Status::EX_UNSUPPORTED_OPERATION ||
+        status.transactionError() == android::UNKNOWN_TRANSACTION) {
+        GTEST_SKIP() << "Not supported -> old API; or not implemented";
+    } else {
+        EXPECT_TRUE(status.isOk());
+    }
+
+    // Register the endpoint
+    EndpointInfo initiatorEndpoint;
+    initiatorEndpoint.id.id = 8;
+    initiatorEndpoint.id.hubId = 0xCAFECAFECAFECAFE;
+    initiatorEndpoint.type = EndpointInfo::EndpointType::NATIVE;
+    initiatorEndpoint.name = String16("Test host endpoint 7");
+    initiatorEndpoint.version = 42;
+    EXPECT_TRUE(contextHub->registerEndpoint(initiatorEndpoint).isOk());
+
+    // Find the destination, if it exists
+    std::vector<EndpointInfo> endpoints;
+    EXPECT_TRUE(contextHub->getEndpoints(&endpoints).isOk());
+    const EndpointInfo* destinationEndpoint = nullptr;
+    for (const EndpointInfo& endpoint : endpoints) {
+        for (const Service& service : endpoint.services) {
+            if (service.serviceDescriptor == String16("ECHO")) {
+                destinationEndpoint = &endpoint;
+                break;
+            }
+        }
+    }
+    if (destinationEndpoint == nullptr) {
+        return;  // no echo service endpoint -> just return
+    }
+
+    // Request the range
+    constexpr int32_t requestedRange = 100;
+    std::vector<int32_t> range;
+    ASSERT_TRUE(contextHub->requestSessionIdRange(requestedRange, &range).isOk());
+    EXPECT_EQ(range.size(), 2);
+    EXPECT_GE(range[1] - range[0] + 1, requestedRange);
+
+    // Open the session
+    cb->resetWasOnEndpointSessionOpenCompleteCalled();
+    int32_t sessionId = range[0];
+    ASSERT_TRUE(contextHub
+                        ->openEndpointSession(sessionId, destinationEndpoint->id,
+                                              initiatorEndpoint.id,
+                                              /* in_serviceDescriptor= */ String16("ECHO"))
+                        .isOk());
+    EXPECT_TRUE(cb->wasOnEndpointSessionOpenCompleteCalled());
+
+    // Send the message
+    Message message;
+    message.flags = 0;
+    message.sequenceNumber = 0;
+    message.content.push_back(42);
+    ASSERT_TRUE(contextHub->sendMessageToEndpoint(sessionId, message).isOk());
+
+    // Check for echo
+    EXPECT_FALSE(cb->getMessages().empty());
+    EXPECT_EQ(cb->getMessages().back().content.back(), 42);
 }
 
 std::string PrintGeneratedTest(const testing::TestParamInfo<ContextHubAidl::ParamType>& info) {

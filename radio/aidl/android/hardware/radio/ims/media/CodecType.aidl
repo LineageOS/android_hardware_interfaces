@@ -21,6 +21,8 @@ package android.hardware.radio.ims.media;
 @Backing(type="int")
 @JavaDerive(toString=true)
 enum CodecType {
+    /** Do not use. */
+    INVALID = 0,
     /** Adaptive Multi-Rate */
     AMR = 1 << 0,
     /** Adaptive Multi-Rate Wide Band */

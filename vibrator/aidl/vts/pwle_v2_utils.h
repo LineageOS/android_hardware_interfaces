@@ -20,8 +20,8 @@
 #include <aidl/android/hardware/vibrator/IVibrator.h>
 #include "test_utils.h"
 
+using aidl::android::hardware::vibrator::FrequencyAccelerationMapEntry;
 using aidl::android::hardware::vibrator::IVibrator;
-using aidl::android::hardware::vibrator::PwleV2OutputMapEntry;
 using aidl::android::hardware::vibrator::PwleV2Primitive;
 
 namespace aidl {
@@ -116,9 +116,8 @@ static float convertSensitivityLevelToAcceleration(int sl, float frequency) {
 }
 
 static float getPwleV2FrequencyMinHz(const std::shared_ptr<IVibrator>& vibrator) {
-    std::vector<PwleV2OutputMapEntry> frequencyToOutputAccelerationMap;
-    EXPECT_OK(
-            vibrator->getPwleV2FrequencyToOutputAccelerationMap(&frequencyToOutputAccelerationMap));
+    std::vector<FrequencyAccelerationMapEntry> frequencyToOutputAccelerationMap;
+    EXPECT_OK(vibrator->getFrequencyToOutputAccelerationMap(&frequencyToOutputAccelerationMap));
     EXPECT_TRUE(!frequencyToOutputAccelerationMap.empty());
     // We can't use ASSERT_TRUE() above because this is a non-void function,
     // but we need to return to assure we don't crash from a null dereference.
@@ -134,9 +133,8 @@ static float getPwleV2FrequencyMinHz(const std::shared_ptr<IVibrator>& vibrator)
 }
 
 static float getPwleV2FrequencyMaxHz(const std::shared_ptr<IVibrator>& vibrator) {
-    std::vector<PwleV2OutputMapEntry> frequencyToOutputAccelerationMap;
-    EXPECT_OK(
-            vibrator->getPwleV2FrequencyToOutputAccelerationMap(&frequencyToOutputAccelerationMap));
+    std::vector<FrequencyAccelerationMapEntry> frequencyToOutputAccelerationMap;
+    EXPECT_OK(vibrator->getFrequencyToOutputAccelerationMap(&frequencyToOutputAccelerationMap));
     EXPECT_TRUE(!frequencyToOutputAccelerationMap.empty());
     // We can't use ASSERT_TRUE() above because this is a non-void function,
     // but we need to return to assure we don't crash from a null dereference.
@@ -151,8 +149,7 @@ static float getPwleV2FrequencyMaxHz(const std::shared_ptr<IVibrator>& vibrator)
     return entry->frequencyHz;
 }
 
-static std::vector<PwleV2Primitive> composeValidPwleV2Effect(
-        const std::shared_ptr<IVibrator>& vibrator) {
+static CompositePwleV2 composeValidPwleV2Effect(const std::shared_ptr<IVibrator>& vibrator) {
     int32_t minDurationMs;
     EXPECT_OK(vibrator->getPwleV2PrimitiveDurationMinMillis(&minDurationMs));
     int32_t maxDurationMs;
@@ -162,20 +159,20 @@ static std::vector<PwleV2Primitive> composeValidPwleV2Effect(
     int32_t maxCompositionSize;
     EXPECT_OK(vibrator->getPwleV2CompositionSizeMax(&maxCompositionSize));
 
-    std::vector<PwleV2Primitive> pwleEffect;
+    CompositePwleV2 composite;
 
-    pwleEffect.emplace_back(0.1f, minFrequency, minDurationMs);
-    pwleEffect.emplace_back(0.5f, maxFrequency, maxDurationMs);
+    composite.pwlePrimitives.emplace_back(0.1f, minFrequency, minDurationMs);
+    composite.pwlePrimitives.emplace_back(0.5f, maxFrequency, maxDurationMs);
 
     float variedFrequency = (minFrequency + maxFrequency) / 2.0f;
     for (int i = 0; i < maxCompositionSize - 2; i++) {
-        pwleEffect.emplace_back(0.7f, variedFrequency, minDurationMs);
+        composite.pwlePrimitives.emplace_back(0.7f, variedFrequency, minDurationMs);
     }
 
-    return pwleEffect;
+    return composite;
 }
 
-static std::vector<PwleV2Primitive> composePwleV2EffectWithTooManyPoints(
+static CompositePwleV2 composePwleV2EffectWithTooManyPoints(
         const std::shared_ptr<IVibrator>& vibrator) {
     int32_t minDurationMs, maxCompositionSize;
     EXPECT_OK(vibrator->getPwleV2PrimitiveDurationMinMillis(&minDurationMs));
@@ -187,12 +184,15 @@ static std::vector<PwleV2Primitive> composePwleV2EffectWithTooManyPoints(
     std::fill(pwleEffect.begin(), pwleEffect.end(),
               PwleV2Primitive(/*amplitude=*/0.2f, maxFrequency, minDurationMs));
 
-    return pwleEffect;
+    CompositePwleV2 composite;
+    composite.pwlePrimitives = pwleEffect;
+
+    return composite;
 }
 
 static std::pair<float, float> getPwleV2SharpnessRange(
         const std::shared_ptr<IVibrator>& vibrator,
-        std::vector<PwleV2OutputMapEntry> freqToOutputAccelerationMap) {
+        std::vector<FrequencyAccelerationMapEntry> freqToOutputAccelerationMap) {
     std::pair<float, float> sharpnessRange = {-1, -1};
 
     // Sort the entries by frequency in ascending order

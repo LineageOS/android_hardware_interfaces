@@ -35,8 +35,8 @@ package android.hardware.tv.tuner;
 /* @hide */
 @Backing(type="byte") @VintfStability
 enum RecordStatus {
-  DATA_READY = 1,
-  LOW_WATER = 2,
-  HIGH_WATER = 4,
-  OVERFLOW = 8,
+  DATA_READY = (1 << 0) /* 1 */,
+  LOW_WATER = (1 << 1) /* 2 */,
+  HIGH_WATER = (1 << 2) /* 4 */,
+  OVERFLOW = (1 << 3) /* 8 */,
 }

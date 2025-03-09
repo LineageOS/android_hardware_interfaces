@@ -33,6 +33,5 @@ cc_benchmark {
         "android.hardware.keymaster@4.0",
         "libkeymaster4support",
         "libsoftkeymasterdevice",
-        "libchrome"
     ],
 }

@@ -36,6 +36,9 @@ package android.hardware.radio.sim;
 @VintfStability
 interface IRadioSimIndication {
   oneway void carrierInfoForImsiEncryption(in android.hardware.radio.RadioIndicationType info);
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void cdmaSubscriptionSourceChanged(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.sim.CdmaSubscriptionSource cdmaSource);
   oneway void simPhonebookChanged(in android.hardware.radio.RadioIndicationType type);
   oneway void simPhonebookRecordsReceived(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.sim.PbReceivedStatus status, in android.hardware.radio.sim.PhonebookRecordInfo[] records);

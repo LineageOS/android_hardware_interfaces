@@ -57,4 +57,17 @@
 #error Macro EXPECT_ILLEGAL_ARGUMENT already defined unexpectedly
 #endif
 
+#if !defined(EXPECT_ILLEGAL_STATE)
+#define EXPECT_ILLEGAL_STATE(expression)                                  \
+    GTEST_AMBIGUOUS_ELSE_BLOCKER_                                         \
+    if (const ::ndk::ScopedAStatus&& _status = (expression);              \
+        _status.getExceptionCode() == EX_ILLEGAL_STATE)                   \
+        ;                                                                 \
+    else                                                                  \
+        ADD_FAILURE() << "Expected EX_ILLEGAL_STATE for: " << #expression \
+                      << "\n  Actual: " << _status
+#else
+#error Macro EXPECT_ILLEGAL_STATE already defined unexpectedly
+#endif
+
 #endif  // VIBRATOR_HAL_TEST_UTILS_H

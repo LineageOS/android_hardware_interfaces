@@ -31,11 +31,12 @@ parcelable CellIdentityGsm {
      */
     String mnc;
     /**
-     * 16-bit Location Area Code, 0..65535, INT_MAX if unknown
+     * 16-bit Location Area Code, 0..65535, RadioConst:VALUE_UNAVAILABLE if unknown
      */
     int lac;
     /**
-     * 16-bit GSM Cell Identity described in TS 27.007, 0..65535, INT_MAX if unknown
+     * 16-bit GSM Cell Identity described in TS 27.007, 0..65535,
+     * RadioConst:VALUE_UNAVAILABLE if unknown
      */
     int cid;
     /**
@@ -43,7 +44,7 @@ parcelable CellIdentityGsm {
      */
     int arfcn;
     /**
-     * 6-bit Base Station Identity Code, 0xFF if unknown
+     * 6-bit Base Station Identity Code, RadioConst:VALUE_UNAVAILABLE_BYTE if unknown
      */
     byte bsic;
     /**

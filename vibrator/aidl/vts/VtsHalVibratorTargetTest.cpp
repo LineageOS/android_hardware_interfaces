@@ -41,12 +41,13 @@ using aidl::android::hardware::vibrator::Braking;
 using aidl::android::hardware::vibrator::BrakingPwle;
 using aidl::android::hardware::vibrator::CompositeEffect;
 using aidl::android::hardware::vibrator::CompositePrimitive;
+using aidl::android::hardware::vibrator::CompositePwleV2;
 using aidl::android::hardware::vibrator::Effect;
 using aidl::android::hardware::vibrator::EffectStrength;
+using aidl::android::hardware::vibrator::FrequencyAccelerationMapEntry;
 using aidl::android::hardware::vibrator::IVibrator;
 using aidl::android::hardware::vibrator::IVibratorManager;
 using aidl::android::hardware::vibrator::PrimitivePwle;
-using aidl::android::hardware::vibrator::PwleV2OutputMapEntry;
 using aidl::android::hardware::vibrator::PwleV2Primitive;
 using aidl::android::hardware::vibrator::VendorEffect;
 using aidl::android::os::PersistableBundle;
@@ -175,11 +176,23 @@ static float getResonantFrequencyHz(const std::shared_ptr<IVibrator>& vibrator,
     return resonantFrequencyHz;
 }
 
+static bool shouldValidateLegacyFrequencyControlResult(int32_t capabilities, int32_t version,
+                                                       ndk::ScopedAStatus& status) {
+    bool hasFrequencyControl = capabilities & IVibrator::CAP_FREQUENCY_CONTROL;
+    // Legacy frequency control APIs deprecated with PWLE V2 feature.
+    bool isDeprecated = version >= PWLE_V2_MIN_VERSION;
+    bool isUnknownOrUnsupported = status.getExceptionCode() == EX_UNSUPPORTED_OPERATION ||
+                                  status.getStatus() == STATUS_UNKNOWN_TRANSACTION;
+
+    // Validate if older HAL or if result is provided, even after deprecation.
+    return hasFrequencyControl && (!isDeprecated || !isUnknownOrUnsupported);
+}
+
 static float getFrequencyResolutionHz(const std::shared_ptr<IVibrator>& vibrator,
-                                      int32_t capabilities) {
-    float freqResolutionHz;
+                                      int32_t capabilities, int32_t version) {
+    float freqResolutionHz = -1;
     ndk::ScopedAStatus status = vibrator->getFrequencyResolution(&freqResolutionHz);
-    if (capabilities & IVibrator::CAP_FREQUENCY_CONTROL) {
+    if (shouldValidateLegacyFrequencyControlResult(capabilities, version, status)) {
         EXPECT_OK(std::move(status));
         EXPECT_GT(freqResolutionHz, 0);
     } else {
@@ -188,11 +201,11 @@ static float getFrequencyResolutionHz(const std::shared_ptr<IVibrator>& vibrator
     return freqResolutionHz;
 }
 
-static float getFrequencyMinimumHz(const std::shared_ptr<IVibrator>& vibrator,
-                                   int32_t capabilities) {
+static float getFrequencyMinimumHz(const std::shared_ptr<IVibrator>& vibrator, int32_t capabilities,
+                                   int32_t version) {
     float freqMinimumHz;
     ndk::ScopedAStatus status = vibrator->getFrequencyMinimum(&freqMinimumHz);
-    if (capabilities & IVibrator::CAP_FREQUENCY_CONTROL) {
+    if (shouldValidateLegacyFrequencyControlResult(capabilities, version, status)) {
         EXPECT_OK(std::move(status));
 
         float resonantFrequencyHz = getResonantFrequencyHz(vibrator, capabilities);
@@ -205,19 +218,19 @@ static float getFrequencyMinimumHz(const std::shared_ptr<IVibrator>& vibrator,
     return freqMinimumHz;
 }
 
-static float getFrequencyMaximumHz(const std::shared_ptr<IVibrator>& vibrator,
-                                   int32_t capabilities) {
+static float getFrequencyMaximumHz(const std::shared_ptr<IVibrator>& vibrator, int32_t capabilities,
+                                   int32_t version) {
     std::vector<float> bandwidthAmplitudeMap;
     ndk::ScopedAStatus status = vibrator->getBandwidthAmplitudeMap(&bandwidthAmplitudeMap);
-    if (capabilities & IVibrator::CAP_FREQUENCY_CONTROL) {
+    if (shouldValidateLegacyFrequencyControlResult(capabilities, version, status)) {
         EXPECT_OK(std::move(status));
     } else {
         EXPECT_UNKNOWN_OR_UNSUPPORTED(std::move(status));
     }
 
     float freqMaximumHz = ((bandwidthAmplitudeMap.size() - 1) *
-                           getFrequencyResolutionHz(vibrator, capabilities)) +
-                          getFrequencyMinimumHz(vibrator, capabilities);
+                           getFrequencyResolutionHz(vibrator, capabilities, version)) +
+                          getFrequencyMinimumHz(vibrator, capabilities, version);
     return freqMaximumHz;
 }
 
@@ -230,12 +243,16 @@ static float getAmplitudeMax() {
 }
 
 static ActivePwle composeValidActivePwle(const std::shared_ptr<IVibrator>& vibrator,
-                                         int32_t capabilities) {
+                                         int32_t capabilities, int32_t version) {
     float frequencyHz;
     if (capabilities & IVibrator::CAP_GET_RESONANT_FREQUENCY) {
         frequencyHz = getResonantFrequencyHz(vibrator, capabilities);
     } else if (capabilities & IVibrator::CAP_FREQUENCY_CONTROL) {
-        frequencyHz = getFrequencyMinimumHz(vibrator, capabilities);
+        if (version < PWLE_V2_MIN_VERSION) {
+            frequencyHz = getFrequencyMinimumHz(vibrator, capabilities, version);
+        } else {
+            frequencyHz = pwle_v2_utils::getPwleV2FrequencyMinHz(vibrator);
+        }
     } else {
         frequencyHz = 150.0;  // default value commonly used
     }
@@ -846,23 +863,24 @@ TEST_P(VibratorAidl, GetQFactor) {
 }
 
 TEST_P(VibratorAidl, GetFrequencyResolution) {
-    getFrequencyResolutionHz(vibrator, capabilities);
+    getFrequencyResolutionHz(vibrator, capabilities, version);
 }
 
 TEST_P(VibratorAidl, GetFrequencyMinimum) {
-    getFrequencyMinimumHz(vibrator, capabilities);
+    getFrequencyMinimumHz(vibrator, capabilities, version);
 }
 
 TEST_P(VibratorAidl, GetBandwidthAmplitudeMap) {
     std::vector<float> bandwidthAmplitudeMap;
     ndk::ScopedAStatus status = vibrator->getBandwidthAmplitudeMap(&bandwidthAmplitudeMap);
-    if (capabilities & IVibrator::CAP_FREQUENCY_CONTROL) {
+
+    if (shouldValidateLegacyFrequencyControlResult(capabilities, version, status)) {
         EXPECT_OK(std::move(status));
         ASSERT_FALSE(bandwidthAmplitudeMap.empty());
 
         int minMapSize = (getResonantFrequencyHz(vibrator, capabilities) -
-                          getFrequencyMinimumHz(vibrator, capabilities)) /
-                         getFrequencyResolutionHz(vibrator, capabilities);
+                          getFrequencyMinimumHz(vibrator, capabilities, version)) /
+                         getFrequencyResolutionHz(vibrator, capabilities, version);
         ASSERT_GT(bandwidthAmplitudeMap.size(), minMapSize);
 
         for (float e : bandwidthAmplitudeMap) {
@@ -911,7 +929,7 @@ TEST_P(VibratorAidl, GetSupportedBraking) {
 
 TEST_P(VibratorAidl, ComposeValidPwle) {
     if (capabilities & IVibrator::CAP_COMPOSE_PWLE_EFFECTS) {
-        ActivePwle firstActive = composeValidActivePwle(vibrator, capabilities);
+        ActivePwle firstActive = composeValidActivePwle(vibrator, capabilities, version);
 
         std::vector<Braking> supported;
         EXPECT_OK(vibrator->getSupportedBraking(&supported));
@@ -921,13 +939,17 @@ TEST_P(VibratorAidl, ComposeValidPwle) {
         firstBraking.braking = isClabSupported ? Braking::CLAB : Braking::NONE;
         firstBraking.duration = 100;
 
-        ActivePwle secondActive = composeValidActivePwle(vibrator, capabilities);
+        ActivePwle secondActive = composeValidActivePwle(vibrator, capabilities, version);
         if (capabilities & IVibrator::CAP_FREQUENCY_CONTROL) {
-            float minFrequencyHz = getFrequencyMinimumHz(vibrator, capabilities);
-            float maxFrequencyHz = getFrequencyMaximumHz(vibrator, capabilities);
-            float freqResolutionHz = getFrequencyResolutionHz(vibrator, capabilities);
-            secondActive.startFrequency = minFrequencyHz + (freqResolutionHz / 2.0f);
-            secondActive.endFrequency = maxFrequencyHz - (freqResolutionHz / 3.0f);
+            float minFrequencyHz = getFrequencyMinimumHz(vibrator, capabilities, version);
+            float maxFrequencyHz = getFrequencyMaximumHz(vibrator, capabilities, version);
+            float freqResolutionHz = getFrequencyResolutionHz(vibrator, capabilities, version);
+            // As of API 16 these APIs are deprecated and no longer required to be implemented
+            //  with frequency control capability.
+            if (minFrequencyHz >= 0 && maxFrequencyHz >= 0 && freqResolutionHz >= 0) {
+                secondActive.startFrequency = minFrequencyHz + (freqResolutionHz / 2.0f);
+                secondActive.endFrequency = maxFrequencyHz - (freqResolutionHz / 3.0f);
+            }
         }
         BrakingPwle secondBraking;
         secondBraking.braking = Braking::NONE;
@@ -955,7 +977,7 @@ TEST_P(VibratorAidl, ComposeValidPwleWithCallback) {
     uint32_t durationMs = segmentDurationMaxMs * 2 + 100;  // Sum of 2 active and 1 braking below
     auto timeout = std::chrono::milliseconds(durationMs) + VIBRATION_CALLBACK_TIMEOUT;
 
-    ActivePwle active = composeValidActivePwle(vibrator, capabilities);
+    ActivePwle active = composeValidActivePwle(vibrator, capabilities, version);
 
     std::vector<Braking> supported;
     EXPECT_OK(vibrator->getSupportedBraking(&supported));
@@ -978,7 +1000,7 @@ TEST_P(VibratorAidl, ComposePwleSegmentBoundary) {
         // test empty queue
         EXPECT_ILLEGAL_ARGUMENT(vibrator->composePwle(pwleQueue, nullptr));
 
-        ActivePwle active = composeValidActivePwle(vibrator, capabilities);
+        ActivePwle active = composeValidActivePwle(vibrator, capabilities, version);
 
         PrimitivePwle pwle;
         pwle = active;
@@ -996,7 +1018,7 @@ TEST_P(VibratorAidl, ComposePwleSegmentBoundary) {
 
 TEST_P(VibratorAidl, ComposePwleAmplitudeParameterBoundary) {
     if (capabilities & IVibrator::CAP_COMPOSE_PWLE_EFFECTS) {
-        ActivePwle active = composeValidActivePwle(vibrator, capabilities);
+        ActivePwle active = composeValidActivePwle(vibrator, capabilities, version);
         active.startAmplitude = getAmplitudeMax() + 1.0;  // Amplitude greater than allowed
         active.endAmplitude = getAmplitudeMax() + 1.0;    // Amplitude greater than allowed
 
@@ -1016,11 +1038,18 @@ TEST_P(VibratorAidl, ComposePwleAmplitudeParameterBoundary) {
 TEST_P(VibratorAidl, ComposePwleFrequencyParameterBoundary) {
     if ((capabilities & IVibrator::CAP_COMPOSE_PWLE_EFFECTS) &&
         (capabilities & IVibrator::CAP_FREQUENCY_CONTROL)) {
-        float freqMinimumHz = getFrequencyMinimumHz(vibrator, capabilities);
-        float freqMaximumHz = getFrequencyMaximumHz(vibrator, capabilities);
-        float freqResolutionHz = getFrequencyResolutionHz(vibrator, capabilities);
+        float freqMinimumHz = getFrequencyMinimumHz(vibrator, capabilities, version);
+        float freqMaximumHz = getFrequencyMaximumHz(vibrator, capabilities, version);
+        float freqResolutionHz = getFrequencyResolutionHz(vibrator, capabilities, version);
 
-        ActivePwle active = composeValidActivePwle(vibrator, capabilities);
+        // As of API 16 these APIs are deprecated and no longer required to be implemented with
+        // frequency control capability.
+        if (freqMinimumHz < 0 || freqMaximumHz < 0 || freqResolutionHz < 0) {
+            GTEST_SKIP() << "PWLE V1 is not supported, skipping test";
+            return;
+        }
+
+        ActivePwle active = composeValidActivePwle(vibrator, capabilities, version);
         active.startFrequency =
             freqMaximumHz + freqResolutionHz;                    // Frequency greater than allowed
         active.endFrequency = freqMaximumHz + freqResolutionHz;  // Frequency greater than allowed
@@ -1040,7 +1069,7 @@ TEST_P(VibratorAidl, ComposePwleFrequencyParameterBoundary) {
 
 TEST_P(VibratorAidl, ComposePwleSegmentDurationBoundary) {
     if (capabilities & IVibrator::CAP_COMPOSE_PWLE_EFFECTS) {
-        ActivePwle active = composeValidActivePwle(vibrator, capabilities);
+        ActivePwle active = composeValidActivePwle(vibrator, capabilities, version);
 
         int32_t segmentDurationMaxMs;
         vibrator->getPwlePrimitiveDurationMax(&segmentDurationMaxMs);
@@ -1052,15 +1081,15 @@ TEST_P(VibratorAidl, ComposePwleSegmentDurationBoundary) {
     }
 }
 
-TEST_P(VibratorAidl, PwleV2FrequencyToOutputAccelerationMapHasValidFrequencyRange) {
-    if (!(capabilities & IVibrator::CAP_COMPOSE_PWLE_EFFECTS_V2)) {
-        GTEST_SKIP() << "PWLE V2 not supported, skipping test";
+TEST_P(VibratorAidl, FrequencyToOutputAccelerationMapHasValidFrequencyRange) {
+    if (version < PWLE_V2_MIN_VERSION || !(capabilities & IVibrator::CAP_FREQUENCY_CONTROL)) {
+        GTEST_SKIP() << "Frequency control is not supported, skipping test";
         return;
     }
 
-    std::vector<PwleV2OutputMapEntry> frequencyToOutputAccelerationMap;
+    std::vector<FrequencyAccelerationMapEntry> frequencyToOutputAccelerationMap;
     ndk::ScopedAStatus status =
-            vibrator->getPwleV2FrequencyToOutputAccelerationMap(&frequencyToOutputAccelerationMap);
+            vibrator->getFrequencyToOutputAccelerationMap(&frequencyToOutputAccelerationMap);
     EXPECT_OK(std::move(status));
     ASSERT_FALSE(frequencyToOutputAccelerationMap.empty());
     auto sharpnessRange =
@@ -1070,6 +1099,15 @@ TEST_P(VibratorAidl, PwleV2FrequencyToOutputAccelerationMapHasValidFrequencyRang
     ASSERT_TRUE(sharpnessRange.first >= 0);
     // Validate that the sharpness range is a valid interval, not a single point.
     ASSERT_TRUE(sharpnessRange.first < sharpnessRange.second);
+}
+
+TEST_P(VibratorAidl, FrequencyToOutputAccelerationMapUnsupported) {
+    if ((capabilities & IVibrator::CAP_FREQUENCY_CONTROL)) return;
+
+    std::vector<FrequencyAccelerationMapEntry> frequencyToOutputAccelerationMap;
+
+    EXPECT_UNKNOWN_OR_UNSUPPORTED(
+            vibrator->getFrequencyToOutputAccelerationMap(&frequencyToOutputAccelerationMap));
 }
 
 TEST_P(VibratorAidl, GetPwleV2PrimitiveDurationMaxMillis) {
@@ -1111,6 +1149,17 @@ TEST_P(VibratorAidl, GetPwleV2PrimitiveDurationMinMillis) {
     ASSERT_LE(durationMs, pwle_v2_utils::COMPOSE_PWLE_V2_MAX_ALLOWED_PRIMITIVE_MIN_DURATION_MS);
 }
 
+TEST_P(VibratorAidl, ValidatePwleV2DependencyOnFrequencyControl) {
+    if (!(capabilities & IVibrator::CAP_COMPOSE_PWLE_EFFECTS_V2)) {
+        GTEST_SKIP() << "PWLE V2 not supported, skipping test";
+        return;
+    }
+
+    // Check if frequency control is supported
+    bool hasFrequencyControl = (capabilities & IVibrator::CAP_FREQUENCY_CONTROL) != 0;
+    ASSERT_TRUE(hasFrequencyControl) << "Frequency control MUST be supported when PWLE V2 is.";
+}
+
 TEST_P(VibratorAidl, ComposeValidPwleV2Effect) {
     if (!(capabilities & IVibrator::CAP_COMPOSE_PWLE_EFFECTS_V2)) {
         GTEST_SKIP() << "PWLE V2 not supported, skipping test";
@@ -1126,12 +1175,13 @@ TEST_P(VibratorAidl, ComposePwleV2Unsupported) {
         EXPECT_EQ(capabilities & IVibrator::CAP_COMPOSE_PWLE_EFFECTS_V2, 0)
                 << "Vibrator version " << version << " should not report PWLE V2 capability.";
     }
-    if (capabilities & IVibrator::CAP_COMPOSE_PWLE_EFFECTS_V2) return;
+    if ((capabilities & IVibrator::CAP_COMPOSE_PWLE_EFFECTS_V2)) return;
 
-    std::vector<PwleV2Primitive> pwleEffect{
-            PwleV2Primitive(/*amplitude=*/1.0f, /*frequencyHz=*/100.0f, /*timeMillis=*/50)};
+    CompositePwleV2 composite;
+    composite.pwlePrimitives.emplace_back(/*amplitude=*/1.0f, /*frequencyHz=*/100.0f,
+                                          /*timeMillis=*/50);
 
-    EXPECT_UNKNOWN_OR_UNSUPPORTED(vibrator->composePwleV2(pwleEffect, nullptr));
+    EXPECT_UNKNOWN_OR_UNSUPPORTED(vibrator->composePwleV2(composite, nullptr));
 }
 
 TEST_P(VibratorAidl, ComposeValidPwleV2EffectWithCallback) {
@@ -1150,8 +1200,10 @@ TEST_P(VibratorAidl, ComposeValidPwleV2EffectWithCallback) {
     auto timeout = std::chrono::milliseconds(minDuration) + VIBRATION_CALLBACK_TIMEOUT;
     float minFrequency = pwle_v2_utils::getPwleV2FrequencyMinHz(vibrator);
 
-    EXPECT_OK(vibrator->composePwleV2(
-            {PwleV2Primitive(/*amplitude=*/0.5, minFrequency, minDuration)}, callback));
+    CompositePwleV2 composite;
+    composite.pwlePrimitives.emplace_back(/*amplitude=*/0.5, minFrequency, minDuration);
+
+    EXPECT_OK(vibrator->composePwleV2(composite, callback));
     EXPECT_EQ(completionFuture.wait_for(timeout), std::future_status::ready);
     EXPECT_OK(vibrator->off());
 }
@@ -1177,43 +1229,48 @@ TEST_P(VibratorAidl, composeInvalidPwleV2Effect) {
     EXPECT_OK(vibrator->getPwleV2PrimitiveDurationMinMillis(&minDurationMs));
     EXPECT_OK(vibrator->getPwleV2PrimitiveDurationMaxMillis(&maxDurationMs));
 
-    std::vector<PwleV2Primitive> composePwle;
+    CompositePwleV2 composePwle;
 
     // Negative amplitude
-    composePwle.push_back(PwleV2Primitive(/*amplitude=*/-0.8f, /*frequency=*/100, minDurationMs));
+    composePwle.pwlePrimitives.push_back(
+            PwleV2Primitive(/*amplitude=*/-0.8f, /*frequency=*/100, minDurationMs));
     EXPECT_ILLEGAL_ARGUMENT(vibrator->composePwleV2(composePwle, nullptr))
             << "Composing PWLE V2 effect with negative amplitude should fail";
-    composePwle.clear();
+    composePwle.pwlePrimitives.clear();
 
     // Amplitude exceeding 1.0
-    composePwle.push_back(PwleV2Primitive(/*amplitude=*/1.2f, /*frequency=*/100, minDurationMs));
+    composePwle.pwlePrimitives.push_back(
+            PwleV2Primitive(/*amplitude=*/1.2f, /*frequency=*/100, minDurationMs));
     EXPECT_ILLEGAL_ARGUMENT(vibrator->composePwleV2(composePwle, nullptr))
             << "Composing PWLE V2 effect with amplitude greater than 1.0 should fail";
-    composePwle.clear();
+    composePwle.pwlePrimitives.clear();
 
     // Duration exceeding maximum
-    composePwle.push_back(
+    composePwle.pwlePrimitives.push_back(
             PwleV2Primitive(/*amplitude=*/0.2f, /*frequency=*/100, maxDurationMs + 10));
     EXPECT_ILLEGAL_ARGUMENT(vibrator->composePwleV2(composePwle, nullptr))
             << "Composing PWLE V2 effect with duration exceeding maximum should fail";
-    composePwle.clear();
+    composePwle.pwlePrimitives.clear();
 
     // Negative duration
-    composePwle.push_back(PwleV2Primitive(/*amplitude=*/0.2f, /*frequency=*/100, /*time=*/-1));
+    composePwle.pwlePrimitives.push_back(
+            PwleV2Primitive(/*amplitude=*/0.2f, /*frequency=*/100, /*time=*/-1));
     EXPECT_ILLEGAL_ARGUMENT(vibrator->composePwleV2(composePwle, nullptr))
             << "Composing PWLE V2 effect with negative duration should fail";
-    composePwle.clear();
+    composePwle.pwlePrimitives.clear();
 
     // Frequency below minimum
     float minFrequency = pwle_v2_utils::getPwleV2FrequencyMinHz(vibrator);
-    composePwle.push_back(PwleV2Primitive(/*amplitude=*/0.2f, minFrequency - 1, minDurationMs));
+    composePwle.pwlePrimitives.push_back(
+            PwleV2Primitive(/*amplitude=*/0.2f, minFrequency - 1, minDurationMs));
     EXPECT_ILLEGAL_ARGUMENT(vibrator->composePwleV2(composePwle, nullptr))
             << "Composing PWLE V2 effect with frequency below minimum should fail";
-    composePwle.clear();
+    composePwle.pwlePrimitives.clear();
 
     // Frequency above maximum
     float maxFrequency = pwle_v2_utils::getPwleV2FrequencyMaxHz(vibrator);
-    composePwle.push_back(PwleV2Primitive(/*amplitude=*/0.2f, maxFrequency + 1, minDurationMs));
+    composePwle.pwlePrimitives.push_back(
+            PwleV2Primitive(/*amplitude=*/0.2f, maxFrequency + 1, minDurationMs));
     EXPECT_ILLEGAL_ARGUMENT(vibrator->composePwleV2(composePwle, nullptr))
             << "Composing PWLE V2 effect with frequency above maximum should fail";
 }

@@ -33,15 +33,42 @@
 
 package android.hardware.radio.voice;
 /* @hide */
-@JavaDerive(toString=true) @VintfStability
+@JavaDerive(toString=true) @SuppressWarnings(value={"redundant-name"}) @VintfStability
 parcelable CdmaRedirectingNumberInfoRecord {
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   android.hardware.radio.voice.CdmaNumberInfoRecord redirectingNumber;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   int redirectingReason;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int REDIRECTING_REASON_UNKNOWN = 0;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int REDIRECTING_REASON_CALL_FORWARDING_BUSY = 1;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int REDIRECTING_REASON_CALL_FORWARDING_NO_REPLY = 2;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int REDIRECTING_REASON_CALLED_DTE_OUT_OF_ORDER = 9;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int REDIRECTING_REASON_CALL_FORWARDING_BY_THE_CALLED_DTE = 10;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int REDIRECTING_REASON_CALL_FORWARDING_UNCONDITIONAL = 15;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int REDIRECTING_REASON_RESERVED = 16;
 }

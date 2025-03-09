@@ -103,5 +103,12 @@ interface ISupplicantStaIface {
   android.hardware.wifi.supplicant.QosPolicyScsRequestStatus[] removeQosPolicyForScs(in byte[] scsPolicyIds);
   void configureMscs(in android.hardware.wifi.supplicant.MscsParams params);
   void disableMscs();
+  android.hardware.wifi.supplicant.UsdCapabilities getUsdCapabilities();
+  void startUsdPublish(in int cmdId, in android.hardware.wifi.supplicant.UsdPublishConfig usdPublishConfig);
+  void startUsdSubscribe(in int cmdId, in android.hardware.wifi.supplicant.UsdSubscribeConfig usdSubscribeConfig);
+  void updateUsdPublish(in int publishId, in byte[] serviceSpecificInfo);
+  void cancelUsdPublish(in int publishId);
+  void cancelUsdSubscribe(in int subscribeId);
+  void sendUsdMessage(in android.hardware.wifi.supplicant.UsdMessageInfo messageInfo);
   const int MAX_POLICIES_PER_QOS_SCS_REQUEST = 16;
 }

@@ -75,3 +75,17 @@ ndk::ScopedAStatus RadioConfigResponse::getHalDeviceCapabilitiesResponse(
     parent_config.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
+
+ndk::ScopedAStatus RadioConfigResponse::getSimTypeInfoResponse(const RadioResponseInfo& info,
+        const std::vector<SimTypeInfo>& /* simTypeInfo */) {
+    rspInfo = info;
+    parent_config.notify(info.serial);
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus RadioConfigResponse::setSimTypeResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_config.notify(info.serial);
+    return ndk::ScopedAStatus::ok();
+}
+

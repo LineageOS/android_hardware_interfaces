@@ -36,9 +36,9 @@ package android.hardware.tv.tuner;
 @Backing(type="int") @VintfStability
 enum DemuxFilterMainType {
   UNDEFINED = 0,
-  TS = 1,
-  MMTP = 2,
-  IP = 4,
-  TLV = 8,
-  ALP = 16,
+  TS = (1 << 0) /* 1 */,
+  MMTP = (1 << 1) /* 2 */,
+  IP = (1 << 2) /* 4 */,
+  TLV = (1 << 3) /* 8 */,
+  ALP = (1 << 4) /* 16 */,
 }

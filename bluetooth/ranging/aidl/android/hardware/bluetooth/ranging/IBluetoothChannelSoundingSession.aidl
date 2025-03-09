@@ -17,6 +17,9 @@
 package android.hardware.bluetooth.ranging;
 
 import android.hardware.bluetooth.ranging.ChannelSoudingRawData;
+import android.hardware.bluetooth.ranging.ChannelSoundingProcedureData;
+import android.hardware.bluetooth.ranging.Config;
+import android.hardware.bluetooth.ranging.ProcedureEnableConfig;
 import android.hardware.bluetooth.ranging.Reason;
 import android.hardware.bluetooth.ranging.ResultType;
 import android.hardware.bluetooth.ranging.VendorSpecificData;
@@ -63,4 +66,28 @@ interface IBluetoothChannelSoundingSession {
      * Close the current session. Object is no longer useful after this method.
      */
     void close(Reason reason);
+
+    /**
+     * API to provide raw ranging procedure data to the HAL. The HAL converts this data into
+     * meaningful ranging results using a proprietary algorithm and then calls back to the
+     * Bluetooth stack via BluetoothChannelSoundingSessionCallback.onResult().
+     */
+    void writeProcedureData(in ChannelSoundingProcedureData procedureData);
+
+    /**
+     * API to provide the latest CS config to the HAL.
+     */
+    void updateChannelSoundingConfig(in Config conifg);
+
+    /**
+     * API to provide the latest CS procedure enable complete information.
+     */
+    void updateProcedureEnableConfig(in ProcedureEnableConfig procedureEnableConfig);
+
+    /**
+     * API to provide the latest BLE event connection interval.
+     * BLE event connection interval, a multiple of 1.25 ms in the range 7.5 ms to 4.0 s
+     * see BLUETOOTH CORE SPECIFICATION Version 6.0 | Vol 6, Part B 4.5.1
+     */
+    void updateBleConnInterval(in int bleConnInterval);
 }

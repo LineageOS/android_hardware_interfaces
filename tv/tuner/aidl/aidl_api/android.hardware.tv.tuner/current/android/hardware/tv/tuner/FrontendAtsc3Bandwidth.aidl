@@ -36,8 +36,8 @@ package android.hardware.tv.tuner;
 @Backing(type="int") @VintfStability
 enum FrontendAtsc3Bandwidth {
   UNDEFINED = 0,
-  AUTO = 1,
-  BANDWIDTH_6MHZ = 2,
-  BANDWIDTH_7MHZ = 4,
-  BANDWIDTH_8MHZ = 8,
+  AUTO = (1 << 0) /* 1 */,
+  BANDWIDTH_6MHZ = (1 << 1) /* 2 */,
+  BANDWIDTH_7MHZ = (1 << 2) /* 4 */,
+  BANDWIDTH_8MHZ = (1 << 3) /* 8 */,
 }

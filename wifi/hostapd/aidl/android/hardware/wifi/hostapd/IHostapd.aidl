@@ -103,4 +103,22 @@ interface IHostapd {
      * wait to be restarted.
      */
     oneway void terminate();
+
+    /**
+     * Removes an existing link from multiple link device which the current AP resides on.
+     *
+     * The multiple link device is an access point which was added by |IHostapd.addAccessPoint| with
+     * |IfaceParams.usesMlo| set to true.
+     *
+     * @param ifaceName Name of the interface which was added by |IHostapd.addAccessPoint|
+     * @param linkIdentity the identity of the link which associated to the multiple link device
+     * that the current AP resides on. The link identity should be one of the identities provided in
+     * |IfaceParams.instanceIdentities| when this iface was created.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |HostapdStatusCode.FAILURE_UNKNOWN|,
+     *         |HostapdStatusCode.FAILURE_ARGS_INVALID| when the linkIdentity mis-matches one of the
+     *             identities provided in |IfaceParams.instanceIdentities|.
+     *         |HostapdStatusCode.FAILURE_IFACE_UNKNOWN| when current existing AP isn't using mlo.
+     */
+    void removeLinkFromMultipleLinkBridgedApIface(in String ifaceName, in String linkIdentity);
 }

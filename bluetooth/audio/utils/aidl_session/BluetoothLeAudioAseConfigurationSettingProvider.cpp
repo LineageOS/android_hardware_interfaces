@@ -92,9 +92,10 @@ constexpr uint8_t kLeAudioSamplingFreq384000Hz = 0x0D;
 /* Frame Durations */
 constexpr uint8_t kLeAudioCodecFrameDur7500us = 0x00;
 constexpr uint8_t kLeAudioCodecFrameDur10000us = 0x01;
+constexpr uint8_t kLeAudioCodecFrameDur20000us = 0x02;
 
 /* Audio Allocations */
-constexpr uint32_t kLeAudioLocationNotAllowed = 0x00000000;
+constexpr uint32_t kLeAudioLocationMonoAudio = 0x00000000;
 constexpr uint32_t kLeAudioLocationFrontLeft = 0x00000001;
 constexpr uint32_t kLeAudioLocationFrontRight = 0x00000002;
 constexpr uint32_t kLeAudioLocationFrontCenter = 0x00000004;
@@ -171,12 +172,14 @@ const std::map<uint8_t, CodecSpecificConfigurationLtv::FrameDuration>
         {kLeAudioCodecFrameDur7500us,
          CodecSpecificConfigurationLtv::FrameDuration::US7500},
         {kLeAudioCodecFrameDur10000us,
-         CodecSpecificConfigurationLtv::FrameDuration::US10000}};
+         CodecSpecificConfigurationLtv::FrameDuration::US10000},
+        {kLeAudioCodecFrameDur20000us,
+         CodecSpecificConfigurationLtv::FrameDuration::US20000}};
 
 /* Helper map for matching various audio channel allocation notations */
 std::map<uint32_t, uint32_t> audio_channel_allocation_map = {
-    {kLeAudioLocationNotAllowed,
-     CodecSpecificConfigurationLtv::AudioChannelAllocation::NOT_ALLOWED},
+    {kLeAudioLocationMonoAudio,
+     CodecSpecificConfigurationLtv::AudioChannelAllocation::MONO},
     {kLeAudioLocationFrontLeft,
      CodecSpecificConfigurationLtv::AudioChannelAllocation::FRONT_LEFT},
     {kLeAudioLocationFrontRight,
@@ -486,6 +489,9 @@ void AudioSetConfigurationProviderJson::populateAseQosConfiguration(
         break;
       case CodecSpecificConfigurationLtv::FrameDuration::US10000:
         qos.sduIntervalUs = 10000;
+        break;
+      case CodecSpecificConfigurationLtv::FrameDuration::US20000:
+        qos.sduIntervalUs = 20000;
         break;
     }
     qos.sduIntervalUs *= frameBlockValue;

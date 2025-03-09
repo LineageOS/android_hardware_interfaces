@@ -95,6 +95,18 @@ TEST_P(BootloaderStateTest, VbStateIsUnverified) {
             << "Verified boot state must be \"UNVERIFIED\" aka \"orange\".";
 }
 
+// Check that the attested Verified Boot key is 32 bytes of zeroes since the bootloader is unlocked.
+TEST_P(BootloaderStateTest, VerifiedBootKeyAllZeroes) {
+    // Gate this test to avoid waiver issues.
+    if (get_vsr_api_level() <= __ANDROID_API_V__) {
+        return;
+    }
+
+    std::vector<uint8_t> expectedVbKey(32, 0);
+    ASSERT_EQ(attestedVbKey_, expectedVbKey) << "Verified Boot key digest must be 32 bytes of "
+                                                "zeroes since the bootloader is unlocked.";
+}
+
 // Following error codes from avb_slot_data() mean that slot data was loaded
 // (even if verification failed).
 static inline bool avb_slot_data_loaded(AvbSlotVerifyResult result) {
@@ -109,7 +121,7 @@ static inline bool avb_slot_data_loaded(AvbSlotVerifyResult result) {
     }
 }
 
-// Check that attested vbmeta digest is correct.
+// Check that the attested VBMeta digest is correct.
 TEST_P(BootloaderStateTest, VbmetaDigest) {
     AvbSlotVerifyData* avbSlotData;
     auto suffix = fs_mgr_get_slot_suffix();
@@ -125,21 +137,29 @@ TEST_P(BootloaderStateTest, VbmetaDigest) {
                                   AVB_HASHTREE_ERROR_MODE_EIO, &avbSlotData);
     ASSERT_TRUE(avb_slot_data_loaded(result)) << "Failed to load avb slot data";
 
-    // Unfortunately, bootloader is not required to report the algorithm used
-    // to calculate the digest. There are only two supported options though,
-    // SHA256 and SHA512. Attested VBMeta digest must match one of these.
-    vector<uint8_t> digest256(AVB_SHA256_DIGEST_SIZE);
-    vector<uint8_t> digest512(AVB_SHA512_DIGEST_SIZE);
-
+    vector<uint8_t> sha256Digest(AVB_SHA256_DIGEST_SIZE);
     avb_slot_verify_data_calculate_vbmeta_digest(avbSlotData, AVB_DIGEST_TYPE_SHA256,
-                                                 digest256.data());
-    avb_slot_verify_data_calculate_vbmeta_digest(avbSlotData, AVB_DIGEST_TYPE_SHA512,
-                                                 digest512.data());
+                                                 sha256Digest.data());
 
-    ASSERT_TRUE((attestedVbmetaDigest_ == digest256) || (attestedVbmetaDigest_ == digest512))
-            << "Attested vbmeta digest (" << bin2hex(attestedVbmetaDigest_)
-            << ") does not match computed digest (sha256: " << bin2hex(digest256)
-            << ", sha512: " << bin2hex(digest512) << ").";
+    if (get_vsr_api_level() >= __ANDROID_API_V__) {
+        ASSERT_TRUE(attestedVbmetaDigest_ == sha256Digest)
+                << "Attested VBMeta digest (" << bin2hex(attestedVbmetaDigest_)
+                << ") does not match the expected SHA-256 digest (" << bin2hex(sha256Digest)
+                << ").";
+    } else {
+        // Prior to VSR-V, there was no MUST requirement for the algorithm used by the bootloader
+        // to calculate the VBMeta digest. However, the only two supported options are SHA-256 and
+        // SHA-512, so we expect the attested VBMeta digest to match one of these.
+        vector<uint8_t> sha512Digest(AVB_SHA512_DIGEST_SIZE);
+        avb_slot_verify_data_calculate_vbmeta_digest(avbSlotData, AVB_DIGEST_TYPE_SHA512,
+                                                     sha512Digest.data());
+
+        ASSERT_TRUE((attestedVbmetaDigest_ == sha256Digest) ||
+                    (attestedVbmetaDigest_ == sha512Digest))
+                << "Attested VBMeta digest (" << bin2hex(attestedVbmetaDigest_)
+                << ") does not match the expected digest (SHA-256: " << bin2hex(sha256Digest)
+                << " or SHA-512: " << bin2hex(sha512Digest) << ").";
+    }
 }
 
 INSTANTIATE_KEYMINT_AIDL_TEST(BootloaderStateTest);

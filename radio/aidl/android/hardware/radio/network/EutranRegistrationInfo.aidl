@@ -54,7 +54,7 @@ parcelable EutranRegistrationInfo {
      * The type of network attachment. This info is valid only on LTE network and must be present
      * when device has attached to the network.
      */
-    AttachResultType lteAttachResultType;
+    AttachResultType lteAttachResultType = AttachResultType.NONE;
 
     /** Values are bitwise ORs of EXTRA_* constants */
     int extraInfo;

@@ -28,9 +28,7 @@ TestRenderEngine::TestRenderEngine(const RenderEngineCreationArgs& args) {
     mRenderEngine = ::android::renderengine::RenderEngine::create(args);
 }
 
-TestRenderEngine::~TestRenderEngine() {
-    mRenderEngine.release();
-}
+TestRenderEngine::~TestRenderEngine() {}
 
 void TestRenderEngine::setRenderLayers(std::vector<std::shared_ptr<TestLayer>> layers) {
     sort(layers.begin(), layers.end(),

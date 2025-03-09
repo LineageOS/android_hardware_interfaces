@@ -33,26 +33,86 @@
 
 package android.hardware.radio.voice;
 /* @hide */
-@JavaDerive(toString=true) @VintfStability
+@JavaDerive(toString=true) @SuppressWarnings(value={"redundant-name"}) @VintfStability
 parcelable CdmaInformationRecord {
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   int name;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   android.hardware.radio.voice.CdmaDisplayInfoRecord[] display;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   android.hardware.radio.voice.CdmaNumberInfoRecord[] number;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   android.hardware.radio.voice.CdmaSignalInfoRecord[] signal;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   android.hardware.radio.voice.CdmaRedirectingNumberInfoRecord[] redir;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   android.hardware.radio.voice.CdmaLineControlInfoRecord[] lineCtrl;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   android.hardware.radio.voice.CdmaT53ClirInfoRecord[] clir;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   android.hardware.radio.voice.CdmaT53AudioControlInfoRecord[] audioCtrl;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int CDMA_MAX_NUMBER_OF_INFO_RECS = 10;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int NAME_DISPLAY = 0;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int NAME_CALLED_PARTY_NUMBER = 1;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int NAME_CALLING_PARTY_NUMBER = 2;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int NAME_CONNECTED_NUMBER = 3;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int NAME_SIGNAL = 4;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int NAME_REDIRECTING_NUMBER = 5;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int NAME_LINE_CONTROL = 6;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int NAME_EXTENDED_DISPLAY = 7;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int NAME_T53_CLIR = 8;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int NAME_T53_RELEASE = 9;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int NAME_T53_AUDIO_CONTROL = 10;
 }

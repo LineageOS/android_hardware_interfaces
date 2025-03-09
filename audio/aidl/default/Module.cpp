@@ -47,6 +47,7 @@ using aidl::android::media::audio::common::AudioDevice;
 using aidl::android::media::audio::common::AudioDeviceType;
 using aidl::android::media::audio::common::AudioFormatDescription;
 using aidl::android::media::audio::common::AudioFormatType;
+using aidl::android::media::audio::common::AudioGainConfig;
 using aidl::android::media::audio::common::AudioInputFlags;
 using aidl::android::media::audio::common::AudioIoFlags;
 using aidl::android::media::audio::common::AudioMMapPolicy;
@@ -206,9 +207,9 @@ ndk::ScopedAStatus Module::createStreamContext(
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
     const auto& flags = portConfigIt->flags.value();
-    StreamContext::DebugParameters params{mDebug.streamTransientStateDelayMs,
-                                          mVendorDebug.forceTransientBurst,
-                                          mVendorDebug.forceSynchronousDrain};
+    StreamContext::DebugParameters params{
+            mDebug.streamTransientStateDelayMs, mVendorDebug.forceTransientBurst,
+            mVendorDebug.forceSynchronousDrain, mVendorDebug.forceDrainToDraining};
     std::unique_ptr<StreamContext::DataMQ> dataMQ = nullptr;
     std::shared_ptr<IStreamCallback> streamAsyncCallback = nullptr;
     std::shared_ptr<ISoundDose> soundDose;
@@ -235,17 +236,24 @@ ndk::ScopedAStatus Module::createStreamContext(
     return ndk::ScopedAStatus::ok();
 }
 
-std::vector<AudioDevice> Module::findConnectedDevices(int32_t portConfigId) {
+std::vector<AudioDevice> Module::getDevicesFromDevicePortConfigIds(
+        const std::set<int32_t>& devicePortConfigIds) {
     std::vector<AudioDevice> result;
-    auto& ports = getConfig().ports;
-    auto portIds = portIdsFromPortConfigIds(findConnectedPortConfigIds(portConfigId));
-    for (auto it = portIds.begin(); it != portIds.end(); ++it) {
-        auto portIt = findById<AudioPort>(ports, *it);
-        if (portIt != ports.end() && portIt->ext.getTag() == AudioPortExt::Tag::device) {
-            result.push_back(portIt->ext.template get<AudioPortExt::Tag::device>().device);
+    auto& configs = getConfig().portConfigs;
+    for (const auto& id : devicePortConfigIds) {
+        auto it = findById<AudioPortConfig>(configs, id);
+        if (it != configs.end() && it->ext.getTag() == AudioPortExt::Tag::device) {
+            result.push_back(it->ext.template get<AudioPortExt::Tag::device>().device);
+        } else {
+            LOG(FATAL) << __func__ << ": " << mType
+                       << ": failed to find device for id" << id;
         }
     }
     return result;
+}
+
+std::vector<AudioDevice> Module::findConnectedDevices(int32_t portConfigId) {
+    return getDevicesFromDevicePortConfigIds(findConnectedPortConfigIds(portConfigId));
 }
 
 std::set<int32_t> Module::findConnectedPortConfigIds(int32_t portConfigId) {
@@ -459,58 +467,132 @@ ndk::ScopedAStatus Module::updateStreamsConnectedState(const AudioPatch& oldPatc
             fillConnectionsHelper(connections, patch.sinkPortConfigIds, patch.sourcePortConfigIds);
         }  // Otherwise, there are no streams to notify.
     };
-    fillConnections(oldConnections, oldPatch);
-    fillConnections(newConnections, newPatch);
-
-    std::for_each(oldConnections.begin(), oldConnections.end(), [&](const auto& connectionPair) {
-        const int32_t mixPortConfigId = connectionPair.first;
-        if (auto it = newConnections.find(mixPortConfigId);
-            it == newConnections.end() || it->second != connectionPair.second) {
-            if (auto status = mStreams.setStreamConnectedDevices(mixPortConfigId, {});
-                status.isOk()) {
-                LOG(DEBUG) << "updateStreamsConnectedState: The stream on port config id "
-                           << mixPortConfigId << " has been disconnected";
-            } else {
-                // Disconnection is tricky to roll back, just register a failure.
-                maybeFailure = std::move(status);
+    auto restoreOldConnections = [&](const std::set<int32_t>& mixPortIds,
+                                     const bool continueWithEmptyDevices) {
+        for (const auto mixPort : mixPortIds) {
+            if (auto it = oldConnections.find(mixPort);
+                continueWithEmptyDevices || it != oldConnections.end()) {
+                const std::vector<AudioDevice> d =
+                        it != oldConnections.end() ? getDevicesFromDevicePortConfigIds(it->second)
+                                                   : std::vector<AudioDevice>();
+                if (auto status = mStreams.setStreamConnectedDevices(mixPort, d); status.isOk()) {
+                    LOG(WARNING) << ":updateStreamsConnectedState: rollback: mix port config:"
+                                 << mixPort
+                                 << (d.empty() ? "; not connected"
+                                               : std::string("; connected to ") +
+                                                         ::android::internal::ToString(d));
+                } else {
+                    // can't do much about rollback failures
+                    LOG(ERROR)
+                            << ":updateStreamsConnectedState: rollback: failed for mix port config:"
+                            << mixPort;
+                }
             }
         }
-    });
-    if (!maybeFailure.isOk()) return maybeFailure;
-    std::set<int32_t> idsToDisconnectOnFailure;
-    std::for_each(newConnections.begin(), newConnections.end(), [&](const auto& connectionPair) {
-        const int32_t mixPortConfigId = connectionPair.first;
-        if (auto it = oldConnections.find(mixPortConfigId);
-            it == oldConnections.end() || it->second != connectionPair.second) {
-            const auto connectedDevices = findConnectedDevices(mixPortConfigId);
+    };
+    fillConnections(oldConnections, oldPatch);
+    fillConnections(newConnections, newPatch);
+    /**
+     * Illustration of oldConnections and newConnections
+     *
+     * oldConnections {
+     * a : {A,B,C},
+     * b : {D},
+     * d : {H,I,J},
+     * e : {N,O,P},
+     * f : {Q,R},
+     * g : {T,U,V},
+     * }
+     *
+     * newConnections {
+     * a : {A,B,C},
+     * c : {E,F,G},
+     * d : {K,L,M},
+     * e : {N,P},
+     * f : {Q,R,S},
+     * g : {U,V,W},
+     * }
+     *
+     * Expected routings:
+     *      'a': is ignored both in disconnect step and connect step,
+     *           due to same devices both in oldConnections and newConnections.
+     *      'b': handled only in disconnect step with empty devices because 'b' is only present
+     *           in oldConnections.
+     *      'c': handled only in connect step with {E,F,G} devices because 'c' is only present
+     *           in newConnections.
+     *      'd': handled only in connect step with {K,L,M} devices because 'd' is also present
+     *           in newConnections and it is ignored in disconnected step.
+     *      'e': handled only in connect step with {N,P} devices because 'e' is also present
+     *           in newConnections and it is ignored in disconnect step. please note that there
+     *           is no exclusive disconnection for device {O}.
+     *      'f': handled only in connect step with {Q,R,S} devices because 'f' is also present
+     *           in newConnections and it is ignored in disconnect step. Even though stream is
+     *           already connected with {Q,R} devices and connection happens with {Q,R,S}.
+     *      'g': handled only in connect step with {U,V,W} devices because 'g' is also present
+     *           in newConnections and it is ignored in disconnect step. There is no exclusive
+     *           disconnection with devices {T,U,V}.
+     *
+     *       If, any failure, will lead to restoreOldConnections (rollback).
+     *       The aim of the restoreOldConnections is to make connections back to oldConnections.
+     *       Failures in restoreOldConnections aren't handled.
+     */
+
+    std::set<int32_t> idsToConnectBackOnFailure;
+    // disconnection step
+    for (const auto& [oldMixPortConfigId, oldDevicePortConfigIds] : oldConnections) {
+        if (auto it = newConnections.find(oldMixPortConfigId); it == newConnections.end()) {
+            idsToConnectBackOnFailure.insert(oldMixPortConfigId);
+            if (auto status = mStreams.setStreamConnectedDevices(oldMixPortConfigId, {});
+                status.isOk()) {
+                LOG(DEBUG) << __func__ << ": The stream on port config id " << oldMixPortConfigId
+                           << " has been disconnected";
+            } else {
+                maybeFailure = std::move(status);
+                // proceed to rollback even on one failure
+                break;
+            }
+        }
+    }
+
+    if (!maybeFailure.isOk()) {
+        restoreOldConnections(idsToConnectBackOnFailure, false /*continueWithEmptyDevices*/);
+        LOG(WARNING) << __func__ << ": failed to disconnect from old patch. attempted rollback";
+        return maybeFailure;
+    }
+
+    std::set<int32_t> idsToRollbackOnFailure;
+    // connection step
+    for (const auto& [newMixPortConfigId, newDevicePortConfigIds] : newConnections) {
+        if (auto it = oldConnections.find(newMixPortConfigId);
+            it == oldConnections.end() || it->second != newDevicePortConfigIds) {
+            const auto connectedDevices = getDevicesFromDevicePortConfigIds(newDevicePortConfigIds);
+            idsToRollbackOnFailure.insert(newMixPortConfigId);
             if (connectedDevices.empty()) {
                 // This is important as workers use the vector size to derive the connection status.
-                LOG(FATAL) << "updateStreamsConnectedState: No connected devices found for port "
-                              "config id "
-                           << mixPortConfigId;
+                LOG(FATAL) << __func__ << ": No connected devices found for port config id "
+                           << newMixPortConfigId;
             }
-            if (auto status = mStreams.setStreamConnectedDevices(mixPortConfigId, connectedDevices);
+            if (auto status =
+                        mStreams.setStreamConnectedDevices(newMixPortConfigId, connectedDevices);
                 status.isOk()) {
-                LOG(DEBUG) << "updateStreamsConnectedState: The stream on port config id "
-                           << mixPortConfigId << " has been connected to: "
+                LOG(DEBUG) << __func__ << ": The stream on port config id " << newMixPortConfigId
+                           << " has been connected to: "
                            << ::android::internal::ToString(connectedDevices);
             } else {
                 maybeFailure = std::move(status);
-                idsToDisconnectOnFailure.insert(mixPortConfigId);
+                // proceed to rollback even on one failure
+                break;
             }
         }
-    });
+    }
+
     if (!maybeFailure.isOk()) {
-        LOG(WARNING) << __func__ << ": " << mType
-                     << ": Due to a failure, disconnecting streams on port config ids "
-                     << ::android::internal::ToString(idsToDisconnectOnFailure);
-        std::for_each(idsToDisconnectOnFailure.begin(), idsToDisconnectOnFailure.end(),
-                      [&](const auto& portConfigId) {
-                          auto status = mStreams.setStreamConnectedDevices(portConfigId, {});
-                          (void)status.isOk();  // Can't do much about a failure here.
-                      });
+        restoreOldConnections(idsToConnectBackOnFailure, false /*continueWithEmptyDevices*/);
+        restoreOldConnections(idsToRollbackOnFailure, true /*continueWithEmptyDevices*/);
+        LOG(WARNING) << __func__ << ": failed to connect for new patch. attempted rollback";
         return maybeFailure;
     }
+
     return ndk::ScopedAStatus::ok();
 }
 
@@ -1200,7 +1282,9 @@ ndk::ScopedAStatus Module::setAudioPortConfigImpl(
     }
 
     if (in_requested.gain.has_value()) {
-        // Let's pretend that gain can always be applied.
+        if (!setAudioPortConfigGain(*portIt, in_requested.gain.value())) {
+            return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+        }
         out_suggested->gain = in_requested.gain.value();
     }
 
@@ -1240,6 +1324,52 @@ ndk::ScopedAStatus Module::setAudioPortConfigImpl(
         *applied = false;
     }
     return ndk::ScopedAStatus::ok();
+}
+
+bool Module::setAudioPortConfigGain(const AudioPort& port, const AudioGainConfig& gainRequested) {
+    auto& ports = getConfig().ports;
+    if (gainRequested.index < 0 || gainRequested.index >= (int)port.gains.size()) {
+        LOG(ERROR) << __func__ << ": gains for port " << port.id << " is undefined";
+        return false;
+    }
+    int stepValue = port.gains[gainRequested.index].stepValue;
+    if (stepValue == 0) {
+        LOG(ERROR) << __func__ << ": port gain step value is 0";
+        return false;
+    }
+    int minValue = port.gains[gainRequested.index].minValue;
+    int maxValue = port.gains[gainRequested.index].maxValue;
+    if (gainRequested.values[0] > maxValue || gainRequested.values[0] < minValue) {
+        LOG(ERROR) << __func__ << ": gain value " << gainRequested.values[0]
+                   << " out of range of min and max gain config";
+        return false;
+    }
+    int gainIndex = (gainRequested.values[0] - minValue) / stepValue;
+    int totalSteps = (maxValue - minValue) / stepValue;
+    if (totalSteps == 0) {
+        LOG(ERROR) << __func__ << ": difference between port gain min value " << minValue
+                   << " and max value " << maxValue << " is less than step value " << stepValue;
+        return false;
+    }
+    // Root-power quantities are used in curve:
+    // 10^((minMb / 100 + (maxMb / 100 - minMb / 100) * gainIndex / totalSteps) / (10 * 2))
+    // where 100 is the conversion from mB to dB, 10 comes from the log 10 conversion from power
+    // ratios, and 2 means are the square of amplitude.
+    float gain =
+            pow(10, (minValue + (maxValue - minValue) * (gainIndex / (float)totalSteps)) / 2000);
+    if (gain < 0) {
+        LOG(ERROR) << __func__ << ": gain " << gain << " is less than 0";
+        return false;
+    }
+    for (const auto& route : getConfig().routes) {
+        if (route.sinkPortId != port.id) {
+            continue;
+        }
+        for (const auto sourcePortId : route.sourcePortIds) {
+            mStreams.setGain(sourcePortId, gain);
+        }
+    }
+    return true;
 }
 
 ndk::ScopedAStatus Module::resetAudioPatch(int32_t in_patchId) {
@@ -1394,6 +1524,7 @@ ndk::ScopedAStatus Module::generateHwAvSyncId(int32_t* _aidl_return) {
 
 const std::string Module::VendorDebug::kForceTransientBurstName = "aosp.forceTransientBurst";
 const std::string Module::VendorDebug::kForceSynchronousDrainName = "aosp.forceSynchronousDrain";
+const std::string Module::VendorDebug::kForceDrainToDrainingName = "aosp.forceDrainToDraining";
 
 ndk::ScopedAStatus Module::getVendorParameters(const std::vector<std::string>& in_ids,
                                                std::vector<VendorParameter>* _aidl_return) {
@@ -1408,6 +1539,10 @@ ndk::ScopedAStatus Module::getVendorParameters(const std::vector<std::string>& i
             VendorParameter forceSynchronousDrain{.id = id};
             forceSynchronousDrain.ext.setParcelable(Boolean{mVendorDebug.forceSynchronousDrain});
             _aidl_return->push_back(std::move(forceSynchronousDrain));
+        } else if (id == VendorDebug::kForceDrainToDrainingName) {
+            VendorParameter forceDrainToDraining{.id = id};
+            forceDrainToDraining.ext.setParcelable(Boolean{mVendorDebug.forceDrainToDraining});
+            _aidl_return->push_back(std::move(forceDrainToDraining));
         } else {
             allParametersKnown = false;
             LOG(VERBOSE) << __func__ << ": " << mType << ": unrecognized parameter \"" << id << "\"";
@@ -1446,6 +1581,10 @@ ndk::ScopedAStatus Module::setVendorParameters(const std::vector<VendorParameter
             }
         } else if (p.id == VendorDebug::kForceSynchronousDrainName) {
             if (!extractParameter<Boolean>(p, &mVendorDebug.forceSynchronousDrain)) {
+                return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+            }
+        } else if (p.id == VendorDebug::kForceDrainToDrainingName) {
+            if (!extractParameter<Boolean>(p, &mVendorDebug.forceDrainToDraining)) {
                 return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
             }
         } else {

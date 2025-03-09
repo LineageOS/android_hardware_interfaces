@@ -29,7 +29,7 @@ parcelable RtpConfig {
     /** Media flow direction. The bitfield of MediaDirection(s) */
     int direction;
     /** Radio Access Network */
-    AccessNetwork accessNetwork;
+    AccessNetwork accessNetwork = AccessNetwork.UNKNOWN;
     /** IP address and port number of the other party for RTP media */
     RtpAddress remoteAddress;
     /** Negotiated session parameters */

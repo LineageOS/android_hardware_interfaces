@@ -231,6 +231,8 @@ bool convertLegacyHalTwtSessionToAidl(legacy_hal::wifi_twt_session twt_session,
                                       TwtSession* aidl_twt_session);
 bool convertLegacyHalTwtSessionStatsToAidl(legacy_hal::wifi_twt_session_stats twt_stats,
                                            TwtSessionStats* aidl_twt_stats);
+legacy_hal::wifi_rtt_preamble convertAidlRttPreambleToLegacy(RttPreamble type);
+
 }  // namespace aidl_struct_util
 }  // namespace wifi
 }  // namespace hardware

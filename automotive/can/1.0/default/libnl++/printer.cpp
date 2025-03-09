@@ -26,6 +26,12 @@
 #include <iomanip>
 #include <sstream>
 
+// should be in linux/netlink.h
+#define NLM_F_DUMP_FILTERED 0x20
+#define NLM_F_NONREC 0x100
+#define NLM_F_CAPPED 0x100
+#define NLM_F_ACK_TLVS 0x200
+
 namespace android::nl {
 
 static void flagsToStream(std::stringstream& ss, __u16 nlmsg_flags, protocols::MessageGenre genre) {

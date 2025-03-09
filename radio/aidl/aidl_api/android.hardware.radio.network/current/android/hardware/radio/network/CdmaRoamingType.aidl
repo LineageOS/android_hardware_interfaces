@@ -35,7 +35,16 @@ package android.hardware.radio.network;
 /* @hide */
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum CdmaRoamingType {
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   HOME_NETWORK,
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   AFFILIATED_ROAM,
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   ANY_ROAM,
 }

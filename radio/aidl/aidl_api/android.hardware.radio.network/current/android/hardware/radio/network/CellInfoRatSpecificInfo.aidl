@@ -40,5 +40,8 @@ union CellInfoRatSpecificInfo {
   android.hardware.radio.network.CellInfoTdscdma tdscdma;
   android.hardware.radio.network.CellInfoLte lte;
   android.hardware.radio.network.CellInfoNr nr;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   android.hardware.radio.network.CellInfoCdma cdma;
 }

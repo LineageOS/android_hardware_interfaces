@@ -36,6 +36,6 @@ package android.hardware.tv.tuner;
 @Backing(type="int") @VintfStability
 enum FrontendDvbcOuterFec {
   UNDEFINED = 0,
-  OUTER_FEC_NONE = 1,
-  OUTER_FEC_RS = 2,
+  OUTER_FEC_NONE,
+  OUTER_FEC_RS,
 }

@@ -40,7 +40,7 @@ parcelable KeepaliveRequest {
     byte[] sourceAddress;
     /**
      * Source port if relevant for the given type
-     * INT_MAX: 0x7FFFFFFF denotes that the field is unused
+     * RadioConst:VALUE_UNAVAILABLE denotes that the field is unused
      */
     int sourcePort;
     /**
@@ -49,7 +49,7 @@ parcelable KeepaliveRequest {
     byte[] destinationAddress;
     /**
      * Destination if relevant for the given type
-     * INT_MAX: 0x7FFFFFFF denotes that the field is unused
+     * RadioConst:VALUE_UNAVAILABLE denotes that the field is unused
      */
     int destinationPort;
     /**

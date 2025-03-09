@@ -197,6 +197,8 @@ bool parseArgInt(const std::string& s, int* out);
 
 bool parseArgLong(const std::string& s, long* out);
 
+bool parseArgDouble(const std::string& s, double* out);
+
 bool parseArgBool(const std::string& s, bool* out);
 
 bool parseArgDirection(const std::string& s, bool* out);

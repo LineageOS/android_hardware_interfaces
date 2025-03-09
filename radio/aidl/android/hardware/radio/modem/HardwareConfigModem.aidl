@@ -34,7 +34,7 @@ parcelable HardwareConfigModem {
     /**
      * Bitset value, based on RadioTechnology.
      */
-    RadioTechnology rat;
+    RadioTechnology rat = RadioTechnology.UNKNOWN;
     /**
      * Maximum number of concurrent active voice calls.
      */

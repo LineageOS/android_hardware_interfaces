@@ -35,9 +35,12 @@ package android.hardware.radio.messaging;
 /* @hide */
 @JavaDerive(toString=true) @VintfStability
 parcelable ImsSmsMessage {
-  android.hardware.radio.RadioTechnologyFamily tech;
+  android.hardware.radio.RadioTechnologyFamily tech = android.hardware.radio.RadioTechnologyFamily.THREE_GPP;
   boolean retry;
   int messageRef;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   android.hardware.radio.messaging.CdmaSmsMessage[] cdmaMessage;
   android.hardware.radio.messaging.GsmSmsMessage[] gsmMessage;
 }

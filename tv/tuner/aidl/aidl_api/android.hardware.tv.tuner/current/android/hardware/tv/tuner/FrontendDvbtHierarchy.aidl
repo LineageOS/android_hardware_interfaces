@@ -36,13 +36,13 @@ package android.hardware.tv.tuner;
 @Backing(type="int") @VintfStability
 enum FrontendDvbtHierarchy {
   UNDEFINED = 0,
-  AUTO = 1,
-  HIERARCHY_NON_NATIVE = 2,
-  HIERARCHY_1_NATIVE = 4,
-  HIERARCHY_2_NATIVE = 8,
-  HIERARCHY_4_NATIVE = 16,
-  HIERARCHY_NON_INDEPTH = 32,
-  HIERARCHY_1_INDEPTH = 64,
-  HIERARCHY_2_INDEPTH = 128,
-  HIERARCHY_4_INDEPTH = 256,
+  AUTO = (1 << 0) /* 1 */,
+  HIERARCHY_NON_NATIVE = (1 << 1) /* 2 */,
+  HIERARCHY_1_NATIVE = (1 << 2) /* 4 */,
+  HIERARCHY_2_NATIVE = (1 << 3) /* 8 */,
+  HIERARCHY_4_NATIVE = (1 << 4) /* 16 */,
+  HIERARCHY_NON_INDEPTH = (1 << 5) /* 32 */,
+  HIERARCHY_1_INDEPTH = (1 << 6) /* 64 */,
+  HIERARCHY_2_INDEPTH = (1 << 7) /* 128 */,
+  HIERARCHY_4_INDEPTH = (1 << 8) /* 256 */,
 }

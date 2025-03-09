@@ -69,9 +69,9 @@
     <codecConfiguration name="APTX_ADAPTIVE_LEX_96k" codec="APTX_ADAPTIVE_LEX" samplingFrequency="96000" frameDurationUs="10000" octetsPerCodecFrame="816"/>
   </codecConfigurationList>
   <strategyConfigurationList>
-    <strategyConfiguration name="STEREO_ONE_CIS_PER_DEVICE" audioLocation="STEREO" connectedDevice="2" channelCount="1"/>
-    <strategyConfiguration name="STEREO_TWO_CISES_PER_DEVICE" audioLocation="STEREO" connectedDevice="1" channelCount="2"/>
-    <strategyConfiguration name="MONO_ONE_CIS_PER_DEVICE" audioLocation="MONO" connectedDevice="1" channelCount="1"/>
-    <strategyConfiguration name="BROADCAST_STEREO" audioLocation="STEREO" connectedDevice="0" channelCount="2"/>
+    <strategyConfiguration name="STEREO_ONE_CIS_PER_DEVICE" audioLocation="STEREO" connectedDevice="2" channelCount="1" audioChannelAllocation="3"/>
+    <strategyConfiguration name="STEREO_TWO_CISES_PER_DEVICE" audioLocation="STEREO" connectedDevice="1" channelCount="2" audioChannelAllocation="3"/>
+    <strategyConfiguration name="MONO_ONE_CIS_PER_DEVICE" audioLocation="MONO" connectedDevice="1" channelCount="1" audioChannelAllocation="4"/>
+    <strategyConfiguration name="BROADCAST_STEREO" audioLocation="STEREO" connectedDevice="0" channelCount="2" audioChannelAllocation="3"/>
   </strategyConfigurationList>
 </leAudioOffloadSetting>

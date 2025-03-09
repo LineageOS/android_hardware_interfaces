@@ -20,6 +20,7 @@ package android.hardware.radio.data;
 @VintfStability
 @Backing(type="byte")
 @JavaDerive(toString=true)
+@SuppressWarnings(value={"redundant-name"})
 enum DataThrottlingAction {
     /*
      * Clear all existing data throttling.

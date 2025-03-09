@@ -40,7 +40,13 @@ interface IRadioSim {
   oneway void changeIccPinForApp(in int serial, in String oldPin, in String newPin, in String aid);
   oneway void enableUiccApplications(in int serial, in boolean enable);
   oneway void getAllowedCarriers(in int serial);
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void getCdmaSubscription(in int serial);
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void getCdmaSubscriptionSource(in int serial);
   oneway void getFacilityLockForApp(in int serial, in String facility, in String password, in int serviceClass, in String appId);
   oneway void getIccCardStatus(in int serial);
@@ -63,6 +69,9 @@ interface IRadioSim {
   oneway void sendTerminalResponseToSim(in int serial, in String contents);
   oneway void setAllowedCarriers(in int serial, in android.hardware.radio.sim.CarrierRestrictions carriers, in android.hardware.radio.sim.SimLockMultiSimPolicy multiSimPolicy);
   oneway void setCarrierInfoForImsiEncryption(in int serial, in android.hardware.radio.sim.ImsiEncryptionInfo imsiEncryptionInfo);
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void setCdmaSubscriptionSource(in int serial, in android.hardware.radio.sim.CdmaSubscriptionSource cdmaSub);
   oneway void setFacilityLockForApp(in int serial, in String facility, in boolean lockState, in String password, in int serviceClass, in String appId);
   oneway void setResponseFunctions(in android.hardware.radio.sim.IRadioSimResponse radioSimResponse, in android.hardware.radio.sim.IRadioSimIndication radioSimIndication);

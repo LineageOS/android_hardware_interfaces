@@ -43,7 +43,7 @@ aidl_interface {
             enabled: true,
         },
     },
-    frozen: true,
+    frozen: false,
     versions_with_info: [
         {
             version: "1",

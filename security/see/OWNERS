@@ -1,0 +1,5 @@
+# include OWNERS from the top level trusty repo
+include trusty:main:/OWNERS
+
+paulcrowley@google.com
+swillden@google.com

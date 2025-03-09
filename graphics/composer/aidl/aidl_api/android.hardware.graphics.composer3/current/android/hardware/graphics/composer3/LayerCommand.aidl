@@ -57,5 +57,6 @@ parcelable LayerCommand {
   @nullable int[] bufferSlotsToClear;
   android.hardware.graphics.composer3.LayerLifecycleBatchCommandType layerLifecycleBatchCommandType;
   int newBufferSlotCount;
-  @nullable android.hardware.graphics.composer3.Lut[] luts;
+  @nullable android.hardware.graphics.composer3.Luts luts;
+  long pictureProfileId;
 }

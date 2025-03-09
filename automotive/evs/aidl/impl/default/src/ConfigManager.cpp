@@ -52,6 +52,25 @@ ConfigManager::CameraInfo::DeviceType ConfigManager::CameraInfo::deviceTypeFromS
     return search == nameToType.end() ? DeviceType::UNKNOWN : search->second;
 }
 
+ConfigManager::CameraInfo::PixelFormat ConfigManager::CameraInfo::pixelFormatFromSV(
+        const std::string_view sv) {
+    using namespace std::string_view_literals;
+    static const std::unordered_map<std::string_view, PixelFormat> nameToFormat = {
+            // Full resolution Y plane followed by 2x2 subsampled U/V
+            // interleaved plane.
+            {"NV12"sv, PixelFormat::NV12},
+            // Full resolution Y plane followed by 2x2 subsampled V/U
+            // interleaved plane.
+            {"NV21"sv, PixelFormat::NV21},
+            // Full resolution Y plane followed by 2x2 subsampled V plane and then U plane.
+            {"YV12"sv, PixelFormat::YV12},
+            // Full resolution Y plane followed by 2x2 subsampled U plane and then V plane.
+            {"I420"sv, PixelFormat::I420},
+    };
+    const auto search = nameToFormat.find(sv);
+    return search == nameToFormat.end() ? PixelFormat::UNKNOWN : search->second;
+}
+
 void ConfigManager::printElementNames(const XMLElement* rootElem, const std::string& prefix) const {
     const XMLElement* curElem = rootElem;
 
@@ -142,6 +161,10 @@ bool ConfigManager::readCameraDeviceInfo(CameraInfo* aCamera, const XMLElement* 
 
     if (const auto typeAttr = aDeviceElem->FindAttribute("type")) {
         aCamera->deviceType = CameraInfo::deviceTypeFromSV(typeAttr->Value());
+    }
+
+    if (const auto formatAttr = aDeviceElem->FindAttribute("format")) {
+        aCamera->format = CameraInfo::pixelFormatFromSV(formatAttr->Value());
     }
 
     /* size information to allocate camera_metadata_t */
@@ -474,19 +497,16 @@ void ConfigManager::readDisplayInfo(const XMLElement* const aDisplayElem) {
     return;
 }
 
-bool ConfigManager::readConfigDataFromXML() noexcept {
+bool ConfigManager::readConfigDataFromXML(const std::string path) noexcept {
     XMLDocument xmlDoc;
 
     const int64_t parsingStart = android::elapsedRealtimeNano();
 
     /* load and parse a configuration file */
-    xmlDoc.LoadFile(sConfigOverridePath.data());
+    xmlDoc.LoadFile(path.c_str());
     if (xmlDoc.ErrorID() != tinyxml2::XML_SUCCESS) {
-        xmlDoc.LoadFile(sConfigDefaultPath.data());
-        if (xmlDoc.ErrorID() != tinyxml2::XML_SUCCESS) {
-            LOG(ERROR) << "Failed to load and/or parse a configuration file, " << xmlDoc.ErrorStr();
-            return false;
-        }
+        LOG(ERROR) << "Failed to load and/or parse a configuration file, " << xmlDoc.ErrorStr();
+        return false;
     }
 
     /* retrieve the root element */
@@ -644,8 +664,7 @@ bool ConfigManager::readConfigDataFromBinary() {
                     p += count * sizeof(camera_metadata_rational_t);
                     break;
                 default:
-                    LOG(WARNING) << "Type " << type << " is unknown; "
-                                 << "data may be corrupted.";
+                    LOG(WARNING) << "Type " << type << " is unknown; " << "data may be corrupted.";
                     break;
             }
         }
@@ -746,8 +765,7 @@ bool ConfigManager::readConfigDataFromBinary() {
                     p += count * sizeof(camera_metadata_rational_t);
                     break;
                 default:
-                    LOG(WARNING) << "Type " << type << " is unknown; "
-                                 << "data may be corrupted.";
+                    LOG(WARNING) << "Type " << type << " is unknown; " << "data may be corrupted.";
                     break;
             }
         }
@@ -958,6 +976,16 @@ bool ConfigManager::writeConfigDataToBinary() {
 }
 
 std::unique_ptr<ConfigManager> ConfigManager::Create() {
+    std::unique_ptr<ConfigManager> mgr = Create(std::string(sConfigOverridePath));
+    if (!mgr) {
+        LOG(DEBUG) << "A configuration override file does not exist. Use a default file instead.";
+        mgr = Create(std::string((sConfigDefaultPath)));
+    }
+
+    return mgr;
+}
+
+std::unique_ptr<ConfigManager> ConfigManager::Create(const std::string path) {
     std::unique_ptr<ConfigManager> cfgMgr(new ConfigManager());
 
     /*
@@ -968,7 +996,7 @@ std::unique_ptr<ConfigManager> ConfigManager::Create() {
      * to the filesystem and construct CameraInfo instead; this was
      * evaluated as 10x faster.
      */
-    if (!cfgMgr->readConfigDataFromXML()) {
+    if (!cfgMgr->readConfigDataFromXML(path)) {
         return nullptr;
     } else {
         return cfgMgr;

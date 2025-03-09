@@ -36,12 +36,12 @@ package android.hardware.tv.tuner;
 @Backing(type="int") @VintfStability
 enum FrontendIsdbtGuardInterval {
   UNDEFINED = 0,
-  AUTO = 1,
-  INTERVAL_1_32 = 2,
-  INTERVAL_1_16 = 4,
-  INTERVAL_1_8 = 8,
-  INTERVAL_1_4 = 16,
-  INTERVAL_1_128 = 32,
-  INTERVAL_19_128 = 64,
-  INTERVAL_19_256 = 128,
+  AUTO = (1 << 0) /* 1 */,
+  INTERVAL_1_32 = (1 << 1) /* 2 */,
+  INTERVAL_1_16 = (1 << 2) /* 4 */,
+  INTERVAL_1_8 = (1 << 3) /* 8 */,
+  INTERVAL_1_4 = (1 << 4) /* 16 */,
+  INTERVAL_1_128 = (1 << 5) /* 32 */,
+  INTERVAL_19_128 = (1 << 6) /* 64 */,
+  INTERVAL_19_256 = (1 << 7) /* 128 */,
 }

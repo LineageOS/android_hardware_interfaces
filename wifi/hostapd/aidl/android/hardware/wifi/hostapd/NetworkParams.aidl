@@ -52,4 +52,8 @@ parcelable NetworkParams {
      * one or more elements). Example: byte[]{ 221, 4, 17, 34, 51, 1 }
      */
     byte[] vendorElements;
+    /**
+     * Whether the network uses client isolation.
+     */
+    boolean isClientIsolationEnabled;
 }

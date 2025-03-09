@@ -42,7 +42,7 @@ cc_test {
         "android.hardware.common.fmq-V1-ndk",
     ],
     static_libs: [
-        "android.hardware.sensors-V2-ndk",
+        "android.hardware.sensors-V3-ndk",
         "VtsHalSensorsTargetTestUtils",
         "libaidlcommonsupport",
     ],

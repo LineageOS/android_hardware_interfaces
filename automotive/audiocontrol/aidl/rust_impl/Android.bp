@@ -15,7 +15,7 @@
  */
 
 rust_binary {
-    name: "android.hardware.automotive.audiocontrol-V4-rust-service",
+    name: "android.hardware.automotive.audiocontrol-rust-service",
     relative_install_path: "hw",
     vendor: true,
     srcs: ["src/*.rs"],
@@ -23,6 +23,7 @@ rust_binary {
     defaults: [
         "latest_android_hardware_automotive_audiocontrol_rust",
         "latest_android_hardware_audio_common_rust",
+        "latest_android_media_audio_common_types_rust",
     ],
     vintf_fragments: ["audiocontrol-rust-service.xml"],
     init_rc: ["audiocontrol-rust-service.rc"],

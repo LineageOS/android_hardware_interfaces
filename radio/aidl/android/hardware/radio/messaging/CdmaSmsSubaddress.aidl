@@ -19,26 +19,32 @@ package android.hardware.radio.messaging;
 /** @hide */
 @VintfStability
 @JavaDerive(toString=true)
+@SuppressWarnings(value={"redundant-name"})
 parcelable CdmaSmsSubaddress {
     /**
      * CCITT X.213 or ISO 8348 AD2
+     * @deprecated Legacy CDMA is unsupported.
      */
     const int SUBADDRESS_TYPE_NSAP = 0;
     /**
      * e.g. X.25
+     * @deprecated Legacy CDMA is unsupported.
      */
     const int SUBADDRESS_TYPE_USER_SPECIFIED = 1;
 
     /**
      * Values are SUBADDRESS_TYPE_
+     * @deprecated Legacy CDMA is unsupported.
      */
     int subaddressType;
     /**
      * True means the last byte's lower 4 bits must be ignored
+     * @deprecated Legacy CDMA is unsupported.
      */
     boolean odd;
     /**
      * Each byte represents an 8-bit digit of subaddress data
+     * @deprecated Legacy CDMA is unsupported.
      */
     byte[] digits;
 }

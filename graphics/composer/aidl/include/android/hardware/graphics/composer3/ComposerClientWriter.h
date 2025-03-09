@@ -25,21 +25,19 @@
 #include <string.h>
 
 #include <aidl/android/hardware/graphics/common/BlendMode.h>
-#include <aidl/android/hardware/graphics/composer3/Color.h>
-#include <aidl/android/hardware/graphics/composer3/Composition.h>
-#include <aidl/android/hardware/graphics/composer3/DisplayBrightness.h>
-#include <aidl/android/hardware/graphics/composer3/LayerBrightness.h>
-#include <aidl/android/hardware/graphics/composer3/LayerLifecycleBatchCommandType.h>
-#include <aidl/android/hardware/graphics/composer3/Lut.h>
-#include <aidl/android/hardware/graphics/composer3/PerFrameMetadata.h>
-#include <aidl/android/hardware/graphics/composer3/PerFrameMetadataBlob.h>
-
-#include <aidl/android/hardware/graphics/composer3/DisplayCommand.h>
-
 #include <aidl/android/hardware/graphics/common/ColorTransform.h>
 #include <aidl/android/hardware/graphics/common/FRect.h>
 #include <aidl/android/hardware/graphics/common/Rect.h>
 #include <aidl/android/hardware/graphics/common/Transform.h>
+#include <aidl/android/hardware/graphics/composer3/Color.h>
+#include <aidl/android/hardware/graphics/composer3/Composition.h>
+#include <aidl/android/hardware/graphics/composer3/DisplayBrightness.h>
+#include <aidl/android/hardware/graphics/composer3/DisplayCommand.h>
+#include <aidl/android/hardware/graphics/composer3/LayerBrightness.h>
+#include <aidl/android/hardware/graphics/composer3/LayerLifecycleBatchCommandType.h>
+#include <aidl/android/hardware/graphics/composer3/Luts.h>
+#include <aidl/android/hardware/graphics/composer3/PerFrameMetadata.h>
+#include <aidl/android/hardware/graphics/composer3/PerFrameMetadataBlob.h>
 
 #include <log/log.h>
 #include <sync/sync.h>
@@ -58,6 +56,8 @@ using namespace aidl::android::hardware::graphics::composer3;
 using aidl::android::hardware::common::NativeHandle;
 
 namespace aidl::android::hardware::graphics::composer3 {
+
+using PictureProfileId = decltype(LayerCommand().pictureProfileId);
 
 class ComposerClientWriter final {
   public:
@@ -82,6 +82,10 @@ class ComposerClientWriter final {
     void setDisplayBrightness(int64_t display, float brightness, float brightnessNits) {
         getDisplayCommand(display).brightness.emplace(
                 DisplayBrightness{.brightness = brightness, .brightnessNits = brightnessNits});
+    }
+
+    void setDisplayPictureProfileId(int64_t display, PictureProfileId pictureProfileId) {
+        getDisplayCommand(display).pictureProfileId = pictureProfileId;
     }
 
     void setClientTarget(int64_t display, uint32_t slot, const native_handle_t* target,
@@ -246,13 +250,13 @@ class ComposerClientWriter final {
         getLayerCommand(display, layer).blockingRegion.emplace(blocking.begin(), blocking.end());
     }
 
-    void setLayerLuts(int64_t display, int64_t layer, std::vector<Lut>& luts) {
-        std::vector<std::optional<Lut>> currentLuts;
-        for (auto& lut : luts) {
-            currentLuts.push_back(std::make_optional<Lut>(
-                    {ndk::ScopedFileDescriptor(lut.pfd.release()), lut.lutProperties}));
-        }
-        getLayerCommand(display, layer).luts.emplace(std::move(currentLuts));
+    void setLayerLuts(int64_t display, int64_t layer, Luts& luts) {
+        getLayerCommand(display, layer).luts.emplace(std::move(luts));
+    }
+
+    void setLayerPictureProfileId(int64_t display, int64_t layer,
+                                  PictureProfileId pictureProfileId) {
+        getLayerCommand(display, layer).pictureProfileId = pictureProfileId;
     }
 
     std::vector<DisplayCommand> takePendingCommands() {

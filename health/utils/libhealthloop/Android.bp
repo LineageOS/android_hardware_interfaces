@@ -22,6 +22,12 @@ package {
 }
 
 bpf {
+    name: "filterPowerSupplyEvents.o_non_vendor",
+    srcs: ["filterPowerSupplyEvents.c"],
+    visibility: ["//visibility:private"],
+}
+
+bpf {
     name: "filterPowerSupplyEvents.o",
     srcs: ["filterPowerSupplyEvents.c"],
     // "vendor: true" because all binaries that use this BPF filter are vendor
@@ -55,10 +61,10 @@ cc_library_static {
     ],
 }
 
-genrule {
+cc_genrule {
     name: "filterPowerSupplyEvents.h",
     out: ["filterPowerSupplyEvents.h"],
-    srcs: [":filterPowerSupplyEvents.o"],
+    srcs: [":filterPowerSupplyEvents.o_non_vendor"],
     cmd: "cat $(in) | od -v -tx1 | cut -c9- | grep -v '^$$' | sed 's/^/0x/;s/ /, 0x/g;s/^, //;s/$$/,/' > $(out)",
 }
 
@@ -76,8 +82,10 @@ cc_test_host {
         "libgmock",
     ],
     generated_headers: [
-        "filterPowerSupplyEvents.h",
         "libbpf_headers",
+    ],
+    device_first_generated_headers: [
+        "filterPowerSupplyEvents.h",
     ],
     compile_multilib: "64",
 }

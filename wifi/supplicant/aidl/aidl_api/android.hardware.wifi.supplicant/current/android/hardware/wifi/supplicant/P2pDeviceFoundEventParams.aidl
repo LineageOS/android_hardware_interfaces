@@ -45,4 +45,6 @@ parcelable P2pDeviceFoundEventParams {
   byte[] wfdR2DeviceInfo;
   byte[] vendorElemBytes;
   @nullable android.hardware.wifi.common.OuiKeyedData[] vendorData;
+  int pairingBootstrappingMethods;
+  @nullable android.hardware.wifi.supplicant.P2pDirInfo dirInfo;
 }

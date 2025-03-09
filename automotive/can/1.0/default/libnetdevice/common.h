@@ -32,6 +32,6 @@ namespace android::netdevice {
  * \param ifname Interface to check
  * \return Interface index, or 0 if the interface doesn't exist
  */
-unsigned int nametoindex(const std::string& ifname);
+unsigned int nametoindex(std::string_view ifname);
 
 }  // namespace android::netdevice

@@ -36,7 +36,7 @@ package android.hardware.radio.ims.media;
 @JavaDerive(toString=true) @VintfStability
 parcelable RtpConfig {
   int direction;
-  android.hardware.radio.AccessNetwork accessNetwork;
+  android.hardware.radio.AccessNetwork accessNetwork = android.hardware.radio.AccessNetwork.UNKNOWN;
   android.hardware.radio.ims.media.RtpAddress remoteAddress;
   android.hardware.radio.ims.media.RtpSessionParams sessionParams;
   android.hardware.radio.ims.media.RtcpConfig rtcpConfig;

@@ -111,7 +111,7 @@ cc_test {
         "VtsHalTargetTestDefaults",
         "use_libaidlvintf_gtest_helper_static",
         "android.hardware.graphics.allocator-ndk_shared",
-        "android.hardware.graphics.common-ndk_shared",
+        "android.hardware.graphics.common-ndk_static",
     ],
     srcs: [
         "vts/VtsHalGraphicsMapperStableC_TargetTest.cpp",

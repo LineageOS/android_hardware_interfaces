@@ -17,6 +17,7 @@
 package android.hardware.thermal;
 
 import android.hardware.thermal.Temperature;
+import android.hardware.thermal.TemperatureThreshold;
 
 /**
  * IThermalChangedCallback send throttling notification to clients.
@@ -25,11 +26,19 @@ import android.hardware.thermal.Temperature;
 @VintfStability
 interface IThermalChangedCallback {
     /**
-     * Send a thermal throttling event to all ThermalHAL
+     * Send a thermal throttling event to all Thermal HAL
      * thermal event listeners.
      *
      * @param temperature The temperature associated with the
      *    throttling event.
      */
     oneway void notifyThrottling(in Temperature temperature);
+
+    /**
+     * Send a thermal threshold change event to all Thermal HAL
+     * thermal event listeners.
+     *
+     * @param threshold The temperature threshold that changed.
+     */
+    oneway void notifyThresholdChanged(in TemperatureThreshold threshold);
 }

@@ -36,8 +36,8 @@ package android.hardware.tv.tuner;
 @Backing(type="int") @VintfStability
 enum FrontendDtmbCodeRate {
   UNDEFINED = 0,
-  AUTO = 1,
-  CODERATE_2_5 = 2,
-  CODERATE_3_5 = 4,
-  CODERATE_4_5 = 8,
+  AUTO = (1 << 0) /* 1 */,
+  CODERATE_2_5 = (1 << 1) /* 2 */,
+  CODERATE_3_5 = (1 << 2) /* 4 */,
+  CODERATE_4_5 = (1 << 3) /* 8 */,
 }

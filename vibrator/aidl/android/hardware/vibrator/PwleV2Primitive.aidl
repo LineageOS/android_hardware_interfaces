@@ -21,7 +21,7 @@ parcelable PwleV2Primitive {
     /**
      * Input amplitude ranges from 0.0 (inclusive) to 1.0 (inclusive), representing the relative
      * input value. Actual output acceleration depends on frequency and device response curve
-     * (see IVibrator.getPwleV2FrequencyToOutputAccelerationMap for max values).
+     * (see IVibrator.getFrequencyToOutputAccelerationMap for max values).
      *
      * Input amplitude linearly maps to output acceleration (e.g., 0.5 amplitude yields half the
      * max acceleration for that frequency).
@@ -36,7 +36,7 @@ parcelable PwleV2Primitive {
      * Absolute frequency point in the units of hertz
      *
      * Values are within the continuous inclusive frequency range defined by
-     * IVibrator#getPwleV2FrequencyToOutputAccelerationMap.
+     * IVibrator#getFrequencyToOutputAccelerationMap.
      */
     float frequencyHz;
 

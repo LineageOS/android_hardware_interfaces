@@ -35,11 +35,12 @@ package android.hardware.radio.ims;
 /* @hide */
 @JavaDerive(toString=true) @VintfStability
 parcelable ConnectionFailureInfo {
-  android.hardware.radio.ims.ConnectionFailureInfo.ConnectionFailureReason failureReason;
+  android.hardware.radio.ims.ConnectionFailureInfo.ConnectionFailureReason failureReason = android.hardware.radio.ims.ConnectionFailureInfo.ConnectionFailureReason.INVALID;
   int causeCode;
   int waitTimeMillis;
-  @Backing(type="int") @VintfStability
+  @Backing(type="int") @SuppressWarnings(value={"redundant-name"}) @VintfStability
   enum ConnectionFailureReason {
+    INVALID = 0,
     REASON_ACCESS_DENIED = 1,
     REASON_NAS_FAILURE = 2,
     REASON_RACH_FAILURE = 3,

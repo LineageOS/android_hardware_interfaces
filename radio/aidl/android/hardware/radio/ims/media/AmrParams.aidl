@@ -23,7 +23,7 @@ import android.hardware.radio.ims.media.AmrMode;
 @JavaDerive(toString=true)
 parcelable AmrParams {
     /** mode-set: AMR codec mode to represent the bit rate */
-    AmrMode amrMode;
+    AmrMode amrMode = AmrMode.INVALID;
     /**
      * octet-align: If it's set to true then all fields in the AMR/AMR-WB header
      * shall be aligned to octet boundaries by adding padding bits.

@@ -42,6 +42,7 @@ parcelable ProgramInfo {
   int signalQuality;
   android.hardware.broadcastradio.Metadata[] metadata;
   android.hardware.broadcastradio.VendorKeyValue[] vendorInfo;
+  @nullable android.hardware.broadcastradio.Alert emergencyAlert;
   const int FLAG_LIVE = (1 << 0) /* 1 */;
   const int FLAG_MUTED = (1 << 1) /* 2 */;
   const int FLAG_TRAFFIC_PROGRAM = (1 << 2) /* 4 */;

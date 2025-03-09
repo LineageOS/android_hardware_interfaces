@@ -1,0 +1,68 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+filegroup {
+    name: "VehicleHalDefaultProperties_JSON-V3",
+    srcs: ["DefaultProperties.json"],
+}
+
+filegroup {
+    name: "VehicleHalTestProperties_JSON-V3",
+    srcs: ["TestProperties.json"],
+}
+
+filegroup {
+    name: "VehicleHalVendorClusterTestProperties_JSON-V3",
+    srcs: ["VendorClusterTestProperties.json"],
+}
+
+prebuilt_etc {
+    name: "Prebuilt_VehicleHalDefaultProperties_JSON-V3",
+    filename_from_src: true,
+    src: "DefaultProperties.json",
+    sub_dir: "automotive/vhalconfig/3/",
+    vendor: true,
+}
+
+prebuilt_etc {
+    name: "Prebuilt_VehicleHalTestProperties_JSON-V3",
+    filename_from_src: true,
+    src: "TestProperties.json",
+    sub_dir: "automotive/vhalconfig/3/",
+    vendor: true,
+}
+
+prebuilt_etc {
+    name: "Prebuilt_VehicleHalVendorClusterTestProperties_JSON-V3",
+    filename_from_src: true,
+    src: "VendorClusterTestProperties.json",
+    sub_dir: "automotive/vhalconfig/3/",
+    vendor: true,
+}
+
+prebuilt_etc_host {
+    name: "Host_Prebuilt_VehicleHalDefaultProperties_JSON-V3",
+    filename_from_src: true,
+    src: "DefaultProperties.json",
+    relative_install_path: "automotive/vhalconfig/3/",
+}
+
+prebuilt_etc_host {
+    name: "Host_Prebuilt_VehicleHalTestProperties_JSON-V3",
+    filename_from_src: true,
+    src: "TestProperties.json",
+    relative_install_path: "automotive/vhalconfig/3/",
+}
+
+prebuilt_etc_host {
+    name: "Host_Prebuilt_VehicleHalVendorClusterTestProperties_JSON-V3",
+    filename_from_src: true,
+    src: "VendorClusterTestProperties.json",
+    relative_install_path: "automotive/vhalconfig/3/",
+}

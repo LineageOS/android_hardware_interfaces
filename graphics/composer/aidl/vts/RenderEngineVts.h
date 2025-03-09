@@ -51,9 +51,10 @@ class TestRenderEngine {
 
   private:
     common::PixelFormat mFormat;
-    std::vector<::android::renderengine::LayerSettings> mCompositionLayers;
     std::unique_ptr<::android::renderengine::RenderEngine> mRenderEngine;
-    std::vector<::android::renderengine::LayerSettings> mRenderLayers;
+    // Delete RenderEngine layers before RenderEngine -- ExternalTexture holds a reference to
+    // RenderEngine.
+    std::vector<::android::renderengine::LayerSettings> mCompositionLayers;
     ::android::sp<::android::GraphicBuffer> mGraphicBuffer;
 
     DisplaySettings mDisplaySettings;

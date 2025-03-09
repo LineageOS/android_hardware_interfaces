@@ -30,6 +30,7 @@ class EvsCameraBase : public evs::BnEvsCamera {
 
     ~EvsCameraBase() override = default;
 
+    virtual std::string getId() = 0;
     virtual void shutdown() = 0;
 
   protected:

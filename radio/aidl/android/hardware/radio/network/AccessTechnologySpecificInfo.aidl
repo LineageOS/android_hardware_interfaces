@@ -25,6 +25,7 @@ import android.hardware.radio.network.NrVopsInfo;
 @JavaDerive(toString=true)
 union AccessTechnologySpecificInfo {
     boolean noinit;
+    /** @deprecated Legacy CDMA is unsupported. */
     Cdma2000RegistrationInfo cdmaInfo;
     EutranRegistrationInfo eutranInfo;
     /**

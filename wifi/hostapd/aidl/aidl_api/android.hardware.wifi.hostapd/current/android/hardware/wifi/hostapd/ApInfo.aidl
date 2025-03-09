@@ -41,4 +41,5 @@ parcelable ApInfo {
   android.hardware.wifi.hostapd.Generation generation;
   byte[] apIfaceInstanceMacAddress;
   @nullable android.hardware.wifi.common.OuiKeyedData[] vendorData;
+  @nullable byte[6] mldMacAddress;
 }

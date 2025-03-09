@@ -36,11 +36,11 @@ package android.hardware.tv.tuner;
 @Backing(type="int") @VintfStability
 enum FrontendAtsc3Modulation {
   UNDEFINED = 0,
-  AUTO = 1,
-  MOD_QPSK = 2,
-  MOD_16QAM = 4,
-  MOD_64QAM = 8,
-  MOD_256QAM = 16,
-  MOD_1024QAM = 32,
-  MOD_4096QAM = 64,
+  AUTO = (1 << 0) /* 1 */,
+  MOD_QPSK = (1 << 1) /* 2 */,
+  MOD_16QAM = (1 << 2) /* 4 */,
+  MOD_64QAM = (1 << 3) /* 8 */,
+  MOD_256QAM = (1 << 4) /* 16 */,
+  MOD_1024QAM = (1 << 5) /* 32 */,
+  MOD_4096QAM = (1 << 6) /* 64 */,
 }

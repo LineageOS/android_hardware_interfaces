@@ -32,6 +32,9 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.bluetooth.ranging;
+/**
+ * @deprecated use PctIQSample instead for V2 and above.
+ */
 @VintfStability
 parcelable ComplexNumber {
   double real;

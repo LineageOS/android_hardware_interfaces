@@ -26,7 +26,7 @@ parcelable RadioAccessSpecifier {
     /**
      * The type of network to scan.
      */
-    AccessNetwork accessNetwork;
+    AccessNetwork accessNetwork = AccessNetwork.UNKNOWN;
     /**
      * The frequency bands to scan. Maximum length of the vector is 8.
      */

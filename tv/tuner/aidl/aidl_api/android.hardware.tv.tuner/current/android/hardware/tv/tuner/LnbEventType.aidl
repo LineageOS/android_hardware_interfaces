@@ -35,8 +35,8 @@ package android.hardware.tv.tuner;
 /* @hide */
 @Backing(type="int") @VintfStability
 enum LnbEventType {
-  DISEQC_RX_OVERFLOW = 0,
-  DISEQC_RX_TIMEOUT = 1,
-  DISEQC_RX_PARITY_ERROR = 2,
-  LNB_OVERLOAD = 3,
+  DISEQC_RX_OVERFLOW,
+  DISEQC_RX_TIMEOUT,
+  DISEQC_RX_PARITY_ERROR,
+  LNB_OVERLOAD,
 }

@@ -36,8 +36,8 @@ package android.hardware.tv.tuner;
 @Backing(type="int") @VintfStability
 enum DemuxScIndex {
   UNDEFINED = 0,
-  I_FRAME = 1,
-  P_FRAME = 2,
-  B_FRAME = 4,
-  SEQUENCE = 8,
+  I_FRAME = (1 << 0) /* 1 */,
+  P_FRAME = (1 << 1) /* 2 */,
+  B_FRAME = (1 << 2) /* 4 */,
+  SEQUENCE = (1 << 3) /* 8 */,
 }

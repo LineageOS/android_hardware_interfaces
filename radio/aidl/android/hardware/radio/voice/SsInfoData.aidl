@@ -19,6 +19,7 @@ package android.hardware.radio.voice;
 /** @hide */
 @VintfStability
 @JavaDerive(toString=true)
+@SuppressWarnings(value={"redundant-name"})
 parcelable SsInfoData {
     const int SS_INFO_MAX = 4;
     /**

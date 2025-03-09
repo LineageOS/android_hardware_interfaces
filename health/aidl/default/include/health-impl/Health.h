@@ -72,6 +72,7 @@ class Health : public BnHealth, public HalHealthLoopCallback {
     // The default implementations return nothing in |out|.
     ndk::ScopedAStatus getDiskStats(std::vector<DiskStats>* out) override;
     ndk::ScopedAStatus getStorageInfo(std::vector<StorageInfo>* out) override;
+    ndk::ScopedAStatus getHingeInfo(std::vector<HingeInfo>* out) override;
 
     ndk::ScopedAStatus setChargingPolicy(BatteryChargingPolicy in_value) override;
     ndk::ScopedAStatus getChargingPolicy(BatteryChargingPolicy* out) override;

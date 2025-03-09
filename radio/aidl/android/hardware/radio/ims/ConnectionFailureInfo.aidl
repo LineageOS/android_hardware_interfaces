@@ -22,7 +22,10 @@ package android.hardware.radio.ims;
 parcelable ConnectionFailureInfo {
     @VintfStability
     @Backing(type="int")
+    @SuppressWarnings(value={"redundant-name"})
     enum ConnectionFailureReason {
+        /** Do not use. */
+        INVALID = 0,
         /** Access class check failed */
         REASON_ACCESS_DENIED = 1,
         /** 3GPP Non-access stratum failure */
@@ -47,7 +50,7 @@ parcelable ConnectionFailureInfo {
     /**
      * Values are REASON_* constants
      */
-    ConnectionFailureReason failureReason;
+    ConnectionFailureReason failureReason = ConnectionFailureReason.INVALID;
 
     /**
      * Failure cause code from network or modem specific to the failure

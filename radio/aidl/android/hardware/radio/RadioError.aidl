@@ -20,6 +20,7 @@ package android.hardware.radio;
 @VintfStability
 @Backing(type="int")
 @JavaDerive(toString=true)
+@SuppressWarnings(value={"redundant-name"})
 enum RadioError {
     /**
      * Success
@@ -60,12 +61,11 @@ enum RadioError {
      */
     SMS_SEND_FAIL_RETRY = 10,
     /**
-     * Fail to set the location where CDMA subscription shall be retrieved because of SIM or
-     * RUIM card absent
+     * SIM or RUIM card absent
      */
     SIM_ABSENT = 11,
     /**
-     * Fail to find CDMA subscription from specified location
+     * Failed to find subscription from specified location
      */
     SUBSCRIPTION_NOT_AVAILABLE = 12,
     /**

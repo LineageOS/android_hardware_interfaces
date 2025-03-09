@@ -35,8 +35,8 @@ package android.hardware.tv.tuner;
 /* @hide */
 @Backing(type="int") @VintfStability
 enum PlaybackStatus {
-  SPACE_EMPTY = 1,
-  SPACE_ALMOST_EMPTY = 2,
-  SPACE_ALMOST_FULL = 4,
-  SPACE_FULL = 8,
+  SPACE_EMPTY = (1 << 0) /* 1 */,
+  SPACE_ALMOST_EMPTY = (1 << 1) /* 2 */,
+  SPACE_ALMOST_FULL = (1 << 2) /* 4 */,
+  SPACE_FULL = (1 << 3) /* 8 */,
 }

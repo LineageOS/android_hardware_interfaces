@@ -16,6 +16,8 @@
 
 package android.hardware.wifi.hostapd;
 
+import android.hardware.wifi.common.DeauthenticationReasonCode;
+
 /**
  * Parameters to control the channel selection for the interface.
  */
@@ -42,4 +44,9 @@ parcelable ClientInfo {
      * True when client connected, false when client disconnected.
      */
     boolean isConnected;
+
+    /**
+     * Reason for client disconnect from soft ap.
+     */
+    DeauthenticationReasonCode disconnectReasonCode;
 }

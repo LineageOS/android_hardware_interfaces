@@ -47,4 +47,9 @@ parcelable RttCapabilities {
   boolean ntbInitiatorSupported;
   boolean ntbResponderSupported;
   @nullable android.hardware.wifi.common.OuiKeyedData[] vendorData;
+  long akmsSupported;
+  long cipherSuitesSupported;
+  boolean secureHeLtfSupported;
+  boolean rangingFrameProtectionSupported;
+  int maxSupportedSecureHeLtfProtocolVersion;
 }

@@ -18,6 +18,7 @@ package android.hardware.radio.config;
 
 import android.hardware.radio.config.PhoneCapability;
 import android.hardware.radio.config.SimSlotStatus;
+import android.hardware.radio.config.SimTypeInfo;
 
 /**
  * Interface declaring response functions to solicited radio config requests.
@@ -152,4 +153,40 @@ oneway interface IRadioConfigResponse {
      */
     void getSimultaneousCallingSupportResponse(
             in android.hardware.radio.RadioResponseInfo info, in int[] enabledLogicalSlots);
+
+    /**
+     * Response to the asynchronous {@link IRadioConfig#getSimTypeInfo} request.
+     *
+     * @param info Response info struct containing response type, serial number and error
+     * @param simTypeInfos Currently active and supported sim types associated with active
+     * physical slot ids.
+     *
+     * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.subscription is not
+     *                                    defined
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:NO_MEMORY
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:MODEM_ERR
+     */
+    void getSimTypeInfoResponse(
+            in android.hardware.radio.RadioResponseInfo info, in SimTypeInfo[] simTypeInfo);
+
+    /**
+     * Response to the asynchronous {@link IRadioConfig#setSimType} request.
+     *
+     * @param info Response info struct containing response type, serial number and error
+     *
+     * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.subscription is not
+     *                                    defined
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:NO_MEMORY
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:MODEM_ERR
+     */
+    void setSimTypeResponse(in android.hardware.radio.RadioResponseInfo info);
 }

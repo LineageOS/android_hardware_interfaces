@@ -16,11 +16,32 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
+aidl_interface_defaults {
+    name: "android.hardware.graphics.allocator-latest",
+    imports: [
+        "android.hardware.graphics.allocator-V2",
+    ],
+}
+
+rust_defaults {
+    name: "android.hardware.graphics.allocator-latest-rust",
+    rustlibs: [
+        "android.hardware.graphics.allocator-V2-rust",
+    ],
+    defaults: [
+        "android.hardware.graphics.common-latest-rust",
+    ],
+}
+
 cc_defaults {
     name: "android.hardware.graphics.allocator-ndk_static",
-    static_libs: [
-        "android.hardware.graphics.allocator-V2-ndk",
-    ],
+    target: {
+        linux: {
+            static_libs: [
+                "android.hardware.graphics.allocator-V2-ndk",
+            ],
+        },
+    },
     defaults: [
         "android.hardware.graphics.common-ndk_static",
     ],
@@ -28,40 +49,81 @@ cc_defaults {
 
 cc_defaults {
     name: "android.hardware.graphics.allocator-ndk_shared",
-    shared_libs: [
-        "android.hardware.graphics.allocator-V2-ndk",
-    ],
+    target: {
+        linux: {
+            shared_libs: [
+                "android.hardware.graphics.allocator-V2-ndk",
+            ],
+        },
+    },
     defaults: [
         "android.hardware.graphics.common-ndk_shared",
     ],
 }
 
-cc_defaults {
-    name: "android.hardware.graphics.common-ndk_static",
-    static_libs: [
-        "android.hardware.graphics.common-V5-ndk",
+aidl_interface_defaults {
+    name: "android.hardware.graphics.common-latest",
+    imports: [
+        "android.hardware.graphics.common-V6",
+    ],
+}
+
+rust_defaults {
+    name: "android.hardware.graphics.common-latest-rust",
+    rustlibs: [
+        "android.hardware.graphics.common-V6-rust",
     ],
 }
 
 cc_defaults {
+    name: "android.hardware.graphics.common-ndk_static",
+    target: {
+        linux: {
+            static_libs: [
+                "android.hardware.graphics.common-V6-ndk",
+            ],
+        },
+    },
+}
+
+cc_defaults {
     name: "android.hardware.graphics.common-ndk_shared",
-    shared_libs: [
-        "android.hardware.graphics.common-V5-ndk",
+    target: {
+        linux: {
+            shared_libs: [
+                "android.hardware.graphics.common-V6-ndk",
+            ],
+        },
+    },
+}
+
+aidl_interface_defaults {
+    name: "android.hardware.graphics.composer3-latest",
+    imports: [
+        "android.hardware.graphics.composer3-V4",
     ],
 }
 
 cc_defaults {
     name: "android.hardware.graphics.composer3-ndk_static",
-    static_libs: [
-        "android.hardware.drm.common-V1-ndk",
-        "android.hardware.graphics.composer3-V4-ndk",
-    ],
+    target: {
+        linux: {
+            static_libs: [
+                "android.hardware.drm.common-V1-ndk",
+                "android.hardware.graphics.composer3-V4-ndk",
+            ],
+        },
+    },
 }
 
 cc_defaults {
     name: "android.hardware.graphics.composer3-ndk_shared",
-    shared_libs: [
-        "android.hardware.drm.common-V1-ndk",
-        "android.hardware.graphics.composer3-V4-ndk",
-    ],
+    target: {
+        linux: {
+            shared_libs: [
+                "android.hardware.drm.common-V1-ndk",
+                "android.hardware.graphics.composer3-V4-ndk",
+            ],
+        },
+    },
 }

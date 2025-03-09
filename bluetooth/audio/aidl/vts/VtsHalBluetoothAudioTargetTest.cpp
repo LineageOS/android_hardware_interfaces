@@ -2375,6 +2375,43 @@ class BluetoothAudioProviderLeAudioOutputHardwareAidl
     return capability;
   }
 
+  LeAudioDeviceCapabilities GetOpusRemoteSinkCapability() {
+    // Create a capability specifically for vendor OPUS
+    LeAudioDeviceCapabilities capability;
+
+    auto vendor_codec = CodecId::Vendor();
+    vendor_codec.codecId = 255;
+    vendor_codec.id = 224;
+    capability.codecId = vendor_codec;
+
+    auto pref_context_metadata = MetadataLtv::PreferredAudioContexts();
+    pref_context_metadata.values =
+        GetAudioContext(AudioContext::MEDIA | AudioContext::CONVERSATIONAL |
+                        AudioContext::GAME);
+    capability.metadata = {pref_context_metadata};
+
+    auto sampling_rate =
+        CodecSpecificCapabilitiesLtv::SupportedSamplingFrequencies();
+    sampling_rate.bitmask =
+        CodecSpecificCapabilitiesLtv::SupportedSamplingFrequencies::HZ16000 |
+        CodecSpecificCapabilitiesLtv::SupportedSamplingFrequencies::HZ8000 |
+        CodecSpecificCapabilitiesLtv::SupportedSamplingFrequencies::HZ48000;
+    auto frame_duration =
+        CodecSpecificCapabilitiesLtv::SupportedFrameDurations();
+    frame_duration.bitmask =
+        CodecSpecificCapabilitiesLtv::SupportedFrameDurations::US7500 |
+        CodecSpecificCapabilitiesLtv::SupportedFrameDurations::US10000 |
+        CodecSpecificCapabilitiesLtv::SupportedFrameDurations::US20000;
+    auto octets = CodecSpecificCapabilitiesLtv::SupportedOctetsPerCodecFrame();
+    octets.min = 0;
+    octets.max = 240;
+    auto frames = CodecSpecificCapabilitiesLtv::SupportedMaxCodecFramesPerSDU();
+    frames.value = 2;
+    capability.codecSpecificCapabilities = {sampling_rate, frame_duration,
+                                            octets, frames};
+    return capability;
+  }
+
   LeAudioDeviceCapabilities GetDefaultRemoteSourceCapability() {
     // Create a capability
     LeAudioDeviceCapabilities capability;
@@ -2734,6 +2771,41 @@ class BluetoothAudioProviderLeAudioOutputHardwareAidl
 
     direction_ase_requriement.aseConfiguration.codecConfiguration = {
         freq, CodecSpecificConfigurationLtv::FrameDuration::US10000, allocation
+
+    };
+    if (is_sink_requirement)
+      requirement.sinkAseRequirement = {direction_ase_requriement};
+
+    if (is_source_requriement)
+      requirement.sourceAseRequirement = {direction_ase_requriement};
+
+    return requirement;
+  }
+
+  LeAudioConfigurationRequirement GetOpusUnicastRequirement(
+      int32_t context_bits, bool is_sink_requirement,
+      bool is_source_requriement,
+      CodecSpecificConfigurationLtv::SamplingFrequency freq =
+          CodecSpecificConfigurationLtv::SamplingFrequency::HZ48000) {
+    // Create a requirements
+    LeAudioConfigurationRequirement requirement;
+    requirement.audioContext = GetAudioContext(context_bits);
+
+    auto allocation = CodecSpecificConfigurationLtv::AudioChannelAllocation();
+    allocation.bitmask =
+        CodecSpecificConfigurationLtv::AudioChannelAllocation::FRONT_LEFT |
+        CodecSpecificConfigurationLtv::AudioChannelAllocation::FRONT_RIGHT;
+
+    auto direction_ase_requriement = AseDirectionRequirement();
+    auto vendor_codec = CodecId::Vendor();
+    vendor_codec.codecId = 255;
+    vendor_codec.id = 224;
+    direction_ase_requriement.aseConfiguration.codecId = vendor_codec;
+    direction_ase_requriement.aseConfiguration.targetLatency =
+        LeAudioAseConfiguration::TargetLatency::HIGHER_RELIABILITY;
+
+    direction_ase_requriement.aseConfiguration.codecConfiguration = {
+        freq, CodecSpecificConfigurationLtv::FrameDuration::US20000, allocation
 
     };
     if (is_sink_requirement)
@@ -3169,6 +3241,31 @@ TEST_P(BluetoothAudioProviderLeAudioOutputHardwareAidl, GetAseConfiguration) {
   ASSERT_TRUE(aidl_retval.isOk());
   ASSERT_FALSE(configurations.empty());
   VerifyIfRequirementsSatisfied(multi_sink_requirements, configurations);
+}
+
+TEST_P(BluetoothAudioProviderLeAudioOutputHardwareAidl,
+       GetOpusAseConfiguration) {
+  if (GetProviderFactoryInterfaceVersion() <
+      BluetoothAudioHalVersion::VERSION_AIDL_V4) {
+    GTEST_SKIP();
+  }
+
+  std::vector<std::optional<LeAudioDeviceCapabilities>> sink_capabilities = {
+      GetOpusRemoteSinkCapability()};
+  std::vector<std::optional<LeAudioDeviceCapabilities>> source_capabilities = {
+      GetDefaultRemoteSourceCapability()};
+
+  std::vector<LeAudioAseConfigurationSetting> configurations;
+  std::vector<LeAudioConfigurationRequirement> sink_requirements = {
+      GetOpusUnicastRequirement(AudioContext::MEDIA, true /* sink */,
+                                false /* source */)};
+  auto aidl_retval = audio_provider_->getLeAudioAseConfiguration(
+      sink_capabilities, std::nullopt, sink_requirements, &configurations);
+
+  ASSERT_TRUE(aidl_retval.isOk());
+  if (!configurations.empty()) {
+    VerifyIfRequirementsSatisfied(sink_requirements, configurations);
+  }
 }
 
 TEST_P(BluetoothAudioProviderLeAudioOutputHardwareAidl,

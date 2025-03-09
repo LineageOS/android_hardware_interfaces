@@ -35,13 +35,13 @@ package android.hardware.tv.tuner;
 /* @hide */
 @Backing(type="int") @VintfStability
 enum DemuxTsFilterType {
-  UNDEFINED = 0,
-  SECTION = 1,
-  PES = 2,
-  TS = 3,
-  AUDIO = 4,
-  VIDEO = 5,
-  PCR = 6,
-  RECORD = 7,
-  TEMI = 8,
+  UNDEFINED,
+  SECTION,
+  PES,
+  TS,
+  AUDIO,
+  VIDEO,
+  PCR,
+  RECORD,
+  TEMI,
 }

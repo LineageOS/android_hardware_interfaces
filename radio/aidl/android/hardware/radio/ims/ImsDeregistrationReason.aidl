@@ -20,6 +20,7 @@ package android.hardware.radio.ims;
 @VintfStability
 @JavaDerive(toString=true)
 @Backing(type="int")
+@SuppressWarnings(value={"redundant-name"})
 enum ImsDeregistrationReason {
     /**
      * Radio shall send this reason to IMS stack to perform graceful de-registration

@@ -22,15 +22,21 @@ import android.hardware.radio.messaging.CdmaSmsMessage;
 @VintfStability
 @JavaDerive(toString=true)
 parcelable CdmaSmsWriteArgs {
+    /** @deprecated Legacy CDMA is unsupported. */
     const int STATUS_REC_UNREAD = 0;
+    /** @deprecated Legacy CDMA is unsupported. */
     const int STATUS_REC_READ = 1;
+    /** @deprecated Legacy CDMA is unsupported. */
     const int STATUS_STO_UNSENT = 2;
+    /** @deprecated Legacy CDMA is unsupported. */
     const int STATUS_STO_SENT = 3;
 
     /**
      * Status of message. See TS 27.005 3.1
      * Values are STATUS_
+     * @deprecated Legacy CDMA is unsupported.
      */
     int status;
+    /** @deprecated Legacy CDMA is unsupported. */
     CdmaSmsMessage message;
 }

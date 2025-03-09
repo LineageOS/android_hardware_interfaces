@@ -19,6 +19,7 @@ package android.hardware.wifi.supplicant;
 @VintfStability
 @Backing(type="int")
 enum WpsProvisionMethod {
+    NONE = -1,
     /**
      * Push button method.
      */

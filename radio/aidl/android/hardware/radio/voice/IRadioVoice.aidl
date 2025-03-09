@@ -369,6 +369,8 @@ oneway interface IRadioVoice {
      * Response function is IRadioVoiceResponse.sendCdmaFeatureCodeResponse()
      *
      * This is available when android.hardware.telephony.cdma is defined.
+     *
+     * @deprecated Legacy CDMA is unsupported.
      */
     void sendCdmaFeatureCode(in int serial, in String featureCode);
 

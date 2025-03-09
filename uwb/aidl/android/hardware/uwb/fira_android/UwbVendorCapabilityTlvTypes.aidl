@@ -48,6 +48,11 @@ enum UwbVendorCapabilityTlvTypes {
      */
     SUPPORTED_ANTENNA_MODES = 0xC1,
 
+    /**
+     * Int value to indicate max supported session count
+     */
+    SUPPORTED_MAX_SESSION_COUNT = 0xEB,
+
     /*********************************************
      * CCC specific
      ********************************************/

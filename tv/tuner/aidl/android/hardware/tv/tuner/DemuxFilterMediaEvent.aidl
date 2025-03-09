@@ -17,7 +17,6 @@
 package android.hardware.tv.tuner;
 
 import android.hardware.common.NativeHandle;
-
 import android.hardware.tv.tuner.DemuxFilterMediaEventExtraMetaData;
 import android.hardware.tv.tuner.DemuxFilterScIndexMask;
 
@@ -91,4 +90,32 @@ parcelable DemuxFilterMediaEvent {
      * access unit framing at decode stage.
      */
     DemuxFilterScIndexMask scIndexMask;
+
+    /**
+     * This attribute is used together with dataGroupId and indexInDataGroup to
+     * associate fragmented data.
+     *
+     * 1 if the media event contains the complete data. dataGroupId can be
+     * ignored.
+     * Greater than 1 if the media event contains incomplete data. Data can be
+     * reassembled by gathering all media events with the same dataGroupId.
+     */
+    int numDataPieces;
+
+    /**
+     * This attribute is used together with numDataPieces and dataGroupId to
+     * associate fragmented data.
+     *
+     * The value should be in the range of [0, numDataPieces - 1], indicating
+     * this piece is the Nth piece.
+     */
+    int indexInDataGroup;
+
+    /**
+     * This attribute is used together with numDataPieces and indexInDataGroup to
+     * associate fragmented data.
+     *
+     * The value is the id of the data group.
+     */
+    int dataGroupId;
 }

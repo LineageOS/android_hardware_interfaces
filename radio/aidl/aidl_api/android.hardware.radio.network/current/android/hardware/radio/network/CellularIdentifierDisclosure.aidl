@@ -36,7 +36,7 @@ package android.hardware.radio.network;
 @JavaDerive(toString=true) @VintfStability
 parcelable CellularIdentifierDisclosure {
   String plmn;
-  android.hardware.radio.network.CellularIdentifier identifier;
-  android.hardware.radio.network.NasProtocolMessage protocolMessage;
+  android.hardware.radio.network.CellularIdentifier identifier = android.hardware.radio.network.CellularIdentifier.UNKNOWN;
+  android.hardware.radio.network.NasProtocolMessage protocolMessage = android.hardware.radio.network.NasProtocolMessage.UNKNOWN;
   boolean isEmergency;
 }

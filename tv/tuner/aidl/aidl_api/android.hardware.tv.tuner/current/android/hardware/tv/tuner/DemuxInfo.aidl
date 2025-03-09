@@ -35,5 +35,5 @@ package android.hardware.tv.tuner;
 /* @hide */
 @VintfStability
 parcelable DemuxInfo {
-  int filterTypes = 0;
+  int filterTypes = android.hardware.tv.tuner.DemuxFilterMainType.UNDEFINED /* 0 */;
 }

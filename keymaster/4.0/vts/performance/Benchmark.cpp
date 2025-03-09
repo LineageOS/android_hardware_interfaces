@@ -16,6 +16,8 @@
 
 #define LOG_TAG "keymaster_benchmark"
 
+#include <getopt.h>
+
 #include <android/hardware/keymaster/4.0/IKeymasterDevice.h>
 #include <android/hardware/keymaster/4.0/types.h>
 #include <keymaster/keymaster_configuration.h>
@@ -35,8 +37,6 @@
 
 #include <benchmark/benchmark.h>
 #include <hidl/Status.h>
-
-#include <base/command_line.h>
 
 namespace android {
 namespace hardware {
@@ -700,14 +700,26 @@ BENCHMARK_KM_CIPHER_ALL_RSA_KEYS(RSA/ECB/OAEPPadding, SMALL_MESSAGE_SIZE);
 }  // namespace hardware
 }  // namespace android
 
+namespace {
+
+std::string ParseCommandLineFlags(int argc, char** argv) {
+    std::string service_name = "default";
+    static struct option long_options[] = {{"service_name", required_argument, 0, 's'},
+                                           {0, 0, 0, 0}};
+    int opt;
+    while ((opt = getopt_long(argc, argv, "s:", long_options, nullptr)) != -1) {
+        if (opt == 's') {
+            service_name = optarg;
+        }
+    }
+    return service_name;
+}
+
+}  // namespace
+
 int main(int argc, char** argv) {
     ::benchmark::Initialize(&argc, argv);
-    base::CommandLine::Init(argc, argv);
-    base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
-    auto service_name = command_line->GetSwitchValueASCII("service_name");
-    if (service_name.empty()) {
-        service_name = "default";
-    }
+    std::string service_name = ParseCommandLineFlags(argc, argv);
     android::hardware::keymaster::V4_0::test::keymaster =
             android::hardware::keymaster::V4_0::test::KeymasterWrapper::newInstance(service_name);
     if (!android::hardware::keymaster::V4_0::test::keymaster) {

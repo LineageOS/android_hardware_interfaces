@@ -109,4 +109,19 @@ ScopedAStatus RadioConfig::setSimSlotsMapping(  //
     return ok();
 }
 
+ScopedAStatus RadioConfig::getSimTypeInfo(int32_t serial) {
+    LOG_CALL << serial;
+    LOG(ERROR) << " getSimTypeInfo is unsupported by HIDL HALs";
+    respond()->getSimTypeInfoResponse(notSupported(serial), {});
+    return ok();
+}
+
+ScopedAStatus RadioConfig::setSimType(
+        int32_t serial, const std::vector<aidl::SimType>& /*simTypes*/) {
+    LOG_CALL << serial;
+    LOG(ERROR) << " setSimType is unsupported by HIDL HALs";
+    respond()->setSimTypeResponse(notSupported(serial));
+    return ok();
+}
+
 }  // namespace android::hardware::radio::compat

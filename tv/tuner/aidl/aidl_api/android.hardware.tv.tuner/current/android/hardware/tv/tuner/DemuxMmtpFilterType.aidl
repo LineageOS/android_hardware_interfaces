@@ -35,12 +35,12 @@ package android.hardware.tv.tuner;
 /* @hide */
 @Backing(type="int") @VintfStability
 enum DemuxMmtpFilterType {
-  UNDEFINED = 0,
-  SECTION = 1,
-  PES = 2,
-  MMTP = 3,
-  AUDIO = 4,
-  VIDEO = 5,
-  RECORD = 6,
-  DOWNLOAD = 7,
+  UNDEFINED,
+  SECTION,
+  PES,
+  MMTP,
+  AUDIO,
+  VIDEO,
+  RECORD,
+  DOWNLOAD,
 }

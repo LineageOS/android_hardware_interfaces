@@ -33,13 +33,15 @@ namespace wifi {
  */
 class WifiApIface : public BnWifiApIface {
   public:
-    WifiApIface(const std::string& ifname, const std::vector<std::string>& instances,
+    WifiApIface(const std::string& ifname, const bool usesMlo,
+                const std::vector<std::string>& instances,
                 const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
                 const std::weak_ptr<iface_util::WifiIfaceUtil> iface_util);
     // Refer to |WifiChip::invalidate()|.
     void invalidate();
     bool isValid();
     std::string getName();
+    bool usesMlo();
     void removeInstance(std::string instance);
 
     // AIDL methods exposed.
@@ -49,6 +51,7 @@ class WifiApIface : public BnWifiApIface {
     ndk::ScopedAStatus getFactoryMacAddress(std::array<uint8_t, 6>* _aidl_return) override;
     ndk::ScopedAStatus resetToFactoryMacAddress() override;
     ndk::ScopedAStatus getBridgedInstances(std::vector<std::string>* _aidl_return) override;
+    ndk::ScopedAStatus usesMlo(bool* _aidl_return) override;
 
   private:
     // Corresponding worker functions for the AIDL methods.
@@ -61,10 +64,17 @@ class WifiApIface : public BnWifiApIface {
     std::pair<std::vector<std::string>, ndk::ScopedAStatus> getBridgedInstancesInternal();
 
     std::string ifname_;
+    bool uses_mlo_;
     std::vector<std::string> instances_;
     std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
     std::weak_ptr<iface_util::WifiIfaceUtil> iface_util_;
     bool is_valid_;
+
+    // The mlo is using one interface but owning two link instances.
+    // The operating should be based on interface.
+    inline std::string getOperatingInstanceName() {
+        return (instances_.size() > 0 && !uses_mlo_) ? instances_[0] : ifname_;
+    };
 
     DISALLOW_COPY_AND_ASSIGN(WifiApIface);
 };

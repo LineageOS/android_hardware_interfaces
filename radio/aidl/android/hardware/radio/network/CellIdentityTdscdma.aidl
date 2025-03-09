@@ -32,15 +32,17 @@ parcelable CellIdentityTdscdma {
      */
     String mnc;
     /**
-     * 16-bit Location Area Code, 0..65535, INT_MAX if unknown.
+     * 16-bit Location Area Code, 0..65535, RadioConst:VALUE_UNAVAILABLE if unknown.
      */
     int lac;
     /**
-     * 28-bit UMTS Cell Identity described in TS 25.331, 0..268435455, INT_MAX if unknown.
+     * 28-bit UMTS Cell Identity described in TS 25.331, 0..268435455, RadioConst:VALUE_UNAVAILABLE
+     * if unknown.
      */
     int cid;
     /**
-     * 8-bit Cell Parameters ID described in TS 25.331, 0..127, INT_MAX if unknown.
+     * 8-bit Cell Parameters ID described in TS 25.331, 0..127, RadioConst:VALUE_UNAVAILABLE if
+     * unknown.
      */
     int cpid;
     /**

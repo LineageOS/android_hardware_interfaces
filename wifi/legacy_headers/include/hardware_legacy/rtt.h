@@ -7,24 +7,33 @@
 
 /* Ranging status */
 typedef enum {
-    RTT_STATUS_SUCCESS       = 0,
-    RTT_STATUS_FAILURE       = 1,           // general failure status
-    RTT_STATUS_FAIL_NO_RSP   = 2,           // target STA does not respond to request
-    RTT_STATUS_FAIL_REJECTED = 3,           // request rejected. Applies to 2-sided RTT only
-    RTT_STATUS_FAIL_NOT_SCHEDULED_YET  = 4,
-    RTT_STATUS_FAIL_TM_TIMEOUT         = 5, // timing measurement times out
-    RTT_STATUS_FAIL_AP_ON_DIFF_CHANNEL = 6, // Target on different channel, cannot range
-    RTT_STATUS_FAIL_NO_CAPABILITY  = 7,     // ranging not supported
-    RTT_STATUS_ABORTED             = 8,     // request aborted for unknown reason
-    RTT_STATUS_FAIL_INVALID_TS     = 9,     // Invalid T1-T4 timestamp
-    RTT_STATUS_FAIL_PROTOCOL       = 10,    // 11mc protocol failed
-    RTT_STATUS_FAIL_SCHEDULE       = 11,    // request could not be scheduled
-    RTT_STATUS_FAIL_BUSY_TRY_LATER = 12,    // responder cannot collaborate at time of request
-    RTT_STATUS_INVALID_REQ         = 13,    // bad request args
-    RTT_STATUS_NO_WIFI             = 14,    // WiFi not enabled
-    RTT_STATUS_FAIL_FTM_PARAM_OVERRIDE = 15, // Responder overrides param info, cannot range with new params
-    RTT_STATUS_NAN_RANGING_PROTOCOL_FAILURE =16, //Negotiation failure
-    RTT_STATUS_NAN_RANGING_CONCURRENCY_NOT_SUPPORTED=17, //concurrency not supported (NDP+RTT)
+    RTT_STATUS_SUCCESS = 0,
+    RTT_STATUS_FAILURE = 1,        // general failure status
+    RTT_STATUS_FAIL_NO_RSP = 2,    // target STA does not respond to request
+    RTT_STATUS_FAIL_REJECTED = 3,  // request rejected. Applies to 2-sided RTT only
+    RTT_STATUS_FAIL_NOT_SCHEDULED_YET = 4,
+    RTT_STATUS_FAIL_TM_TIMEOUT = 5,          // timing measurement times out
+    RTT_STATUS_FAIL_AP_ON_DIFF_CHANNEL = 6,  // Target on different channel, cannot range
+    RTT_STATUS_FAIL_NO_CAPABILITY = 7,       // ranging not supported
+    RTT_STATUS_ABORTED = 8,                  // request aborted for unknown reason
+    RTT_STATUS_FAIL_INVALID_TS = 9,          // Invalid T1-T4 timestamp
+    RTT_STATUS_FAIL_PROTOCOL = 10,           // 11mc protocol failed
+    RTT_STATUS_FAIL_SCHEDULE = 11,           // request could not be scheduled
+    RTT_STATUS_FAIL_BUSY_TRY_LATER = 12,     // responder cannot collaborate at time of request
+    RTT_STATUS_INVALID_REQ = 13,             // bad request args
+    RTT_STATUS_NO_WIFI = 14,                 // WiFi not enabled
+    RTT_STATUS_FAIL_FTM_PARAM_OVERRIDE =
+            15,  // Responder overrides param info, cannot range with new params
+    RTT_STATUS_NAN_RANGING_PROTOCOL_FAILURE = 16,           // Negotiation failure
+    RTT_STATUS_NAN_RANGING_CONCURRENCY_NOT_SUPPORTED = 17,  // concurrency not supported (NDP+RTT)
+    RTT_STATUS_SECURE_RANGING_FAILURE_INVALID_AKM = 18,  // Secure Ranging failed due to invalid AKM
+                                                         // (Authentication and Key Management)
+    RTT_STATUS_SECURE_RANGING_FAILURE_INVALID_CIPHER = 19,  // Secure Ranging failed due to invalid
+                                                            // Cipher
+    RTT_STATUS_SECURE_RANGING_FAILURE_INVALID_CONFIG = 20,  // Secure Ranging failed due to invalid
+                                                            // configuration
+    RTT_STATUS_SECURE_RANGING_FAILURE_REJECTED = 21,        // Secure ranging rejected by the AP.2
+    RTT_STATUS_SECURE_RANGING_FAILURE_UNKNOWN = 22,         // Secure ranging failure unknown
 } wifi_rtt_status;
 
 /* RTT peer type */
@@ -60,13 +69,59 @@ typedef enum {
 
 /* RTT Type */
 typedef enum {
-    RTT_TYPE_1_SIDED          = 0x1,
+    RTT_TYPE_1_SIDED = 0x1,
     /* Deprecated. Use RTT_TYPE_2_SIDED_11MC instead. */
-    RTT_TYPE_2_SIDED          = 0x2,
-    RTT_TYPE_2_SIDED_11MC     = RTT_TYPE_2_SIDED,
+    RTT_TYPE_2_SIDED = 0x2,
+    RTT_TYPE_2_SIDED_11MC = RTT_TYPE_2_SIDED,
     RTT_TYPE_2_SIDED_11AZ_NTB = 0x3,
-
+    RTT_TYPE_2_SIDED_11AZ_NTB_SECURE = 0x4,
 } wifi_rtt_type;
+
+/* RTT AKM type */
+typedef enum {
+    WPA_KEY_MGMT_NONE = 0x0,
+    WPA_KEY_MGMT_PASN = 0x1,
+    WPA_KEY_MGMT_SAE = 0x2,
+    WPA_KEY_MGMT_EAP_FT_SHA256 = 0x4,
+    WPA_KEY_MGMT_FT_PSK_SHA256 = 0x8,
+    WPA_KEY_MGMT_EAP_FT_SHA384 = 0x10,
+    WPA_KEY_MGMT_FT_PSK_SHA384 = 0x20,
+    WPA_KEY_MGMT_EAP_FILS_SHA256 = 0x40,
+    WPA_KEY_MGMT_EAP_FILS_SHA384 = 0x80
+} wifi_rtt_akm;
+
+typedef enum {
+    WPA_CIPHER_NONE = 0x0,
+    WPA_CIPHER_CCMP_128 = 0x1,
+    WPA_CIPHER_CCMP_256 = 0x2,
+    WPA_CIPHER_GCMP_128 = 0x4,
+    WPA_CIPHER_GCMP_256 = 0x8,
+} wifi_rtt_cipher_suite;
+
+#define RTT_SECURITY_MAX_PASSPHRASE_LEN 63
+#define PMKID_LEN 16
+#define RTT_MAX_COOKIE_LEN 255
+
+typedef struct {
+    wifi_rtt_akm base_akm;  // Base Authentication and Key Management (AKM) protocol used for PASN
+    wifi_rtt_cipher_suite pairwise_cipher_suite;  // Pairwise cipher suite used for the PTKSA
+                                                  // (Pairwise Transient Key Security Association)
+    u32 passphrase_len;
+    u8 passphrase[RTT_SECURITY_MAX_PASSPHRASE_LEN];  // Passphrase for the base AKM. This can be
+                                                     // empty based on the AKM type.
+    u32 pmkid_len;
+    u8 pmkid[PMKID_LEN];  // PMKID corresponding to the cached PMK from the base AKM. PMKID can be
+                          // null if no cached PMK is present.
+    u8 comeback_cookie_len;  // Comeback cookie length. If the length is 0, it indicates there is no
+                             // cookie.
+    u8 comeback_cookie[RTT_MAX_COOKIE_LEN];  // Comeback cookie indicated over wifi_rtt_result_v4.
+} wifi_rtt_pasn_config;
+
+typedef struct {
+    wifi_rtt_pasn_config pasn_config;
+    bool enable_secure_he_ltf;
+    bool enable_ranging_frame_protection;
+} wifi_rtt_secure_config;
 
 /* RTT configuration */
 typedef struct {
@@ -126,6 +181,11 @@ typedef struct {
     u64 ntb_max_measurement_time; // 11az Non-Trigger-based (non-TB) maximum measurement time in
                                   // units of 10 milliseconds
 } wifi_rtt_config_v3;
+
+typedef struct {
+    wifi_rtt_config_v3 rtt_config;
+    wifi_rtt_secure_config rtt_secure_config;
+} wifi_rtt_config_v4;
 
 /* RTT results */
 typedef struct {
@@ -197,6 +257,19 @@ typedef struct {
   byte num_rx_sts;                 // Number of receive space-time streams used.
 } wifi_rtt_result_v3;
 
+typedef struct {
+    wifi_rtt_result_v3 rtt_result_v3;
+    bool is_ranging_protection_enabled;
+    bool is_secure_he_ltf_enabled;
+    wifi_rtt_akm base_akm;
+    wifi_rtt_cipher_suite cipher_suite;
+    int secure_he_ltf_protocol_version;
+    u16 pasn_comeback_after_millis;  // The time in milliseconds after which the non-AP STA is
+                                     // requested to retry the PASN authentication.
+    u8 pasn_comeback_cookie_len;  // Comeback cookie length. If the length is 0, it indicates there
+                                  // is no cookie.
+    u8 pasn_comeback_cookie[RTT_MAX_COOKIE_LEN];  // Comeback cookie octets.
+} wifi_rtt_result_v4;
 
 /* RTT result callbacks */
 typedef struct {
@@ -234,6 +307,15 @@ typedef struct {
                                wifi_rtt_result_v3 *rtt_result_v3[]);
 } wifi_rtt_event_handler_v3;
 
+/* RTT result v4 callback (secure ranging support) */
+typedef struct {
+    /*
+     * Called when vendor implementation supports sending RTT results version 4 (Added support for
+     * secure 11az ranging)
+     */
+    void (*on_rtt_results_v4)(wifi_request_id id, unsigned num_results,
+                              wifi_rtt_result_v4* rtt_result_v4[]);
+} wifi_rtt_event_handler_v4;
 
 /* v3 API to request RTT measurement(11az support).  */
 wifi_error wifi_rtt_range_request_v3(wifi_request_id id,
@@ -241,6 +323,11 @@ wifi_error wifi_rtt_range_request_v3(wifi_request_id id,
                                      unsigned num_rtt_config,
                                      wifi_rtt_config_v3 rtt_config_v3[],
                                      wifi_rtt_event_handler_v3 handler);
+
+/* v4 API to request RTT measurement(11az security support). */
+wifi_error wifi_rtt_range_request_v4(wifi_request_id id, wifi_interface_handle iface,
+                                     unsigned num_rtt_config, wifi_rtt_config_v4 rtt_config_v4[],
+                                     wifi_rtt_event_handler_v4 handler);
 
 /* API to cancel RTT measurements */
 wifi_error wifi_rtt_range_cancel(wifi_request_id id,  wifi_interface_handle iface,
@@ -313,9 +400,27 @@ typedef struct {
     byte ntb_responder_supported;   // if 11az non-TB responder is supported
 } wifi_rtt_capabilities_v3;
 
+/* RTT Capabilities v4 (11az secure support) */
+typedef struct {
+    wifi_rtt_capabilities_v3 rtt_capab_v3;
+    bool secure_he_ltf_supported;
+    int max_supported_secure_he_ltf_protocol_ver;  // Maximum supported secure HE-LTF protocol
+                                                   // version.
+    bool ranging_fame_protection_supported;
+    wifi_rtt_akm supported_akms;  // Bitmap of wifi_rtt_akm values indicating the set of supported
+                                  // AKMs.
+    wifi_rtt_cipher_suite
+            supported_cipher_suites;  // Bitmap of wifi_rtt_cipher_suite values
+                                      // indicating the set of supported pairwise cipher suites.
+} wifi_rtt_capabilities_v4;
+
 /*  RTT capabilities v3 of the device (11az support) */
 wifi_error wifi_get_rtt_capabilities_v3(wifi_interface_handle iface,
                                         wifi_rtt_capabilities_v3 *capabilities);
+
+/*  RTT capabilities v4 of the device (11az secure support) */
+wifi_error wifi_get_rtt_capabilities_v4(wifi_interface_handle iface,
+                                        wifi_rtt_capabilities_v4* capabilities);
 
 /* debugging definitions */
 enum {

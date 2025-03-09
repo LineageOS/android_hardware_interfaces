@@ -36,5 +36,8 @@ package android.hardware.radio;
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum RadioTechnologyFamily {
   THREE_GPP,
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   THREE_GPP2,
 }

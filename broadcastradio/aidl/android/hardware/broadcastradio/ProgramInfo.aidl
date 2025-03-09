@@ -16,6 +16,7 @@
 
 package android.hardware.broadcastradio;
 
+import android.hardware.broadcastradio.Alert;
 import android.hardware.broadcastradio.Metadata;
 import android.hardware.broadcastradio.ProgramIdentifier;
 import android.hardware.broadcastradio.ProgramSelector;
@@ -192,4 +193,12 @@ parcelable ProgramInfo {
      * for example: paid-service=true; bitrate=320kbps.
      */
     VendorKeyValue[] vendorInfo;
+
+    /**
+     * Emergency alert message.
+     *
+     * <p>Alert message can be sent from a radio station of technologies such as HD radio to
+     * the radio users for some emergency events.
+     */
+    @nullable Alert emergencyAlert;
 }

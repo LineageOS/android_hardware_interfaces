@@ -531,4 +531,26 @@ enum PixelFormat {
      * interpretation is defined by the dataspace.
      */
     RGBA_10101010 = 0x3b,
+
+    /**
+     * YCBCR_P210 is a 4:2:2 YCbCr semiplanar format comprised of a WxH Y plane
+     * followed by a WxH CbCr plane. Each sample is represented by a 16-bit
+     * little-endian value, with the lower 6 bits set to zero.
+     *
+     * This format must be accepted by the allocator when used with the
+     * following usage flags:
+     *
+     *    - BufferUsage::VIDEO_*
+     *    - BufferUsage::CPU_*
+     *    - BufferUsage::GPU_TEXTURE
+     *
+     * The component values are unsigned normalized to the range [0, 1], whose
+     * interpretation is defined by the dataspace.
+     *
+     * This format is appropriate for 10bit video content.
+     *
+     * Buffers with this format must be locked with IMapper::lockYCbCr
+     * or with IMapper::lock.
+     */
+    YCBCR_P210 = 0x3c,
 }

@@ -17,6 +17,7 @@
 package android.hardware.bluetooth.audio;
 
 import android.hardware.bluetooth.audio.AudioLocation;
+import android.hardware.bluetooth.audio.CodecSpecificConfigurationLtv.AudioChannelAllocation;
 import android.hardware.bluetooth.audio.CodecType;
 import android.hardware.bluetooth.audio.Lc3Capabilities;
 
@@ -35,8 +36,11 @@ parcelable BroadcastCapability {
         @nullable VendorCapabilities[] vendorCapabillities;
     }
     CodecType codecType;
+    // @deprecated use audioLocation if present.
     AudioLocation supportedChannel;
     // Supported channel count for each stream
     int channelCountPerStream;
     LeAudioCodecCapabilities leAudioCodecCapabilities;
+    // The new audio location type, replacing supportedChannel
+    @nullable AudioChannelAllocation audioLocation;
 }

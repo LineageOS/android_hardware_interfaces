@@ -26,6 +26,7 @@
 #include <aidl/android/hardware/gnss/BnGnssMeasurementInterface.h>
 #include <aidl/android/hardware/gnss/BnGnssPowerIndication.h>
 #include <aidl/android/hardware/gnss/BnGnssPsds.h>
+#include <aidl/android/hardware/gnss/gnss_assistance/BnGnssAssistanceInterface.h>
 #include <aidl/android/hardware/gnss/measurement_corrections/BnMeasurementCorrectionsInterface.h>
 #include <aidl/android/hardware/gnss/visibility_control/BnGnssVisibilityControl.h>
 #include <atomic>
@@ -83,6 +84,9 @@ class Gnss : public BnGnss {
             std::shared_ptr<android::hardware::gnss::measurement_corrections::
                                     IMeasurementCorrectionsInterface>* iMeasurementCorrections)
             override;
+    ndk::ScopedAStatus getExtensionGnssAssistanceInterface(
+            std::shared_ptr<android::hardware::gnss::gnss_assistance::IGnssAssistanceInterface>*
+                    iGnssAssistanceInterface) override;
 
     void reportSvStatus() const;
     void setGnssMeasurementEnabled(const bool enabled);

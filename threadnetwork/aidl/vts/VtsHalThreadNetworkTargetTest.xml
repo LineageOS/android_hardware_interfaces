@@ -13,11 +13,12 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
+
 <configuration description="Runs VtsHalThreadNetworkTargetTest.">
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
-        <option name="run-command" value="cmd thread_network force-stop-ot-daemon enabled" />
+        <option name="run-command" value="if pm list features |grep 'android.hardware.thread_network'; then cmd thread_network force-stop-ot-daemon enabled; fi" />
         <option name="run-command" value="cmd bluetooth_manager enable" />
-        <option name="teardown-command" value="cmd thread_network force-stop-ot-daemon disabled" />
+        <option name="teardown-command" value="if pm list features |grep 'android.hardware.thread_network'; then cmd thread_network force-stop-ot-daemon disabled; fi" />
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.PushFilePreparer">
         <option name="cleanup" value="true" />

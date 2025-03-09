@@ -16,6 +16,7 @@ aidl_interface {
     srcs: ["android/hardware/uwb/*.aidl"],
     stability: "vintf",
     host_supported: true,
+    frozen: true,
     backend: {
         java: {
             sdk_version: "module_Tiramisu",
@@ -56,6 +57,7 @@ aidl_interface {
     vendor_available: true,
     srcs: ["android/hardware/uwb/fira_android/*.aidl"],
     stability: "vintf",
+    frozen: false,
     backend: {
         java: {
             sdk_version: "module_Tiramisu",

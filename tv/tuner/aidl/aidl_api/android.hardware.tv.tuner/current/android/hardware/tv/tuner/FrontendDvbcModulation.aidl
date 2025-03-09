@@ -36,10 +36,10 @@ package android.hardware.tv.tuner;
 @Backing(type="int") @VintfStability
 enum FrontendDvbcModulation {
   UNDEFINED = 0,
-  AUTO = 1,
-  MOD_16QAM = 2,
-  MOD_32QAM = 4,
-  MOD_64QAM = 8,
-  MOD_128QAM = 16,
-  MOD_256QAM = 32,
+  AUTO = (1 << 0) /* 1 */,
+  MOD_16QAM = (1 << 1) /* 2 */,
+  MOD_32QAM = (1 << 2) /* 4 */,
+  MOD_64QAM = (1 << 3) /* 8 */,
+  MOD_128QAM = (1 << 4) /* 16 */,
+  MOD_256QAM = (1 << 5) /* 32 */,
 }

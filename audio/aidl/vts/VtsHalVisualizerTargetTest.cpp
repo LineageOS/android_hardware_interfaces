@@ -19,6 +19,7 @@
 #define LOG_TAG "VtsHalVisualizerTest"
 #include <android-base/logging.h>
 #include <android/binder_enums.h>
+#include <audio_utils/power.h>
 
 #include "EffectHelper.h"
 
@@ -44,31 +45,26 @@ enum ParamName {
     PARAM_MEASUREMENT_MODE,
     PARAM_LATENCY,
 };
-using VisualizerParamTestParam =
-        std::tuple<std::pair<std::shared_ptr<IFactory>, Descriptor>, int, Visualizer::ScalingMode,
-                   Visualizer::MeasurementMode, int>;
+using VisualizerTestParam = std::tuple<std::pair<std::shared_ptr<IFactory>, Descriptor>, int,
+                                       Visualizer::ScalingMode, Visualizer::MeasurementMode, int>;
 
-class VisualizerParamTest : public ::testing::TestWithParam<VisualizerParamTestParam>,
-                            public EffectHelper {
+class VisualizerTestHelper : public EffectHelper {
   public:
-    VisualizerParamTest()
-        : mCaptureSize(std::get<PARAM_CAPTURE_SIZE>(GetParam())),
-          mScalingMode(std::get<PARAM_SCALING_MODE>(GetParam())),
-          mMeasurementMode(std::get<PARAM_MEASUREMENT_MODE>(GetParam())),
-          mLatency(std::get<PARAM_LATENCY>(GetParam())) {
-        std::tie(mFactory, mDescriptor) = std::get<PARAM_INSTANCE_NAME>(GetParam());
-
-        size_t channelCount =
-                getChannelCount(AudioChannelLayout::make<AudioChannelLayout::layoutMask>(
-                        AudioChannelLayout::LAYOUT_STEREO));
-        mBufferSizeInFrames = kInputFrameCount * channelCount;
-        mInputBuffer.resize(mBufferSizeInFrames);
-        generateInputBuffer(mInputBuffer, 0, true, channelCount, kMaxAudioSampleValue);
-
-        mOutputBuffer.resize(mBufferSizeInFrames);
+    VisualizerTestHelper(
+            std::pair<std::shared_ptr<IFactory>, Descriptor> descPair = {}, int captureSize = 128,
+            int latency = 0,
+            Visualizer::ScalingMode scalingMode = Visualizer::ScalingMode::NORMALIZED,
+            Visualizer::MeasurementMode measurementMode = Visualizer::MeasurementMode::NONE)
+        : mCaptureSize(captureSize),
+          mLatency(latency),
+          mScalingMode(scalingMode),
+          mMeasurementMode(measurementMode),
+          mInputBuffer(mBufferSizeInFrames),
+          mOutputBuffer(mBufferSizeInFrames) {
+        std::tie(mFactory, mDescriptor) = descPair;
     }
 
-    void SetUp() override {
+    void SetUpVisualizer() {
         ASSERT_NE(nullptr, mFactory);
         ASSERT_NO_FATAL_FAILURE(create(mFactory, mEffect, mDescriptor));
 
@@ -80,28 +76,14 @@ class VisualizerParamTest : public ::testing::TestWithParam<VisualizerParamTestP
         mVersion = EffectFactoryHelper::getHalVersion(mFactory);
     }
 
-    void TearDown() override {
+    void TearDownVisualizer() {
         ASSERT_NO_FATAL_FAILURE(close(mEffect));
         ASSERT_NO_FATAL_FAILURE(destroy(mFactory, mEffect));
         mOpenEffectReturn = IEffect::OpenEffectReturn{};
     }
 
-    static const long kInputFrameCount = 0x100, kOutputFrameCount = 0x100;
-    std::shared_ptr<IFactory> mFactory;
-    std::shared_ptr<IEffect> mEffect;
-    Descriptor mDescriptor;
-    int mCaptureSize;
-    Visualizer::ScalingMode mScalingMode = Visualizer::ScalingMode::NORMALIZED;
-    Visualizer::MeasurementMode mMeasurementMode = Visualizer::MeasurementMode::NONE;
-    int mLatency = 0;
-    int mVersion = 0;
-    std::vector<float> mInputBuffer;
-    std::vector<float> mOutputBuffer;
-    size_t mBufferSizeInFrames;
-    IEffect::OpenEffectReturn mOpenEffectReturn;
-    bool mAllParamsValid = true;
-
-    void SetAndGetParameters() {
+    void SetAndGetParameters(bool* allParamsValid = nullptr) {
+        if (allParamsValid != nullptr) *allParamsValid = true;
         for (auto& it : mCommonTags) {
             auto& tag = it.first;
             auto& vs = it.second;
@@ -111,7 +93,9 @@ class VisualizerParamTest : public ::testing::TestWithParam<VisualizerParamTestP
             ASSERT_STATUS(EX_NONE, mEffect->getDescriptor(&desc));
             const bool valid = isParameterValid<Visualizer, Range::visualizer>(vs, desc);
             const binder_exception_t expected = valid ? EX_NONE : EX_ILLEGAL_ARGUMENT;
-            if (expected == EX_ILLEGAL_ARGUMENT) mAllParamsValid = false;
+            if (expected == EX_ILLEGAL_ARGUMENT && allParamsValid != nullptr) {
+                *allParamsValid = false;
+            }
 
             // set parameter
             Parameter expectParam;
@@ -155,19 +139,53 @@ class VisualizerParamTest : public ::testing::TestWithParam<VisualizerParamTestP
                 {Visualizer::latencyMs, Visualizer::make<Visualizer::latencyMs>(latency)});
     }
 
-    static std::unordered_set<Visualizer::MeasurementMode> getMeasurementModeValues() {
-        return {ndk::enum_range<Visualizer::MeasurementMode>().begin(),
-                ndk::enum_range<Visualizer::MeasurementMode>().end()};
-    }
-
     static std::unordered_set<Visualizer::ScalingMode> getScalingModeValues() {
         return {ndk::enum_range<Visualizer::ScalingMode>().begin(),
                 ndk::enum_range<Visualizer::ScalingMode>().end()};
     }
 
+    static constexpr long kInputFrameCount = 0x100, kOutputFrameCount = 0x100;
+    const size_t mChannelCount =
+            getChannelCount(AudioChannelLayout::make<AudioChannelLayout::layoutMask>(
+                    AudioChannelLayout::LAYOUT_MONO));
+    const size_t mBufferSizeInFrames = kInputFrameCount * mChannelCount;
+    const int mCaptureSize;
+    const int mLatency;
+    const Visualizer::ScalingMode mScalingMode;
+    const Visualizer::MeasurementMode mMeasurementMode;
+    int mVersion;
+    std::vector<float> mInputBuffer;
+    std::vector<float> mOutputBuffer;
+    std::shared_ptr<IEffect> mEffect;
+    std::shared_ptr<IFactory> mFactory;
+    Descriptor mDescriptor;
+    IEffect::OpenEffectReturn mOpenEffectReturn;
+
   private:
     std::vector<std::pair<Visualizer::Tag, Visualizer>> mCommonTags;
     void CleanUp() { mCommonTags.clear(); }
+};
+
+class VisualizerParamTest : public ::testing::TestWithParam<VisualizerTestParam>,
+                            public VisualizerTestHelper {
+  public:
+    VisualizerParamTest()
+        : VisualizerTestHelper(std::get<PARAM_INSTANCE_NAME>(GetParam()),
+                               std::get<PARAM_CAPTURE_SIZE>(GetParam()),
+                               std::get<PARAM_LATENCY>(GetParam()),
+                               std::get<PARAM_SCALING_MODE>(GetParam()),
+                               std::get<PARAM_MEASUREMENT_MODE>(GetParam())) {
+        generateInputBuffer(mInputBuffer, 0, true, mChannelCount, kMaxAudioSampleValue);
+    }
+
+    void SetUp() override { SetUpVisualizer(); }
+
+    void TearDown() override { TearDownVisualizer(); }
+
+    static std::unordered_set<Visualizer::MeasurementMode> getMeasurementModeValues() {
+        return {ndk::enum_range<Visualizer::MeasurementMode>().begin(),
+                ndk::enum_range<Visualizer::MeasurementMode>().end()};
+    }
 };
 
 TEST_P(VisualizerParamTest, SetAndGetCaptureSize) {
@@ -191,11 +209,14 @@ TEST_P(VisualizerParamTest, SetAndGetLatency) {
 }
 
 TEST_P(VisualizerParamTest, testCaptureSampleBufferSizeAndOutput) {
+    SKIP_TEST_IF_DATA_UNSUPPORTED(mDescriptor.common.flags);
+
+    bool allParamsValid = true;
     ASSERT_NO_FATAL_FAILURE(addCaptureSizeParam(mCaptureSize));
     ASSERT_NO_FATAL_FAILURE(addScalingModeParam(mScalingMode));
     ASSERT_NO_FATAL_FAILURE(addMeasurementModeParam(mMeasurementMode));
     ASSERT_NO_FATAL_FAILURE(addLatencyParam(mLatency));
-    ASSERT_NO_FATAL_FAILURE(SetAndGetParameters());
+    ASSERT_NO_FATAL_FAILURE(SetAndGetParameters(&allParamsValid));
 
     Parameter getParam;
     Parameter::Id id;
@@ -208,11 +229,87 @@ TEST_P(VisualizerParamTest, testCaptureSampleBufferSizeAndOutput) {
                                                     &mOpenEffectReturn, mVersion));
     ASSERT_EQ(mInputBuffer, mOutputBuffer);
 
-    if (mAllParamsValid) {
+    if (allParamsValid) {
         std::vector<uint8_t> captureBuffer = getParam.get<Parameter::specific>()
                                                      .get<Parameter::Specific::visualizer>()
                                                      .get<Visualizer::captureSampleBuffer>();
         ASSERT_EQ((size_t)mCaptureSize, captureBuffer.size());
+    }
+}
+
+class VisualizerDataTest : public ::testing::TestWithParam<VisualizerTestParam>,
+                           public VisualizerTestHelper {
+  public:
+    VisualizerDataTest()
+        : VisualizerTestHelper(std::get<PARAM_INSTANCE_NAME>(GetParam()),
+                               std::get<PARAM_CAPTURE_SIZE>(GetParam()),
+                               std::get<PARAM_LATENCY>(GetParam()),
+                               std::get<PARAM_SCALING_MODE>(GetParam()),
+                               std::get<PARAM_MEASUREMENT_MODE>(GetParam())) {}
+
+    void SetUp() override { SetUpVisualizer(); }
+
+    void TearDown() override { TearDownVisualizer(); }
+};
+
+TEST_P(VisualizerDataTest, testScalingModeParameters) {
+    SKIP_TEST_IF_DATA_UNSUPPORTED(mDescriptor.common.flags);
+
+    // This test holds true for the following range
+    static_assert(kMaxAudioSampleValue <= 1.0 && kMaxAudioSampleValue > 0.0,
+                  "Valid range of kMaxAudioSample value for the test: (0.0, 1.0]");
+
+    constexpr float kPowerToleranceDb = 0.5;
+
+    generateSineWave(std::vector<int>{1000}, mInputBuffer, 1.0, mBufferSizeInFrames);
+    const float expectedPowerNormalized = audio_utils_compute_power_mono(
+            mInputBuffer.data(), AUDIO_FORMAT_PCM_FLOAT, mInputBuffer.size());
+
+    const std::vector<float> testMaxAudioSampleValueList = {
+            0.25 * kMaxAudioSampleValue, 0.5 * kMaxAudioSampleValue, 0.75 * kMaxAudioSampleValue,
+            kMaxAudioSampleValue};
+
+    Parameter::Id idCsb;
+    Visualizer::Id vsIdCsb;
+    vsIdCsb.set<Visualizer::Id::commonTag>(Visualizer::captureSampleBuffer);
+    idCsb.set<Parameter::Id::visualizerTag>(vsIdCsb);
+
+    for (float maxAudioSampleValue : testMaxAudioSampleValueList) {
+        bool allParamsValid = true;
+        ASSERT_NO_FATAL_FAILURE(addCaptureSizeParam(mCaptureSize));
+        ASSERT_NO_FATAL_FAILURE(addScalingModeParam(mScalingMode));
+        ASSERT_NO_FATAL_FAILURE(addLatencyParam(mLatency));
+        ASSERT_NO_FATAL_FAILURE(SetAndGetParameters(&allParamsValid));
+
+        generateSineWave(std::vector<int>{1000}, mInputBuffer, maxAudioSampleValue,
+                         mBufferSizeInFrames);
+
+        // The stop and reset calls to the effect are made towards the end in order to fetch the
+        // captureSampleBuffer values
+        ASSERT_NO_FATAL_FAILURE(processAndWriteToOutput(mInputBuffer, mOutputBuffer, mEffect,
+                                                        &mOpenEffectReturn, mVersion, 1, false));
+        if (allParamsValid) {
+            Parameter getParam;
+            EXPECT_STATUS(EX_NONE, mEffect->getParameter(idCsb, &getParam))
+                    << " with: " << idCsb.toString();
+            std::vector<uint8_t> captureBuffer = getParam.get<Parameter::specific>()
+                                                         .get<Parameter::Specific::visualizer>()
+                                                         .get<Visualizer::captureSampleBuffer>();
+            ASSERT_EQ((size_t)mCaptureSize, captureBuffer.size());
+
+            float currPowerCsb = audio_utils_compute_power_mono(
+                    captureBuffer.data(), AUDIO_FORMAT_PCM_8_BIT, mCaptureSize);
+
+            if (mScalingMode == Visualizer::ScalingMode::NORMALIZED) {
+                EXPECT_NEAR(currPowerCsb, expectedPowerNormalized, kPowerToleranceDb);
+            } else {
+                float powerI = audio_utils_compute_power_mono(
+                        mInputBuffer.data(), AUDIO_FORMAT_PCM_FLOAT, mInputBuffer.size());
+                EXPECT_NEAR(currPowerCsb, powerI, kPowerToleranceDb);
+            }
+        }
+        ASSERT_NO_FATAL_FAILURE(command(mEffect, CommandId::STOP));
+        ASSERT_NO_FATAL_FAILURE(command(mEffect, CommandId::RESET));
     }
 }
 
@@ -225,7 +322,7 @@ INSTANTIATE_TEST_SUITE_P(
                 testing::ValuesIn(EffectHelper::getTestValueSet<Visualizer, int, Range::visualizer,
                                                                 Visualizer::captureSamples>(
                         kDescPair, EffectHelper::expandTestValueBasic<int>)),
-                testing::ValuesIn(VisualizerParamTest::getScalingModeValues()),
+                testing::ValuesIn(VisualizerTestHelper::getScalingModeValues()),
                 testing::ValuesIn(VisualizerParamTest::getMeasurementModeValues()),
                 testing::ValuesIn(EffectHelper::getTestValueSet<Visualizer, int, Range::visualizer,
                                                                 Visualizer::latencyMs>(
@@ -248,6 +345,35 @@ INSTANTIATE_TEST_SUITE_P(
         });
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(VisualizerParamTest);
+
+INSTANTIATE_TEST_SUITE_P(
+        VisualizerDataTest, VisualizerDataTest,
+        ::testing::Combine(
+                testing::ValuesIn(kDescPair = EffectFactoryHelper::getAllEffectDescriptors(
+                                          IFactory::descriptor, getEffectTypeUuidVisualizer())),
+                testing::Values(128),  // captureSize
+                testing::ValuesIn(VisualizerTestHelper::getScalingModeValues()),
+                testing::Values(Visualizer::MeasurementMode::PEAK_RMS),
+                testing::Values(0)  // latency
+                ),
+        [](const testing::TestParamInfo<VisualizerDataTest::ParamType>& info) {
+            auto descriptor = std::get<PARAM_INSTANCE_NAME>(info.param).second;
+            std::string captureSize = std::to_string(std::get<PARAM_CAPTURE_SIZE>(info.param));
+            std::string scalingMode = aidl::android::hardware::audio::effect::toString(
+                    std::get<PARAM_SCALING_MODE>(info.param));
+            std::string measurementMode = aidl::android::hardware::audio::effect::toString(
+                    std::get<PARAM_MEASUREMENT_MODE>(info.param));
+            std::string latency = std::to_string(std::get<PARAM_LATENCY>(info.param));
+
+            std::string name = getPrefix(descriptor) + "_captureSize" + captureSize +
+                               "_scalingMode" + scalingMode + "_measurementMode" + measurementMode +
+                               "_latency" + latency;
+            std::replace_if(
+                    name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');
+            return name;
+        });
+
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(VisualizerDataTest);
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);

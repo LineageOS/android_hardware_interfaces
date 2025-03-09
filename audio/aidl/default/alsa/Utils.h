@@ -59,6 +59,8 @@ class DeviceProxy {
     AlsaProxy mProxy;
 };
 
+void applyGain(void* buffer, float gain, size_t bytesToTransfer, enum pcm_format pcmFormat,
+               int channelCount);
 ::aidl::android::media::audio::common::AudioChannelLayout getChannelLayoutMaskFromChannelCount(
         unsigned int channelCount, int isInput);
 ::aidl::android::media::audio::common::AudioChannelLayout getChannelIndexMaskFromChannelCount(

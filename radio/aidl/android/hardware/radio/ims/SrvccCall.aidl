@@ -47,16 +47,16 @@ parcelable SrvccCall {
     int index;
 
     /** The type of the call */
-    CallType callType;
+    CallType callType = CallType.NORMAL;
 
     /** Values are android.hardware.radio.voice.Call.STATE_* constants */
     int callState;
 
     /** The substate of the call */
-    CallSubState callSubstate;
+    CallSubState callSubstate = CallSubState.NONE;
 
     /** The type of the ringback tone */
-    ToneType ringbackToneType;
+    ToneType ringbackToneType = ToneType.NONE;
 
     /** true if is mpty call */
     boolean isMpty;

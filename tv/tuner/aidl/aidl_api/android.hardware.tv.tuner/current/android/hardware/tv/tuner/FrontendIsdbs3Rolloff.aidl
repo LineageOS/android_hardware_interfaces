@@ -35,6 +35,6 @@ package android.hardware.tv.tuner;
 /* @hide */
 @Backing(type="int") @VintfStability
 enum FrontendIsdbs3Rolloff {
-  UNDEFINED = 0,
-  ROLLOFF_0_03 = 1,
+  UNDEFINED,
+  ROLLOFF_0_03,
 }

@@ -36,7 +36,7 @@ package android.hardware.tv.tuner;
 @Backing(type="int") @VintfStability
 enum FrontendDtmbTimeInterleaveMode {
   UNDEFINED = 0,
-  AUTO = 1,
-  TIMER_INT_240 = 2,
-  TIMER_INT_720 = 4,
+  AUTO = (1 << 0) /* 1 */,
+  TIMER_INT_240 = (1 << 1) /* 2 */,
+  TIMER_INT_720 = (1 << 2) /* 4 */,
 }

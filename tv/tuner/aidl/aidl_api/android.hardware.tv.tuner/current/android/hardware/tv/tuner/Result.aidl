@@ -35,11 +35,11 @@ package android.hardware.tv.tuner;
 /* @hide */
 @Backing(type="int") @VintfStability
 enum Result {
-  SUCCESS = 0,
-  UNAVAILABLE = 1,
-  NOT_INITIALIZED = 2,
-  INVALID_STATE = 3,
-  INVALID_ARGUMENT = 4,
-  OUT_OF_MEMORY = 5,
-  UNKNOWN_ERROR = 6,
+  SUCCESS,
+  UNAVAILABLE,
+  NOT_INITIALIZED,
+  INVALID_STATE,
+  INVALID_ARGUMENT,
+  OUT_OF_MEMORY,
+  UNKNOWN_ERROR,
 }

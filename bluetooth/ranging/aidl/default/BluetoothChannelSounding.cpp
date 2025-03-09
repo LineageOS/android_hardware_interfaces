@@ -55,4 +55,11 @@ ndk::ScopedAStatus BluetoothChannelSounding::openSession(
   *_aidl_return = session;
   return ::ndk::ScopedAStatus::ok();
 }
+
+ndk::ScopedAStatus BluetoothChannelSounding::getSupportedCsSecurityLevels(
+    std::vector<CsSecurityLevel>* _aidl_return) {
+  std::vector<CsSecurityLevel> supported_security_levels = {};
+  *_aidl_return = supported_security_levels;
+  return ::ndk::ScopedAStatus::ok();
+}
 }  // namespace aidl::android::hardware::bluetooth::ranging::impl

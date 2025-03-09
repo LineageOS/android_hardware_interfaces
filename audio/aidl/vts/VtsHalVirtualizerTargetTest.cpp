@@ -94,7 +94,6 @@ class VirtualizerHelper : public EffectHelper {
         }
     }
 
-    static constexpr int kSamplingFrequency = 44100;
     static constexpr int kDefaultChannelLayout = AudioChannelLayout::LAYOUT_STEREO;
     static constexpr int kDurationMilliSec = 720;
     static constexpr int kBufferSize = kSamplingFrequency * kDurationMilliSec / 1000;
@@ -164,10 +163,7 @@ class VirtualizerProcessTest : public ::testing::TestWithParam<VirtualizerProces
         if (mZeroInput) {
             std::fill(buffer.begin(), buffer.end(), 0);
         } else {
-            int frequency = 100;
-            for (size_t i = 0; i < buffer.size(); i++) {
-                buffer[i] = sin(2 * M_PI * frequency * i / kSamplingFrequency);
-            }
+            generateSineWave(1000 /*Input Frequency*/, buffer);
         }
     }
 

@@ -36,7 +36,7 @@ package android.hardware.radio.modem;
 @JavaDerive(toString=true) @VintfStability
 parcelable HardwareConfigModem {
   int rilModel;
-  android.hardware.radio.RadioTechnology rat;
+  android.hardware.radio.RadioTechnology rat = android.hardware.radio.RadioTechnology.UNKNOWN;
   int maxVoiceCalls;
   int maxDataCalls;
   int maxStandby;

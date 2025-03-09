@@ -24,6 +24,7 @@ import android.hardware.health.BatteryHealthData;
 import android.hardware.health.BatteryStatus;
 import android.hardware.health.DiskStats;
 import android.hardware.health.StorageInfo;
+import android.hardware.health.HingeInfo;
 
 /**
  * Health Information.
@@ -115,7 +116,6 @@ parcelable HealthInfo {
      * Battery capacity level. See {@link BatteryCapacityLevel} for more details.
      */
     BatteryCapacityLevel batteryCapacityLevel;
-
     /**
      * Value of {@link #batteryChargeTimeToFullNowSeconds} if it is not
      * supported.
@@ -148,4 +148,8 @@ parcelable HealthInfo {
      * Battery health data
      */
     @nullable BatteryHealthData batteryHealthData;
+    /**
+     * Information about foldable hinge health. Will be an empty vector if no hinges present
+     */
+    @nullable HingeInfo[] hingeInfos;
 }

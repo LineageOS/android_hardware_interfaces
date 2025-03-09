@@ -33,7 +33,7 @@
 
 package android.hardware.radio.network;
 /* @hide */
-@Backing(type="int") @JavaDerive(toString=true) @VintfStability
+@Backing(type="int") @JavaDerive(toString=true) @SuppressWarnings(value={"redundant-name"}) @VintfStability
 enum RadioBandMode {
   BAND_MODE_UNSPECIFIED,
   BAND_MODE_EURO,

@@ -28,10 +28,12 @@ namespace hardware {
 namespace wifi {
 using aidl_return_util::validateAndCall;
 
-WifiApIface::WifiApIface(const std::string& ifname, const std::vector<std::string>& instances,
+WifiApIface::WifiApIface(const std::string& ifname, const bool usesMlo,
+                         const std::vector<std::string>& instances,
                          const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
                          const std::weak_ptr<iface_util::WifiIfaceUtil> iface_util)
     : ifname_(ifname),
+      uses_mlo_(usesMlo),
       instances_(instances),
       legacy_hal_(legacy_hal),
       iface_util_(iface_util),
@@ -48,6 +50,10 @@ bool WifiApIface::isValid() {
 
 std::string WifiApIface::getName() {
     return ifname_;
+}
+
+bool WifiApIface::usesMlo() {
+    return uses_mlo_;
 }
 
 void WifiApIface::removeInstance(std::string instance) {
@@ -72,7 +78,7 @@ ndk::ScopedAStatus WifiApIface::setMacAddress(const std::array<uint8_t, 6>& in_m
 ndk::ScopedAStatus WifiApIface::getFactoryMacAddress(std::array<uint8_t, 6>* _aidl_return) {
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
                            &WifiApIface::getFactoryMacAddressInternal, _aidl_return,
-                           instances_.size() > 0 ? instances_[0] : ifname_);
+                           getOperatingInstanceName());
 }
 
 ndk::ScopedAStatus WifiApIface::resetToFactoryMacAddress() {
@@ -90,14 +96,14 @@ std::pair<std::string, ndk::ScopedAStatus> WifiApIface::getNameInternal() {
 }
 
 ndk::ScopedAStatus WifiApIface::setCountryCodeInternal(const std::array<uint8_t, 2>& code) {
-    legacy_hal::wifi_error legacy_status = legacy_hal_.lock()->setCountryCode(
-            instances_.size() > 0 ? instances_[0] : ifname_, code);
+    legacy_hal::wifi_error legacy_status =
+            legacy_hal_.lock()->setCountryCode(getOperatingInstanceName(), code);
     return createWifiStatusFromLegacyError(legacy_status);
 }
 
 ndk::ScopedAStatus WifiApIface::setMacAddressInternal(const std::array<uint8_t, 6>& mac) {
     // Support random MAC up to 2 interfaces
-    if (instances_.size() == 2) {
+    if (instances_.size() == 2 && !uses_mlo_) {
         int rbyte = 1;
         for (auto const& intf : instances_) {
             std::array<uint8_t, 6> rmac = mac;
@@ -131,7 +137,7 @@ std::pair<std::array<uint8_t, 6>, ndk::ScopedAStatus> WifiApIface::getFactoryMac
 
 ndk::ScopedAStatus WifiApIface::resetToFactoryMacAddressInternal() {
     std::pair<std::array<uint8_t, 6>, ndk::ScopedAStatus> getMacResult;
-    if (instances_.size() == 2) {
+    if (instances_.size() == 2 && !uses_mlo_) {
         for (auto const& intf : instances_) {
             getMacResult = getFactoryMacAddressInternal(intf);
             LOG(DEBUG) << "Reset MAC to factory MAC on " << intf;
@@ -164,6 +170,11 @@ ndk::ScopedAStatus WifiApIface::resetToFactoryMacAddressInternal() {
 
 std::pair<std::vector<std::string>, ndk::ScopedAStatus> WifiApIface::getBridgedInstancesInternal() {
     return {instances_, ndk::ScopedAStatus::ok()};
+}
+
+ndk::ScopedAStatus WifiApIface::usesMlo(bool* _aidl_return) {
+    *_aidl_return = uses_mlo_;
+    return ndk::ScopedAStatus::ok();
 }
 
 }  // namespace wifi

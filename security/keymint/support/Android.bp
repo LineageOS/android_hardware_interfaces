@@ -30,6 +30,7 @@ cc_library {
         "-Wall",
         "-Wextra",
         "-Werror",
+        "-DKEYMINT_HAL_V4",
     ],
     srcs: [
         "attestation_record.cpp",
@@ -40,10 +41,42 @@ cc_library {
     export_include_dirs: [
         "include",
     ],
+    header_libs: [
+        "libhardware_headers",
+    ],
     defaults: [
         "keymint_use_latest_hal_aidl_ndk_shared",
     ],
     shared_libs: [
+        "libbase",
+        "libcrypto",
+        "libutils",
+        "libhardware",
+    ],
+}
+
+cc_library {
+    name: "libkeymint_support_V3",
+    vendor_available: true,
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+    ],
+    srcs: [
+        "attestation_record.cpp",
+        "authorization_set.cpp",
+        "keymint_utils.cpp",
+        "key_param_output.cpp",
+    ],
+    export_include_dirs: [
+        "include",
+    ],
+    header_libs: [
+        "libhardware_headers",
+    ],
+    shared_libs: [
+        "android.hardware.security.keymint-V3-ndk",
         "libbase",
         "libcrypto",
         "libutils",
@@ -82,6 +115,7 @@ cc_library {
 
 cc_test {
     name: "libkeymint_remote_prov_support_test",
+    cpp_std: "c++20",
     srcs: ["remote_prov_utils_test.cpp"],
     static_libs: [
         "android.hardware.security.rkp-V3-ndk",
@@ -94,6 +128,7 @@ cc_test {
     ],
     shared_libs: [
         "libbase",
+        "libbinder_ndk",
         "libcppbor",
         "libcppcose_rkp",
         "libcrypto",

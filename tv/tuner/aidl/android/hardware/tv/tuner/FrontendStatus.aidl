@@ -28,6 +28,7 @@ import android.hardware.tv.tuner.FrontendModulationStatus;
 import android.hardware.tv.tuner.FrontendRollOff;
 import android.hardware.tv.tuner.FrontendScanAtsc3PlpInfo;
 import android.hardware.tv.tuner.FrontendSpectralInversion;
+import android.hardware.tv.tuner.FrontendStandardExt;
 import android.hardware.tv.tuner.FrontendStatusAtsc3PlpInfo;
 import android.hardware.tv.tuner.FrontendTransmissionMode;
 import android.hardware.tv.tuner.LnbVoltage;
@@ -272,4 +273,13 @@ union FrontendStatus {
      * Average jitter (milliseconds).
      */
     int iptvAverageJitterMs;
+
+    /**
+     * Standard extension.
+     *
+     * DVB-T and DVB-S can transition to another standard within the same standard series. For
+     * example, DVB-T can transition to DVB-T2 and back. This attribute represents the standard
+     * extension. Valid values include FrontendDvbtStandard.T or FrontendDvbsStandard.S2 etc.
+     */
+    FrontendStandardExt standardExt;
 }

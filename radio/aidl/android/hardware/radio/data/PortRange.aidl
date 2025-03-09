@@ -24,6 +24,7 @@ package android.hardware.radio.data;
  */
 @VintfStability
 @JavaDerive(toString=true)
+@SuppressWarnings(value={"redundant-name"})
 parcelable PortRange {
     const int PORT_RANGE_MIN = 20;
     const int PORT_RANGE_MAX = 65535;

@@ -333,8 +333,8 @@ Filter::~Filter() {
     // All the filter event callbacks in start are for testing purpose.
     switch (mType.mainType) {
         case DemuxFilterMainType::TS:
-            createMediaEvent(events, false);
-            createMediaEvent(events, true);
+            createMediaEvent(events, false, 0);
+            createMediaEvent(events, true, 1);
             createTsRecordEvent(events);
             createTemiEvent(events);
             break;
@@ -1235,7 +1235,8 @@ bool Filter::sameFile(int fd1, int fd2) {
     return (stat1.st_dev == stat2.st_dev) && (stat1.st_ino == stat2.st_ino);
 }
 
-void Filter::createMediaEvent(vector<DemuxFilterEvent>& events, bool isAudioPresentation) {
+void Filter::createMediaEvent(vector<DemuxFilterEvent>& events, bool isAudioPresentation,
+                              int indexInDataGroup) {
     DemuxFilterMediaEvent mediaEvent;
     mediaEvent.streamId = 1;
     mediaEvent.isPtsPresent = true;
@@ -1301,6 +1302,10 @@ void Filter::createMediaEvent(vector<DemuxFilterEvent>& events, bool isAudioPres
 
     mediaEvent.avDataId = static_cast<int64_t>(dataId);
     mediaEvent.avMemory = ::android::dupToAidl(nativeHandle);
+
+    mediaEvent.numDataPieces = 2;
+    mediaEvent.indexInDataGroup = indexInDataGroup;
+    mediaEvent.dataGroupId = 321;
 
     events.push_back(DemuxFilterEvent::make<DemuxFilterEvent::Tag::media>(std::move(mediaEvent)));
 

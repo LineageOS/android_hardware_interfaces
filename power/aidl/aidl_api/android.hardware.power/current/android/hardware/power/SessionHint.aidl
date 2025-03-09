@@ -42,4 +42,6 @@ enum SessionHint {
   GPU_LOAD_UP = 5,
   GPU_LOAD_DOWN = 6,
   GPU_LOAD_RESET = 7,
+  CPU_LOAD_SPIKE = 8,
+  GPU_LOAD_SPIKE = 9,
 }

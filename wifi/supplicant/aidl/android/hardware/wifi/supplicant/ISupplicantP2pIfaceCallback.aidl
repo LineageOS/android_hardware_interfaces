@@ -26,6 +26,8 @@ import android.hardware.wifi.supplicant.P2pPeerClientJoinedEventParams;
 import android.hardware.wifi.supplicant.P2pProvDiscStatusCode;
 import android.hardware.wifi.supplicant.P2pProvisionDiscoveryCompletedEventParams;
 import android.hardware.wifi.supplicant.P2pStatusCode;
+import android.hardware.wifi.supplicant.P2pUsdBasedServiceDiscoveryResultParams;
+import android.hardware.wifi.supplicant.UsdTerminateReasonCode;
 import android.hardware.wifi.supplicant.WpsConfigMethods;
 import android.hardware.wifi.supplicant.WpsDevPasswordId;
 
@@ -325,4 +327,29 @@ oneway interface ISupplicantP2pIfaceCallback {
      * @param params Parameters associated with the invitation request event.
      */
     void onInvitationReceivedWithParams(in P2pInvitationEventParams params);
+
+    /**
+     * Used to indicate the reception of an USD based service discovery response.
+     *
+     * @param params Parameters associated with the USD based service discovery result.
+     */
+    void onUsdBasedServiceDiscoveryResult(in P2pUsdBasedServiceDiscoveryResultParams params);
+
+    /**
+     * Used to indicate the termination of USD based service discovery.
+     *
+     * @param sessionId Identifier to identify the instance of a service discovery.
+     * @param reasonCode The reason for termination of service discovery.
+     */
+    void onUsdBasedServiceDiscoveryTerminated(
+            in int sessionId, in UsdTerminateReasonCode reasonCode);
+
+    /**
+     * Used to indicate the termination of USD based service Advertisement.
+     *
+     * @param sessionId Identifier to identify the instance of a service advertisement.
+     * @param reasonCode The reason for termination of service advertisement.
+     */
+    void onUsdBasedServiceAdvertisementTerminated(
+            in int sessionId, in UsdTerminateReasonCode reasonCode);
 }

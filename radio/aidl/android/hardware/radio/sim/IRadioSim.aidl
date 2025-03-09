@@ -123,6 +123,8 @@ oneway interface IRadioSim {
      * Response function is IRadioSimResponse.getCdmaSubscriptionResponse()
      *
      * This is available when android.hardware.telephony.cdma is defined.
+     *
+     * @deprecated Legacy CDMA is unsupported.
      */
     void getCdmaSubscription(in int serial);
 
@@ -134,6 +136,8 @@ oneway interface IRadioSim {
      * Response function is IRadioSimResponse.getCdmaSubscriptionSourceResponse()
      *
      * This is available when android.hardware.telephony.cdma is defined.
+     *
+     * @deprecated Legacy CDMA is unsupported.
      */
     void getCdmaSubscriptionSource(in int serial);
 
@@ -255,9 +259,9 @@ oneway interface IRadioSim {
 
     /**
      * Request APDU exchange on the basic channel. This command reflects TS 27.007
-     * "generic SIM access" operation (+CSIM). The modem must ensure proper function of GSM/CDMA,
+     * "generic SIM access" operation (+CSIM). The modem must ensure proper function of GSM,
      * and filter commands appropriately. It must filter channel management and SELECT by DF
-     * name commands. "sessionid" field must be ignored.
+     * name commands. "sessionId" field is always 0 (for aid="") and may be ignored.
      *
      * @param serial Serial number of request.
      * @param message SimApdu to be sent
@@ -406,6 +410,8 @@ oneway interface IRadioSim {
      * Response function is IRadioSimResponse.setCdmaSubscriptionSourceResponse()
      *
      * This is available when android.hardware.telephony.cdma is defined.
+     *
+     * @deprecated Legacy CDMA is unsupported.
      */
     void setCdmaSubscriptionSource(in int serial, in CdmaSubscriptionSource cdmaSub);
 

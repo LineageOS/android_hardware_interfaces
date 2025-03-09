@@ -36,7 +36,7 @@ package android.hardware.tv.tuner;
 @Backing(type="int") @VintfStability
 enum FrontendIsdbtPartialReceptionFlag {
   UNDEFINED = 0,
-  AUTO = 1,
-  FALSE = 2,
-  TRUE = 4,
+  AUTO = (1 << 0) /* 1 */,
+  FALSE = (1 << 1) /* 2 */,
+  TRUE = (1 << 2) /* 4 */,
 }

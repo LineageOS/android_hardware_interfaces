@@ -36,9 +36,9 @@ package android.hardware.tv.tuner;
 @Backing(type="int") @VintfStability
 enum DemuxScAvcIndex {
   UNDEFINED = 0,
-  I_SLICE = 1,
-  P_SLICE = 2,
-  B_SLICE = 4,
-  SI_SLICE = 8,
-  SP_SLICE = 16,
+  I_SLICE = (1 << 0) /* 1 */,
+  P_SLICE = (1 << 1) /* 2 */,
+  B_SLICE = (1 << 2) /* 4 */,
+  SI_SLICE = (1 << 3) /* 8 */,
+  SP_SLICE = (1 << 4) /* 16 */,
 }

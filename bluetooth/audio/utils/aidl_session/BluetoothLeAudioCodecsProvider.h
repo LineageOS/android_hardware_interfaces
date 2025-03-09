@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "aidl/android/hardware/bluetooth/audio/CodecInfo.h"
+#include "aidl/android/hardware/bluetooth/audio/CodecSpecificConfigurationLtv.h"
 #include "aidl/android/hardware/bluetooth/audio/SessionType.h"
 #include "aidl_android_hardware_bluetooth_audio_setting.h"
 
@@ -84,12 +85,18 @@ class BluetoothLeAudioCodecsProvider {
   template <class T>
   static inline UnicastCapability ComposeUnicastCapability(
       const CodecType& codec_type, const AudioLocation& audio_location,
+      const std::optional<
+          CodecSpecificConfigurationLtv::AudioChannelAllocation>&
+          audio_channel_allocation,
       const uint8_t& device_cnt, const uint8_t& channel_count,
       const T& capability);
 
   template <class T>
   static inline BroadcastCapability ComposeBroadcastCapability(
       const CodecType& codec_type, const AudioLocation& audio_location,
+      const std::optional<
+          CodecSpecificConfigurationLtv::AudioChannelAllocation>&
+          audio_channel_allocation,
       const uint8_t& channel_count, const std::vector<T>& capability);
 
   static inline Lc3Capabilities ComposeLc3Capability(

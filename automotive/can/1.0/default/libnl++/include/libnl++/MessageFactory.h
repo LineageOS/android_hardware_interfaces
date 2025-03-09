@@ -26,6 +26,9 @@
 
 namespace android::nl {
 
+static constexpr uint16_t kDefaultFlags = NLM_F_REQUEST | NLM_F_ACK;
+static constexpr uint16_t kCreateFlags = NLM_F_REQUEST | NLM_F_CREATE | NLM_F_EXCL | NLM_F_ACK;
+
 class MessageFactoryBase {
   protected:
     static nlattr* add(nlmsghdr* msg, size_t maxLen, nlattrtype_t type, const void* data,
@@ -54,7 +57,7 @@ class MessageFactory : private MessageFactoryBase {
      * \param type Message type (such as RTM_NEWLINK).
      * \param flags Message flags (such as NLM_F_REQUEST).
      */
-    MessageFactory(nlmsgtype_t type, uint16_t flags)
+    MessageFactory(nlmsgtype_t type, uint16_t flags = kDefaultFlags)
         : header(mMessage.header), data(mMessage.data) {
         mMessage.header.nlmsg_len = offsetof(Message, attributesBuffer);
         mMessage.header.nlmsg_type = type;

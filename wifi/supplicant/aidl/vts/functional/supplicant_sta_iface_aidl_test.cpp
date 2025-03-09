@@ -47,6 +47,9 @@ using aidl::android::hardware::wifi::supplicant::MscsParams;
 using aidl::android::hardware::wifi::supplicant::QosCharacteristics;
 using aidl::android::hardware::wifi::supplicant::QosPolicyScsData;
 using aidl::android::hardware::wifi::supplicant::QosPolicyScsRequestStatus;
+using aidl::android::hardware::wifi::supplicant::UsdMessageInfo;
+using aidl::android::hardware::wifi::supplicant::UsdReasonCode;
+using aidl::android::hardware::wifi::supplicant::UsdServiceDiscoveryInfo;
 using aidl::android::hardware::wifi::supplicant::WpaDriverCapabilitiesMask;
 using aidl::android::hardware::wifi::supplicant::WpsConfigMethods;
 using android::ProcessState;
@@ -241,6 +244,38 @@ class SupplicantStaIfaceCallback : public BnSupplicantStaIfaceCallback {
     ::ndk::ScopedAStatus onPmkSaCacheAdded(
             const ::aidl::android::hardware::wifi::supplicant::PmkSaCacheData& /* pmkSaData */)
             override {
+        return ndk::ScopedAStatus::ok();
+    }
+    ::ndk::ScopedAStatus onUsdPublishStarted(int32_t /* cmdId */,
+                                             int32_t /* publishId */) override {
+        return ndk::ScopedAStatus::ok();
+    }
+    ::ndk::ScopedAStatus onUsdSubscribeStarted(int32_t /* cmdId */,
+                                               int32_t /* subscribeId */) override {
+        return ndk::ScopedAStatus::ok();
+    }
+    ::ndk::ScopedAStatus onUsdPublishConfigFailed(int32_t /* cmdId */) override {
+        return ndk::ScopedAStatus::ok();
+    }
+    ::ndk::ScopedAStatus onUsdSubscribeConfigFailed(int32_t /* cmdId */) override {
+        return ndk::ScopedAStatus::ok();
+    }
+    ::ndk::ScopedAStatus onUsdPublishTerminated(int32_t /* publishId */,
+                                                UsdReasonCode /* reasonCode */) override {
+        return ndk::ScopedAStatus::ok();
+    }
+    ::ndk::ScopedAStatus onUsdSubscribeTerminated(int32_t /* subscribeId */,
+                                                  UsdReasonCode /* reasonCode */) override {
+        return ndk::ScopedAStatus::ok();
+    }
+    ::ndk::ScopedAStatus onUsdPublishReplied(const UsdServiceDiscoveryInfo& /* info */) override {
+        return ndk::ScopedAStatus::ok();
+    }
+    ::ndk::ScopedAStatus onUsdServiceDiscovered(
+            const UsdServiceDiscoveryInfo& /* info */) override {
+        return ndk::ScopedAStatus::ok();
+    }
+    ::ndk::ScopedAStatus onUsdMessageReceived(const UsdMessageInfo& /* messageInfo */) override {
         return ndk::ScopedAStatus::ok();
     }
 };

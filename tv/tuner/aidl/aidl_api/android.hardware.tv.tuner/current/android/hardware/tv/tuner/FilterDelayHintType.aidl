@@ -35,7 +35,7 @@ package android.hardware.tv.tuner;
 /* @hide */
 @Backing(type="int") @VintfStability
 enum FilterDelayHintType {
-  INVALID = 0,
-  TIME_DELAY_IN_MS = 1,
-  DATA_SIZE_DELAY_IN_BYTES = 2,
+  INVALID,
+  TIME_DELAY_IN_MS,
+  DATA_SIZE_DELAY_IN_BYTES,
 }

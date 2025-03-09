@@ -33,7 +33,7 @@
 
 package android.hardware.radio.network;
 /* @hide */
-@Backing(type="int") @JavaDerive(toString=true) @VintfStability
+@Backing(type="int") @JavaDerive(toString=true) @SuppressWarnings(value={"redundant-name"}) @VintfStability
 enum RegState {
   NOT_REG_MT_NOT_SEARCHING_OP = 0,
   REG_HOME = 1,

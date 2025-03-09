@@ -66,15 +66,15 @@ parcelable DataProfileInfo {
     /**
      * PDP_type values.
      */
-    PdpProtocolType protocol;
+    PdpProtocolType protocol = PdpProtocolType.IP;
     /**
      * PDP_type values used on roaming network.
      */
-    PdpProtocolType roamingProtocol;
+    PdpProtocolType roamingProtocol = PdpProtocolType.IP;
     /**
      * APN authentication type.
      */
-    ApnAuthType authType;
+    ApnAuthType authType = ApnAuthType.NO_PAP_NO_CHAP;
     /**
      * The username for APN, or empty string.
      */

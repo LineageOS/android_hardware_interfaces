@@ -1,0 +1,24 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+rust_binary {
+    name: "android.hardware.tv.mediaquality-service.example",
+    relative_install_path: "hw",
+    init_rc: ["mediaquality-default.rc"],
+    vintf_fragments: ["mediaquality-default.xml"],
+    vendor: true,
+    rustlibs: [
+        "libandroid_logger",
+        "liblogger",
+        "liblog_rust",
+        "libbinder_rs",
+        "android.hardware.tv.mediaquality-V1-rust",
+    ],
+    srcs: ["main.rs"],
+}

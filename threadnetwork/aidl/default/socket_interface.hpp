@@ -247,6 +247,15 @@ class SocketInterface : public ot::Spinel::SpinelInterface,
     otError WaitForHardwareResetCompletion(uint32_t aTimeoutMs);
 
     /**
+     * Initialize socket
+     *
+     * @retval TRUE  Socket initialization is successful.
+     * @retval FALSE Socket initialization is failed.
+     *
+     */
+    otError InitSocket();
+
+    /**
      * Reset socket interface to intitial state.
      *
      */
@@ -257,6 +266,7 @@ class SocketInterface : public ot::Spinel::SpinelInterface,
                                              ///< descriptor to become available.
         kMaxRetriesForSocketCloseCheck = 3,  ///< Maximum retry times for checking
                                              ///< if socket is closed.
+        kMaxRetriesForSocketInit = 3,        ///< Maximum retry times for socket initialization.
     };
 
     ReceiveFrameCallback mReceiveFrameCallback;

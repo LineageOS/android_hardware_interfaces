@@ -20,6 +20,7 @@ package android.hardware.radio.sim;
 @VintfStability
 @Backing(type="int")
 @JavaDerive(toString=true)
+@SuppressWarnings(value={"redundant-name"})
 enum SimLockMultiSimPolicy {
 
     /**

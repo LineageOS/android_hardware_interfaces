@@ -198,6 +198,8 @@ class VtsComposerClient {
 
     std::vector<RefreshRateChangedDebugData> takeListOfRefreshRateChangedDebugData();
 
+    std::pair<ScopedAStatus, int32_t> getMaxLayerPictureProfiles(int64_t display);
+
     static constexpr int32_t kMaxFrameIntervalNs = 50000000;  // 20fps
     static constexpr int32_t kNoFrameIntervalNs = 0;
 

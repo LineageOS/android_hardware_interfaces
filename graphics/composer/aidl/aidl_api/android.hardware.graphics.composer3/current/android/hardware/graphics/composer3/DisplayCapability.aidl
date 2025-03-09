@@ -43,4 +43,5 @@ enum DisplayCapability {
   SUSPEND = 6,
   DISPLAY_IDLE_TIMER = 7,
   MULTI_THREADED_PRESENT = 8,
+  PICTURE_PROCESSING = 9,
 }

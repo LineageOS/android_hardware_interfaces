@@ -52,7 +52,8 @@ SignedDataSigStruct<Data> = [
 ; example, this could be provided by the hardware vendor, who certifies all of their chips.
 ; The SignerName is a free-form string describing who generated the signature. The root
 ; certificate will need to be communicated to the verifier out of band, along with the
-; SignerName that is expected for the given root certificate.
+; SignerName that is expected for the given root certificate. UDS certificate
+; requirements are defined in https://android.googlesource.com/platform/hardware/interfaces/+/main/security/rkp/README.md#uds-certificates.
 UdsCerts = {
     * SignerName => UdsCertChain
 }

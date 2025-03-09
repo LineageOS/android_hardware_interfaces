@@ -48,4 +48,11 @@ apex {
         "android.hardware.audio.service-aidl.xml",
         "android.hardware.bluetooth.audio.xml",
     ],
+    required: [
+        "aidl_audio_set_configurations_bfbs",
+        "aidl_default_audio_set_configurations_json",
+        "aidl_audio_set_scenarios_bfbs",
+        "aidl_default_audio_set_scenarios_json",
+        "hfp_codec_capabilities_xml",
+    ],
 }

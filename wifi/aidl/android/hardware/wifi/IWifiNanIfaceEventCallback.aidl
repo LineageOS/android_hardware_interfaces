@@ -29,6 +29,7 @@ import android.hardware.wifi.NanPairingConfirmInd;
 import android.hardware.wifi.NanPairingRequestInd;
 import android.hardware.wifi.NanStatus;
 import android.hardware.wifi.NanSuspensionModeChangeInd;
+import android.hardware.wifi.RttResult;
 /**
  * NAN Response and Asynchronous Event Callbacks.
  *
@@ -461,4 +462,12 @@ oneway interface IWifiNanIfaceEventCallback {
      *        |NanStatusCode.INVALID_PAIRING_ID|
      */
     void notifyTerminatePairingResponse(in char id, in NanStatus status);
+
+    /**
+     * Callback is invoked when ranging results are available.
+     *
+     * @param results RttResult data.
+     * @param discoverySessionId Discovery session ID.
+     */
+    void notifyRangingResults(in RttResult[] results, in byte discoverySessionId);
 }

@@ -94,6 +94,8 @@ oneway interface IRadioNetwork {
      * Response function is IRadioNetworkResponse.getCdmaRoamingPreferenceResponse()
      *
      * This is available when android.hardware.telephony.cdma is defined.
+     *
+     * @deprecated Legacy CDMA is unsupported.
      */
     void getCdmaRoamingPreference(in int serial);
 
@@ -272,13 +274,15 @@ oneway interface IRadioNetwork {
      * Response function is IRadioNetworkResponse.setCdmaRoamingPreferenceResponse()
      *
      * This is available when android.hardware.telephony.cdma is defined.
+     *
+     * @deprecated Legacy CDMA is unsupported.
      */
     void setCdmaRoamingPreference(in int serial, in CdmaRoamingType type);
 
     /**
      * Sets the minimum time between when unsolicited cellInfoList() must be invoked.
      * A value of 0, means invoke cellInfoList() when any of the reported information changes.
-     * Setting the value to INT_MAX(0x7fffffff) means never issue a unsolicited cellInfoList().
+     * Value of RadioConst:VALUE_UNAVAILABLE means never issue a unsolicited cellInfoList().
      *
      * @param serial Serial number of request.
      * @param rate minimum time in milliseconds to indicate time between unsolicited cellInfoList()
@@ -334,7 +338,7 @@ oneway interface IRadioNetwork {
 
     /**
      * Enables/disables network state change notifications due to changes in LAC and/or CID (for
-     * GSM) or BID/SID/NID/latitude/longitude (for CDMA). Basically +CREG=2 vs. +CREG=1 (TS 27.007).
+     * GSM). Basically +CREG=2 vs. +CREG=1 (TS 27.007).
      * The Radio implementation must default to "updates enabled" when the screen is on and
      * "updates disabled" when the screen is off.
      *
@@ -503,7 +507,7 @@ oneway interface IRadioNetwork {
      *
      * This is available when android.hardware.telephony is defined.
      */
-    oneway void setUsageSetting(in int serial, in UsageSetting usageSetting);
+    void setUsageSetting(in int serial, in UsageSetting usageSetting);
 
     /**
      * Get the UE usage setting for data/voice centric usage.
@@ -514,7 +518,7 @@ oneway interface IRadioNetwork {
      *
      * This is available when android.hardware.telephony is defined.
      */
-    oneway void getUsageSetting(in int serial);
+    void getUsageSetting(in int serial);
 
     /**
      * Set the Emergency Mode
@@ -713,4 +717,60 @@ oneway interface IRadioNetwork {
      * This is available when android.hardware.telephony.access is defined.
      */
     void isSecurityAlgorithmsUpdatedEnabled(in int serial);
+
+    /**
+     * Set the non-terrestrial PLMN with lower priority than terrestrial networks.
+     * MCC/MNC broadcast by the non-terrestrial networks may not be included in OPLMNwACT file on
+     * SIM profile. Acquisition of satellite based system is lower priority to terrestrial
+     * networks. UE shall make all attempts to acquire terrestrial service prior to camping on
+     * satellite LTE service.
+     *
+     * @param serial Serial number of request
+     * @param simSlot Indicates the SIM slot to which this API will be applied. The modem will use
+     *                this information to determine the relevant carrier.
+     * @param carrierPlmnArray Array of roaming PLMN used for connecting to satellite networks
+     *                         supported by user subscription.
+     * @param allSatellitePlmnArray allSatellitePlmnArray contains all the PLMNs present in
+     *                              carrierPlmnArray and also list of satellite PLMNs that are not
+     *                              supported by the carrier.
+     *                              Modem should use the allSatellitePlmnArray to identify satellite
+     *                              PLMNs that are not supported by the carrier and make sure not to
+     *                              attach to them.
+     *
+     * Response function is IRadioNetworkResponse.setSatellitePlmnResponse()
+     *
+     * This is available when android.hardware.telephony.radio.access is defined.
+     */
+    void setSatellitePlmn(in int serial, in int simSlot, in String[] carrierPlmnArray,
+            in String[] allSatellitePlmnArray);
+
+    /**
+     * Enable or disable satellite in the cellular modem associated with a carrier.
+     *
+     * Refer setSatellitePlmn for the details of satellite PLMN scanning process. Once modem is
+     * disabled, modem should not attach to any of the PLMNs present in allSatellitePlmnArray.
+     * If modem is enabled, modem should attach to only PLMNs present in carrierPlmnArray.
+     *
+     * @param serial Serial number of request
+     * @param simSlot Indicates the SIM slot to which this API will be applied. The modem will use
+     *                this information to determine the relevant carrier.
+     * @param satelliteEnabled {@code true} to enable satellite, {@code false} to disable satellite.
+     *
+     * Response function is IRadioNetworkResponse.setSatelliteEnabledForCarrier()
+     *
+     * This is available when android.hardware.telephony.radio.access is defined.
+     */
+    void setSatelliteEnabledForCarrier(in int serial, in int simSlot, boolean satelliteEnabled);
+
+    /**
+     * Check whether satellite is enabled in the cellular modem associated with a carrier.
+     *
+     * @param serial Serial number of request
+     * @param simSlot Indicates the SIM slot to which this API will be applied.
+     *
+     * Response function is IRadioNetworkResponse.isSatelliteEnabledForCarrier()
+     *
+     * This is available when android.hardware.telephony.radio.access is defined.
+     */
+    void isSatelliteEnabledForCarrier(in int serial, in int simSlot);
 }

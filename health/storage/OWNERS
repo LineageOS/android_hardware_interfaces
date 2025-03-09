@@ -1,6 +1,9 @@
 # Bug component: 30545
 
+# Don't inherit owners from hardware/interfaces/health/
 set noparent
+# But inherit from hardware/interfaces
+include platform/hardware/interfaces:/OWNERS
 
 jaegeuk@google.com
 elsk@google.com

@@ -17,18 +17,12 @@
 #pragma once
 
 #ifndef LOG_TAG
-#warn "ComposerCommandBuffer.h included without LOG_TAG"
+#warning "ComposerCommandBuffer.h included without LOG_TAG"
 #endif
 
 //#define LOG_NDEBUG 0
 
-#include <algorithm>
-#include <limits>
-#include <memory>
 #include <vector>
-
-#include <inttypes.h>
-#include <string.h>
 
 #include <android/hardware/graphics/composer/2.2/IComposer.h>
 #include <android/hardware/graphics/composer/2.2/IComposerClient.h>
@@ -82,7 +76,7 @@ class CommandWriterBase : public V2_1::CommandWriterBase {
 
     void setLayerPerFrameMetadata(const hidl_vec<IComposerClient::PerFrameMetadata>& metadataVec) {
         beginCommand(IComposerClient::Command::SET_LAYER_PER_FRAME_METADATA,
-                     metadataVec.size() * 2);
+                     static_cast<uint16_t>(metadataVec.size() * 2));
         for (const auto& metadata : metadataVec) {
             writeSigned(static_cast<int32_t>(metadata.key));
             writeFloat(metadata.value);

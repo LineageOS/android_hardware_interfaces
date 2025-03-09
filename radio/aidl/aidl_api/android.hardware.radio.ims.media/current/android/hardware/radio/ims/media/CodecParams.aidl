@@ -35,7 +35,7 @@ package android.hardware.radio.ims.media;
 /* @hide */
 @JavaDerive(toString=true) @VintfStability
 parcelable CodecParams {
-  android.hardware.radio.ims.media.CodecType codecType;
+  android.hardware.radio.ims.media.CodecType codecType = android.hardware.radio.ims.media.CodecType.INVALID;
   byte rxPayloadTypeNumber;
   byte txPayloadTypeNumber;
   byte samplingRateKHz;

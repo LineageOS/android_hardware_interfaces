@@ -39,6 +39,7 @@ enum AccessNetwork {
     EUTRAN,
     /**
      * CDMA 2000 network
+     * @deprecated Legacy CDMA is unsupported.
      */
     CDMA2000,
     /**

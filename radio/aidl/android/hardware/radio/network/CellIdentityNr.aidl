@@ -29,12 +29,12 @@ import android.hardware.radio.network.OperatorInfo;
 parcelable CellIdentityNr {
     /**
      * 3-digit Mobile Country Code, in range[0, 999]; This value must be valid for registered or
-     *  camped cells; INT_MAX means invalid/unreported.
+     *  camped cells; Empty string means invalid/unreported.
      */
     String mcc;
     /**
      * 2 or 3-digit Mobile Network Code, in range [0, 999], This value must be valid for
-     * registered or camped cells; INT_MAX means invalid/unreported.
+     * registered or camped cells; Empty string means invalid/unreported.
      */
     String mnc;
     /**
@@ -48,7 +48,7 @@ parcelable CellIdentityNr {
      */
     int pci;
     /**
-     * 16-bit tracking area code, INT_MAX means invalid/unreported.
+     * 16-bit tracking area code, RadioConst:VALUE_UNAVAILABLE means invalid/unreported.
      */
     int tac;
     /**

@@ -22,8 +22,8 @@
 
 namespace android::netdevice {
 
-unsigned int nametoindex(const std::string& ifname) {
-    const auto ifidx = if_nametoindex(ifname.c_str());
+unsigned int nametoindex(std::string_view ifname) {
+    const auto ifidx = if_nametoindex(std::string(ifname).c_str());
     if (ifidx != 0) return ifidx;
 
     if (errno != ENODEV) {

@@ -35,9 +35,9 @@ package android.hardware.tv.tuner;
 /* @hide */
 @Backing(type="int") @VintfStability
 enum DemuxRecordScIndexType {
-  NONE = 0,
-  SC = 1,
-  SC_HEVC = 2,
-  SC_AVC = 3,
-  SC_VVC = 4,
+  NONE,
+  SC,
+  SC_HEVC,
+  SC_AVC,
+  SC_VVC,
 }

@@ -26,7 +26,7 @@ parcelable RadioResponseInfoModem {
     /**
      * Response type
      */
-    RadioResponseType type;
+    RadioResponseType type = RadioResponseType.SOLICITED;
     /**
      * Serial number of the request
      */
@@ -34,7 +34,7 @@ parcelable RadioResponseInfoModem {
     /**
      * Response error
      */
-    RadioError error;
+    RadioError error = RadioError.NONE;
     /**
      * Whether the modem is enabled or not
      */

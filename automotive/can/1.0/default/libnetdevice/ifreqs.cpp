@@ -21,6 +21,8 @@
 #include <android-base/logging.h>
 #include <android-base/unique_fd.h>
 
+#include <sys/ioctl.h>
+
 #include <map>
 
 namespace android::netdevice::ifreqs {
@@ -68,9 +70,11 @@ bool send(unsigned long request, struct ifreq& ifr) {
     return true;
 }
 
-struct ifreq fromName(const std::string& ifname) {
+struct ifreq fromName(std::string_view ifname) {
     struct ifreq ifr = {};
-    strlcpy(ifr.ifr_name, ifname.c_str(), IF_NAMESIZE);
+    // memcpy: last \0 initialized with ifreq above
+    memcpy(ifr.ifr_name, ifname.data(),
+           std::min(ifname.size(), static_cast<size_t>(IF_NAMESIZE - 1)));
     return ifr;
 }
 

@@ -21,6 +21,8 @@ package android.hardware.radio.network;
 @Backing(type="int")
 @JavaDerive(toString=true)
 enum Domain {
+    /** Do not use. */
+    INVALID = 0,
     /**
      * Circuit-switched
      */

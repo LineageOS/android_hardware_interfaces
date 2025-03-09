@@ -294,6 +294,7 @@ class KeyMintBenchmarkTest {
     ErrorCode DeleteKey() {
         Status result = keymint_->deleteKey(key_blob_);
         key_blob_ = vector<uint8_t>();
+        key_transform_ = "";
         return GetReturnErrorCode(result);
     }
 

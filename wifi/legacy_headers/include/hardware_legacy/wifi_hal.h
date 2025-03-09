@@ -494,6 +494,7 @@ void wifi_get_error_info(wifi_error err, const char **msg); // return a pointer 
 #define WIFI_FEATURE_ROAMING_MODE_CONTROL   (uint64_t)0x800000000 // Support for configuring roaming mode
 #define WIFI_FEATURE_SET_VOIP_MODE          (uint64_t)0x1000000000 // Support Voip mode setting
 #define WIFI_FEATURE_CACHED_SCAN_RESULTS    (uint64_t)0x2000000000 // Support cached scan result report
+#define WIFI_FEATURE_MLO_SAP (uint64_t)0x4000000000                // Support MLO SoftAp
 // Add more features here
 
 #define IS_MASK_SET(mask, flags)        (((flags) & (mask)) == (mask))

@@ -35,6 +35,7 @@ package android.hardware.radio.ims.media;
 /* @hide */
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum CodecType {
+  INVALID = 0,
   AMR = (1 << 0) /* 1 */,
   AMR_WB = (1 << 1) /* 2 */,
   EVS = (1 << 2) /* 4 */,

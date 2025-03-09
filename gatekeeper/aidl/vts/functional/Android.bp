@@ -15,6 +15,7 @@
 //
 
 package {
+    default_team: "trendy_team_android_hardware_backed_security",
     // See: http://go/android-license-faq
     default_applicable_licenses: ["hardware_interfaces_license"],
 }

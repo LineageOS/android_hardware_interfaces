@@ -36,7 +36,7 @@ package android.hardware.tv.tuner;
 @Backing(type="int") @VintfStability
 enum FrontendAtsc3TimeInterleaveMode {
   UNDEFINED = 0,
-  AUTO = 1,
-  CTI = 2,
-  HTI = 4,
+  AUTO = (1 << 0) /* 1 */,
+  CTI = (1 << 1) /* 2 */,
+  HTI = (1 << 2) /* 4 */,
 }

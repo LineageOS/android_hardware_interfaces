@@ -702,17 +702,30 @@ enum Dataspace {
     /**
      * Ultra HDR
      *
-     * JPEG image with embedded 10-bit recovery map following the Ultra HDR specification.
+     * JPEG image with embedded HDR gain map following the Ultra HDR specification and
+     * ISO/CD 21496‐1
      *
      * This value must always remain aligned with the public ImageFormat Jpeg/R definition and is
      * valid with formats:
      *    HAL_PIXEL_FORMAT_BLOB: JPEG image encoded by Ultra HDR encoder according to
      *    the <a href="https://developer.android.com/guide/topics/media/hdr-image-format">
      *    Ultra HDR Image format specification</a>.
-     * The image contains a standard SDR JPEG and a recovery map. Ultra HDR decoders can use the
-     * map to recover the 10-bit input image.
+     * The image contains a standard SDR JPEG and a gain map. Ultra HDR decoders can use the
+     * map to boost the brightness of the rendered image.
      */
     JPEG_R = 0x1005,
+
+    /**
+     * ISO/IEC 23008-12:2024
+     *
+     * High Efficiency Image File Format (HEIF) with embedded HDR gain map
+     *
+     * This value is valid with formats:
+     *    HAL_PIXEL_FORMAT_BLOB: A HEIC image encoded by HEIC or HEVC encoder
+     * according to ISO/IEC 23008-12:2024 that includes an HDR gain map and
+     * metadata according to ISO/CD 21496‐1.
+     */
+    HEIF_ULTRAHDR = 0x1006,
 
     /**
      * ITU-R Recommendation 709 (BT.709)

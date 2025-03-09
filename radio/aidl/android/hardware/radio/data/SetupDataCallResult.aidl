@@ -27,6 +27,7 @@ import android.hardware.radio.data.TrafficDescriptor;
 /** @hide */
 @VintfStability
 @JavaDerive(toString=true)
+@SuppressWarnings(value={"redundant-name"})
 parcelable SetupDataCallResult {
     /**
      * Indicates the data connection is inactive.
@@ -64,14 +65,14 @@ parcelable SetupDataCallResult {
     /**
      * Data call fail cause. DataCallFailCause.NONE if no error.
      */
-    DataCallFailCause cause;
+    DataCallFailCause cause = DataCallFailCause.NONE;
     /**
      * If cause is not DataCallFailCause.NONE, this field indicates the network suggested data
      * retry back-off time in milliseconds. Negative value indicates network does not give any
-     * suggestion. 0 indicates retry should be performed immediately. 0x7fffffffffffffff indicates
-     * the device should not retry data setup anymore. During this time, no calls to
-     * IRadioData.setupDataCall for this APN will be made unless IRadioDataIndication.unthrottleApn
-     * is sent with the same APN.
+     * suggestion. 0 indicates retry should be performed immediately.
+     * RadioConst:VALUE_UNAVAILABLE_LONG indicates the device should not retry data setup anymore.
+     * During this time, no calls to IRadioData.setupDataCall for this APN will be made unless
+     * IRadioDataIndication.unthrottleApn is sent with the same APN.
      */
     long suggestedRetryTime;
     /**
@@ -87,7 +88,7 @@ parcelable SetupDataCallResult {
      * PDP protocol type. If cause is DataCallFailCause.ONLY_SINGLE_BEARER_ALLOWED, this is the
      * protocol type supported, such as "IP" or "IPV6".
      */
-    PdpProtocolType type;
+    PdpProtocolType type = PdpProtocolType.IP;
     /**
      * The network interface name.
      */

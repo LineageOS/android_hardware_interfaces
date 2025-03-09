@@ -46,5 +46,7 @@ enum EvConnectorType {
   TESLA_SUPERCHARGER = 9,
   GBT_AC = 10,
   GBT_DC = 11,
+  SAE_J3400_AC = 8,
+  SAE_J3400_DC = 9,
   OTHER = 101,
 }

@@ -19,6 +19,7 @@
 #include "broadcastradio-utils-aidl/Utils.h"
 
 #include <android-base/logging.h>
+#include <android-base/parsedouble.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 
@@ -629,6 +630,10 @@ bool parseArgInt(const std::string& s, int* out) {
 
 bool parseArgLong(const std::string& s, long* out) {
     return ::android::base::ParseInt(s, out);
+}
+
+bool parseArgDouble(const std::string& s, double* out) {
+    return ::android::base::ParseDouble(s, out);
 }
 
 bool parseArgBool(const std::string& s, bool* out) {

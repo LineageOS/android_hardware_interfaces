@@ -35,7 +35,7 @@ package android.hardware.radio.ims.media;
 /* @hide */
 @JavaDerive(toString=true) @VintfStability
 parcelable AmrParams {
-  android.hardware.radio.ims.media.AmrMode amrMode;
+  android.hardware.radio.ims.media.AmrMode amrMode = android.hardware.radio.ims.media.AmrMode.INVALID;
   boolean octetAligned;
   int maxRedundancyMillis;
 }

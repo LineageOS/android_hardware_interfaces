@@ -39,4 +39,8 @@ interface IBluetoothChannelSoundingSession {
   boolean isAbortedProcedureRequired();
   void writeRawData(in android.hardware.bluetooth.ranging.ChannelSoudingRawData rawData);
   void close(android.hardware.bluetooth.ranging.Reason reason);
+  void writeProcedureData(in android.hardware.bluetooth.ranging.ChannelSoundingProcedureData procedureData);
+  void updateChannelSoundingConfig(in android.hardware.bluetooth.ranging.Config conifg);
+  void updateProcedureEnableConfig(in android.hardware.bluetooth.ranging.ProcedureEnableConfig procedureEnableConfig);
+  void updateBleConnInterval(in int bleConnInterval);
 }

@@ -36,4 +36,5 @@ package android.hardware.graphics.composer3;
 parcelable DisplayIdentification {
   byte port;
   byte[] data;
+  android.hardware.graphics.composer3.ScreenPartStatus screenPartStatus = android.hardware.graphics.composer3.ScreenPartStatus.UNSUPPORTED;
 }

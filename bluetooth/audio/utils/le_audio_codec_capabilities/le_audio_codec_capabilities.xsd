@@ -56,9 +56,12 @@
   <xs:element name="strategyConfiguration">
     <xs:complexType>
       <xs:attribute name="name" type="xs:string"/>
+      <!-- Deprecated definition of Audio Location, please use audioLocationInt -->
       <xs:attribute name="audioLocation" type="audioLocation"/>
       <xs:attribute name="connectedDevice" type="xs:unsignedByte"/>
       <xs:attribute name="channelCount" type="xs:unsignedByte"/>
+      <!-- Integer Audio Location to populate to audioLocation if present -->
+      <xs:attribute name="audioChannelAllocation" type="xs:int"/>
     </xs:complexType>
   </xs:element>
   <xs:simpleType name="audioLocation">

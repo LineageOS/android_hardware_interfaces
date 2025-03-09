@@ -372,6 +372,16 @@ void onAsyncNanEventSuspensionModeChange(NanSuspensionModeChangeInd* event) {
     }
 }
 
+std::function<void(wifi_rtt_result* rtt_results[], uint32_t num_results, uint16_t session_id)>
+        on_nan_event_ranging_results_callback;
+void onAsyncNanEventRangingResults(wifi_rtt_result* rtt_results[], uint32_t num_results,
+                                   uint16_t session_id) {
+    const auto lock = aidl_sync_util::acquireGlobalLock();
+    if (on_nan_event_ranging_results_callback && rtt_results) {
+        on_nan_event_ranging_results_callback(rtt_results, num_results, session_id);
+    }
+}
+
 std::function<void(const NanPairingRequestInd&)> on_nan_event_pairing_request_user_callback;
 void onAsyncNanEventPairingRequest(NanPairingRequestInd* event) {
     const auto lock = aidl_sync_util::acquireGlobalLock();
@@ -1510,6 +1520,7 @@ wifi_error WifiLegacyHal::nanRegisterCallbackHandlers(const std::string& iface_n
     on_nan_event_schedule_update_user_callback = user_callbacks.on_event_schedule_update;
     on_nan_event_suspension_mode_change_user_callback =
             user_callbacks.on_event_suspension_mode_change;
+    on_nan_event_ranging_results_callback = user_callbacks.on_ranging_results;
 
     return global_func_table_.wifi_nan_register_handler(getIfaceHandle(iface_name),
                                                         {onAsyncNanNotifyResponse,
@@ -1534,7 +1545,8 @@ wifi_error WifiLegacyHal::nanRegisterCallbackHandlers(const std::string& iface_n
                                                          onAsyncNanEventPairingConfirm,
                                                          onAsyncNanEventBootstrappingRequest,
                                                          onAsyncNanEventBootstrappingConfirm,
-                                                         onAsyncNanEventSuspensionModeChange});
+                                                         onAsyncNanEventSuspensionModeChange,
+                                                         onAsyncNanEventRangingResults});
 }
 
 wifi_error WifiLegacyHal::nanEnableRequest(const std::string& iface_name, transaction_id id,

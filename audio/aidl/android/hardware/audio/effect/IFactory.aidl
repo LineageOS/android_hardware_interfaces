@@ -74,13 +74,18 @@ interface IFactory {
 
     /**
      * Called by the framework to destroy the effect and free up all currently allocated resources.
-     * It is recommended to destroy the effect from the client side as soon as it is becomes unused.
+     * This method can be called at any time to destroy an effect instance. It is recommended to
+     * destroy the effect from the client side as soon as it becomes unused to free up resources.
      *
-     * The client must ensure effect instance is closed before destroy.
+     * The effect instance must handle any necessary cleanup and resource deallocation.
+     * If the effect is in the **PROCESSING** or **DRAINING** state, it must gracefully stop
+     * processing before destruction.
+     * The effect must ensure that all internal states are properly cleaned up to prevent resource
+     * leaks.
      *
      * @param handle The handle of effect instance to be destroyed.
      * @throws EX_ILLEGAL_ARGUMENT if the effect handle is not valid.
-     * @throws EX_ILLEGAL_STATE if the effect instance is not in a proper state to be destroyed.
+     * @throws EX_ILLEGAL_STATE if the effect instance can not be destroyed.
      */
     void destroyEffect(in IEffect handle);
 }

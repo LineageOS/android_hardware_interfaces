@@ -350,3 +350,24 @@ ndk::ScopedAStatus RadioNetworkResponse::isSecurityAlgorithmsUpdatedEnabledRespo
     parent_network.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
+
+ndk::ScopedAStatus RadioNetworkResponse::setSatellitePlmnResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_network.notify(info.serial);
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus RadioNetworkResponse::setSatelliteEnabledForCarrierResponse(
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_network.notify(info.serial);
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus RadioNetworkResponse::isSatelliteEnabledForCarrierResponse(
+        const RadioResponseInfo& info, bool enabled) {
+    rspInfo = info;
+    this->isSatelliteEnabledForCarrier = enabled;
+    parent_network.notify(info.serial);
+    return ndk::ScopedAStatus::ok();
+}

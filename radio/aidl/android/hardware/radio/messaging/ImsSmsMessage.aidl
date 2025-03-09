@@ -24,7 +24,7 @@ import android.hardware.radio.messaging.GsmSmsMessage;
 @VintfStability
 @JavaDerive(toString=true)
 parcelable ImsSmsMessage {
-    RadioTechnologyFamily tech;
+    RadioTechnologyFamily tech = RadioTechnologyFamily.THREE_GPP;
     /**
      * Retry if true
      */
@@ -37,6 +37,7 @@ parcelable ImsSmsMessage {
     /**
      * Valid field if tech is 3GPP2 and size = 1 else must be empty. Only one of cdmaMessage and
      * gsmMessage must be of size 1 based on the RadioTechnologyFamily and the other must be size 0.
+     * @deprecated Legacy CDMA is unsupported.
      */
     CdmaSmsMessage[] cdmaMessage;
     /**

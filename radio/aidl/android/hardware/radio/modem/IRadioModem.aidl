@@ -139,15 +139,15 @@ oneway interface IRadioModem {
     void nvReadItem(in int serial, in NvItem itemId);
 
     /**
-     * Reset the radio NV configuration to the factory state.
-     * This is used for device configuration by some CDMA operators.
+     * Reboots modem.
+     *
+     * This was historically used to reset NV configuration, but starting from Android U, NV APIs
+     * are deprecated.
      *
      * @param serial Serial number of request.
-     * @param resetType ResetNvType
+     * @param resetType Always ResetNvType.RELOAD.
      *
      * Response function is IRadioModemResponse.nvResetConfigResponse()
-     *
-     * Note: This will be deprecated in favor of a rebootModem API in Android U.
      */
     void nvResetConfig(in int serial, in ResetNvType resetType);
 

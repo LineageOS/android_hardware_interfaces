@@ -40,6 +40,9 @@ interface IRadioNetworkResponse {
   oneway void getAvailableBandModesResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.network.RadioBandMode[] bandModes);
   oneway void getAvailableNetworksResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.network.OperatorInfo[] networkInfos);
   oneway void getBarringInfoResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.network.CellIdentity cellIdentity, in android.hardware.radio.network.BarringInfo[] barringInfos);
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void getCdmaRoamingPreferenceResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.network.CdmaRoamingType type);
   oneway void getCellInfoListResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.network.CellInfo[] cellInfo);
   oneway void getDataRegistrationStateResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.network.RegStateResult dataRegResponse);
@@ -57,6 +60,9 @@ interface IRadioNetworkResponse {
   oneway void setAllowedNetworkTypesBitmapResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void setBandModeResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void setBarringPasswordResponse(in android.hardware.radio.RadioResponseInfo info);
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void setCdmaRoamingPreferenceResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void setCellInfoListRateResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void setIndicationFilterResponse(in android.hardware.radio.RadioResponseInfo info);
@@ -85,4 +91,7 @@ interface IRadioNetworkResponse {
   oneway void setCellularIdentifierTransparencyEnabledResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void setSecurityAlgorithmsUpdatedEnabledResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void isSecurityAlgorithmsUpdatedEnabledResponse(in android.hardware.radio.RadioResponseInfo info, in boolean isEnabled);
+  oneway void setSatellitePlmnResponse(in android.hardware.radio.RadioResponseInfo info);
+  oneway void setSatelliteEnabledForCarrierResponse(in android.hardware.radio.RadioResponseInfo info);
+  oneway void isSatelliteEnabledForCarrierResponse(in android.hardware.radio.RadioResponseInfo info, boolean isEnabled);
 }

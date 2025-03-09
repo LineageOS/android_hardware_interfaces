@@ -46,4 +46,5 @@ parcelable DisplayCommand {
   boolean presentDisplay;
   boolean presentOrValidateDisplay;
   int frameIntervalNs;
+  long pictureProfileId;
 }

@@ -16,6 +16,8 @@
 
 package android.hardware.wifi;
 
+import android.hardware.wifi.RttBw;
+
 /**
  * NDP Capabilities response.
  */
@@ -103,4 +105,16 @@ parcelable NanCapabilities {
      * Flag to indicate if NAN suspension is supported.
      */
     boolean supportsSuspension;
+    /**
+     * Flag to indicate if NAN periodic ranging is supported.
+     */
+    boolean supportsPeriodicRanging;
+    /**
+     * Maximum supported bandwidth.
+     */
+    RttBw maxSupportedBandwidth;
+    /**
+     * Maximum number of supported receive chains.
+     */
+    int maxNumRxChainsSupported;
 }

@@ -37,4 +37,5 @@ parcelable P2pCreateGroupOwnerInfo {
   boolean persistent;
   int persistentNetworkId;
   @nullable android.hardware.wifi.common.OuiKeyedData[] vendorData;
+  boolean isP2pV2;
 }

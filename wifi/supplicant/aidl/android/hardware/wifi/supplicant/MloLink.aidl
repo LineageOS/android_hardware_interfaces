@@ -16,6 +16,8 @@
 
 package android.hardware.wifi.supplicant;
 
+import android.hardware.wifi.supplicant.WifiChannelWidthInMhz;
+
 /**
  * Multi-Link Operation (MLO) Link IEEE Std 802.11-be.
  * The information for MLO link needed by 802.11be standard.
@@ -66,4 +68,8 @@ parcelable MloLink {
      * Frequency on which the link operates in MHz.
      */
     int frequencyMHz;
+    /**
+     * Channel bandwidth
+     */
+    WifiChannelWidthInMhz channelBandwidth;
 }

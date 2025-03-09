@@ -35,10 +35,10 @@ package android.hardware.tv.tuner;
 /* @hide */
 @Backing(type="int") @VintfStability
 enum DemuxIpFilterType {
-  UNDEFINED = 0,
-  SECTION = 1,
-  NTP = 2,
-  IP_PAYLOAD = 3,
-  IP = 4,
-  PAYLOAD_THROUGH = 5,
+  UNDEFINED,
+  SECTION,
+  NTP,
+  IP_PAYLOAD,
+  IP,
+  PAYLOAD_THROUGH,
 }

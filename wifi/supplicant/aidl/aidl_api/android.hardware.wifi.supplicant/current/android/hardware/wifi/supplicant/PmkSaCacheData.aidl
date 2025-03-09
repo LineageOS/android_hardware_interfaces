@@ -37,4 +37,5 @@ parcelable PmkSaCacheData {
   byte[6] bssid;
   long expirationTimeInSec;
   byte[] serializedEntry;
+  @nullable byte[] pmkid;
 }

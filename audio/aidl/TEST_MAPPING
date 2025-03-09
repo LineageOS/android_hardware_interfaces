@@ -72,12 +72,7 @@
       "name": "audiosystem_tests"
     },
     {
-      "name": "CtsVirtualDevicesTestCases",
-      "options" : [
-        {
-          "include-filter": "android.virtualdevice.cts.VirtualAudioTest"
-        }
-      ]
+      "name": "CtsVirtualDevicesAudioTestCases"
     }
   ]
 }

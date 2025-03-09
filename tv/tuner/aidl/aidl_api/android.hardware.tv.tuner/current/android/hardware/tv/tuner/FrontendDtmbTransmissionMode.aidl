@@ -36,7 +36,7 @@ package android.hardware.tv.tuner;
 @Backing(type="int") @VintfStability
 enum FrontendDtmbTransmissionMode {
   UNDEFINED = 0,
-  AUTO = 1,
-  C1 = 2,
-  C3780 = 4,
+  AUTO = (1 << 0) /* 1 */,
+  C1 = (1 << 1) /* 2 */,
+  C3780 = (1 << 2) /* 4 */,
 }

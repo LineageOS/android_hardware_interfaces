@@ -80,6 +80,7 @@ using aidl::android::hardware::audio::core::StreamDescriptor;
 using aidl::android::hardware::audio::core::VendorParameter;
 using aidl::android::hardware::audio::core::sounddose::ISoundDose;
 using aidl::android::hardware::common::fmq::SynchronizedReadWrite;
+using aidl::android::media::audio::common::AudioChannelLayout;
 using aidl::android::media::audio::common::AudioContentType;
 using aidl::android::media::audio::common::AudioDevice;
 using aidl::android::media::audio::common::AudioDeviceAddress;
@@ -87,6 +88,7 @@ using aidl::android::media::audio::common::AudioDeviceDescription;
 using aidl::android::media::audio::common::AudioDeviceType;
 using aidl::android::media::audio::common::AudioDualMonoMode;
 using aidl::android::media::audio::common::AudioFormatType;
+using aidl::android::media::audio::common::AudioGainConfig;
 using aidl::android::media::audio::common::AudioInputFlags;
 using aidl::android::media::audio::common::AudioIoFlags;
 using aidl::android::media::audio::common::AudioLatencyMode;
@@ -114,6 +116,10 @@ using android::hardware::audio::common::StreamWorker;
 using android::hardware::audio::common::testing::detail::TestExecutionTracer;
 using ndk::enum_range;
 using ndk::ScopedAStatus;
+
+static constexpr int32_t kAidlVersion1 = 1;
+static constexpr int32_t kAidlVersion2 = 2;
+static constexpr int32_t kAidlVersion3 = 3;
 
 template <typename T>
 std::set<int32_t> extractIds(const std::vector<T>& v) {
@@ -478,6 +484,7 @@ class AudioCoreModuleBase {
         if (setUpDebug) {
             ASSERT_NO_FATAL_FAILURE(SetUpDebug());
         }
+        ASSERT_TRUE(module->getInterfaceVersion(&aidlVersion).isOk());
     }
 
     void RestartService() {
@@ -490,6 +497,7 @@ class AudioCoreModuleBase {
         if (setUpDebug) {
             ASSERT_NO_FATAL_FAILURE(SetUpDebug());
         }
+        ASSERT_TRUE(module->getInterfaceVersion(&aidlVersion).isOk());
     }
 
     void SetUpDebug() {
@@ -577,6 +585,7 @@ class AudioCoreModuleBase {
     std::unique_ptr<WithDebugFlags> debug;
     std::vector<AudioPort> initialPorts;
     std::vector<AudioRoute> initialRoutes;
+    int32_t aidlVersion = -1;
 };
 
 class WithDevicePortConnectedState {
@@ -1509,7 +1518,7 @@ TEST_P(AudioCoreModule, CheckDevicePorts) {
     const int defaultDeviceFlag = 1 << AudioPortDeviceExt::FLAG_INDEX_DEFAULT_DEVICE;
     for (const auto& port : ports) {
         if (port.ext.getTag() != AudioPortExt::Tag::device) continue;
-        const auto& devicePort = port.ext.get<AudioPortExt::Tag::device>();
+        const AudioPortDeviceExt& devicePort = port.ext.get<AudioPortExt::Tag::device>();
         EXPECT_NE(AudioDeviceType::NONE, devicePort.device.type.type);
         EXPECT_NE(AudioDeviceType::IN_DEFAULT, devicePort.device.type.type);
         EXPECT_NE(AudioDeviceType::OUT_DEFAULT, devicePort.device.type.type);
@@ -1543,6 +1552,15 @@ TEST_P(AudioCoreModule, CheckDevicePorts) {
             } else {
                 FAIL() << "Invalid AudioIoFlags Tag: " << toString(port.flags.getTag());
             }
+        }
+        // Speaker layout can be null or layoutMask variant.
+        if (devicePort.speakerLayout.has_value()) {
+            // Should only be set for output ports.
+            EXPECT_EQ(AudioIoFlags::Tag::output, port.flags.getTag());
+            const auto speakerLayoutTag = devicePort.speakerLayout.value().getTag();
+            EXPECT_EQ(AudioChannelLayout::Tag::layoutMask, speakerLayoutTag)
+                    << "If set, speaker layout must be layoutMask.  Received: "
+                    << toString(speakerLayoutTag);
         }
     }
 }
@@ -1818,6 +1836,47 @@ TEST_P(AudioCoreModule, SetAudioPortConfigInvalidPortConfigId) {
         EXPECT_FALSE(suggestedConfig.format.has_value());
         EXPECT_FALSE(suggestedConfig.channelMask.has_value());
         EXPECT_FALSE(suggestedConfig.sampleRate.has_value());
+    }
+}
+
+TEST_P(AudioCoreModule, SetAudioPortConfigInvalidPortAudioGain) {
+    ASSERT_GE(aidlVersion, kAidlVersion1);
+    if (aidlVersion < kAidlVersion3) {
+        GTEST_SKIP() << "Skip for audio HAL version lower than " << kAidlVersion3;
+    }
+    std::vector<AudioPort> ports;
+    ASSERT_IS_OK(module->getAudioPorts(&ports));
+    bool atLeastOnePortWithNonemptyGain = false;
+    for (const auto port : ports) {
+        AudioPortConfig portConfig;
+        portConfig.portId = port.id;
+        if (port.gains.empty()) {
+            continue;
+        }
+        atLeastOnePortWithNonemptyGain = true;
+        int index = 0;
+        ASSERT_NE(0, port.gains[index].stepValue) << "Invalid audio port config gain step 0";
+        portConfig.gain->index = index;
+        AudioGainConfig invalidGainConfig;
+
+        int invalidGain = port.gains[index].maxValue + port.gains[index].stepValue;
+        invalidGainConfig.values.push_back(invalidGain);
+        portConfig.gain.emplace(invalidGainConfig);
+        bool applied = true;
+        AudioPortConfig suggestedConfig;
+        EXPECT_STATUS(EX_ILLEGAL_ARGUMENT,
+                      module->setAudioPortConfig(portConfig, &suggestedConfig, &applied))
+                << "invalid port gain " << invalidGain << " lower than min gain";
+
+        invalidGain = port.gains[index].minValue - port.gains[index].stepValue;
+        invalidGainConfig.values[0] = invalidGain;
+        portConfig.gain.emplace(invalidGainConfig);
+        EXPECT_STATUS(EX_ILLEGAL_ARGUMENT,
+                      module->setAudioPortConfig(portConfig, &suggestedConfig, &applied))
+                << "invalid port gain " << invalidGain << "higher than max gain";
+    }
+    if (!atLeastOnePortWithNonemptyGain) {
+        GTEST_SKIP() << "No audio port contains non-empty gain configuration";
     }
 }
 
@@ -3966,6 +4025,7 @@ TEST_P(AudioStreamOut, UpdateOffloadMetadata) {
 
 enum {
     NAMED_CMD_NAME,
+    NAMED_CMD_MIN_INTERFACE_VERSION,
     NAMED_CMD_DELAY_MS,
     NAMED_CMD_STREAM_TYPE,
     NAMED_CMD_CMDS,
@@ -3973,7 +4033,7 @@ enum {
 };
 enum class StreamTypeFilter { ANY, SYNC, ASYNC };
 using NamedCommandSequence =
-        std::tuple<std::string, int /*cmdDelayMs*/, StreamTypeFilter,
+        std::tuple<std::string, int /*minInterfaceVersion*/, int /*cmdDelayMs*/, StreamTypeFilter,
                    std::shared_ptr<StateSequence>, bool /*validatePositionIncrease*/>;
 enum { PARAM_MODULE_NAME, PARAM_CMD_SEQ, PARAM_SETUP_SEQ };
 using StreamIoTestParameters =
@@ -3984,6 +4044,12 @@ class AudioStreamIo : public AudioCoreModuleBase,
   public:
     void SetUp() override {
         ASSERT_NO_FATAL_FAILURE(SetUpImpl(std::get<PARAM_MODULE_NAME>(GetParam())));
+        ASSERT_GE(aidlVersion, kAidlVersion1);
+        if (const int minVersion =
+                    std::get<NAMED_CMD_MIN_INTERFACE_VERSION>(std::get<PARAM_CMD_SEQ>(GetParam()));
+            aidlVersion < minVersion) {
+            GTEST_SKIP() << "Skip for audio HAL version lower than " << minVersion;
+        }
         ASSERT_NO_FATAL_FAILURE(SetUpModuleConfig());
     }
 
@@ -3993,6 +4059,20 @@ class AudioStreamIo : public AudioCoreModuleBase,
         if (allPortConfigs.empty()) {
             GTEST_SKIP() << "No mix ports have attached devices";
         }
+        const auto& commandsAndStates =
+                std::get<NAMED_CMD_CMDS>(std::get<PARAM_CMD_SEQ>(GetParam()));
+        const bool validatePositionIncrease =
+                std::get<NAMED_CMD_VALIDATE_POS_INCREASE>(std::get<PARAM_CMD_SEQ>(GetParam()));
+        auto runStreamIoCommands = [&](const AudioPortConfig& portConfig) {
+            if (!std::get<PARAM_SETUP_SEQ>(GetParam())) {
+                ASSERT_NO_FATAL_FAILURE(RunStreamIoCommandsImplSeq1(portConfig, commandsAndStates,
+                                                                    validatePositionIncrease));
+            } else {
+                ASSERT_NO_FATAL_FAILURE(RunStreamIoCommandsImplSeq2(portConfig, commandsAndStates,
+                                                                    validatePositionIncrease));
+            }
+        };
+
         for (const auto& portConfig : allPortConfigs) {
             auto port = moduleConfig->getPort(portConfig.portId);
             ASSERT_TRUE(port.has_value());
@@ -4020,16 +4100,18 @@ class AudioStreamIo : public AudioCoreModuleBase,
             delayTransientStates.flags().streamTransientStateDelayMs =
                     std::get<NAMED_CMD_DELAY_MS>(std::get<PARAM_CMD_SEQ>(GetParam()));
             ASSERT_NO_FATAL_FAILURE(delayTransientStates.SetUp(module.get()));
-            const auto& commandsAndStates =
-                    std::get<NAMED_CMD_CMDS>(std::get<PARAM_CMD_SEQ>(GetParam()));
-            const bool validatePositionIncrease =
-                    std::get<NAMED_CMD_VALIDATE_POS_INCREASE>(std::get<PARAM_CMD_SEQ>(GetParam()));
-            if (!std::get<PARAM_SETUP_SEQ>(GetParam())) {
-                ASSERT_NO_FATAL_FAILURE(RunStreamIoCommandsImplSeq1(portConfig, commandsAndStates,
-                                                                    validatePositionIncrease));
-            } else {
-                ASSERT_NO_FATAL_FAILURE(RunStreamIoCommandsImplSeq2(portConfig, commandsAndStates,
-                                                                    validatePositionIncrease));
+            ASSERT_NO_FATAL_FAILURE(runStreamIoCommands(portConfig));
+            if (aidlVersion >= kAidlVersion3 && isNonBlocking && !IOTraits<Stream>::is_input) {
+                // Also try running the same sequence with "aosp.forceDrainToDraining" set.
+                // This will only work with the default implementation. When it works, the stream
+                // tries always to move to the 'DRAINING' state after an "early notify" drain.
+                // This helps to check more paths for our test scenarios.
+                WithModuleParameter forceDrainToDraining("aosp.forceDrainToDraining",
+                                                         Boolean{true});
+                if (forceDrainToDraining.SetUpNoChecks(module.get(), true /*failureExpected*/)
+                            .isOk()) {
+                    ASSERT_NO_FATAL_FAILURE(runStreamIoCommands(portConfig));
+                }
             }
             if (isNonBlocking) {
                 // Also try running the same sequence with "aosp.forceTransientBurst" set.
@@ -4039,13 +4121,7 @@ class AudioStreamIo : public AudioCoreModuleBase,
                 WithModuleParameter forceTransientBurst("aosp.forceTransientBurst", Boolean{true});
                 if (forceTransientBurst.SetUpNoChecks(module.get(), true /*failureExpected*/)
                             .isOk()) {
-                    if (!std::get<PARAM_SETUP_SEQ>(GetParam())) {
-                        ASSERT_NO_FATAL_FAILURE(RunStreamIoCommandsImplSeq1(
-                                portConfig, commandsAndStates, validatePositionIncrease));
-                    } else {
-                        ASSERT_NO_FATAL_FAILURE(RunStreamIoCommandsImplSeq2(
-                                portConfig, commandsAndStates, validatePositionIncrease));
-                    }
+                    ASSERT_NO_FATAL_FAILURE(runStreamIoCommands(portConfig));
                 }
             } else if (!IOTraits<Stream>::is_input) {
                 // Also try running the same sequence with "aosp.forceSynchronousDrain" set.
@@ -4056,13 +4132,7 @@ class AudioStreamIo : public AudioCoreModuleBase,
                                                           Boolean{true});
                 if (forceSynchronousDrain.SetUpNoChecks(module.get(), true /*failureExpected*/)
                             .isOk()) {
-                    if (!std::get<PARAM_SETUP_SEQ>(GetParam())) {
-                        ASSERT_NO_FATAL_FAILURE(RunStreamIoCommandsImplSeq1(
-                                portConfig, commandsAndStates, validatePositionIncrease));
-                    } else {
-                        ASSERT_NO_FATAL_FAILURE(RunStreamIoCommandsImplSeq2(
-                                portConfig, commandsAndStates, validatePositionIncrease));
-                    }
+                    ASSERT_NO_FATAL_FAILURE(runStreamIoCommands(portConfig));
                 }
             }
         }
@@ -4515,14 +4585,14 @@ std::shared_ptr<StateSequence> makeBurstCommands(bool isSync) {
     return std::make_shared<StateSequenceFollower>(std::move(d));
 }
 static const NamedCommandSequence kReadSeq =
-        std::make_tuple(std::string("Read"), 0, StreamTypeFilter::ANY, makeBurstCommands(true),
-                        true /*validatePositionIncrease*/);
+        std::make_tuple(std::string("Read"), kAidlVersion1, 0, StreamTypeFilter::ANY,
+                        makeBurstCommands(true), true /*validatePositionIncrease*/);
 static const NamedCommandSequence kWriteSyncSeq =
-        std::make_tuple(std::string("Write"), 0, StreamTypeFilter::SYNC, makeBurstCommands(true),
-                        true /*validatePositionIncrease*/);
+        std::make_tuple(std::string("Write"), kAidlVersion1, 0, StreamTypeFilter::SYNC,
+                        makeBurstCommands(true), true /*validatePositionIncrease*/);
 static const NamedCommandSequence kWriteAsyncSeq =
-        std::make_tuple(std::string("Write"), 0, StreamTypeFilter::ASYNC, makeBurstCommands(false),
-                        true /*validatePositionIncrease*/);
+        std::make_tuple(std::string("Write"), kAidlVersion1, 0, StreamTypeFilter::ASYNC,
+                        makeBurstCommands(false), true /*validatePositionIncrease*/);
 
 std::shared_ptr<StateSequence> makeAsyncDrainCommands(bool isInput) {
     using State = StreamDescriptor::State;
@@ -4551,10 +4621,10 @@ std::shared_ptr<StateSequence> makeAsyncDrainCommands(bool isInput) {
     return std::make_shared<StateSequenceFollower>(std::move(d));
 }
 static const NamedCommandSequence kWriteDrainAsyncSeq = std::make_tuple(
-        std::string("WriteDrain"), kStreamTransientStateTransitionDelayMs, StreamTypeFilter::ASYNC,
-        makeAsyncDrainCommands(false), false /*validatePositionIncrease*/);
+        std::string("WriteDrain"), kAidlVersion1, kStreamTransientStateTransitionDelayMs,
+        StreamTypeFilter::ASYNC, makeAsyncDrainCommands(false), false /*validatePositionIncrease*/);
 static const NamedCommandSequence kDrainInSeq =
-        std::make_tuple(std::string("Drain"), 0, StreamTypeFilter::ANY,
+        std::make_tuple(std::string("Drain"), kAidlVersion1, 0, StreamTypeFilter::ANY,
                         makeAsyncDrainCommands(true), false /*validatePositionIncrease*/);
 
 std::shared_ptr<StateSequence> makeDrainOutCommands(bool isSync) {
@@ -4576,11 +4646,27 @@ std::shared_ptr<StateSequence> makeDrainOutCommands(bool isSync) {
     return std::make_shared<StateSequenceFollower>(std::move(d));
 }
 static const NamedCommandSequence kDrainOutSyncSeq =
-        std::make_tuple(std::string("Drain"), 0, StreamTypeFilter::SYNC, makeDrainOutCommands(true),
-                        false /*validatePositionIncrease*/);
+        std::make_tuple(std::string("Drain"), kAidlVersion1, 0, StreamTypeFilter::SYNC,
+                        makeDrainOutCommands(true), false /*validatePositionIncrease*/);
 static const NamedCommandSequence kDrainOutAsyncSeq =
-        std::make_tuple(std::string("Drain"), 0, StreamTypeFilter::ASYNC,
+        std::make_tuple(std::string("Drain"), kAidlVersion3, 0, StreamTypeFilter::ASYNC,
                         makeDrainOutCommands(false), false /*validatePositionIncrease*/);
+
+std::shared_ptr<StateSequence> makeDrainEarlyOutCommands() {
+    using State = StreamDescriptor::State;
+    auto d = std::make_unique<StateDag>();
+    StateDag::Node last = d->makeFinalNode(State::IDLE);
+    StateDag::Node draining = d->makeNode(State::DRAINING, kDrainReadyEvent, last);
+    draining.children().push_back(d->makeNode(State::DRAINING, kGetStatusCommand, last));
+    StateDag::Node active = d->makeNode(State::ACTIVE, kDrainOutEarlyCommand, draining);
+    StateDag::Node idle = d->makeNode(State::IDLE, kBurstCommand, active);
+    idle.children().push_back(d->makeNode(State::TRANSFERRING, kTransferReadyEvent, active));
+    d->makeNode(State::STANDBY, kStartCommand, idle);
+    return std::make_shared<StateSequenceFollower>(std::move(d));
+}
+static const NamedCommandSequence kDrainEarlyOutAsyncSeq =
+        std::make_tuple(std::string("DrainEarly"), kAidlVersion3, 0, StreamTypeFilter::ASYNC,
+                        makeDrainEarlyOutCommands(), false /*validatePositionIncrease*/);
 
 std::shared_ptr<StateSequence> makeDrainPauseOutCommands(bool isSync) {
     using State = StreamDescriptor::State;
@@ -4601,12 +4687,33 @@ std::shared_ptr<StateSequence> makeDrainPauseOutCommands(bool isSync) {
     d->makeNode(State::STANDBY, kStartCommand, idle);
     return std::make_shared<StateSequenceFollower>(std::move(d));
 }
-static const NamedCommandSequence kDrainPauseOutSyncSeq = std::make_tuple(
-        std::string("DrainPause"), kStreamTransientStateTransitionDelayMs, StreamTypeFilter::SYNC,
-        makeDrainPauseOutCommands(true), false /*validatePositionIncrease*/);
-static const NamedCommandSequence kDrainPauseOutAsyncSeq = std::make_tuple(
-        std::string("DrainPause"), kStreamTransientStateTransitionDelayMs, StreamTypeFilter::ASYNC,
-        makeDrainPauseOutCommands(false), false /*validatePositionIncrease*/);
+static const NamedCommandSequence kDrainPauseOutSyncSeq =
+        std::make_tuple(std::string("DrainPause"), kAidlVersion1,
+                        kStreamTransientStateTransitionDelayMs, StreamTypeFilter::SYNC,
+                        makeDrainPauseOutCommands(true), false /*validatePositionIncrease*/);
+static const NamedCommandSequence kDrainPauseOutAsyncSeq =
+        std::make_tuple(std::string("DrainPause"), kAidlVersion1,
+                        kStreamTransientStateTransitionDelayMs, StreamTypeFilter::ASYNC,
+                        makeDrainPauseOutCommands(false), false /*validatePositionIncrease*/);
+
+std::shared_ptr<StateSequence> makeDrainEarlyPauseOutCommands() {
+    using State = StreamDescriptor::State;
+    auto d = std::make_unique<StateDag>();
+    StateDag::Node draining = d->makeNodes({std::make_pair(State::DRAINING, kPauseCommand),
+                                            std::make_pair(State::DRAIN_PAUSED, kStartCommand),
+                                            std::make_pair(State::DRAINING, kPauseCommand),
+                                            std::make_pair(State::DRAIN_PAUSED, kBurstCommand)},
+                                           State::TRANSFER_PAUSED);
+    StateDag::Node active = d->makeNode(State::ACTIVE, kDrainOutEarlyCommand, draining);
+    StateDag::Node idle = d->makeNode(State::IDLE, kBurstCommand, active);
+    idle.children().push_back(d->makeNode(State::TRANSFERRING, kDrainOutEarlyCommand, draining));
+    d->makeNode(State::STANDBY, kStartCommand, idle);
+    return std::make_shared<StateSequenceFollower>(std::move(d));
+}
+static const NamedCommandSequence kDrainEarlyPauseOutAsyncSeq =
+        std::make_tuple(std::string("DrainEarlyPause"), kAidlVersion3,
+                        kStreamTransientStateTransitionDelayMs, StreamTypeFilter::ASYNC,
+                        makeDrainEarlyPauseOutCommands(), false /*validatePositionIncrease*/);
 
 // This sequence also verifies that the capture / presentation position is not reset on standby.
 std::shared_ptr<StateSequence> makeStandbyCommands(bool isInput, bool isSync) {
@@ -4648,14 +4755,15 @@ std::shared_ptr<StateSequence> makeStandbyCommands(bool isInput, bool isSync) {
     return std::make_shared<StateSequenceFollower>(std::move(d));
 }
 static const NamedCommandSequence kStandbyInSeq =
-        std::make_tuple(std::string("Standby"), 0, StreamTypeFilter::ANY,
+        std::make_tuple(std::string("Standby"), kAidlVersion1, 0, StreamTypeFilter::ANY,
                         makeStandbyCommands(true, false), false /*validatePositionIncrease*/);
 static const NamedCommandSequence kStandbyOutSyncSeq =
-        std::make_tuple(std::string("Standby"), 0, StreamTypeFilter::SYNC,
+        std::make_tuple(std::string("Standby"), kAidlVersion1, 0, StreamTypeFilter::SYNC,
                         makeStandbyCommands(false, true), false /*validatePositionIncrease*/);
-static const NamedCommandSequence kStandbyOutAsyncSeq = std::make_tuple(
-        std::string("Standby"), kStreamTransientStateTransitionDelayMs, StreamTypeFilter::ASYNC,
-        makeStandbyCommands(false, false), false /*validatePositionIncrease*/);
+static const NamedCommandSequence kStandbyOutAsyncSeq =
+        std::make_tuple(std::string("Standby"), kAidlVersion1,
+                        kStreamTransientStateTransitionDelayMs, StreamTypeFilter::ASYNC,
+                        makeStandbyCommands(false, false), false /*validatePositionIncrease*/);
 
 std::shared_ptr<StateSequence> makePauseCommands(bool isInput, bool isSync) {
     using State = StreamDescriptor::State;
@@ -4690,14 +4798,15 @@ std::shared_ptr<StateSequence> makePauseCommands(bool isInput, bool isSync) {
     return std::make_shared<StateSequenceFollower>(std::move(d));
 }
 static const NamedCommandSequence kPauseInSeq =
-        std::make_tuple(std::string("Pause"), 0, StreamTypeFilter::ANY,
+        std::make_tuple(std::string("Pause"), kAidlVersion1, 0, StreamTypeFilter::ANY,
                         makePauseCommands(true, false), false /*validatePositionIncrease*/);
 static const NamedCommandSequence kPauseOutSyncSeq =
-        std::make_tuple(std::string("Pause"), 0, StreamTypeFilter::SYNC,
+        std::make_tuple(std::string("Pause"), kAidlVersion1, 0, StreamTypeFilter::SYNC,
                         makePauseCommands(false, true), false /*validatePositionIncrease*/);
-static const NamedCommandSequence kPauseOutAsyncSeq = std::make_tuple(
-        std::string("Pause"), kStreamTransientStateTransitionDelayMs, StreamTypeFilter::ASYNC,
-        makePauseCommands(false, false), false /*validatePositionIncrease*/);
+static const NamedCommandSequence kPauseOutAsyncSeq =
+        std::make_tuple(std::string("Pause"), kAidlVersion1, kStreamTransientStateTransitionDelayMs,
+                        StreamTypeFilter::ASYNC, makePauseCommands(false, false),
+                        false /*validatePositionIncrease*/);
 
 std::shared_ptr<StateSequence> makeFlushCommands(bool isInput, bool isSync) {
     using State = StreamDescriptor::State;
@@ -4725,14 +4834,15 @@ std::shared_ptr<StateSequence> makeFlushCommands(bool isInput, bool isSync) {
     return std::make_shared<StateSequenceFollower>(std::move(d));
 }
 static const NamedCommandSequence kFlushInSeq =
-        std::make_tuple(std::string("Flush"), 0, StreamTypeFilter::ANY,
+        std::make_tuple(std::string("Flush"), kAidlVersion1, 0, StreamTypeFilter::ANY,
                         makeFlushCommands(true, false), false /*validatePositionIncrease*/);
 static const NamedCommandSequence kFlushOutSyncSeq =
-        std::make_tuple(std::string("Flush"), 0, StreamTypeFilter::SYNC,
+        std::make_tuple(std::string("Flush"), kAidlVersion1, 0, StreamTypeFilter::SYNC,
                         makeFlushCommands(false, true), false /*validatePositionIncrease*/);
-static const NamedCommandSequence kFlushOutAsyncSeq = std::make_tuple(
-        std::string("Flush"), kStreamTransientStateTransitionDelayMs, StreamTypeFilter::ASYNC,
-        makeFlushCommands(false, false), false /*validatePositionIncrease*/);
+static const NamedCommandSequence kFlushOutAsyncSeq =
+        std::make_tuple(std::string("Flush"), kAidlVersion1, kStreamTransientStateTransitionDelayMs,
+                        StreamTypeFilter::ASYNC, makeFlushCommands(false, false),
+                        false /*validatePositionIncrease*/);
 
 std::shared_ptr<StateSequence> makeDrainPauseFlushOutCommands(bool isSync) {
     using State = StreamDescriptor::State;
@@ -4752,13 +4862,13 @@ std::shared_ptr<StateSequence> makeDrainPauseFlushOutCommands(bool isSync) {
     return std::make_shared<StateSequenceFollower>(std::move(d));
 }
 static const NamedCommandSequence kDrainPauseFlushOutSyncSeq =
-        std::make_tuple(std::string("DrainPauseFlush"), kStreamTransientStateTransitionDelayMs,
-                        StreamTypeFilter::SYNC, makeDrainPauseFlushOutCommands(true),
-                        false /*validatePositionIncrease*/);
+        std::make_tuple(std::string("DrainPauseFlush"), kAidlVersion1,
+                        kStreamTransientStateTransitionDelayMs, StreamTypeFilter::SYNC,
+                        makeDrainPauseFlushOutCommands(true), false /*validatePositionIncrease*/);
 static const NamedCommandSequence kDrainPauseFlushOutAsyncSeq =
-        std::make_tuple(std::string("DrainPauseFlush"), kStreamTransientStateTransitionDelayMs,
-                        StreamTypeFilter::ASYNC, makeDrainPauseFlushOutCommands(false),
-                        false /*validatePositionIncrease*/);
+        std::make_tuple(std::string("DrainPauseFlush"), kAidlVersion1,
+                        kStreamTransientStateTransitionDelayMs, StreamTypeFilter::ASYNC,
+                        makeDrainPauseFlushOutCommands(false), false /*validatePositionIncrease*/);
 
 // Note, this isn't the "official" enum printer, it is only used to make the test name suffix.
 std::string PrintStreamFilterToString(StreamTypeFilter filter) {
@@ -4796,9 +4906,10 @@ INSTANTIATE_TEST_SUITE_P(
         AudioStreamIoOutTest, AudioStreamIoOut,
         testing::Combine(testing::ValuesIn(android::getAidlHalInstanceNames(IModule::descriptor)),
                          testing::Values(kWriteSyncSeq, kWriteAsyncSeq, kWriteDrainAsyncSeq,
-                                         kDrainOutSyncSeq, kDrainPauseOutSyncSeq,
-                                         kDrainPauseOutAsyncSeq, kStandbyOutSyncSeq,
-                                         kStandbyOutAsyncSeq,
+                                         kDrainOutSyncSeq, kDrainOutAsyncSeq,
+                                         kDrainEarlyOutAsyncSeq, kDrainPauseOutSyncSeq,
+                                         kDrainPauseOutAsyncSeq, kDrainEarlyPauseOutAsyncSeq,
+                                         kStandbyOutSyncSeq, kStandbyOutAsyncSeq,
                                          kPauseOutSyncSeq,  // kPauseOutAsyncSeq,
                                          kFlushOutSyncSeq, kFlushOutAsyncSeq,
                                          kDrainPauseFlushOutSyncSeq, kDrainPauseFlushOutAsyncSeq),

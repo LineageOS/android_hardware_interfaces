@@ -20,6 +20,7 @@ import android.hardware.bluetooth.ranging.ComplexNumber;
 
 /**
  * Tone PCT data with quality indicator from a mode-2 or mode-3 step.
+ * @deprecated use ModeTwoData
  */
 @VintfStability
 parcelable StepTonePct {

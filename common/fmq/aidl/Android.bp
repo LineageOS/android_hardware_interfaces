@@ -28,9 +28,8 @@ aidl_interface {
             sdk_version: "module_current",
         },
         cpp: {
-            // FMQ will not be supported in the cpp backend because the parcelables
-            // are not stable enough for use in shared memory
-            enabled: false,
+            // FMQ is only supported for PODs with the cpp backend
+            enabled: true,
         },
         ndk: {
             apex_available: [

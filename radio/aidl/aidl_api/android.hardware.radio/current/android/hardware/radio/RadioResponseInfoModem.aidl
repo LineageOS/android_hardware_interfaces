@@ -35,8 +35,8 @@ package android.hardware.radio;
 /* @hide */
 @JavaDerive(toString=true) @VintfStability
 parcelable RadioResponseInfoModem {
-  android.hardware.radio.RadioResponseType type;
+  android.hardware.radio.RadioResponseType type = android.hardware.radio.RadioResponseType.SOLICITED;
   int serial;
-  android.hardware.radio.RadioError error;
+  android.hardware.radio.RadioError error = android.hardware.radio.RadioError.NONE;
   boolean isEnabled;
 }

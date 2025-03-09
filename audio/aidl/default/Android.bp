@@ -62,7 +62,6 @@ cc_library {
         "ModulePrimary.cpp",
         "SoundDose.cpp",
         "Stream.cpp",
-        "StreamSwitcher.cpp",
         "Telephony.cpp",
         "XsdcConversion.cpp",
         "alsa/Mixer.cpp",
@@ -72,11 +71,13 @@ cc_library {
         "bluetooth/DevicePortProxy.cpp",
         "bluetooth/ModuleBluetooth.cpp",
         "bluetooth/StreamBluetooth.cpp",
+        "deprecated/StreamSwitcher.cpp",
         "primary/PrimaryMixer.cpp",
         "primary/StreamPrimary.cpp",
         "r_submix/ModuleRemoteSubmix.cpp",
         "r_submix/SubmixRoute.cpp",
         "r_submix/StreamRemoteSubmix.cpp",
+        "stub/DriverStubImpl.cpp",
         "stub/ModuleStub.cpp",
         "stub/StreamStub.cpp",
         "usb/ModuleUsb.cpp",
@@ -188,6 +189,47 @@ cc_test {
     srcs: [
         "AudioPolicyConfigXmlConverter.cpp",
         "tests/AudioPolicyConfigXmlConverterTest.cpp",
+    ],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-Wthread-safety",
+        "-DBACKEND_NDK",
+    ],
+    test_suites: ["general-tests"],
+}
+
+cc_test {
+    name: "audio_alsa_utils_tests",
+    vendor_available: true,
+    defaults: [
+        "latest_android_media_audio_common_types_ndk_static",
+        "latest_android_hardware_audio_core_ndk_static",
+    ],
+    static_libs: [
+        "libalsautilsv2",
+        "libtinyalsav2",
+    ],
+    shared_libs: [
+        "libaudio_aidl_conversion_common_ndk",
+        "libaudioaidlcommon",
+        "libaudioutils",
+        "libbase",
+        "libbinder_ndk",
+        "libcutils",
+        "libfmq",
+        "libmedia_helper",
+        "libstagefright_foundation",
+        "libutils",
+    ],
+    header_libs: [
+        "libaudio_system_headers",
+        "libaudioaidl_headers",
+    ],
+    srcs: [
+        "alsa/Utils.cpp",
+        "tests/AlsaUtilsTest.cpp",
     ],
     cflags: [
         "-Wall",

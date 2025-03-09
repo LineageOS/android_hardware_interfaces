@@ -59,6 +59,9 @@ interface IRadioVoiceResponse {
   oneway void isVoNrEnabledResponse(in android.hardware.radio.RadioResponseInfo info, in boolean enable);
   oneway void rejectCallResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void sendBurstDtmfResponse(in android.hardware.radio.RadioResponseInfo info);
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void sendCdmaFeatureCodeResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void sendDtmfResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void sendUssdResponse(in android.hardware.radio.RadioResponseInfo info);

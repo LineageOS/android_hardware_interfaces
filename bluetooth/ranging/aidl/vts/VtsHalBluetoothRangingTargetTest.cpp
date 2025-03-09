@@ -30,18 +30,27 @@ using aidl::android::hardware::bluetooth::ranging::
 using aidl::android::hardware::bluetooth::ranging::
     BnBluetoothChannelSoundingSessionCallback;
 using aidl::android::hardware::bluetooth::ranging::ChannelSoudingRawData;
+using aidl::android::hardware::bluetooth::ranging::ChannelSoundingProcedureData;
+using aidl::android::hardware::bluetooth::ranging::Config;
 using aidl::android::hardware::bluetooth::ranging::CsSecurityLevel;
 using aidl::android::hardware::bluetooth::ranging::IBluetoothChannelSounding;
 using aidl::android::hardware::bluetooth::ranging::
     IBluetoothChannelSoundingSession;
 using aidl::android::hardware::bluetooth::ranging::
     IBluetoothChannelSoundingSessionCallback;
+using aidl::android::hardware::bluetooth::ranging::ProcedureEnableConfig;
 using aidl::android::hardware::bluetooth::ranging::RangingResult;
 using aidl::android::hardware::bluetooth::ranging::Reason;
 using aidl::android::hardware::bluetooth::ranging::ResultType;
 using aidl::android::hardware::bluetooth::ranging::SessionType;
 using aidl::android::hardware::bluetooth::ranging::VendorSpecificData;
 using ndk::ScopedAStatus;
+
+enum class RangingHalVersion : uint8_t {
+  V_UNAVAILABLE = 0,
+  V_1,
+  V_2,
+};
 
 class BluetoothChannelSoundingSessionCallback
     : public BnBluetoothChannelSoundingSessionCallback {
@@ -80,6 +89,8 @@ class BluetoothRangingTest : public ::testing::TestWithParam<std::string> {
     ALOGI("SetUp Ranging Test");
     bluetooth_channel_sounding_ = IBluetoothChannelSounding::fromBinder(
         ndk::SpAIBinder(AServiceManager_waitForService(GetParam().c_str())));
+    hal_version_ = GetRangingHalVersion();
+    ASSERT_GT(hal_version_, RangingHalVersion::V_UNAVAILABLE);
     ASSERT_NE(bluetooth_channel_sounding_, nullptr);
   }
 
@@ -95,6 +106,8 @@ class BluetoothRangingTest : public ::testing::TestWithParam<std::string> {
   ScopedAStatus getSupportedSessionTypes(
       std::optional<std::vector<SessionType>>* _aidl_return);
   ScopedAStatus getMaxSupportedCsSecurityLevel(CsSecurityLevel* _aidl_return);
+  ScopedAStatus getSupportedCsSecurityLevels(
+      std::vector<CsSecurityLevel>* _aidl_return);
   ScopedAStatus openSession(
       const BluetoothChannelSoundingParameters& in_params,
       const std::shared_ptr<IBluetoothChannelSoundingSessionCallback>&
@@ -110,6 +123,30 @@ class BluetoothRangingTest : public ::testing::TestWithParam<std::string> {
     ScopedAStatus status = openSession(params, callback, session);
     return status;
   }
+
+  RangingHalVersion GetRangingHalVersion() {
+    int32_t aidl_version = 0;
+    if (bluetooth_channel_sounding_ == nullptr) {
+      return RangingHalVersion::V_UNAVAILABLE;
+    }
+    auto aidl_ret_val =
+        bluetooth_channel_sounding_->getInterfaceVersion(&aidl_version);
+    if (!aidl_ret_val.isOk()) {
+      return RangingHalVersion::V_UNAVAILABLE;
+    }
+    switch (aidl_version) {
+      case 1:
+        return RangingHalVersion::V_1;
+      case 2:
+        return RangingHalVersion::V_2;
+      default:
+        return RangingHalVersion::V_UNAVAILABLE;
+    }
+    return RangingHalVersion::V_UNAVAILABLE;
+  }
+
+ public:
+  RangingHalVersion hal_version_ = RangingHalVersion::V_UNAVAILABLE;
 
  private:
   std::shared_ptr<IBluetoothChannelSounding> bluetooth_channel_sounding_;
@@ -130,6 +167,13 @@ ScopedAStatus BluetoothRangingTest::getMaxSupportedCsSecurityLevel(
   return bluetooth_channel_sounding_->getMaxSupportedCsSecurityLevel(
       _aidl_return);
 }
+
+ScopedAStatus BluetoothRangingTest::getSupportedCsSecurityLevels(
+    std::vector<CsSecurityLevel>* _aidl_return) {
+  return bluetooth_channel_sounding_->getSupportedCsSecurityLevels(
+      _aidl_return);
+}
+
 ScopedAStatus BluetoothRangingTest::openSession(
     const BluetoothChannelSoundingParameters& in_params,
     const std::shared_ptr<IBluetoothChannelSoundingSessionCallback>&
@@ -155,8 +199,22 @@ TEST_P(BluetoothRangingTest, GetSupportedSessionTypes) {
 }
 
 TEST_P(BluetoothRangingTest, GetMaxSupportedCsSecurityLevel) {
+  if (hal_version_ > RangingHalVersion::V_1) {
+    GTEST_SKIP();
+  }
   CsSecurityLevel security_level;
   ScopedAStatus status = getMaxSupportedCsSecurityLevel(&security_level);
+  ASSERT_TRUE(status.isOk());
+}
+
+TEST_P(BluetoothRangingTest, GetSupportedCsSecurityLevels) {
+  if (hal_version_ < RangingHalVersion::V_2) {
+    GTEST_SKIP();
+  }
+  std::vector<CsSecurityLevel> supported_security_levels;
+  ScopedAStatus status =
+      getSupportedCsSecurityLevels(&supported_security_levels);
+  ASSERT_GT(static_cast<uint8_t>(supported_security_levels.size()), 0);
   ASSERT_TRUE(status.isOk());
 }
 
@@ -205,12 +263,71 @@ TEST_P(BluetoothRangingTest, IsAbortedProcedureRequired) {
 }
 
 TEST_P(BluetoothRangingTest, WriteRawData) {
+  if (hal_version_ > RangingHalVersion::V_1) {
+    GTEST_SKIP();
+  }
   std::shared_ptr<IBluetoothChannelSoundingSession> session;
   auto status = initBluetoothChannelSoundingSession(&session);
   ASSERT_TRUE(status.isOk());
   if (session != nullptr) {
     ChannelSoudingRawData raw_data;
     status = session->writeRawData(raw_data);
+    ASSERT_TRUE(status.isOk());
+  }
+}
+
+TEST_P(BluetoothRangingTest, WriteProcedureData) {
+  if (hal_version_ < RangingHalVersion::V_2) {
+    GTEST_SKIP();
+  }
+  std::shared_ptr<IBluetoothChannelSoundingSession> session;
+  auto status = initBluetoothChannelSoundingSession(&session);
+  ASSERT_TRUE(status.isOk());
+  if (session != nullptr) {
+    ChannelSoundingProcedureData procedure_data;
+    status = session->writeProcedureData(procedure_data);
+    ASSERT_TRUE(status.isOk());
+  }
+}
+
+TEST_P(BluetoothRangingTest, UpdateChannelSoundingConfig) {
+  if (hal_version_ < RangingHalVersion::V_2) {
+    GTEST_SKIP();
+  }
+  std::shared_ptr<IBluetoothChannelSoundingSession> session;
+  auto status = initBluetoothChannelSoundingSession(&session);
+  ASSERT_TRUE(status.isOk());
+  if (session != nullptr) {
+    Config config;
+    status = session->updateChannelSoundingConfig(config);
+    ASSERT_TRUE(status.isOk());
+  }
+}
+
+TEST_P(BluetoothRangingTest, UpdateProcedureEnableConfig) {
+  if (hal_version_ < RangingHalVersion::V_2) {
+    GTEST_SKIP();
+  }
+  std::shared_ptr<IBluetoothChannelSoundingSession> session;
+  auto status = initBluetoothChannelSoundingSession(&session);
+  ASSERT_TRUE(status.isOk());
+  if (session != nullptr) {
+    ProcedureEnableConfig procedure_enable_config;
+    status = session->updateProcedureEnableConfig(procedure_enable_config);
+    ASSERT_TRUE(status.isOk());
+  }
+}
+
+TEST_P(BluetoothRangingTest, UpdateBleConnInterval) {
+  if (hal_version_ < RangingHalVersion::V_2) {
+    GTEST_SKIP();
+  }
+  std::shared_ptr<IBluetoothChannelSoundingSession> session;
+  auto status = initBluetoothChannelSoundingSession(&session);
+  ASSERT_TRUE(status.isOk());
+  if (session != nullptr) {
+    int ble_conn_interval = 10;
+    status = session->updateBleConnInterval(ble_conn_interval);
     ASSERT_TRUE(status.isOk());
   }
 }

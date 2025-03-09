@@ -93,9 +93,9 @@ void displayComponentInfo(hidl_vec<IOmx::ComponentInfo>& nodeList) {
 
 void validateAttributes(
         const std::map<const std::string, const testing::internal::RE>& knownPatterns,
-        const std::vector<const struct AttributePattern>& unknownPatterns,
+        const std::vector<struct AttributePattern>& unknownPatterns,
         hidl_vec<IOmxStore::Attribute> attributes) {
-    std::set<const std::string> attributeKeys;
+    std::set<std::string> attributeKeys;
     for (const auto& attr : attributes) {
         // Make sure there are no duplicates
         const auto [nodeIter, inserted] = attributeKeys.insert(attr.key);
@@ -179,7 +179,7 @@ TEST_P(StoreHidlTest, ListServiceAttr) {
          * tried for a match with the second element of the pair. If this second
          * match fails, the test will fail.
          */
-        const std::vector<const struct AttributePattern> unknownPatterns = {
+        const std::vector<struct AttributePattern> unknownPatterns = {
                 {"supports-[a-z0-9-]*", "0|1"}};
 
         validateAttributes(knownPatterns, unknownPatterns, attributes);
@@ -248,7 +248,7 @@ TEST_P(StoreHidlTest, ListRoles) {
     };
 
     // Strings for matching rules for node attributes with key patterns
-    const std::vector<const struct AttributePattern> unknownPatterns = {
+    const std::vector<struct AttributePattern> unknownPatterns = {
             {"measured-frame-rate-" + size + "-range", range_num},
             {"feature-[a-zA-Z0-9_-]+", string},
     };
@@ -257,9 +257,9 @@ TEST_P(StoreHidlTest, ListRoles) {
     const testing::internal::RE nodeNamePattern = "[a-zA-Z0-9._-]+";
     const testing::internal::RE nodeOwnerPattern = "[a-zA-Z0-9._-]+";
 
-    std::set<const std::string> roleKeys;
-    std::map<const std::string, std::set<const std::string>> nodeToRoles;
-    std::map<const std::string, std::set<const std::string>> ownerToNodes;
+    std::set<std::string> roleKeys;
+    std::map<const std::string, std::set<std::string>> nodeToRoles;
+    std::map<const std::string, std::set<std::string>> ownerToNodes;
     for (const IOmxStore::RoleInfo& role : roleList) {
         // Make sure there are no duplicates
         const auto [roleIter, inserted] = roleKeys.insert(role.role);
@@ -276,7 +276,7 @@ TEST_P(StoreHidlTest, ListRoles) {
         }
 
         // Check the nodes for this role
-        std::set<const std::string> nodeKeys;
+        std::set<std::string> nodeKeys;
         for (const IOmxStore::NodeInfo& node : role.nodes) {
             // Make sure there are no duplicates
             const auto [nodeIter, inserted] = nodeKeys.insert(node.name);
@@ -317,7 +317,7 @@ TEST_P(StoreHidlTest, ListRoles) {
 
         // Verify that roles for each node match with the information from
         // IOmxStore::listRoles().
-        std::set<const std::string> nodeKeys;
+        std::set<std::string> nodeKeys;
         for (IOmx::ComponentInfo node : nodeList) {
             // Make sure there are no duplicates
             const auto [nodeIter, inserted] = nodeKeys.insert(node.mName);
@@ -334,7 +334,7 @@ TEST_P(StoreHidlTest, ListRoles) {
 
             // All the roles advertised by IOmxStore::listRoles() for this
             // node must be included in roleKeys.
-            std::set<const std::string> difference;
+            std::set<std::string> difference;
             std::set_difference(nodeToRoles[node.mName].begin(), nodeToRoles[node.mName].end(),
                                 roleKeys.begin(), roleKeys.end(),
                                 std::inserter(difference, difference.begin()));
@@ -347,7 +347,7 @@ TEST_P(StoreHidlTest, ListRoles) {
         }
         // Check that all nodes obtained from IOmxStore::listRoles() are
         // supported by the their corresponding IOmx instances.
-        std::set<const std::string> difference;
+        std::set<std::string> difference;
         std::set_difference(nodes.begin(), nodes.end(), nodeKeys.begin(), nodeKeys.end(),
                             std::inserter(difference, difference.begin()));
         EXPECT_EQ(difference.empty(), true) << "IOmx::listNodes() for IOmx "

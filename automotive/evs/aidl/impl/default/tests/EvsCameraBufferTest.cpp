@@ -92,6 +92,7 @@ class EvsCameraForTest : public EvsCamera {
                 (override));
     MOCK_METHOD(bool, stopVideoStreamImpl_locked,
                 (ndk::ScopedAStatus & status, std::unique_lock<std::mutex>& lck), (override));
+    MOCK_METHOD(std::string, getId, (), (override));
 };
 
 TEST(EvsCameraBufferTest, ChangeBufferPoolSize) {

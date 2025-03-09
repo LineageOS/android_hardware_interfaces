@@ -31,15 +31,15 @@ parcelable SecurityAlgorithmUpdate {
     /**
      * Type of connection event which is being reported on
      */
-    ConnectionEvent connectionEvent;
+    ConnectionEvent connectionEvent = ConnectionEvent.CS_SIGNALLING_GSM;
     /**
      * Encryption algorithm which was used
      */
-    SecurityAlgorithm encryption;
+    SecurityAlgorithm encryption = SecurityAlgorithm.A50;
     /**
      * Integrity algorithm which was used
      */
-    SecurityAlgorithm integrity;
+    SecurityAlgorithm integrity = SecurityAlgorithm.A50;
     /**
      * Whether or not this connection event is associated with an
      * unauthenticated / unencrypted emergency session

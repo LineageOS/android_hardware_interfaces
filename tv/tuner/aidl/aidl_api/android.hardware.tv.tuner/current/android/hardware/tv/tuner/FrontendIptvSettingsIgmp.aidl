@@ -36,7 +36,7 @@ package android.hardware.tv.tuner;
 @Backing(type="int") @VintfStability
 enum FrontendIptvSettingsIgmp {
   UNDEFINED = 0,
-  V1 = 1,
-  V2 = 2,
-  V3 = 4,
+  V1 = (1 << 0) /* 1 */,
+  V2 = (1 << 1) /* 2 */,
+  V3 = (1 << 2) /* 4 */,
 }

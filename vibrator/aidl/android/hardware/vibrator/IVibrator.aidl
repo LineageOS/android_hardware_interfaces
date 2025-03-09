@@ -19,12 +19,12 @@ package android.hardware.vibrator;
 import android.hardware.vibrator.Braking;
 import android.hardware.vibrator.CompositeEffect;
 import android.hardware.vibrator.CompositePrimitive;
+import android.hardware.vibrator.CompositePwleV2;
 import android.hardware.vibrator.Effect;
 import android.hardware.vibrator.EffectStrength;
+import android.hardware.vibrator.FrequencyAccelerationMapEntry;
 import android.hardware.vibrator.IVibratorCallback;
 import android.hardware.vibrator.PrimitivePwle;
-import android.hardware.vibrator.PwleV2OutputMapEntry;
-import android.hardware.vibrator.PwleV2Primitive;
 import android.hardware.vibrator.VendorEffect;
 
 @VintfStability
@@ -290,6 +290,8 @@ interface IVibrator {
      *
      * @return The frequency resolution of the bandwidth amplitude map.
      *         Non-zero value if supported, or value should be ignored if not supported.
+     * @deprecated This method is deprecated from AIDL v3 and is no longer required to be
+     * implemented even if CAP_FREQUENCY_CONTROL capability is reported.
      */
     float getFrequencyResolution();
 
@@ -301,6 +303,8 @@ interface IVibrator {
      *
      * @return The minimum frequency allowed. Non-zero value if supported,
      *         or value should be ignored if not supported.
+     * @deprecated This method is deprecated from AIDL v3 and is no longer required to be
+     * implemented even if CAP_FREQUENCY_CONTROL capability is reported.
      */
     float getFrequencyMinimum();
 
@@ -322,6 +326,8 @@ interface IVibrator {
      *
      * @return The maximum output acceleration amplitude for each supported frequency,
      *         starting at getMinimumFrequency()
+     * @deprecated This method is deprecated from AIDL v3 and is no longer required to be
+     * implemented even if CAP_FREQUENCY_CONTROL capability is reported.
      */
     float[] getBandwidthAmplitudeMap();
 
@@ -333,6 +339,8 @@ interface IVibrator {
      *
      * @return The maximum duration allowed for a single PrimitivePwle.
      *         Non-zero value if supported, or value should be ignored if not supported.
+     * @deprecated This method is deprecated from AIDL v3 and is no longer required to be
+     * implemented. Use `IVibrator.getPwleV2PrimitiveDurationMaxMillis` instead.
      */
     int getPwlePrimitiveDurationMax();
 
@@ -344,6 +352,8 @@ interface IVibrator {
      *
      * @return The maximum count allowed. Non-zero value if supported,
      *         or value should be ignored if not supported.
+     * @deprecated This method is deprecated from AIDL v3 and is no longer required to be
+     * implemented. Use `IVibrator.getPwleV2CompositionSizeMax` instead.
      */
     int getPwleCompositionSizeMax();
 
@@ -355,6 +365,8 @@ interface IVibrator {
      * Implementations are optional but encouraged if available.
      *
      * @return The braking mechanisms which are supported by the composePwle API.
+     * @deprecated This method is deprecated from AIDL v3 and is no longer required to be
+     * implemented.
      */
     Braking[] getSupportedBraking();
 
@@ -368,6 +380,8 @@ interface IVibrator {
      * explicitly call off. IVibratorCallback.onComplete() support is required for this API.
      *
      * @param composite Array of PWLEs.
+     * @deprecated This method is deprecated from AIDL v3 and is no longer required to be
+     * implemented. Use `IVibrator.composePwleV2` instead.
      */
     void composePwle(in PrimitivePwle[] composite, in IVibratorCallback callback);
 
@@ -396,12 +410,12 @@ interface IVibrator {
      * Retrieves a mapping of vibration frequency (Hz) to the maximum achievable output
      * acceleration (Gs) the device can reach at that frequency.
      *
-     * The map, represented as a list of `PwleV2OutputMapEntry` (frequency, output acceleration)
-     * pairs, defines the device's frequency response. The platform uses the minimum and maximum
-     * frequency values to determine the supported input range for `IVibrator.composePwleV2`.
-     * Output acceleration values are used to identify a frequency range suitable to safely play
-     * perceivable vibrations with a simple API. The map is also exposed for developers using an
-     * advanced API.
+     * The map, represented as a list of `FrequencyAccelerationMapEntry` (frequency, output
+     * acceleration) pairs, defines the device's frequency response. The platform uses the minimum
+     * and maximum frequency values to determine the supported input range for
+     * `IVibrator.composePwleV2`. Output acceleration values are used to identify a frequency range
+     * suitable to safely play perceivable vibrations with a simple API. The map is also exposed for
+     * developers using an advanced API.
      *
      * The platform does not impose specific requirements on map resolution which can vary
      * depending on the shape of device output curve. The values will be linearly interpolated
@@ -410,7 +424,7 @@ interface IVibrator {
      *
      *
      * This may not be supported and this support is reflected in getCapabilities
-     * (CAP_COMPOSE_PWLE_EFFECTS_V2). If this is supported, it's expected to be non-empty and
+     * (CAP_FREQUENCY_CONTROL). If this is supported, it's expected to be non-empty and
      * describe a valid non-empty frequency range where the simple API can be defined
      * (i.e. a range where the output acceleration is always above 10 db SL).
      *
@@ -418,7 +432,7 @@ interface IVibrator {
      *         mapping.
      * @throws EX_UNSUPPORTED_OPERATION if unsupported, as reflected by getCapabilities.
      */
-    List<PwleV2OutputMapEntry> getPwleV2FrequencyToOutputAccelerationMap();
+    List<FrequencyAccelerationMapEntry> getFrequencyToOutputAccelerationMap();
 
     /**
      * Retrieve the maximum duration allowed for any primitive PWLE in units of
@@ -436,8 +450,8 @@ interface IVibrator {
      * Retrieve the maximum number of PWLE primitives input supported by IVibrator.composePwleV2.
      *
      * This may not be supported and this support is reflected in
-     * getCapabilities (CAP_COMPOSE_PWLE_EFFECTS_V2). Devices supporting PWLE effects must
-     * support effects with at least 16 PwleV2Primitive.
+     * getCapabilities (CAP_COMPOSE_PWLE_EFFECTS_V2). Devices supporting
+     * PWLE effects must support effects with at least 16 PwleV2Primitive.
      *
      * @return The maximum count allowed. Non-zero value if supported.
      * @throws EX_UNSUPPORTED_OPERATION if unsupported, as reflected by getCapabilities.
@@ -458,15 +472,23 @@ interface IVibrator {
     int getPwleV2PrimitiveDurationMinMillis();
 
     /**
-     * Play composed sequence of chirps with optional callback upon completion.
+     * Play composed sequence of PWLEs with optional callback upon completion.
+     *
+     * A PWLE (Piecewise-Linear Envelope) effect defines a vibration waveform using amplitude and
+     * frequency points. The envelope linearly interpolates both amplitude and frequency between
+     * consecutive points, creating smooth transitions in the vibration pattern.
      *
      * This may not be supported and this support is reflected in
      * getCapabilities (CAP_COMPOSE_PWLE_EFFECTS_V2).
      *
+     * Note: Devices reporting CAP_COMPOSE_PWLE_EFFECTS_V2 support MUST also have the
+     * CAP_FREQUENCY_CONTROL capability and provide a valid frequency to output acceleration map.
+     *
      * Doing this operation while the vibrator is already on is undefined behavior. Clients should
      * explicitly call off. IVibratorCallback.onComplete() support is required for this API.
      *
-     * @param composite An array of primitives that represents a PWLE (Piecewise-Linear Envelope).
+     * @param composite A CompositePwleV2 representing a composite vibration effect, composed of an
+     *                  array of primitives that define the PWLE (Piecewise-Linear Envelope).
      */
-    void composePwleV2(in PwleV2Primitive[] composite, in IVibratorCallback callback);
+    void composePwleV2(in CompositePwleV2 composite, in IVibratorCallback callback);
 }

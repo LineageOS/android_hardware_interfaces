@@ -43,5 +43,5 @@ parcelable NrSignalStrength {
   int csiSinr;
   int csiCqiTableIndex;
   byte[] csiCqiReport;
-  int timingAdvance = 0x7FFFFFFF;
+  int timingAdvance = android.hardware.radio.RadioConst.VALUE_UNAVAILABLE /* 2147483647 */;
 }

@@ -38,6 +38,8 @@ class EffectThread {
     RetCode destroyThread();
     RetCode startThread();
     RetCode stopThread();
+    RetCode startDraining();
+    RetCode finishDraining();
 
     // Will call process() in a loop if the thread is running.
     void threadLoop();
@@ -48,6 +50,9 @@ class EffectThread {
      * change before/during data processing, and keep the thread and effect state consistent.
      */
     virtual void process() = 0;
+
+  protected:
+    bool mDraining GUARDED_BY(mThreadMutex) = false;
 
   private:
     static constexpr int kMaxTaskNameLen = 15;

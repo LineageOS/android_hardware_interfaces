@@ -35,9 +35,9 @@ package android.hardware.tv.tuner;
 /* @hide */
 @Backing(type="int") @VintfStability
 enum DataFormat {
-  TS = 0,
-  PES = 1,
-  ES = 2,
-  SHV_TLV = 3,
-  UNDEFINED = 4,
+  TS,
+  PES,
+  ES,
+  SHV_TLV,
+  UNDEFINED,
 }

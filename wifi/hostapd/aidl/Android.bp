@@ -29,7 +29,7 @@ aidl_interface {
         "android/hardware/wifi/hostapd/*.aidl",
     ],
     imports: [
-        "android.hardware.wifi.common-V1",
+        "android.hardware.wifi.common-V2",
     ],
     stability: "vintf",
     backend: {
@@ -41,7 +41,9 @@ aidl_interface {
             ],
             min_sdk_version: "30",
             lint: {
-                baseline_filename: "lint-baseline.xml",
+                // Disable linter to avoid error about fixed size arrays.
+                // Interface will only be accessed on devices >= T.
+                enabled: false,
             },
         },
         ndk: {

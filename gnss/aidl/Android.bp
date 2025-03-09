@@ -30,6 +30,7 @@ aidl_interface {
         "android/hardware/gnss/*.aidl",
         "android/hardware/gnss/measurement_corrections/*.aidl",
         "android/hardware/gnss/visibility_control/*.aidl",
+        "android/hardware/gnss/gnss_assistance/*.aidl",
     ],
     stability: "vintf",
     backend: {
@@ -56,6 +57,6 @@ aidl_interface {
         },
 
     ],
-    frozen: true,
+    frozen: false,
 
 }

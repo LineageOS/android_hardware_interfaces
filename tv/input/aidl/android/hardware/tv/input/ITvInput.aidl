@@ -109,4 +109,28 @@ interface ITvInput {
      */
     void getTvMessageQueueDesc(
             out MQDescriptor<byte, SynchronizedReadWrite> queue, int deviceId, int streamId);
+
+    /**
+     * Set the picture profile ID for a specific stream in a device.
+     *
+     * @param deviceId Device ID for the stream to use the profile.
+     * @param streamId Stream ID for the stream to  use the profile. Must be one of the
+     *         stream IDs returned from getStreamConfigurations().
+     * @param profileId Picture profile ID for the stream. The ID is assigned by the framework,
+     *         and can be set by applications or TV input framework. See
+     *         android.media.quality.PictureQuality for more details.
+     */
+    void setPictureProfileId(in int deviceId, in int streamId, in long profileId);
+
+    /**
+     * Set the sound profile ID for a specific stream in a device.
+     *
+     * @param deviceId Device ID for the stream to use the profile.
+     * @param streamId Stream ID for the stream to  use the profile. Must be one of the
+     *         stream IDs returned from getStreamConfigurations().
+     * @param profileId Sound profile ID for the stream. The ID is assigned by the framework,
+     *         and can be set by applications or TV input framework. See
+     *         android.media.quality.SoundQuality for more details.
+     */
+    void setSoundProfileId(in int deviceId, in int streamId, in long profileId);
 }

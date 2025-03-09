@@ -58,6 +58,7 @@ using aidl::android::hardware::wifi::NanStatus;
 using aidl::android::hardware::wifi::NanStatusCode;
 using aidl::android::hardware::wifi::NanSuspensionModeChangeInd;
 using aidl::android::hardware::wifi::NanTxType;
+using aidl::android::hardware::wifi::RttResult;
 
 #define TIMEOUT_PERIOD 10
 
@@ -106,6 +107,7 @@ class WifiNanIfaceAidlTest : public testing::TestWithParam<std::string> {
         NOTIFY_SUSPEND_RESPONSE,
         NOTIFY_RESUME_RESPONSE,
         NOTIFY_TERMINATE_PAIRING_RESPONSE,
+        NOTIFY_RANGING_RESULTS,
 
         EVENT_CLUSTER_EVENT,
         EVENT_DISABLED,
@@ -398,6 +400,12 @@ class WifiNanIfaceAidlTest : public testing::TestWithParam<std::string> {
             parent_.id_ = id;
             parent_.status_ = status;
             parent_.notify(NOTIFY_TERMINATE_PAIRING_RESPONSE);
+            return ndk::ScopedAStatus::ok();
+        }
+        ::ndk::ScopedAStatus notifyRangingResults(const std::vector<RttResult>& /* results */,
+                                                  int8_t discoverySessionId) override {
+            parent_.session_id_ = discoverySessionId;
+            parent_.notify(NOTIFY_RANGING_RESULTS);
             return ndk::ScopedAStatus::ok();
         }
 

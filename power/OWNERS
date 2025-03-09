@@ -1,5 +1,3 @@
 # Bug component: 826709
-
-# ADPF virtual team
-lpy@google.com
+file:platform/frameworks/base:/ADPF_OWNERS
 wvw@google.com

@@ -81,10 +81,12 @@ package aidl.android.hardware.bluetooth.audio.setting {
 
   public class StrategyConfiguration {
     ctor public StrategyConfiguration();
+    method public int getAudioChannelAllocation();
     method public aidl.android.hardware.bluetooth.audio.setting.AudioLocation getAudioLocation();
     method public short getChannelCount();
     method public short getConnectedDevice();
     method public String getName();
+    method public void setAudioChannelAllocation(int);
     method public void setAudioLocation(aidl.android.hardware.bluetooth.audio.setting.AudioLocation);
     method public void setChannelCount(short);
     method public void setConnectedDevice(short);

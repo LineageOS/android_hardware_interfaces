@@ -205,7 +205,8 @@ ndk::ScopedAStatus EvsCamera::stopVideoStream() {
         }
 
         if ((!preVideoStreamStop_locked(status, lck) || !stopVideoStreamImpl_locked(status, lck) ||
-             !postVideoStreamStop_locked(status, lck)) && !status.isOk()) {
+             !postVideoStreamStop_locked(status, lck)) &&
+            !status.isOk()) {
             needShutdown = true;
         }
     }

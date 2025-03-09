@@ -35,9 +35,9 @@ package android.hardware.radio.network;
 /* @hide */
 @JavaDerive(toString=true) @VintfStability
 parcelable RegStateResult {
-  android.hardware.radio.network.RegState regState;
-  android.hardware.radio.RadioTechnology rat;
-  android.hardware.radio.network.RegistrationFailCause reasonForDenial;
+  android.hardware.radio.network.RegState regState = android.hardware.radio.network.RegState.NOT_REG_MT_NOT_SEARCHING_OP;
+  android.hardware.radio.RadioTechnology rat = android.hardware.radio.RadioTechnology.UNKNOWN;
+  android.hardware.radio.network.RegistrationFailCause reasonForDenial = android.hardware.radio.network.RegistrationFailCause.NONE;
   android.hardware.radio.network.CellIdentity cellIdentity;
   String registeredPlmn;
   android.hardware.radio.network.AccessTechnologySpecificInfo accessTechnologySpecificInfo;

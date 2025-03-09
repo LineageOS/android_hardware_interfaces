@@ -37,4 +37,8 @@ enum RttType {
      * Two-sided RTT 11az non trigger based (non-TB) type.
      */
     TWO_SIDED_11AZ_NTB = 3,
+    /**
+     * Two-sided RTT 11az non trigger based (non-TB) secure type.
+     */
+    TWO_SIDED_11AZ_NTB_SECURE = 4,
 }

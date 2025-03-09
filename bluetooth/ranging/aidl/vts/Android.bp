@@ -1,4 +1,5 @@
 package {
+    default_team: "trendy_team_bluetooth",
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
@@ -16,7 +17,7 @@ cc_test {
         "libutils",
     ],
     static_libs: [
-        "android.hardware.bluetooth.ranging-V1-ndk",
+        "android.hardware.bluetooth.ranging-V2-ndk",
         "libbluetooth-types",
     ],
     test_config: "VtsHalBluetoothRangingTargetTest.xml",

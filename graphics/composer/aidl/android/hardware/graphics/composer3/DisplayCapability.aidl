@@ -96,4 +96,10 @@ enum DisplayCapability {
      * @see DisplayCommand.validateDisplay
      */
     MULTI_THREADED_PRESENT = 8,
+    /**
+     * Specifies that the display supports a global picture-processing pipeline.
+     *
+     * @see DisplayCommand.pictureProfileId
+     */
+    PICTURE_PROCESSING = 9,
 }

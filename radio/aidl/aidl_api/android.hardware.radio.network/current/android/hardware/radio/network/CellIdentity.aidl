@@ -39,6 +39,9 @@ union CellIdentity {
   android.hardware.radio.network.CellIdentityGsm gsm;
   android.hardware.radio.network.CellIdentityWcdma wcdma;
   android.hardware.radio.network.CellIdentityTdscdma tdscdma;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   android.hardware.radio.network.CellIdentityCdma cdma;
   android.hardware.radio.network.CellIdentityLte lte;
   android.hardware.radio.network.CellIdentityNr nr;

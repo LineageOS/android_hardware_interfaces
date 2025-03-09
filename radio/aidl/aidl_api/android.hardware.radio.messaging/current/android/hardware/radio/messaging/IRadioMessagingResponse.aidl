@@ -36,25 +36,49 @@ package android.hardware.radio.messaging;
 @VintfStability
 interface IRadioMessagingResponse {
   oneway void acknowledgeIncomingGsmSmsWithPduResponse(in android.hardware.radio.RadioResponseInfo info);
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void acknowledgeLastIncomingCdmaSmsResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void acknowledgeLastIncomingGsmSmsResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void acknowledgeRequest(in int serial);
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void deleteSmsOnRuimResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void deleteSmsOnSimResponse(in android.hardware.radio.RadioResponseInfo info);
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void getCdmaBroadcastConfigResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.messaging.CdmaBroadcastSmsConfigInfo[] configs);
   oneway void getGsmBroadcastConfigResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.messaging.GsmBroadcastSmsConfigInfo[] configs);
   oneway void getSmscAddressResponse(in android.hardware.radio.RadioResponseInfo info, in String smsc);
   oneway void reportSmsMemoryStatusResponse(in android.hardware.radio.RadioResponseInfo info);
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void sendCdmaSmsExpectMoreResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.messaging.SendSmsResult sms);
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void sendCdmaSmsResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.messaging.SendSmsResult sms);
   oneway void sendImsSmsResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.messaging.SendSmsResult sms);
   oneway void sendSmsExpectMoreResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.messaging.SendSmsResult sms);
   oneway void sendSmsResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.messaging.SendSmsResult sms);
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void setCdmaBroadcastActivationResponse(in android.hardware.radio.RadioResponseInfo info);
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void setCdmaBroadcastConfigResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void setGsmBroadcastActivationResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void setGsmBroadcastConfigResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void setSmscAddressResponse(in android.hardware.radio.RadioResponseInfo info);
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void writeSmsToRuimResponse(in android.hardware.radio.RadioResponseInfo info, in int index);
   oneway void writeSmsToSimResponse(in android.hardware.radio.RadioResponseInfo info, in int index);
 }

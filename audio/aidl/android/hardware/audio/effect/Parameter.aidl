@@ -26,6 +26,7 @@ import android.hardware.audio.effect.Downmix;
 import android.hardware.audio.effect.DynamicsProcessing;
 import android.hardware.audio.effect.EnvironmentalReverb;
 import android.hardware.audio.effect.Equalizer;
+import android.hardware.audio.effect.Eraser;
 import android.hardware.audio.effect.HapticGenerator;
 import android.hardware.audio.effect.LoudnessEnhancer;
 import android.hardware.audio.effect.NoiseSuppression;
@@ -111,6 +112,10 @@ union Parameter {
          * Parameter tag defined for Spatializer parameters.
          */
         Spatializer.Id spatializerTag;
+        /**
+         * Parameter tag defined for eraser parameters.
+         */
+        Eraser.Id eraserTag;
     }
 
     /**
@@ -198,6 +203,8 @@ union Parameter {
         Visualizer visualizer;
         Volume volume;
         Spatializer spatializer;
+        // Eraser added at android.hardware.audio.effect.V3
+        Eraser eraser;
     }
     Specific specific;
 

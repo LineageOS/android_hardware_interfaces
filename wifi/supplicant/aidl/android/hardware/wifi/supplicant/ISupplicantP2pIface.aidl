@@ -25,10 +25,15 @@ import android.hardware.wifi.supplicant.MiracastMode;
 import android.hardware.wifi.supplicant.P2pAddGroupConfigurationParams;
 import android.hardware.wifi.supplicant.P2pConnectInfo;
 import android.hardware.wifi.supplicant.P2pCreateGroupOwnerInfo;
+import android.hardware.wifi.supplicant.P2pDirInfo;
 import android.hardware.wifi.supplicant.P2pDiscoveryInfo;
 import android.hardware.wifi.supplicant.P2pExtListenInfo;
 import android.hardware.wifi.supplicant.P2pFrameTypeMask;
 import android.hardware.wifi.supplicant.P2pGroupCapabilityMask;
+import android.hardware.wifi.supplicant.P2pProvisionDiscoveryParams;
+import android.hardware.wifi.supplicant.P2pReinvokePersistentGroupParams;
+import android.hardware.wifi.supplicant.P2pUsdBasedServiceAdvertisementConfig;
+import android.hardware.wifi.supplicant.P2pUsdBasedServiceDiscoveryConfig;
 import android.hardware.wifi.supplicant.WpsConfigMethods;
 import android.hardware.wifi.supplicant.WpsProvisionMethod;
 
@@ -38,6 +43,15 @@ import android.hardware.wifi.supplicant.WpsProvisionMethod;
  */
 @VintfStability
 interface ISupplicantP2pIface {
+    /**
+     * P2P features exposed by wpa_supplicant/chip.
+     */
+    /* Support for P2P2 (Wi-Fi Alliance P2P v2.0) */
+    const long P2P_FEATURE_V2 = 1 << 0;
+
+    /* Support for WPA3 Compatibility Mode in PCC Mode */
+    const long P2P_FEATURE_PCC_MODE_WPA3_COMPATIBILITY = 1 << 1;
+
     /**
      * This command can be used to add a bonjour service.
      *
@@ -398,6 +412,9 @@ interface ISupplicantP2pIface {
      * Send P2P provision discovery request to the specified peer. The
      * parameters for this command are the P2P device address of the peer and the
      * desired configuration method.
+     * <p>
+     * @deprecated This method is deprecated from AIDL v4, newer HALs should use
+     * provisionDiscoveryWithParams.
      *
      * @param peerAddress MAC address of the device to send discovery.
      * @method provisionMethod Provisioning method to use.
@@ -424,6 +441,9 @@ interface ISupplicantP2pIface {
 
     /**
      * Reinvoke a device from a persistent group.
+     * <p>
+     * @deprecated This method is deprecated from AIDL v4, newer HALs should use
+     * reinvokePersistentGroup.
      *
      * @param persistentNetworkId Used to specify the persistent group.
      * @param peerAddress MAC address of the device to reinvoke.
@@ -938,4 +958,111 @@ interface ISupplicantP2pIface {
      *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
      */
     void createGroupOwner(in P2pCreateGroupOwnerInfo groupOwnerInfo);
+
+    /**
+     * Get the features supported by P2P interface.
+     *
+     * @return The bitmask of ISupplicantP2pIface.P2P_FEATURE_* values.
+     *
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+     */
+    long getFeatureSet();
+
+    /**
+     * Start an Unsynchronized Service Discovery (USD) based P2P service discovery.
+     *
+     * @param serviceDiscoveryConfig Configuration associated with this discovery operation.
+     * @return A non-zero identifier to identify the instance of a service discovery.
+     *         It is used to cancel the service discovery.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     */
+    int startUsdBasedServiceDiscovery(in P2pUsdBasedServiceDiscoveryConfig serviceDiscoveryConfig);
+
+    /**
+     * Stop an Unsynchronized Service Discovery (USD) based P2P service discovery.
+     *
+     * @param sessionId Identifier to cancel the service discovery instance.
+     *        Use zero to cancel all the service discovery instances.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     *         |SupplicantStatusCode.FAILURE_NOT_STARTED|
+     */
+    void stopUsdBasedServiceDiscovery(in int sessionId);
+
+    /**
+     * Start an Unsynchronized Service Discovery (USD) based P2P service advertisement.
+     *
+     * @param serviceDiscoveryConfig Configuration associated with this service advertisement.
+     * @return A non-zero identifier to identify the instance of a service advertisement.
+     *         It is used to cancel the service advertisement.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     */
+    int startUsdBasedServiceAdvertisement(
+            in P2pUsdBasedServiceAdvertisementConfig serviceAdvertisementConfig);
+
+    /**
+     * Stop an Unsynchronized Service Discovery (USD) based P2P service advertisement.
+     *
+     * @param sessionId Identifier to cancel the service advertisement.
+     *        Use zero to cancel all the service advertisement instances.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     *         |SupplicantStatusCode.FAILURE_NOT_STARTED|
+     */
+    void stopUsdBasedServiceAdvertisement(in int sessionId);
+
+    /**
+     * Send P2P provision discovery request to the specified peer.
+     *
+     * @param params Parameters associated with this provision discovery request.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     */
+    void provisionDiscoveryWithParams(in P2pProvisionDiscoveryParams params);
+
+    /**
+     * The Device Identity Resolution (DIR) Info used to send in
+     * Bluetooth LE advertising packet for the receiving device to
+     * check if the device is a previously paired device.
+     *
+     * @return The DIR info - |P2pDirInfo|
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     *         |SupplicantStatusCode.FAILURE_DATA_NOT_AVAILABLE|
+     */
+    P2pDirInfo getDirInfo();
+
+    /**
+     * Validate a Device Identity Resolution (DIR) Info of a P2P device.
+     * wpa_supplicant takes the |P2pDirInfo| and derives a set of Tag values based on
+     * the cached Device Identity Keys (DevIK) of all paired peers saved in the
+     * configuration file. If a derived Tag value matches the Tag value received in the
+     * |P2pDirInfo|, the device is identified as a paired peer and returns an identifier
+     * identifying the device identity key information stored in the configuration file.
+     *
+     * @return The identifier of device identity key stored in the configuration file.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     */
+    int validateDirInfo(in P2pDirInfo dirInfo);
+
+    /**
+     * Reinvoke a device from a persistent group.
+     *
+     * @param reinvokeGroupParams Parameters associated to reinvoke a group.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     */
+    void reinvokePersistentGroup(in P2pReinvokePersistentGroupParams reinvokeGroupParams);
 }

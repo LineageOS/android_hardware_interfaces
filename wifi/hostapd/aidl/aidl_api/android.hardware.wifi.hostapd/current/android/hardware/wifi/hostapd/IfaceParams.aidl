@@ -39,5 +39,5 @@ parcelable IfaceParams {
   android.hardware.wifi.hostapd.ChannelParams[] channelParams;
   @nullable android.hardware.wifi.common.OuiKeyedData[] vendorData;
   @nullable String[] instanceIdentities;
-  boolean isMlo;
+  boolean usesMlo;
 }

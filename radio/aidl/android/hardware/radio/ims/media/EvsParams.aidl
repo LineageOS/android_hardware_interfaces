@@ -24,10 +24,10 @@ import android.hardware.radio.ims.media.EvsMode;
 @JavaDerive(toString=true)
 parcelable EvsParams {
     /** EVS codec bandwidth */
-    EvsBandwidth bandwidth;
+    EvsBandwidth bandwidth = EvsBandwidth.NONE;
 
     /** mode-set: EVS codec mode to represent the bit rate */
-    EvsMode evsMode;
+    EvsMode evsMode = EvsMode.INVALID;
     /**
      * ch-aw-recv: Channel aware mode for the receive direction. Permissible values
      * are -1, 0, 2, 3, 5, and 7. If -1, channel-aware mode is disabled in the

@@ -46,14 +46,17 @@ package android.hardware.automotive.audiocontrol;
  * audio_policy_engine_configuration.xml file.
  */
 import android.hardware.audio.common.PlaybackTrackMetadata;
+import android.hardware.automotive.audiocontrol.AudioDeviceConfiguration;
 import android.hardware.automotive.audiocontrol.AudioFocusChange;
 import android.hardware.automotive.audiocontrol.AudioGainConfigInfo;
+import android.hardware.automotive.audiocontrol.AudioZone;
 import android.hardware.automotive.audiocontrol.DuckingInfo;
 import android.hardware.automotive.audiocontrol.IAudioGainCallback;
 import android.hardware.automotive.audiocontrol.IFocusListener;
 import android.hardware.automotive.audiocontrol.IModuleChangeCallback;
 import android.hardware.automotive.audiocontrol.MutingInfo;
 import android.hardware.automotive.audiocontrol.Reasons;
+import android.media.audio.common.AudioPort;
 
 /**
  * Interacts with the car's audio subsystem to manage audio sources and volumes
@@ -206,4 +209,41 @@ interface IAudioControl {
      * @throws EX_UNSUPPORTED_OPERATION if dynamic audio configs are not supported.
      */
     void clearModuleChangeCallback();
+
+    /**
+     * Returns the audio device configurations that should be used to configure
+     * the car audio service audio management.
+     *
+     * <p>If this method is not supported, car audio service will attempt to configure the car audio
+     * service properties based on previously supported mechanisms.
+     *
+     * <p>If the returned value contains the
+     * {@link RoutingDeviceConfiguration#DEFAULT_AUDIO_ROUTING} value, the car audio service will
+     * attempt to configure audio routing based on the mechanism previously supported by car audio
+     * service (e.g. car audio configuration file). Otherwise, the {@link #getCarAudioZones()}
+     * API must return valid audio zone(s) configuration(s) for the device.
+     *
+     */
+    AudioDeviceConfiguration getAudioDeviceConfiguration();
+
+    /**
+     * Returns the list of audio devices that can be used for mirroring between different audio
+     * zones.
+     *
+     * @throws EX_UNSUPPORTED_OPERATION if mirroring devices are not supported.
+     */
+    List<AudioPort> getOutputMirroringDevices();
+
+    /**
+     * List of audio zones used to configure car audio service at bootup.
+     *
+     * <p>If the returned value from {@link #getAudioDeviceConfiguration()} contains
+     * {@link RoutingDeviceConfiguration#DEFAULT_AUDIO_ROUTING} value, the car audio service will
+     * attempt to configure the audio routing based on the mechanism previously supported by
+     * car audio service (e.g. car audio configuration file). Otherwise, this method must return
+     * valid audio zone(s) configuration(s) for the device.
+     *
+     * @throws EX_UNSUPPORTED_OPERATION if audio zone configuration are not supported.
+     */
+    List<AudioZone> getCarAudioZones();
 }

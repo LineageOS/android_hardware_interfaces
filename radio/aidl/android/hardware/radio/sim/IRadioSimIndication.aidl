@@ -41,6 +41,7 @@ oneway interface IRadioSimIndication {
      *
      * @param type Type of radio indication
      * @param cdmaSource New CdmaSubscriptionSource
+     * @deprecated Legacy CDMA is unsupported.
      */
     void cdmaSubscriptionSourceChanged(
             in RadioIndicationType type, in CdmaSubscriptionSource cdmaSource);

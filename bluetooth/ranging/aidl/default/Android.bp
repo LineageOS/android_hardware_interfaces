@@ -14,7 +14,7 @@ cc_binary {
         "service.cpp",
     ],
     shared_libs: [
-        "android.hardware.bluetooth.ranging-V1-ndk",
+        "android.hardware.bluetooth.ranging-V2-ndk",
         "libbase",
         "libbinder_ndk",
         "libhidlbase",

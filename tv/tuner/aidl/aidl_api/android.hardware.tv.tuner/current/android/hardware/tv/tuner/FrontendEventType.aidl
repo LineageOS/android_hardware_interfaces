@@ -35,7 +35,7 @@ package android.hardware.tv.tuner;
 /* @hide */
 @Backing(type="int") @VintfStability
 enum FrontendEventType {
-  LOCKED = 0,
-  NO_SIGNAL = 1,
-  LOST_LOCK = 2,
+  LOCKED,
+  NO_SIGNAL,
+  LOST_LOCK,
 }

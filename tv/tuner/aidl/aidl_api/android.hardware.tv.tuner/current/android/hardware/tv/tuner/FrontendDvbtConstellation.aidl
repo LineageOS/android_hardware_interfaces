@@ -36,13 +36,13 @@ package android.hardware.tv.tuner;
 @Backing(type="int") @VintfStability
 enum FrontendDvbtConstellation {
   UNDEFINED = 0,
-  AUTO = 1,
-  CONSTELLATION_QPSK = 2,
-  CONSTELLATION_16QAM = 4,
-  CONSTELLATION_64QAM = 8,
-  CONSTELLATION_256QAM = 16,
-  CONSTELLATION_QPSK_R = 32,
-  CONSTELLATION_16QAM_R = 64,
-  CONSTELLATION_64QAM_R = 128,
-  CONSTELLATION_256QAM_R = 256,
+  AUTO = (1 << 0) /* 1 */,
+  CONSTELLATION_QPSK = (1 << 1) /* 2 */,
+  CONSTELLATION_16QAM = (1 << 2) /* 4 */,
+  CONSTELLATION_64QAM = (1 << 3) /* 8 */,
+  CONSTELLATION_256QAM = (1 << 4) /* 16 */,
+  CONSTELLATION_QPSK_R = (1 << 5) /* 32 */,
+  CONSTELLATION_16QAM_R = (1 << 6) /* 64 */,
+  CONSTELLATION_64QAM_R = (1 << 7) /* 128 */,
+  CONSTELLATION_256QAM_R = (1 << 8) /* 256 */,
 }

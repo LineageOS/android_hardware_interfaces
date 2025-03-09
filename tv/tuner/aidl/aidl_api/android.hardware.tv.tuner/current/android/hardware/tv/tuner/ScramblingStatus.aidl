@@ -35,7 +35,7 @@ package android.hardware.tv.tuner;
 /* @hide */
 @Backing(type="int") @VintfStability
 enum ScramblingStatus {
-  UNKNOWN = 1,
-  NOT_SCRAMBLED = 2,
-  SCRAMBLED = 4,
+  UNKNOWN = (1 << 0) /* 1 */,
+  NOT_SCRAMBLED = (1 << 1) /* 2 */,
+  SCRAMBLED = (1 << 2) /* 4 */,
 }

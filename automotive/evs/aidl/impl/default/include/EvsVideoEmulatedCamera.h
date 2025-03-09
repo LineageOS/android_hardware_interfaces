@@ -27,7 +27,6 @@
 #include <aidl/android/hardware/automotive/evs/ParameterRange.h>
 #include <aidl/android/hardware/automotive/evs/Stream.h>
 #include <media/NdkMediaExtractor.h>
-
 #include <ui/GraphicBuffer.h>
 
 #include <cstdint>
@@ -69,6 +68,8 @@ class EvsVideoEmulatedCamera : public EvsCamera {
 
     // Methods from EvsCameraBase follow.
     void shutdown() override;
+
+    std::string getId() override { return mDescription.id; }
 
     const evs::CameraDesc& getDesc() { return mDescription; }
 
@@ -117,6 +118,10 @@ class EvsVideoEmulatedCamera : public EvsCamera {
     bool postVideoStreamStop_locked(ndk::ScopedAStatus& status,
                                     std::unique_lock<std::mutex>& lck) override;
 
+    int (*mFillBuffer)(const uint8_t* src_y, int src_stride_y, const uint8_t* src_u,
+                       int src_stride_u, const uint8_t* src_v, int src_stride_v, uint8_t* dst_argb,
+                       int dst_stride_argb, int width, int height);
+
     // The properties of this camera.
     CameraDesc mDescription = {};
 
@@ -149,6 +154,10 @@ class EvsVideoEmulatedCamera : public EvsCamera {
     uint64_t mUsage = 0;
     // Bytes per line in the buffers
     uint32_t mStride = 0;
+    // Bytes per line in the output buffer
+    uint32_t mDstStride = 0;
+    // Bytes per line of U/V plane
+    uint32_t mUvStride = 0;
 
     // Camera parameters.
     std::unordered_map<CameraParam, std::shared_ptr<CameraParameterDesc>> mParams;

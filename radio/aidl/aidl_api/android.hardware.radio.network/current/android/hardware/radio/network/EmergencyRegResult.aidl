@@ -35,9 +35,9 @@ package android.hardware.radio.network;
 /* @hide */
 @JavaDerive(toString=true) @VintfStability
 parcelable EmergencyRegResult {
-  android.hardware.radio.AccessNetwork accessNetwork;
-  android.hardware.radio.network.RegState regState;
-  android.hardware.radio.network.Domain emcDomain;
+  android.hardware.radio.AccessNetwork accessNetwork = android.hardware.radio.AccessNetwork.UNKNOWN;
+  android.hardware.radio.network.RegState regState = android.hardware.radio.network.RegState.NOT_REG_MT_NOT_SEARCHING_OP;
+  android.hardware.radio.network.Domain emcDomain = android.hardware.radio.network.Domain.INVALID;
   boolean isVopsSupported;
   boolean isEmcBearerSupported;
   byte nwProvidedEmc;

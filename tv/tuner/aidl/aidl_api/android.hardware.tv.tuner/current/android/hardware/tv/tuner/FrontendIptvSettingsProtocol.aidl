@@ -36,6 +36,6 @@ package android.hardware.tv.tuner;
 @Backing(type="int") @VintfStability
 enum FrontendIptvSettingsProtocol {
   UNDEFINED = 0,
-  UDP = 1,
-  RTP = 2,
+  UDP = (1 << 0) /* 1 */,
+  RTP = (1 << 1) /* 2 */,
 }

@@ -46,4 +46,9 @@ enum SessionTag {
      * instead.
      */
     APP,
+
+    /**
+     * This tag is used to mark hint sessions created by the system UI.
+     */
+    SYSUI,
 }

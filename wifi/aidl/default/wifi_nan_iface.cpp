@@ -613,7 +613,36 @@ void WifiNanIface::registerCallbackHandlers() {
                     }
                 }
             };
+    callback_handlers.on_ranging_results = [weak_ptr_this](
+                                                   legacy_hal::wifi_rtt_result* rtt_results[],
+                                                   uint32_t num_results, uint16_t session_id) {
+        const auto shared_ptr_this = weak_ptr_this.lock();
+        if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+            LOG(ERROR) << "Callback invoked on an invalid object";
+            return;
+        }
+        if (shared_ptr_this->getMinCallbackVersion() < 3) {
+            LOG(INFO) << "notifyRangingResults requires callback version 3";
+            return;
+        }
 
+        std::vector<const wifi_rtt_result*> legacy_results;
+        std::copy_if(rtt_results, rtt_results + num_results, back_inserter(legacy_results),
+                     [](wifi_rtt_result* rtt_result) { return rtt_result != nullptr; });
+
+        std::vector<RttResult> aidl_results;
+        if (!aidl_struct_util::convertLegacyVectorOfRttResultToAidl(legacy_results,
+                                                                    &aidl_results)) {
+            LOG(ERROR) << "Failed to convert RTT results to AIDL structs";
+            return;
+        }
+
+        for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
+            if (!callback->notifyRangingResults(aidl_results, session_id).isOk()) {
+                LOG(ERROR) << "Failed to invoke the callback";
+            }
+        }
+    };
     legacy_hal::wifi_error legacy_status =
             legacy_hal_.lock()->nanRegisterCallbackHandlers(ifname_, callback_handlers);
     if (legacy_status != legacy_hal::WIFI_SUCCESS) {
@@ -670,6 +699,10 @@ bool WifiNanIface::isValid() {
 
 std::string WifiNanIface::getName() {
     return ifname_;
+}
+
+int32_t WifiNanIface::getMinCallbackVersion() {
+    return event_cb_handler_.getMinCallbackVersion();
 }
 
 std::set<std::shared_ptr<IWifiNanIfaceEventCallback>> WifiNanIface::getEventCallbacks() {

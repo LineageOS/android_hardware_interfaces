@@ -18,8 +18,11 @@ package android.hardware.automotive.vehicle;
 
 import android.hardware.automotive.vehicle.GetValueRequests;
 import android.hardware.automotive.vehicle.IVehicleCallback;
+import android.hardware.automotive.vehicle.MinMaxSupportedValueResults;
+import android.hardware.automotive.vehicle.PropIdAreaId;
 import android.hardware.automotive.vehicle.SetValueRequests;
 import android.hardware.automotive.vehicle.SubscribeOptions;
+import android.hardware.automotive.vehicle.SupportedValuesListResults;
 import android.hardware.automotive.vehicle.VehiclePropConfigs;
 
 // Vehicle HAL interface.
@@ -260,4 +263,106 @@ interface IVehicle {
      *    the used shared memory file to return.
      */
     void returnSharedMemory(in IVehicleCallback callback, long sharedMemoryId);
+
+    /**
+     * Gets the supported values lists for [propId, areaId]s.
+     *
+     * For a specific [propId, areaId], if the hardware currently specifies
+     * a list of supported values for it, then it is returned through the
+     * {@code supportedValuesList} field inside
+     * {@code SupportedValuesListResult}. If the hardware does not specify
+     * a list of supported values for it (indicated by
+     * {@code HasSupportedValueInfo.hasSupportedValuesList} being
+     * {@code false}), then {@code supportedValuesList} field will be
+     * {@code null}.
+     *
+     * The supported value list applies for both read/write operations. if
+     * it differs for read/write, this is the super-set.
+     *
+     * Must return a list of results, one for each requested [propId, areaId].
+     *
+     * The returned supported values list represents the currently supported
+     * values and may change dynamically. Caller should use
+     * {@code registerSupportedValueChangeCallback} to register for supported
+     * value range change.
+     *
+     * If unable to determine the supported values for some [propId, areaId] due
+     * to error cases, for example, unable to determine EV_CHARGE_PERCENT_LIMIT
+     * supported values due to battery in an error state,
+     * {@code SupportedValuesListResult.status} for that should be set to
+     * a non-okay {@code StatusCode}.
+     *
+     * If one of the [propId, areaId] is not supported,
+     * {@code SupportedValuesListResult.status} for that should be set to
+     * {@code StatusCode.INVALID_ARG}.
+     *
+     * This function should only return non-okay {@code StatusCode} if the whole
+     * operation failed and unable to get any results.
+     */
+    SupportedValuesListResults getSupportedValuesLists(in List<PropIdAreaId> propIdAreaIds);
+
+    /**
+     * Gets the min/max supported values for [propId, areaId]s.
+     *
+     * For a specific [propId, areaId], if the hardware currently specifies
+     * min/max supported value for it, then it is returned through the
+     * {@code minSupportedValue} or {@code maxSupportedValue} field inside
+     * {@code MinMaxSupportedValueResult}. If the hardware does not specify
+     * min/max supported value for it (indicated by
+     * {@code HasSupportedValueInfo.hasMinSupportedValue} or
+     * {@code HasSupportedValueInfo.hasMaxSupportedValue} being
+     * {@code false}), then {@code minSupportedValue} or
+     * {@code maxSupportedValue} is {@code null}.
+     *
+     * The min/max supported values apply for both read/write operations. if
+     * they differs for read/write, they are from the super-set.
+     *
+     * Must return a list of results, one for each requested [propId, areaId].
+     *
+     * The returned min/max supported values represent the currently supported
+     * values and may change dynamically. Caller should use
+     * {@code registerSupportedValueChangeCallback} to register for supported
+     * value range change.
+     *
+     * If unable to determine the supported values for some [propId, areaId] due
+     * to error cases, for example, unable to determine HVAC_FAN_SPEED
+     * max supported value due to HVAC in an error state,
+     * {@code MinMaxSupportedValueResult.status} for that should be set to
+     * a non-okay {@code StatusCode}.
+     *
+     * If one of the [propId, areaId] is not supported,
+     * {@code MinMaxSupportedValueResult.status} for that should be set to
+     * {@code StatusCode.INVALID_ARG}.
+     *
+     * This function should only return non-okay {@code StatusCode} if the whole
+     * operation failed and unable to get any results.
+     */
+    MinMaxSupportedValueResults getMinMaxSupportedValue(in List<PropIdAreaId> propIdAreaIds);
+
+    /**
+     * Registers the supported value change callback.
+     *
+     * For the specified [propId, areaId]s,
+     * {@code callback.onSupportedValueChange} must be invoked if change
+     * happens.
+     *
+     * This always registers a new callback for the specified [propId, areaId]s
+     * if the same callback was not previously registered for them.
+     *
+     * The list of [propId, areaId]s to register must not be empty.
+     *
+     * @param callback The callback for supported value change.
+     * @param propIdAreaIds A list of [propId, areaId]s to register.
+     */
+    void registerSupportedValueChangeCallback(
+            in IVehicleCallback callback, in List<PropIdAreaId> propIdAreaIds);
+
+    /**
+     * Unregisters the supported value change callback.
+     *
+     * @param callback The callback to unregister.
+     * @param propIdAreaIds A list of [propId, areaId]s to unregister.
+     */
+    void unregisterSupportedValueChangeCallback(
+            in IVehicleCallback callback, in List<PropIdAreaId> propIdAreaIds);
 }

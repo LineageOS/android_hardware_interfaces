@@ -33,7 +33,7 @@
 
 package android.hardware.radio;
 /* @hide */
-@Backing(type="int") @JavaDerive(toString=true) @VintfStability
+@Backing(type="int") @JavaDerive(toString=true) @SuppressWarnings(value={"redundant-name"}) @VintfStability
 enum RadioError {
   NONE = 0,
   RADIO_NOT_AVAILABLE = 1,

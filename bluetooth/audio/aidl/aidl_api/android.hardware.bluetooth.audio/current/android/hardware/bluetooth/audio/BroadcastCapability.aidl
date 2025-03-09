@@ -38,6 +38,7 @@ parcelable BroadcastCapability {
   android.hardware.bluetooth.audio.AudioLocation supportedChannel;
   int channelCountPerStream;
   android.hardware.bluetooth.audio.BroadcastCapability.LeAudioCodecCapabilities leAudioCodecCapabilities;
+  @nullable android.hardware.bluetooth.audio.CodecSpecificConfigurationLtv.AudioChannelAllocation audioLocation;
   @VintfStability
   parcelable VendorCapabilities {
     ParcelableHolder extension;

@@ -85,4 +85,11 @@ interface IWifiApIface {
      *         |WifiStatusCode.ERROR_UNKNOWN|
      */
     void setMacAddress(in byte[6] mac);
+
+    /**
+     * Check if ApIface is for an AP using Multi-Link Operation
+     *
+     * @return true if it is MLO iface, false otherwise.
+     */
+    boolean usesMlo();
 }

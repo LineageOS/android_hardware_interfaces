@@ -35,7 +35,7 @@ package android.hardware.tv.tuner;
 /* @hide */
 @Backing(type="int") @VintfStability
 enum FrontendDvbtPlpMode {
-  UNDEFINED = 0,
-  AUTO = 1,
-  MANUAL = 2,
+  UNDEFINED,
+  AUTO,
+  MANUAL,
 }

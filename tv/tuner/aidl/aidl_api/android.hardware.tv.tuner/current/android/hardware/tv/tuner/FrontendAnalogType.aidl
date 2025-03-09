@@ -36,12 +36,12 @@ package android.hardware.tv.tuner;
 @Backing(type="int") @VintfStability
 enum FrontendAnalogType {
   UNDEFINED = 0,
-  AUTO = 1,
-  PAL = 2,
-  PAL_M = 4,
-  PAL_N = 8,
-  PAL_60 = 16,
-  NTSC = 32,
-  NTSC_443 = 64,
-  SECAM = 128,
+  AUTO = (1 << 0) /* 1 */,
+  PAL = (1 << 1) /* 2 */,
+  PAL_M = (1 << 2) /* 4 */,
+  PAL_N = (1 << 3) /* 8 */,
+  PAL_60 = (1 << 4) /* 16 */,
+  NTSC = (1 << 5) /* 32 */,
+  NTSC_443 = (1 << 6) /* 64 */,
+  SECAM = (1 << 7) /* 128 */,
 }

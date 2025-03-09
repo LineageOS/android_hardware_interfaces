@@ -35,10 +35,28 @@ package android.hardware.radio.messaging;
 /* @hide */
 @JavaDerive(toString=true) @VintfStability
 parcelable CdmaSmsMessage {
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   int teleserviceId;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   boolean isServicePresent;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   int serviceCategory;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   android.hardware.radio.messaging.CdmaSmsAddress address;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   android.hardware.radio.messaging.CdmaSmsSubaddress subAddress;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   byte[] bearerData;
 }

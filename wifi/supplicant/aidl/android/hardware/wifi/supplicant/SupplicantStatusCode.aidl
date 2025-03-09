@@ -67,4 +67,8 @@ enum SupplicantStatusCode {
      * A different request is currently being processed.
      */
     FAILURE_ONGOING_REQUEST,
+    /**
+     * Requested data is not available.
+     */
+    FAILURE_DATA_NOT_AVAILABLE,
 }

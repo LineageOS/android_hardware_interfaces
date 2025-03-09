@@ -97,5 +97,6 @@ enum Dataspace {
   JPEG_APP_SEGMENTS = 0x1003,
   HEIF = 0x1004,
   JPEG_R = 0x1005,
+  HEIF_ULTRAHDR = 0x1006,
   BT709_FULL_RANGE = (((1 << 16) | (3 << 22)) | (1 << 27)) /* 146866176 */,
 }

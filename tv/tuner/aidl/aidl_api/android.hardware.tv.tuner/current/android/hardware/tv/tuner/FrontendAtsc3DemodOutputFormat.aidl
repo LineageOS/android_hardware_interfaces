@@ -36,6 +36,6 @@ package android.hardware.tv.tuner;
 @Backing(type="byte") @VintfStability
 enum FrontendAtsc3DemodOutputFormat {
   UNDEFINED = 0,
-  ATSC3_LINKLAYER_PACKET = 1,
-  BASEBAND_PACKET = 2,
+  ATSC3_LINKLAYER_PACKET = (1 << 0) /* 1 */,
+  BASEBAND_PACKET = (1 << 1) /* 2 */,
 }

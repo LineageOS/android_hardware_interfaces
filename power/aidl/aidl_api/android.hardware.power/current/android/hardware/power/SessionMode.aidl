@@ -35,4 +35,7 @@ package android.hardware.power;
 @Backing(type="int") @VintfStability
 enum SessionMode {
   POWER_EFFICIENCY,
+  GRAPHICS_PIPELINE,
+  AUTO_CPU,
+  AUTO_GPU,
 }

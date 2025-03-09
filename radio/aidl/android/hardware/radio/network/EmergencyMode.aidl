@@ -20,6 +20,7 @@ package android.hardware.radio.network;
 @VintfStability
 @Backing(type="int")
 @JavaDerive(toString=true)
+@SuppressWarnings(value={"redundant-name"})
 enum EmergencyMode {
     /**
      * Mode Type Emergency WWAN, indicates that the current domain selected for the Emergency call

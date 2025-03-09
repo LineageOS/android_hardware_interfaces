@@ -77,6 +77,7 @@ parcelable Call {
     boolean isVoice;
     /**
      * true if CDMA voice privacy mode is active
+     * @deprecated Legacy CDMA is unsupported.
      */
     boolean isVoicePrivacy;
     /**
@@ -99,7 +100,7 @@ parcelable Call {
      * Vector of User-User Signaling Information
      */
     UusInfo[] uusInfo;
-    AudioQuality audioQuality;
+    AudioQuality audioQuality = AudioQuality.UNSPECIFIED;
     /**
      * Forwarded number. It can set only one forwarded number based on 3GPP rule of the CS.
      * Reference: 3GPP TS 24.008 section 10.5.4.21b

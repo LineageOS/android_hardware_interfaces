@@ -64,19 +64,101 @@ static const CodecConfiguration kValidCodecLC3_16k_1(
 static const StrategyConfiguration kValidStrategyStereoOneCis(
     std::make_optional("STEREO_ONE_CIS_PER_DEVICE"),
     std::make_optional(AudioLocation::STEREO), std::make_optional(2),
-    std::make_optional(1));
+    std::make_optional(1), std::nullopt);
 static const StrategyConfiguration kValidStrategyStereoTwoCis(
     std::make_optional("STEREO_TWO_CISES_PER_DEVICE"),
     std::make_optional(AudioLocation::STEREO), std::make_optional(1),
-    std::make_optional(2));
+    std::make_optional(2), std::nullopt);
 static const StrategyConfiguration kValidStrategyMonoOneCis(
     std::make_optional("MONO_ONE_CIS_PER_DEVICE"),
     std::make_optional(AudioLocation::MONO), std::make_optional(1),
-    std::make_optional(1));
+    std::make_optional(1), std::nullopt);
 static const StrategyConfiguration kValidStrategyBroadcastStereo(
     std::make_optional("BROADCAST_STEREO"),
     std::make_optional(AudioLocation::STEREO), std::make_optional(0),
-    std::make_optional(2));
+    std::make_optional(2), std::nullopt);
+
+static const StrategyConfiguration kValidStrategyStereoOneCisInt(
+    std::make_optional("STEREO_ONE_CIS_PER_DEVICE"), std::nullopt,
+    std::make_optional(2), std::make_optional(1), std::make_optional(3));
+static const StrategyConfiguration kValidStrategyStereoTwoCisInt(
+    std::make_optional("STEREO_TWO_CISES_PER_DEVICE"), std::nullopt,
+    std::make_optional(1), std::make_optional(2), std::make_optional(3));
+static const StrategyConfiguration kValidStrategyMonoOneCisInt(
+    std::make_optional("MONO_ONE_CIS_PER_DEVICE"), std::nullopt,
+    std::make_optional(1), std::make_optional(1), std::make_optional(4));
+static const StrategyConfiguration kValidStrategyBroadcastStereoInt(
+    std::make_optional("BROADCAST_STEREO"), std::nullopt, std::make_optional(0),
+    std::make_optional(2), std::make_optional(3));
+
+static const StrategyConfiguration kValidStrategyStereoOneCisBoth(
+    std::make_optional("STEREO_ONE_CIS_PER_DEVICE"),
+    std::make_optional(AudioLocation::STEREO), std::make_optional(2),
+    std::make_optional(1), std::make_optional(3));
+static const StrategyConfiguration kValidStrategyStereoTwoCisBoth(
+    std::make_optional("STEREO_TWO_CISES_PER_DEVICE"),
+    std::make_optional(AudioLocation::STEREO), std::make_optional(1),
+    std::make_optional(2), std::make_optional(3));
+static const StrategyConfiguration kValidStrategyMonoOneCisBoth(
+    std::make_optional("MONO_ONE_CIS_PER_DEVICE"),
+    std::make_optional(AudioLocation::MONO), std::make_optional(1),
+    std::make_optional(1), std::make_optional(4));
+static const StrategyConfiguration kValidStrategyBroadcastStereoBoth(
+    std::make_optional("BROADCAST_STEREO"),
+    std::make_optional(AudioLocation::STEREO), std::make_optional(0),
+    std::make_optional(2), std::make_optional(3));
+
+// List of all invalid strategy configuration
+const auto kInvalidStrategyStereoTwoCisTwoDevice = StrategyConfigurationList(
+    std::vector<StrategyConfiguration>{StrategyConfiguration(
+        std::make_optional("STEREO_ONE_CIS_PER_DEVICE"),
+        std::make_optional(AudioLocation::STEREO), std::make_optional(2),
+        std::make_optional(2), std::nullopt)});
+const auto kInvalidStrategyMonoTwoCisTwoDevice = StrategyConfigurationList(
+    std::vector<StrategyConfiguration>{StrategyConfiguration(
+        std::make_optional("MONO_ONE_CIS_PER_DEVICE"),
+        std::make_optional(AudioLocation::STEREO), std::make_optional(2),
+        std::make_optional(2), std::nullopt)});
+const auto kInvalidStrategyNoName = StrategyConfigurationList(
+    std::vector<StrategyConfiguration>{StrategyConfiguration(
+        std::nullopt, std::make_optional(AudioLocation::STEREO),
+        std::make_optional(2), std::make_optional(1), std::nullopt)});
+const auto kInvalidStrategyNoLocation = StrategyConfigurationList(
+    std::vector<StrategyConfiguration>{StrategyConfiguration(
+        std::make_optional("STEREO_ONE_CIS_PER_DEVICE"), std::nullopt,
+        std::make_optional(2), std::make_optional(1), std::nullopt)});
+const auto kInvalidStrategyNoDevice = StrategyConfigurationList(
+    std::vector<StrategyConfiguration>{StrategyConfiguration(
+        std::make_optional("STEREO_ONE_CIS_PER_DEVICE"),
+        std::make_optional(AudioLocation::STEREO), std::nullopt,
+        std::make_optional(1), std::nullopt)});
+const auto kInvalidStrategyNoChannel = StrategyConfigurationList(
+    std::vector<StrategyConfiguration>{StrategyConfiguration(
+        std::make_optional("STEREO_ONE_CIS_PER_DEVICE"),
+        std::make_optional(AudioLocation::STEREO), std::make_optional(2),
+        std::nullopt, std::nullopt)});
+const auto kInvalidStrategyIntMoreBitmask = StrategyConfigurationList(
+    std::vector<StrategyConfiguration>{StrategyConfiguration(
+        std::make_optional("STEREO_ONE_CIS_PER_DEVICE"),
+        std::make_optional(AudioLocation::STEREO), std::make_optional(2),
+        std::make_optional(1), std::make_optional(7))});
+const auto kInvalidStrategyIntStereoTwoCisTwoDevice = StrategyConfigurationList(
+    std::vector<StrategyConfiguration>{StrategyConfiguration(
+        std::make_optional("STEREO_ONE_CIS_PER_DEVICE"), std::nullopt,
+        std::make_optional(2), std::make_optional(2), std::make_optional(3))});
+const auto kInvalidStrategyIntMonoTwoCisTwoDevice = StrategyConfigurationList(
+    std::vector<StrategyConfiguration>{StrategyConfiguration(
+        std::make_optional("MONO_ONE_CIS_PER_DEVICE"), std::nullopt,
+        std::make_optional(2), std::make_optional(2), std::make_optional(4))});
+const auto kInvalidStrategyIntBroadcast = StrategyConfigurationList(
+    std::vector<StrategyConfiguration>{StrategyConfiguration(
+        std::make_optional("MONO_ONE_CIS_PER_DEVICE"), std::nullopt,
+        std::make_optional(0), std::make_optional(1), std::make_optional(3))});
+const auto kInvalidStrategyBothStereoMonoInt = StrategyConfigurationList(
+    std::vector<StrategyConfiguration>{StrategyConfiguration(
+        std::make_optional("STEREO_ONE_CIS_PER_DEVICE"),
+        std::make_optional(AudioLocation::STEREO), std::make_optional(2),
+        std::make_optional(1), std::make_optional(4))});
 
 // Define valid test list built from above valid components
 // Scenario, Configuration, CodecConfiguration, StrategyConfiguration
@@ -88,11 +170,16 @@ static const std::vector<ConfigurationList> kValidConfigurationList = {
 static const std::vector<CodecConfigurationList> kValidCodecConfigurationList =
     {CodecConfigurationList(
         std::vector<CodecConfiguration>{kValidCodecLC3_16k_1})};
+
 static const std::vector<StrategyConfigurationList>
     kValidStrategyConfigurationList = {
         StrategyConfigurationList(std::vector<StrategyConfiguration>{
             kValidStrategyStereoOneCis, kValidStrategyStereoTwoCis,
-            kValidStrategyMonoOneCis, kValidStrategyBroadcastStereo})};
+            kValidStrategyMonoOneCis, kValidStrategyBroadcastStereo,
+            kValidStrategyStereoOneCisInt, kValidStrategyStereoTwoCisInt,
+            kValidStrategyMonoOneCisInt, kValidStrategyBroadcastStereoInt,
+            kValidStrategyStereoOneCisBoth, kValidStrategyStereoTwoCisBoth,
+            kValidStrategyMonoOneCisBoth, kValidStrategyBroadcastStereoBoth})};
 
 class BluetoothLeAudioCodecsProviderTest
     : public ::testing::TestWithParam<OffloadSetting> {
@@ -270,49 +357,19 @@ class UpdateStrategyConfigurationsToMapTest
   static std::vector<StrategyConfigurationList>
   CreateInvalidStrategyConfigurations() {
     std::vector<StrategyConfigurationList>
-        invalid_strategy_configuration_test_cases;
-    invalid_strategy_configuration_test_cases.push_back(
-        StrategyConfigurationList(
-            std::vector<StrategyConfiguration>{StrategyConfiguration(
-                std::make_optional("STEREO_ONE_CIS_PER_DEVICE"),
-                std::make_optional(AudioLocation::STEREO),
-                std::make_optional(2), std::make_optional(2))}));
-
-    invalid_strategy_configuration_test_cases.push_back(
-        StrategyConfigurationList(
-            std::vector<StrategyConfiguration>{StrategyConfiguration(
-                std::make_optional("MONO_ONE_CIS_PER_DEVICE"),
-                std::make_optional(AudioLocation::STEREO),
-                std::make_optional(2), std::make_optional(2))}));
-
-    invalid_strategy_configuration_test_cases.push_back(
-        StrategyConfigurationList(
-            std::vector<StrategyConfiguration>{StrategyConfiguration(
-                std::nullopt, std::make_optional(AudioLocation::STEREO),
-                std::make_optional(2), std::make_optional(1))}));
-
-    invalid_strategy_configuration_test_cases.push_back(
-        StrategyConfigurationList(
-            std::vector<StrategyConfiguration>{StrategyConfiguration(
-                std::make_optional("STEREO_ONE_CIS_PER_DEVICE"), std::nullopt,
-                std::make_optional(2), std::make_optional(1))}));
-
-    invalid_strategy_configuration_test_cases.push_back(
-        StrategyConfigurationList(
-            std::vector<StrategyConfiguration>{StrategyConfiguration(
-                std::make_optional("STEREO_ONE_CIS_PER_DEVICE"),
-                std::make_optional(AudioLocation::STEREO), std::nullopt,
-                std::make_optional(1))}));
-
-    invalid_strategy_configuration_test_cases.push_back(
-        StrategyConfigurationList(
-            std::vector<StrategyConfiguration>{StrategyConfiguration(
-                std::make_optional("STEREO_ONE_CIS_PER_DEVICE"),
-                std::make_optional(AudioLocation::STEREO),
-                std::make_optional(2), std::nullopt)}));
-
-    invalid_strategy_configuration_test_cases.push_back(
-        StrategyConfigurationList(std::vector<StrategyConfiguration>{}));
+        invalid_strategy_configuration_test_cases = {
+            kInvalidStrategyStereoTwoCisTwoDevice,
+            kInvalidStrategyMonoTwoCisTwoDevice,
+            kInvalidStrategyNoName,
+            kInvalidStrategyNoLocation,
+            kInvalidStrategyNoDevice,
+            kInvalidStrategyNoChannel,
+            kInvalidStrategyIntMoreBitmask,
+            kInvalidStrategyIntStereoTwoCisTwoDevice,
+            kInvalidStrategyIntMonoTwoCisTwoDevice,
+            kInvalidStrategyIntBroadcast,
+            kInvalidStrategyBothStereoMonoInt,
+            StrategyConfigurationList(std::vector<StrategyConfiguration>{})};
 
     return invalid_strategy_configuration_test_cases;
   }

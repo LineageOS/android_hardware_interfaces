@@ -41,6 +41,7 @@ parcelable DisplayConfiguration {
   int configGroup;
   int vsyncPeriod;
   @nullable android.hardware.graphics.composer3.VrrConfig vrrConfig;
+  android.hardware.graphics.composer3.OutputType hdrOutputType;
   parcelable Dpi {
     float x;
     float y;

@@ -23,6 +23,7 @@ package android.hardware.radio.ims.media;
 @VintfStability
 @Backing(type="int")
 @JavaDerive(toString=true)
+@SuppressWarnings(value={"redundant-name"})
 enum RtcpXrReportBlockType {
     /** Disable RTCP XR */
     RTCPXR_NONE = 0,

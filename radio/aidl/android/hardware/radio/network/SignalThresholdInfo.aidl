@@ -24,11 +24,12 @@ import android.hardware.radio.AccessNetwork;
  */
 @VintfStability
 @JavaDerive(toString=true)
+@SuppressWarnings(value={"redundant-name"})
 parcelable SignalThresholdInfo {
     /**
      * Received Signal Strength Indication.
      * Range: -113 dBm and -51 dBm
-     * Used RAN: GERAN, CDMA2000
+     * Used RAN: GERAN
      * Reference: 3GPP TS 27.007 section 8.5.
      */
     const int SIGNAL_MEASUREMENT_TYPE_RSSI = 1;
@@ -121,5 +122,5 @@ parcelable SignalThresholdInfo {
     /**
      * The Radio Access Network for current threshold info.
      */
-    AccessNetwork ran;
+    AccessNetwork ran = AccessNetwork.UNKNOWN;
 }

@@ -72,12 +72,15 @@ enum EvConnectorType {
     TESLA_ROADSTER = 7,
     /**
      * DO NOT USE
-     * Use TESLA_SUPERCHARGER instead.
+     * Use SAE_J3400_AC instead.
      *
      * High Power Wall Charger of Tesla.
      */
     TESLA_HPWC = 8,
     /**
+     * DO NOT USE
+     * Use SAE_J3400_DC instead.
+     *
      * SAE J3400 connector
      *
      * Also known as the "North American Charging Standard" (NACS)
@@ -88,6 +91,32 @@ enum EvConnectorType {
     GBT_AC = 10,
     /** GBT_DC Fast Charging Standard */
     GBT_DC = 11,
+    /**
+     * SAE J3400 connector - AC Charging.
+     *
+     * Also known as the "North American Charging Standard" (NACS).
+     *
+     * This enum must be used if the vehicle specifically supports AC charging. If the vehicle
+     * supports both AC and DC, INFO_EV_CONNECTOR_TYPE should be populated with both SAE_J3400_AC
+     * and SAE_J3400_DC. If the vehicle only supports AC charging, it should only be populated with
+     * SAE_J3400_AC.
+     *
+     * This is equivalent to TESLA_HPWC enum.
+     */
+    SAE_J3400_AC = 8,
+    /**
+     * SAE J3400 connector - DC Charging.
+     *
+     * Also known as the "North American Charging Standard" (NACS).
+     *
+     * This enum must be used if the vehicle specifically supports DC charging. If the vehicle
+     * supports both AC and DC, INFO_EV_CONNECTOR_TYPE should be populated with both SAE_J3400_AC
+     * and SAE_J3400_DC. If the vehicle only supports DC charging, it should only be populated with
+     * SAE_J3400_DC.
+     *
+     * This is equivalent to TESLA_SUPERCHARGER enum.
+     */
+    SAE_J3400_DC = 9,
     /**
      * Connector type to use when no other types apply. Before using this
      * value, work with Google to see if the EvConnectorType enum can be

@@ -37,6 +37,7 @@ union CellInfoRatSpecificInfo {
     CellInfoNr nr;
     /**
      * 3gpp2 CellInfo types;
+     * @deprecated Legacy CDMA is unsupported.
      */
     CellInfoCdma cdma;
 }

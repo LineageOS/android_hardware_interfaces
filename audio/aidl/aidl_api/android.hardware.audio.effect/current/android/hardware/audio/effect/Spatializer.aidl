@@ -42,6 +42,7 @@ union Spatializer {
   android.media.audio.common.HeadTracking.Mode headTrackingMode;
   android.media.audio.common.HeadTracking.ConnectionMode headTrackingConnectionMode;
   android.media.audio.common.HeadTracking.SensorData headTrackingSensorData;
+  android.media.audio.common.AudioChannelLayout[] spatializedChannelLayout;
   @VintfStability
   union Id {
     android.hardware.audio.effect.VendorExtension vendorExtensionTag;

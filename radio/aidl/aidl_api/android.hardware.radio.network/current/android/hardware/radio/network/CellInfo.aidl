@@ -36,6 +36,6 @@ package android.hardware.radio.network;
 @JavaDerive(toString=true) @VintfStability
 parcelable CellInfo {
   boolean registered;
-  android.hardware.radio.network.CellConnectionStatus connectionStatus;
+  android.hardware.radio.network.CellConnectionStatus connectionStatus = android.hardware.radio.network.CellConnectionStatus.NONE;
   android.hardware.radio.network.CellInfoRatSpecificInfo ratSpecificInfo;
 }

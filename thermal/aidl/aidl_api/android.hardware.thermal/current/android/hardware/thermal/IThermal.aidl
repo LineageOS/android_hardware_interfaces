@@ -46,4 +46,5 @@ interface IThermal {
   void unregisterThermalChangedCallback(in android.hardware.thermal.IThermalChangedCallback callback);
   void registerCoolingDeviceChangedCallbackWithType(in android.hardware.thermal.ICoolingDeviceChangedCallback callback, in android.hardware.thermal.CoolingType type);
   void unregisterCoolingDeviceChangedCallback(in android.hardware.thermal.ICoolingDeviceChangedCallback callback);
+  float forecastSkinTemperature(in int forecastSeconds);
 }

@@ -1,0 +1,39 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+aidl_interface {
+    name: "android.hardware.tv.mediaquality",
+    vendor_available: true,
+    owner: "haofanw",
+    srcs: [
+        "android/hardware/tv/mediaquality/*.aidl",
+    ],
+    imports: [
+        "android.hardware.graphics.common-V5",
+    ],
+    stability: "vintf",
+    backend: {
+        java: {
+            enabled: true,
+            platform_apis: true,
+        },
+        ndk: {
+            enabled: true,
+            min_sdk_version: "31",
+        },
+        rust: {
+            enabled: true,
+            min_sdk_version: "31",
+        },
+        cpp: {
+            enabled: false,
+        },
+    },
+    frozen: false,
+}

@@ -37,9 +37,9 @@ package android.hardware.radio.data;
 parcelable DataProfileInfo {
   int profileId;
   String apn;
-  android.hardware.radio.data.PdpProtocolType protocol;
-  android.hardware.radio.data.PdpProtocolType roamingProtocol;
-  android.hardware.radio.data.ApnAuthType authType;
+  android.hardware.radio.data.PdpProtocolType protocol = android.hardware.radio.data.PdpProtocolType.IP;
+  android.hardware.radio.data.PdpProtocolType roamingProtocol = android.hardware.radio.data.PdpProtocolType.IP;
+  android.hardware.radio.data.ApnAuthType authType = android.hardware.radio.data.ApnAuthType.NO_PAP_NO_CHAP;
   String user;
   String password;
   int type;

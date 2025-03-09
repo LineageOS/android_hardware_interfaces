@@ -33,7 +33,7 @@
 
 package android.hardware.radio.sim;
 /* @hide */
-@JavaDerive(toString=true) @VintfStability
+@JavaDerive(toString=true) @SuppressWarnings(value={"redundant-name"}) @VintfStability
 parcelable SimRefreshResult {
   int type;
   int efId;

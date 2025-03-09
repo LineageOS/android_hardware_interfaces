@@ -47,4 +47,10 @@ parcelable P2pPeerClientJoinedEventParams {
      * that no vendor data is provided.
      */
     @nullable OuiKeyedData[] vendorData;
+
+    /**
+     * Authentication key management protocol used in connection.
+     * This is a bitmask of |KeyMgmtMask| values.
+     */
+    int keyMgmtMask;
 }

@@ -16,8 +16,9 @@
 
 package android.hardware.bluetooth.audio;
 
-import android.hardware.bluetooth.audio.Lc3Configuration;
 import android.hardware.bluetooth.audio.AptxAdaptiveLeConfiguration;
+import android.hardware.bluetooth.audio.Lc3Configuration;
+import android.hardware.bluetooth.audio.OpusConfiguration;
 
 @VintfStability
 union LeAudioCodecConfiguration {
@@ -28,4 +29,5 @@ union LeAudioCodecConfiguration {
     Lc3Configuration lc3Config;
     VendorConfiguration vendorConfig;
     AptxAdaptiveLeConfiguration aptxAdaptiveLeConfig;
+    OpusConfiguration opusConfig;
 }

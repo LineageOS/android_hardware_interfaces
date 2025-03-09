@@ -36,7 +36,7 @@ package android.hardware.tv.tuner;
 @Backing(type="int") @VintfStability
 enum FrontendAtscModulation {
   UNDEFINED = 0,
-  AUTO = 1,
-  MOD_8VSB = 4,
-  MOD_16VSB = 8,
+  AUTO = (1 << 0) /* 1 */,
+  MOD_8VSB = (1 << 2) /* 4 */,
+  MOD_16VSB = (1 << 3) /* 8 */,
 }

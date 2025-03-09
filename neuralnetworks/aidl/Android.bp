@@ -11,13 +11,16 @@ aidl_interface {
     name: "android.hardware.neuralnetworks",
     host_supported: true,
     vendor_available: true,
+    frozen: true,
     srcs: [
         "android/hardware/neuralnetworks/*.aidl",
     ],
     stability: "vintf",
+    defaults: [
+        "android.hardware.graphics.common-latest",
+    ],
     imports: [
         "android.hardware.common-V2",
-        "android.hardware.graphics.common-V5",
     ],
     backend: {
         java: {
@@ -40,28 +43,28 @@ aidl_interface {
             version: "1",
             imports: [
                 "android.hardware.common-V2",
-                "android.hardware.graphics.common-V5",
+                "android.hardware.graphics.common-V6",
             ],
         },
         {
             version: "2",
             imports: [
                 "android.hardware.common-V2",
-                "android.hardware.graphics.common-V5",
+                "android.hardware.graphics.common-V6",
             ],
         },
         {
             version: "3",
             imports: [
                 "android.hardware.common-V2",
-                "android.hardware.graphics.common-V5",
+                "android.hardware.graphics.common-V6",
             ],
         },
         {
             version: "4",
             imports: [
                 "android.hardware.common-V2",
-                "android.hardware.graphics.common-V5",
+                "android.hardware.graphics.common-V6",
             ],
         },
 

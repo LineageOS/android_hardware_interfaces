@@ -39,7 +39,7 @@ parcelable StkCcUnsolSsResult {
   int requestType;
   int teleserviceType;
   int serviceClass;
-  android.hardware.radio.RadioError result;
+  android.hardware.radio.RadioError result = android.hardware.radio.RadioError.NONE;
   android.hardware.radio.voice.SsInfoData[] ssInfo;
   android.hardware.radio.voice.CfData[] cfData;
   const int REQUEST_TYPE_ACTIVATION = 0;

@@ -1,0 +1,8 @@
+{
+    "ravenwood-presubmit": [
+        {
+            "name": "CarServiceHostUnitTest",
+            "host": true
+        }
+    ]
+}

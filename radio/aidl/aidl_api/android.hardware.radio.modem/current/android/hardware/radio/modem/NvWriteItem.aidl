@@ -32,12 +32,15 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.modem;
-/**
- * @hide
- * @deprecated NV APIs are deprecated starting from Android U.
- */
+/* @hide */
 @JavaDerive(toString=true) @VintfStability
 parcelable NvWriteItem {
-  android.hardware.radio.modem.NvItem itemId;
+  /**
+   * @deprecated NV APIs are deprecated starting from Android U.
+   */
+  android.hardware.radio.modem.NvItem itemId = android.hardware.radio.modem.NvItem.INVALID;
+  /**
+   * @deprecated NV APIs are deprecated starting from Android U.
+   */
   String value;
 }

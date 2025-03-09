@@ -36,10 +36,10 @@ package android.hardware.radio.ims;
 @JavaDerive(toString=true) @VintfStability
 parcelable SrvccCall {
   int index;
-  android.hardware.radio.ims.SrvccCall.CallType callType;
+  android.hardware.radio.ims.SrvccCall.CallType callType = android.hardware.radio.ims.SrvccCall.CallType.NORMAL;
   int callState;
-  android.hardware.radio.ims.SrvccCall.CallSubState callSubstate;
-  android.hardware.radio.ims.SrvccCall.ToneType ringbackToneType;
+  android.hardware.radio.ims.SrvccCall.CallSubState callSubstate = android.hardware.radio.ims.SrvccCall.CallSubState.NONE;
+  android.hardware.radio.ims.SrvccCall.ToneType ringbackToneType = android.hardware.radio.ims.SrvccCall.ToneType.NONE;
   boolean isMpty;
   boolean isMT;
   String number;

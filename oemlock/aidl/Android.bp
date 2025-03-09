@@ -10,6 +10,7 @@ package {
 aidl_interface {
     name: "android.hardware.oemlock",
     vendor_available: true,
+    frozen: true,
     srcs: ["android/hardware/oemlock/*.aidl"],
     stability: "vintf",
     backend: {

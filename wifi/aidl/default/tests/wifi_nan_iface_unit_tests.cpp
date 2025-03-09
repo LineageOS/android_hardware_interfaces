@@ -138,6 +138,7 @@ class MockNanIfaceEventCallback : public IWifiNanIfaceEventCallback {
     MOCK_METHOD2(notifyResumeResponse, ndk::ScopedAStatus(char16_t, const NanStatus&));
     MOCK_METHOD2(notifyTerminatePairingResponse, ndk::ScopedAStatus(char16_t, const NanStatus&));
     MOCK_METHOD1(eventSuspensionModeChanged, ndk::ScopedAStatus(const NanSuspensionModeChangeInd&));
+    MOCK_METHOD2(notifyRangingResults, ndk::ScopedAStatus(const std::vector<RttResult>&, int8_t));
 };
 
 class WifiNanIfaceTest : public Test {

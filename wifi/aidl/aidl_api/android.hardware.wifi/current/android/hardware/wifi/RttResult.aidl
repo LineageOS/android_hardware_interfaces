@@ -66,4 +66,11 @@ parcelable RttResult {
   byte numTxSpatialStreams;
   byte numRxSpatialStreams;
   @nullable android.hardware.wifi.common.OuiKeyedData[] vendorData;
+  boolean isRangingFrameProtectionEnabled;
+  boolean isSecureLtfEnabled;
+  long baseAkm;
+  long cipherSuite;
+  int secureHeLtfProtocolVersion;
+  long pasnComebackAfterMillis;
+  @nullable byte[] pasnComebackCookie;
 }

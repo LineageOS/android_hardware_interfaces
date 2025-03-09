@@ -36,10 +36,10 @@ package android.hardware.radio.ims;
 @JavaDerive(toString=true) @VintfStability
 parcelable ImsCall {
   int index;
-  android.hardware.radio.ims.ImsCall.CallType callType;
-  android.hardware.radio.AccessNetwork accessNetwork;
-  android.hardware.radio.ims.ImsCall.CallState callState;
-  android.hardware.radio.ims.ImsCall.Direction direction;
+  android.hardware.radio.ims.ImsCall.CallType callType = android.hardware.radio.ims.ImsCall.CallType.NORMAL;
+  android.hardware.radio.AccessNetwork accessNetwork = android.hardware.radio.AccessNetwork.UNKNOWN;
+  android.hardware.radio.ims.ImsCall.CallState callState = android.hardware.radio.ims.ImsCall.CallState.ACTIVE;
+  android.hardware.radio.ims.ImsCall.Direction direction = android.hardware.radio.ims.ImsCall.Direction.INCOMING;
   boolean isHeldByRemote;
   @Backing(type="int")
   enum CallType {

@@ -70,6 +70,38 @@ enum CameraMetadataTag {
      */
     ANDROID_COLOR_CORRECTION_AVAILABLE_ABERRATION_MODES,
     /**
+     * android.colorCorrection.colorTemperature [dynamic, int32, public]
+     *
+     * <p>Specifies the color temperature for CCT mode in Kelvin
+     * to adjust the white balance of the image.</p>
+     */
+    ANDROID_COLOR_CORRECTION_COLOR_TEMPERATURE,
+    /**
+     * android.colorCorrection.colorTint [dynamic, int32, public]
+     *
+     * <p>Specifies the color tint for CCT mode to adjust the white
+     * balance of the image.</p>
+     */
+    ANDROID_COLOR_CORRECTION_COLOR_TINT,
+    /**
+     * android.colorCorrection.colorTemperatureRange [static, int32[], public]
+     *
+     * <p>The range of supported color temperature values for
+     * ANDROID_COLOR_CORRECTION_COLOR_TEMPERATURE.</p>
+     *
+     * @see ANDROID_COLOR_CORRECTION_COLOR_TEMPERATURE
+     */
+    ANDROID_COLOR_CORRECTION_COLOR_TEMPERATURE_RANGE,
+    /**
+     * android.colorCorrection.availableModes [static, byte[], public]
+     *
+     * <p>List of color correction modes for ANDROID_COLOR_CORRECTION_MODE that are
+     * supported by this camera device.</p>
+     *
+     * @see ANDROID_COLOR_CORRECTION_MODE
+     */
+    ANDROID_COLOR_CORRECTION_AVAILABLE_MODES,
+    /**
      * android.control.aeAntibandingMode [dynamic, enum, public]
      *
      * <p>The desired setting for the camera device's auto-exposure
@@ -501,6 +533,21 @@ enum CameraMetadataTag {
      * <p>Current state of the low light boost AE mode.</p>
      */
     ANDROID_CONTROL_LOW_LIGHT_BOOST_STATE,
+    /**
+     * android.control.aePriorityMode [dynamic, enum, public]
+     *
+     * <p>Turn on AE priority mode.</p>
+     */
+    ANDROID_CONTROL_AE_PRIORITY_MODE = 65597,
+    /**
+     * android.control.aeAvailablePriorityModes [static, byte[], public]
+     *
+     * <p>List of auto-exposure priority modes for ANDROID_CONTROL_AE_PRIORITY_MODE
+     * that are supported by this camera device.</p>
+     *
+     * @see ANDROID_CONTROL_AE_PRIORITY_MODE
+     */
+    ANDROID_CONTROL_AE_AVAILABLE_PRIORITY_MODES,
     /**
      * android.demosaic.mode [controls, enum, system]
      *
@@ -2346,6 +2393,62 @@ enum CameraMetadataTag {
      */
     ANDROID_HEIC_AVAILABLE_HEIC_STALL_DURATIONS_MAXIMUM_RESOLUTION,
     /**
+     * android.heic.availableHeicUltraHdrStreamConfigurations [static, enum[], ndk_public]
+     *
+     * <p>The available HEIC (ISO/IEC 23008-12/24) UltraHDR stream
+     * configurations that this camera device supports
+     * (i.e. format, width, height, output/input stream).</p>
+     */
+    ANDROID_HEIC_AVAILABLE_HEIC_ULTRA_HDR_STREAM_CONFIGURATIONS,
+    /**
+     * android.heic.availableHeicUltraHdrMinFrameDurations [static, int64[], ndk_public]
+     *
+     * <p>This lists the minimum frame duration for each
+     * format/size combination for HEIC UltraHDR output formats.</p>
+     */
+    ANDROID_HEIC_AVAILABLE_HEIC_ULTRA_HDR_MIN_FRAME_DURATIONS,
+    /**
+     * android.heic.availableHeicUltraHdrStallDurations [static, int64[], ndk_public]
+     *
+     * <p>This lists the maximum stall duration for each
+     * output format/size combination for HEIC UltraHDR streams.</p>
+     */
+    ANDROID_HEIC_AVAILABLE_HEIC_ULTRA_HDR_STALL_DURATIONS,
+    /**
+     * android.heic.availableHeicUltraHdrStreamConfigurationsMaximumResolution [static, enum[], ndk_public]
+     *
+     * <p>The available HEIC (ISO/IEC 23008-12/24) UltraHDR stream
+     * configurations that this camera device supports
+     * (i.e. format, width, height, output/input stream) for CaptureRequests where
+     * ANDROID_SENSOR_PIXEL_MODE is set to
+     * <a href="https://developer.android.com/reference/android/hardware/camera2/CameraMetadata.html#SENSOR_PIXEL_MODE_MAXIMUM_RESOLUTION">CameraMetadata#SENSOR_PIXEL_MODE_MAXIMUM_RESOLUTION</a>.</p>
+     *
+     * @see ANDROID_SENSOR_PIXEL_MODE
+     */
+    ANDROID_HEIC_AVAILABLE_HEIC_ULTRA_HDR_STREAM_CONFIGURATIONS_MAXIMUM_RESOLUTION,
+    /**
+     * android.heic.availableHeicUltraHdrMinFrameDurationsMaximumResolution [static, int64[], ndk_public]
+     *
+     * <p>This lists the minimum frame duration for each
+     * format/size combination for HEIC UltraHDR output formats for CaptureRequests where
+     * ANDROID_SENSOR_PIXEL_MODE is set to
+     * <a href="https://developer.android.com/reference/android/hardware/camera2/CameraMetadata.html#SENSOR_PIXEL_MODE_MAXIMUM_RESOLUTION">CameraMetadata#SENSOR_PIXEL_MODE_MAXIMUM_RESOLUTION</a>.</p>
+     *
+     * @see ANDROID_SENSOR_PIXEL_MODE
+     */
+    ANDROID_HEIC_AVAILABLE_HEIC_ULTRA_HDR_MIN_FRAME_DURATIONS_MAXIMUM_RESOLUTION,
+    /**
+     * android.heic.availableHeicUltraHdrStallDurationsMaximumResolution [static, int64[], ndk_public]
+     *
+     * <p>This lists the maximum stall duration for each
+     * output format/size combination for HEIC UltraHDR streams for CaptureRequests where
+     * ANDROID_SENSOR_PIXEL_MODE is set to
+     * <a href="https://developer.android.com/reference/android/hardware/camera2/CameraMetadata.html#SENSOR_PIXEL_MODE_MAXIMUM_RESOLUTION">CameraMetadata#SENSOR_PIXEL_MODE_MAXIMUM_RESOLUTION</a>.</p>
+     *
+     * @see ANDROID_SENSOR_PIXEL_MODE
+     */
+    ANDROID_HEIC_AVAILABLE_HEIC_ULTRA_HDR_STALL_DURATIONS_MAXIMUM_RESOLUTION,
+    /**
      * android.heic.info.supported [static, enum, system]
      *
      * <p>Whether this camera device can support identical set of stream combinations
@@ -2374,6 +2477,13 @@ enum CameraMetadataTag {
      * passenger seats.</p>
      */
     ANDROID_AUTOMOTIVE_LENS_FACING = CameraMetadataSectionStart.ANDROID_AUTOMOTIVE_LENS_START,
+    /**
+     * android.extension.nightModeIndicator [dynamic, enum, public]
+     *
+     * <p>Indicates when to activate Night Mode Camera Extension for high-quality
+     * still captures in low-light conditions.</p>
+     */
+    ANDROID_EXTENSION_NIGHT_MODE_INDICATOR = 2097154,
     /**
      * android.jpegr.availableJpegRStreamConfigurations [static, enum[], ndk_public]
      *
@@ -2426,4 +2536,50 @@ enum CameraMetadataTag {
      * @see ANDROID_SENSOR_PIXEL_MODE
      */
     ANDROID_JPEGR_AVAILABLE_JPEG_R_STALL_DURATIONS_MAXIMUM_RESOLUTION,
+    /**
+     * android.desktopEffects.capabilities [static, enum[], system]
+     *
+     * <p>List of special effects supported by the camera device.</p>
+     */
+    ANDROID_DESKTOP_EFFECTS_CAPABILITIES = CameraMetadataSectionStart.ANDROID_DESKTOP_EFFECTS_START,
+    /**
+     * android.desktopEffects.backgroundBlurModes [static, byte[], system]
+     *
+     * <p>List of background blur modes supported by the camera device. The key will only exist
+     * if BACKGROUND_BLUR is listed by ANDROID_DESKTOP_EFFECTS_CAPABILITIES.</p>
+     *
+     * @see ANDROID_DESKTOP_EFFECTS_CAPABILITIES
+     */
+    ANDROID_DESKTOP_EFFECTS_BACKGROUND_BLUR_MODES,
+    /**
+     * android.desktopEffects.backgroundBlurMode [controls, enum, system]
+     *
+     * <p>Control how the background should be blurred. Supported modes are listed in
+     * ANDROID_DESKTOP_EFFECTS_BACKGROUND_BLUR_MODES by the camera device.</p>
+     *
+     * @see ANDROID_DESKTOP_EFFECTS_BACKGROUND_BLUR_MODES
+     */
+    ANDROID_DESKTOP_EFFECTS_BACKGROUND_BLUR_MODE,
+    /**
+     * android.desktopEffects.faceRetouchMode [controls, enum, system]
+     *
+     * <p>Whether to enable face retouch effect.</p>
+     */
+    ANDROID_DESKTOP_EFFECTS_FACE_RETOUCH_MODE,
+    /**
+     * android.desktopEffects.faceRetouchStrength [controls, byte, system]
+     *
+     * <p>Control the strength of face retouch applied to the frames. If
+     * ANDROID_DESKTOP_EFFECTS_FACE_RETOUCH_MODE in ON without a faceRetouchStrength,
+     * a default will be set by the camera device.</p>
+     *
+     * @see ANDROID_DESKTOP_EFFECTS_FACE_RETOUCH_MODE
+     */
+    ANDROID_DESKTOP_EFFECTS_FACE_RETOUCH_STRENGTH,
+    /**
+     * android.desktopEffects.portraitRelightMode [controls, enum, system]
+     *
+     * <p>Whether to enable portrait relighting effect.</p>
+     */
+    ANDROID_DESKTOP_EFFECTS_PORTRAIT_RELIGHT_MODE,
 }

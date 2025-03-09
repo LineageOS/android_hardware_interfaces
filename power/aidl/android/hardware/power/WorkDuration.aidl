@@ -19,7 +19,7 @@ package android.hardware.power;
 @VintfStability
 parcelable WorkDuration {
     /**
-     * Time stamp in nanoseconds based on CLOCK_MONOTONIC when the duration
+     * Timestamp in nanoseconds based on CLOCK_MONOTONIC when the duration
      * sample was measured.
      */
     long timeStampNanos;
@@ -49,4 +49,21 @@ parcelable WorkDuration {
      * SDK/NDK reportActualWorkDuration API.
      */
     long gpuDurationNanos;
+
+    /**
+     * Timestamp indicating the approximate time when this frame is intended to
+     * present by the app, and will be required for all sessions associated with
+     * frame producers. This should always be provided if the session is associated
+     * with a pipeline, even if it is not using the GRAPHICS_PIPELINE mode.
+     *
+     * This timestamp is intended to be used for correlating CompositionData timing
+     * information with reported WorkDurations from apps. WorkDurations for
+     * sessions associated with a frame producers, without a reasonable value set
+     * for this field should be discarded.
+     *
+     * Intended vsync times can be inferred or retrieved from Choreographer callbacks.
+     * While this timestamp is not required to be perfectly accurate, it should
+     * roughly correspond with an expected vsync time, and should be discarded otherwise.
+     */
+    long intendedPresentTimestampNanos;
 }

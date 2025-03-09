@@ -564,6 +564,7 @@ oneway interface IRadioVoiceResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:OPERATION_NOT_ALLOWED
+     * @deprecated Legacy CDMA is unsupported.
      */
     void sendCdmaFeatureCodeResponse(in RadioResponseInfo info);
 

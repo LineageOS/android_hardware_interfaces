@@ -24,6 +24,7 @@
 #include <json/json.h>
 
 #include <fstream>
+#include <string>
 
 namespace android {
 namespace hardware {
@@ -48,7 +49,8 @@ IvnAndroidDeviceService::IvnAndroidDeviceService(std::string_view configPath) {
 }
 
 bool IvnAndroidDeviceService::init() {
-    std::ifstream configStream(mConfigPath);
+    std::string configPathStr(mConfigPath);
+    std::ifstream configStream(configPathStr);
     if (!configStream) {
         LOG(ERROR) << "couldn't open " << mConfigPath << " for parsing.";
         return false;

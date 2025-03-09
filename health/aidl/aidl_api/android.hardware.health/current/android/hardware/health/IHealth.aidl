@@ -49,6 +49,7 @@ interface IHealth {
   void setChargingPolicy(android.hardware.health.BatteryChargingPolicy in_value);
   android.hardware.health.BatteryChargingPolicy getChargingPolicy();
   android.hardware.health.BatteryHealthData getBatteryHealthData();
+  android.hardware.health.HingeInfo[] getHingeInfo();
   const int STATUS_UNKNOWN = 2;
   const int STATUS_CALLBACK_DIED = 4;
 }

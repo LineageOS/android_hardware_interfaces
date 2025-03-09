@@ -282,7 +282,7 @@ enum StandardMetadataType {
      * When it is encoded into a byte stream, the total number of Rects is written using
      * 8 bytes in little endian. It is followed by each Rect.
      *
-     * To encode a Rect, write the following fields in this order each as 8 bytes in little endian:
+     * To encode a Rect, write the following fields in this order each as 4 bytes in little endian:
      * left, top, right and bottom.
      */
     CROP = 16,

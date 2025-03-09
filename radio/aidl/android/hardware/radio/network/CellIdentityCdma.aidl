@@ -23,31 +23,37 @@ import android.hardware.radio.network.OperatorInfo;
 @JavaDerive(toString=true)
 parcelable CellIdentityCdma {
     /**
-     * Network Id 0..65535, INT_MAX if unknown
+     * Network Id 0..65535, RadioConst:VALUE_UNAVAILABLE if unknown
+     * @deprecated Legacy CDMA is unsupported.
      */
     int networkId;
     /**
-     * CDMA System Id 0..32767, INT_MAX if unknown
+     * CDMA System Id 0..32767, RadioConst:VALUE_UNAVAILABLE if unknown
+     * @deprecated Legacy CDMA is unsupported.
      */
     int systemId;
     /**
-     * Base Station Id 0..65535, INT_MAX if unknown
+     * Base Station Id 0..65535, RadioConst:VALUE_UNAVAILABLE if unknown
+     * @deprecated Legacy CDMA is unsupported.
      */
     int baseStationId;
     /**
      * Longitude is a decimal number as specified in 3GPP2 C.S0005-A v6.0. It is represented in
      * units of 0.25 seconds and ranges from -2592000 to 2592000, both values inclusive
-     * (corresponding to a range of -180 to +180 degrees). INT_MAX if unknown
+     * (corresponding to a range of -180 to +180 degrees). RadioConst:VALUE_UNAVAILABLE if unknown
+     * @deprecated Legacy CDMA is unsupported.
      */
     int longitude;
     /**
      * Latitude is a decimal number as specified in 3GPP2 C.S0005-A v6.0. It is represented in
      * units of 0.25 seconds and ranges from -1296000 to 1296000, both values inclusive
-     * (corresponding to a range of -90 to +90 degrees). INT_MAX if unknown
+     * (corresponding to a range of -90 to +90 degrees). RadioConst:VALUE_UNAVAILABLE if unknown
+     * @deprecated Legacy CDMA is unsupported.
      */
     int latitude;
     /**
      * OperatorInfo containing alphaLong and alphaShort
+     * @deprecated Legacy CDMA is unsupported.
      */
     OperatorInfo operatorNames;
 }

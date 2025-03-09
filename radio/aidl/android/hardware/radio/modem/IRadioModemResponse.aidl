@@ -175,8 +175,6 @@ oneway interface IRadioModemResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *
-     * Note: This will be deprecated in favor of a rebootModemResponse API in Android U.
      */
     void nvResetConfigResponse(in RadioResponseInfo info);
 

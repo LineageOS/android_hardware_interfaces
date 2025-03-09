@@ -41,7 +41,13 @@ interface IRadioSimResponse {
   oneway void changeIccPinForAppResponse(in android.hardware.radio.RadioResponseInfo info, in int remainingRetries);
   oneway void enableUiccApplicationsResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void getAllowedCarriersResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.sim.CarrierRestrictions carriers, in android.hardware.radio.sim.SimLockMultiSimPolicy multiSimPolicy);
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void getCdmaSubscriptionResponse(in android.hardware.radio.RadioResponseInfo info, in String mdn, in String hSid, in String hNid, in String min, in String prl);
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void getCdmaSubscriptionSourceResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.sim.CdmaSubscriptionSource source);
   oneway void getFacilityLockForAppResponse(in android.hardware.radio.RadioResponseInfo info, in int response);
   oneway void getIccCardStatusResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.sim.CardStatus cardStatus);
@@ -63,6 +69,9 @@ interface IRadioSimResponse {
   oneway void sendTerminalResponseToSimResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void setAllowedCarriersResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void setCarrierInfoForImsiEncryptionResponse(in android.hardware.radio.RadioResponseInfo info);
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void setCdmaSubscriptionSourceResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void setFacilityLockForAppResponse(in android.hardware.radio.RadioResponseInfo info, in int retry);
   oneway void setSimCardPowerResponse(in android.hardware.radio.RadioResponseInfo info);

@@ -65,6 +65,8 @@ oneway interface IRadioMessaging {
      * Response function is IRadioMessagingResponse.acknowledgeLastIncomingCdmaSmsResponse()
      *
      * This is available when android.hardware.telephony.cdma is defined.
+     *
+     * @deprecated Legacy CDMA is unsupported.
      */
     void acknowledgeLastIncomingCdmaSms(in int serial, in CdmaSmsAck smsAck);
 
@@ -94,6 +96,8 @@ oneway interface IRadioMessaging {
      * Response function is IRadioMessagingResponse.deleteSmsOnRuimResponse()
      *
      * This is available when android.hardware.telephony.cdma is defined.
+     *
+     * @deprecated Legacy CDMA is unsupported.
      */
     void deleteSmsOnRuim(in int serial, in int index);
 
@@ -117,6 +121,8 @@ oneway interface IRadioMessaging {
      * Response function is IRadioMessagingResponse.getCdmaBroadcastConfigResponse()
      *
      * This is available when android.hardware.telephony.cdma is defined.
+     *
+     * @deprecated Legacy CDMA is unsupported.
      */
     void getCdmaBroadcastConfig(in int serial);
 
@@ -173,6 +179,8 @@ oneway interface IRadioMessaging {
      * Response function is IRadioMessagingResponse.sendCdmaSmsResponse()
      *
      * This is available when android.hardware.telephony.cdma is defined.
+     *
+     * @deprecated Legacy CDMA is unsupported.
      */
     void sendCdmaSms(in int serial, in CdmaSmsMessage sms);
 
@@ -186,6 +194,8 @@ oneway interface IRadioMessaging {
      * Response function is IRadioMessagingResponse.sendCdmaSmsExpectMoreResponse()
      *
      * This is available when android.hardware.telephony.cdma is defined.
+     *
+     * @deprecated Legacy CDMA is unsupported.
      */
     void sendCdmaSmsExpectMore(in int serial, in CdmaSmsMessage sms);
 
@@ -243,6 +253,8 @@ oneway interface IRadioMessaging {
      * Response function is IRadioMessagingResponse.setCdmaBroadcastActivationResponse()
      *
      * This is available when android.hardware.telephony.cdma is defined.
+     *
+     * @deprecated Legacy CDMA is unsupported.
      */
     void setCdmaBroadcastActivation(in int serial, in boolean activate);
 
@@ -255,6 +267,8 @@ oneway interface IRadioMessaging {
      * Response function is IRadioMessagingResponse.setCdmaBroadcastConfigResponse()
      *
      * This is available when android.hardware.telephony.cdma is defined.
+     *
+     * @deprecated Legacy CDMA is unsupported.
      */
     void setCdmaBroadcastConfig(in int serial, in CdmaBroadcastSmsConfigInfo[] configInfo);
 
@@ -315,6 +329,8 @@ oneway interface IRadioMessaging {
      * Response function is IRadioMessagingResponse.writeSmsToRuimResponse()
      *
      * This is available when android.hardware.telephony.cdma is defined.
+     *
+     * @deprecated Legacy CDMA is unsupported.
      */
     void writeSmsToRuim(in int serial, in CdmaSmsWriteArgs cdmaSms);
 

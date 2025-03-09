@@ -19,8 +19,8 @@ package {
 aidl_interface {
     name: "android.hardware.confirmationui",
     vendor_available: true,
-    imports: [
-        "android.hardware.security.keymint-V3",
+    defaults: [
+        "android.hardware.security.keymint-latest-defaults",
     ],
     srcs: ["android/hardware/confirmationui/*.aidl"],
     stability: "vintf",
@@ -38,7 +38,7 @@ aidl_interface {
     versions_with_info: [
         {
             version: "1",
-            imports: ["android.hardware.security.keymint-V3"],
+            imports: ["android.hardware.security.keymint-V4"],
         },
     ],
     frozen: true,

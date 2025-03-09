@@ -38,4 +38,22 @@ parcelable Config {
   android.hardware.bluetooth.ranging.SubModeType subModeType;
   android.hardware.bluetooth.ranging.RttType rttType;
   byte[10] channelMap;
+  int minMainModeSteps;
+  int maxMainModeSteps;
+  byte mainModeRepetition;
+  byte mode0Steps;
+  android.hardware.bluetooth.ranging.Role role;
+  android.hardware.bluetooth.ranging.CsSyncPhyType csSyncPhyType;
+  android.hardware.bluetooth.ranging.ChannelSelectionType channelSelectionType;
+  android.hardware.bluetooth.ranging.Ch3cShapeType ch3cShapeType;
+  byte ch3cJump;
+  int channelMapRepetition;
+  int tIp1TimeUs;
+  int tIp2TimeUs;
+  int tFcsTimeUs;
+  byte tPmTimeUs;
+  byte tSwTimeUsSupportedByLocal;
+  byte tSwTimeUsSupportedByRemote;
+  int bleConnInterval = BLE_CONN_INTERVAL_UNAVAILABLE /* 0 */;
+  const int BLE_CONN_INTERVAL_UNAVAILABLE = 0;
 }

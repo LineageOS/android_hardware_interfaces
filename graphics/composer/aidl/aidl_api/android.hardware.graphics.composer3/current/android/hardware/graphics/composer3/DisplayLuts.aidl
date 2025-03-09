@@ -38,6 +38,6 @@ parcelable DisplayLuts {
   android.hardware.graphics.composer3.DisplayLuts.LayerLut[] layerLuts;
   parcelable LayerLut {
     long layer;
-    android.hardware.graphics.composer3.Lut lut;
+    android.hardware.graphics.composer3.Luts luts;
   }
 }

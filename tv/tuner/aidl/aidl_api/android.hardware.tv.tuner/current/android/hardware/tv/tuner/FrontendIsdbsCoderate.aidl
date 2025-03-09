@@ -36,10 +36,10 @@ package android.hardware.tv.tuner;
 @Backing(type="int") @VintfStability
 enum FrontendIsdbsCoderate {
   UNDEFINED = 0,
-  AUTO = 1,
-  CODERATE_1_2 = 2,
-  CODERATE_2_3 = 4,
-  CODERATE_3_4 = 8,
-  CODERATE_5_6 = 16,
-  CODERATE_7_8 = 32,
+  AUTO = (1 << 0) /* 1 */,
+  CODERATE_1_2 = (1 << 1) /* 2 */,
+  CODERATE_2_3 = (1 << 2) /* 4 */,
+  CODERATE_3_4 = (1 << 3) /* 8 */,
+  CODERATE_5_6 = (1 << 4) /* 16 */,
+  CODERATE_7_8 = (1 << 5) /* 32 */,
 }

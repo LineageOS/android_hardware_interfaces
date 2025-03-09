@@ -29,6 +29,7 @@ import android.hardware.gnss.IGnssMeasurementInterface;
 import android.hardware.gnss.IGnssNavigationMessageInterface;
 import android.hardware.gnss.IGnssPowerIndication;
 import android.hardware.gnss.IGnssPsds;
+import android.hardware.gnss.gnss_assistance.IGnssAssistanceInterface;
 import android.hardware.gnss.measurement_corrections.IMeasurementCorrectionsInterface;
 import android.hardware.gnss.visibility_control.IGnssVisibilityControl;
 
@@ -343,4 +344,11 @@ interface IGnss {
      * Stops the NMEA output stream.
      */
     void stopNmea();
+
+    /**
+     * This method returns the IGnssAssistanceInterface.
+     *
+     * @return Handle to the IGnssAssistanceInterface.
+     */
+    IGnssAssistanceInterface getExtensionGnssAssistanceInterface();
 }

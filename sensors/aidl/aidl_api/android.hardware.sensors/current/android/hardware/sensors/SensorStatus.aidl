@@ -34,7 +34,7 @@
 package android.hardware.sensors;
 @Backing(type="byte") @VintfStability
 enum SensorStatus {
-  NO_CONTACT = -1,
+  NO_CONTACT = (-1) /* -1 */,
   UNRELIABLE = 0,
   ACCURACY_LOW = 1,
   ACCURACY_MEDIUM = 2,

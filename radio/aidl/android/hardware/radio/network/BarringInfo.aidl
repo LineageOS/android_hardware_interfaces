@@ -21,6 +21,7 @@ import android.hardware.radio.network.BarringTypeSpecificInfo;
 /** @hide */
 @VintfStability
 @JavaDerive(toString=true)
+@SuppressWarnings(value={"redundant-name"})
 parcelable BarringInfo {
     /**
      * Device is not barred for the given service

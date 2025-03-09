@@ -52,5 +52,6 @@ interface IKeyMintDevice {
   byte[16] getRootOfTrustChallenge();
   byte[] getRootOfTrust(in byte[16] challenge);
   void sendRootOfTrust(in byte[] rootOfTrust);
+  void setAdditionalAttestationInfo(in android.hardware.security.keymint.KeyParameter[] info);
   const int AUTH_TOKEN_MAC_LENGTH = 32;
 }

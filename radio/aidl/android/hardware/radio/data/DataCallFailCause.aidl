@@ -20,6 +20,7 @@ package android.hardware.radio.data;
 @VintfStability
 @Backing(type="int")
 @JavaDerive(toString=true)
+@SuppressWarnings(value={"redundant-name"})
 enum DataCallFailCause {
     /**
      * An integer cause code defined in TS 24.008 section 6.1.3.1.3 or TS 24.301 Release 8+ Annex B.
@@ -420,6 +421,7 @@ enum DataCallFailCause {
     TRAT_SWAP_FAILED = 0x800,
     /**
      * Device falls back from eHRPD to HRPD.
+     * @deprecated Legacy CDMA is unsupported.
      */
     EHRPD_TO_HRPD_FALLBACK = 0x801,
     /**
@@ -520,26 +522,32 @@ enum DataCallFailCause {
     PDN_NON_IP_CALL_DISALLOWED = 0x817,
     /**
      * Device in CDMA locked state.
+     * @deprecated Legacy CDMA is unsupported.
      */
     CDMA_LOCK = 0x818,
     /**
      * Received an intercept order from the base station.
+     * @deprecated Legacy CDMA is unsupported.
      */
     CDMA_INTERCEPT = 0x819,
     /**
      * Receiving a reorder from the base station.
+     * @deprecated Legacy CDMA is unsupported.
      */
     CDMA_REORDER = 0x81A,
     /**
      * Receiving a release from the base station with a SO (Service Option) Reject reason.
+     * @deprecated Legacy CDMA is unsupported.
      */
     CDMA_RELEASE_DUE_TO_SO_REJECTION = 0x81B,
     /**
      * Receiving an incoming call from the base station.
+     * @deprecated Legacy CDMA is unsupported.
      */
     CDMA_INCOMING_CALL = 0x81C,
     /**
      * Received an alert stop from the base station due to incoming only.
+     * @deprecated Legacy CDMA is unsupported.
      */
     CDMA_ALERT_STOP = 0x81D,
     /**
@@ -569,6 +577,7 @@ enum DataCallFailCause {
     CONCURRENT_SERVICES_INCOMPATIBLE = 0x823,
     /**
      * Device does not have CDMA service.
+     * @deprecated Legacy CDMA is unsupported.
      */
     NO_CDMA_SERVICE = 0x824,
     /**
@@ -577,6 +586,7 @@ enum DataCallFailCause {
     RUIM_NOT_PRESENT = 0x825,
     /**
      * Receiving a retry order from the base station.
+     * @deprecated Legacy CDMA is unsupported.
      */
     CDMA_RETRY_ORDER = 0x826,
     /**
@@ -1061,30 +1071,37 @@ enum DataCallFailCause {
     UMTS_HANDOVER_TO_IWLAN = 0x897,
     /**
      * Received a connection deny due to general or network busy on EVDO network.
+     * @deprecated Legacy CDMA is unsupported.
      */
     EVDO_CONNECTION_DENY_BY_GENERAL_OR_NETWORK_BUSY = 0x898,
     /**
      * Received a connection deny due to billing or authentication failure on EVDO network.
+     * @deprecated Legacy CDMA is unsupported.
      */
     EVDO_CONNECTION_DENY_BY_BILLING_OR_AUTHENTICATION_FAILURE = 0x899,
     /**
      * HDR system has been changed due to redirection or the PRL was not preferred.
+     * @deprecated Legacy CDMA is unsupported.
      */
     EVDO_HDR_CHANGED = 0x89A,
     /**
      * Device exited HDR due to redirection or the PRL was not preferred.
+     * @deprecated Legacy CDMA is unsupported.
      */
     EVDO_HDR_EXITED = 0x89B,
     /**
      * Device does not have an HDR session.
+     * @deprecated Legacy CDMA is unsupported.
      */
     EVDO_HDR_NO_SESSION = 0x89C,
     /**
      * It is ending an HDR call origination in favor of a GPS fix.
+     * @deprecated Legacy CDMA is unsupported.
      */
     EVDO_USING_GPS_FIX_INSTEAD_OF_HDR_CALL = 0x89D,
     /**
      * Connection setup on the HDR system was time out.
+     * @deprecated Legacy CDMA is unsupported.
      */
     EVDO_HDR_CONNECTION_SETUP_TIMEOUT = 0x89E,
     /**

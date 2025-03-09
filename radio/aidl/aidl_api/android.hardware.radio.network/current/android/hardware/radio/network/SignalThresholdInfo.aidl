@@ -33,14 +33,14 @@
 
 package android.hardware.radio.network;
 /* @hide */
-@JavaDerive(toString=true) @VintfStability
+@JavaDerive(toString=true) @SuppressWarnings(value={"redundant-name"}) @VintfStability
 parcelable SignalThresholdInfo {
   int signalMeasurement;
   int hysteresisMs;
   int hysteresisDb;
   int[] thresholds;
   boolean isEnabled;
-  android.hardware.radio.AccessNetwork ran;
+  android.hardware.radio.AccessNetwork ran = android.hardware.radio.AccessNetwork.UNKNOWN;
   const int SIGNAL_MEASUREMENT_TYPE_RSSI = 1;
   const int SIGNAL_MEASUREMENT_TYPE_RSCP = 2;
   const int SIGNAL_MEASUREMENT_TYPE_RSRP = 3;

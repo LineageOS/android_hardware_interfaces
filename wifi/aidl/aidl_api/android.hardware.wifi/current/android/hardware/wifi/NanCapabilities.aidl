@@ -54,4 +54,7 @@ parcelable NanCapabilities {
   boolean supportsPairing;
   boolean supportsSetClusterId;
   boolean supportsSuspension;
+  boolean supportsPeriodicRanging;
+  android.hardware.wifi.RttBw maxSupportedBandwidth;
+  int maxNumRxChainsSupported;
 }

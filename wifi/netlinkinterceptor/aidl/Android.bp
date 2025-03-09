@@ -29,6 +29,7 @@ aidl_interface {
     vendor_available: true,
     srcs: ["android/hardware/net/nlinterceptor/*.aidl"],
     stability: "vintf",
+    frozen: true,
     backend: {
         java: {
             enabled: false,

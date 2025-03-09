@@ -1,5 +1,6 @@
 cc_test {
     name: "VtsHalLmpEventTargetTest",
+    team: "trendy_team_bluetooth",
     defaults: [
         "VtsHalTargetTestDefaults",
         "use_libaidlvintf_gtest_helper_static",

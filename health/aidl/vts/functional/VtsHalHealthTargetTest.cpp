@@ -360,6 +360,20 @@ TEST_P(HealthAidl, getStorageInfo) {
 }
 
 /*
+ * Tests the values returned by getHingeInfo() from interface IHealth.
+ */
+TEST_P(HealthAidl, getHingeInfo) {
+    std::vector<HingeInfo> value;
+    auto status = health->getHingeInfo(&value);
+    ASSERT_THAT(status, AnyOf(IsOk(), ExceptionIs(EX_UNSUPPORTED_OPERATION)));
+    if (!status.isOk()) return;
+    for (auto& hinge : value) {
+        ASSERT_TRUE(hinge.expectedHingeLifespan >= 0);
+        ASSERT_TRUE(hinge.numTimesFolded >= 0);
+    }
+}
+
+/*
  * Tests the values returned by getDiskStats() from interface IHealth.
  */
 TEST_P(HealthAidl, getDiskStats) {

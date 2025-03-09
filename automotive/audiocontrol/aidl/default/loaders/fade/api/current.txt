@@ -1,0 +1,160 @@
+// Signature format: 2.0
+package android.hardware.automotive.audiocontrol.fade {
+
+  public class AttributesType {
+    ctor public AttributesType();
+    method @Nullable public android.hardware.automotive.audiocontrol.fade.ContentTypeEnum getContentType();
+    method @Nullable public String getTags();
+    method @Nullable public android.hardware.automotive.audiocontrol.fade.UsageEnumType getUsage();
+    method public void setContentType(@Nullable android.hardware.automotive.audiocontrol.fade.ContentTypeEnum);
+    method public void setTags(@Nullable String);
+    method public void setUsage(@Nullable android.hardware.automotive.audiocontrol.fade.UsageEnumType);
+  }
+
+  public class AudioAttributesUsagesType {
+    ctor public AudioAttributesUsagesType();
+    method @Nullable public java.util.List<android.hardware.automotive.audiocontrol.fade.AttributesType> getAudioAttribute_optional();
+    method @Nullable public java.util.List<android.hardware.automotive.audiocontrol.fade.UsageType> getUsage_optional();
+  }
+
+  public class CarAudioFadeConfigurationType {
+    ctor public CarAudioFadeConfigurationType();
+    method @Nullable public android.hardware.automotive.audiocontrol.fade.FadeConfigurationConfigs getConfigs();
+    method public void setConfigs(@Nullable android.hardware.automotive.audiocontrol.fade.FadeConfigurationConfigs);
+  }
+
+  public class ContentType {
+    ctor public ContentType();
+    method @Nullable public android.hardware.automotive.audiocontrol.fade.ContentTypeEnum getValue();
+    method public void setValue(@Nullable android.hardware.automotive.audiocontrol.fade.ContentTypeEnum);
+  }
+
+  public enum ContentTypeEnum {
+    method @NonNull public String getRawName();
+    enum_constant public static final android.hardware.automotive.audiocontrol.fade.ContentTypeEnum AUDIO_CONTENT_TYPE_MOVIE;
+    enum_constant public static final android.hardware.automotive.audiocontrol.fade.ContentTypeEnum AUDIO_CONTENT_TYPE_MUSIC;
+    enum_constant public static final android.hardware.automotive.audiocontrol.fade.ContentTypeEnum AUDIO_CONTENT_TYPE_SONIFICATION;
+    enum_constant public static final android.hardware.automotive.audiocontrol.fade.ContentTypeEnum AUDIO_CONTENT_TYPE_SPEECH;
+    enum_constant public static final android.hardware.automotive.audiocontrol.fade.ContentTypeEnum AUDIO_CONTENT_TYPE_UNKNOWN;
+  }
+
+  public class FadeConfigurationConfig {
+    ctor public FadeConfigurationConfig();
+    method @Nullable public String getDefaultFadeInDelayForOffenders();
+    method @Nullable public String getDefaultFadeInDurationInMillis();
+    method @Nullable public String getDefaultFadeOutDurationInMillis();
+    method @Nullable public android.hardware.automotive.audiocontrol.fade.FadeInConfigurationsType getFadeInConfigurations();
+    method @Nullable public android.hardware.automotive.audiocontrol.fade.FadeOutConfigurationsType getFadeOutConfigurations();
+    method @Nullable public android.hardware.automotive.audiocontrol.fade.FadeStateType getFadeState();
+    method @Nullable public android.hardware.automotive.audiocontrol.fade.FadeableUsagesType getFadeableUsages();
+    method @Nullable public String getName();
+    method @Nullable public android.hardware.automotive.audiocontrol.fade.UnfadeableAudioAttributesType getUnfadeableAudioAttributes();
+    method @Nullable public android.hardware.automotive.audiocontrol.fade.UnfadeableContentTypesType getUnfadeableContentTypes();
+    method public void setDefaultFadeInDelayForOffenders(@Nullable String);
+    method public void setDefaultFadeInDurationInMillis(@Nullable String);
+    method public void setDefaultFadeOutDurationInMillis(@Nullable String);
+    method public void setFadeInConfigurations(@Nullable android.hardware.automotive.audiocontrol.fade.FadeInConfigurationsType);
+    method public void setFadeOutConfigurations(@Nullable android.hardware.automotive.audiocontrol.fade.FadeOutConfigurationsType);
+    method public void setFadeState(@Nullable android.hardware.automotive.audiocontrol.fade.FadeStateType);
+    method public void setFadeableUsages(@Nullable android.hardware.automotive.audiocontrol.fade.FadeableUsagesType);
+    method public void setName(@Nullable String);
+    method public void setUnfadeableAudioAttributes(@Nullable android.hardware.automotive.audiocontrol.fade.UnfadeableAudioAttributesType);
+    method public void setUnfadeableContentTypes(@Nullable android.hardware.automotive.audiocontrol.fade.UnfadeableContentTypesType);
+  }
+
+  public class FadeConfigurationConfigs {
+    ctor public FadeConfigurationConfigs();
+    method @Nullable public java.util.List<android.hardware.automotive.audiocontrol.fade.FadeConfigurationConfig> getConfig();
+  }
+
+  public class FadeConfigurationType {
+    ctor public FadeConfigurationType();
+    method @Nullable public android.hardware.automotive.audiocontrol.fade.AudioAttributesUsagesType getAudioAttributes();
+    method @Nullable public String getFadeDurationMillis();
+    method public void setAudioAttributes(@Nullable android.hardware.automotive.audiocontrol.fade.AudioAttributesUsagesType);
+    method public void setFadeDurationMillis(@Nullable String);
+  }
+
+  public class FadeInConfigurationsType {
+    ctor public FadeInConfigurationsType();
+    method @Nullable public android.hardware.automotive.audiocontrol.fade.FadeConfigurationType getFadeConfiguration();
+    method public void setFadeConfiguration(@Nullable android.hardware.automotive.audiocontrol.fade.FadeConfigurationType);
+  }
+
+  public class FadeOutConfigurationsType {
+    ctor public FadeOutConfigurationsType();
+    method @Nullable public android.hardware.automotive.audiocontrol.fade.FadeConfigurationType getFadeConfiguration();
+    method public void setFadeConfiguration(@Nullable android.hardware.automotive.audiocontrol.fade.FadeConfigurationType);
+  }
+
+  public enum FadeStateEnumType {
+    method @NonNull public String getRawName();
+    enum_constant public static final android.hardware.automotive.audiocontrol.fade.FadeStateEnumType FADE_STATE_DISABLED;
+    enum_constant public static final android.hardware.automotive.audiocontrol.fade.FadeStateEnumType FADE_STATE_ENABLED_DEFAULT;
+    enum_constant public static final android.hardware.automotive.audiocontrol.fade.FadeStateEnumType _0;
+    enum_constant public static final android.hardware.automotive.audiocontrol.fade.FadeStateEnumType _1;
+  }
+
+  public class FadeStateType {
+    ctor public FadeStateType();
+    method @Nullable public android.hardware.automotive.audiocontrol.fade.FadeStateEnumType getValue();
+    method public void setValue(@Nullable android.hardware.automotive.audiocontrol.fade.FadeStateEnumType);
+  }
+
+  public class FadeableUsagesType {
+    ctor public FadeableUsagesType();
+    method @Nullable public java.util.List<android.hardware.automotive.audiocontrol.fade.UsageType> getUsage();
+  }
+
+  public class UnfadeableAudioAttributesType {
+    ctor public UnfadeableAudioAttributesType();
+    method @Nullable public android.hardware.automotive.audiocontrol.fade.AudioAttributesUsagesType getAudioAttributes();
+    method public void setAudioAttributes(@Nullable android.hardware.automotive.audiocontrol.fade.AudioAttributesUsagesType);
+  }
+
+  public class UnfadeableContentTypesType {
+    ctor public UnfadeableContentTypesType();
+    method @Nullable public java.util.List<android.hardware.automotive.audiocontrol.fade.ContentType> getContentType();
+  }
+
+  public enum UsageEnumType {
+    method @NonNull public String getRawName();
+    enum_constant public static final android.hardware.automotive.audiocontrol.fade.UsageEnumType AUDIO_USAGE_ALARM;
+    enum_constant public static final android.hardware.automotive.audiocontrol.fade.UsageEnumType AUDIO_USAGE_ANNOUNCEMENT;
+    enum_constant public static final android.hardware.automotive.audiocontrol.fade.UsageEnumType AUDIO_USAGE_ASSISTANCE_ACCESSIBILITY;
+    enum_constant public static final android.hardware.automotive.audiocontrol.fade.UsageEnumType AUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE;
+    enum_constant public static final android.hardware.automotive.audiocontrol.fade.UsageEnumType AUDIO_USAGE_ASSISTANCE_SONIFICATION;
+    enum_constant public static final android.hardware.automotive.audiocontrol.fade.UsageEnumType AUDIO_USAGE_ASSISTANT;
+    enum_constant public static final android.hardware.automotive.audiocontrol.fade.UsageEnumType AUDIO_USAGE_CALL_ASSISTANT;
+    enum_constant public static final android.hardware.automotive.audiocontrol.fade.UsageEnumType AUDIO_USAGE_EMERGENCY;
+    enum_constant public static final android.hardware.automotive.audiocontrol.fade.UsageEnumType AUDIO_USAGE_GAME;
+    enum_constant public static final android.hardware.automotive.audiocontrol.fade.UsageEnumType AUDIO_USAGE_MEDIA;
+    enum_constant public static final android.hardware.automotive.audiocontrol.fade.UsageEnumType AUDIO_USAGE_NOTIFICATION;
+    enum_constant public static final android.hardware.automotive.audiocontrol.fade.UsageEnumType AUDIO_USAGE_NOTIFICATION_COMMUNICATION_DELAYED;
+    enum_constant public static final android.hardware.automotive.audiocontrol.fade.UsageEnumType AUDIO_USAGE_NOTIFICATION_COMMUNICATION_INSTANT;
+    enum_constant public static final android.hardware.automotive.audiocontrol.fade.UsageEnumType AUDIO_USAGE_NOTIFICATION_COMMUNICATION_REQUEST;
+    enum_constant public static final android.hardware.automotive.audiocontrol.fade.UsageEnumType AUDIO_USAGE_NOTIFICATION_EVENT;
+    enum_constant public static final android.hardware.automotive.audiocontrol.fade.UsageEnumType AUDIO_USAGE_NOTIFICATION_TELEPHONY_RINGTONE;
+    enum_constant public static final android.hardware.automotive.audiocontrol.fade.UsageEnumType AUDIO_USAGE_SAFETY;
+    enum_constant public static final android.hardware.automotive.audiocontrol.fade.UsageEnumType AUDIO_USAGE_UNKNOWN;
+    enum_constant public static final android.hardware.automotive.audiocontrol.fade.UsageEnumType AUDIO_USAGE_VEHICLE_STATUS;
+    enum_constant public static final android.hardware.automotive.audiocontrol.fade.UsageEnumType AUDIO_USAGE_VIRTUAL_SOURCE;
+    enum_constant public static final android.hardware.automotive.audiocontrol.fade.UsageEnumType AUDIO_USAGE_VOICE_COMMUNICATION;
+    enum_constant public static final android.hardware.automotive.audiocontrol.fade.UsageEnumType AUDIO_USAGE_VOICE_COMMUNICATION_SIGNALLING;
+  }
+
+  public class UsageType {
+    ctor public UsageType();
+    method @Nullable public android.hardware.automotive.audiocontrol.fade.UsageEnumType getValue();
+    method public void setValue(@Nullable android.hardware.automotive.audiocontrol.fade.UsageEnumType);
+  }
+
+  public class XmlParser {
+    ctor public XmlParser();
+    method @Nullable public static android.hardware.automotive.audiocontrol.fade.CarAudioFadeConfigurationType read(@NonNull java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+    method @Nullable public static String readText(@NonNull org.xmlpull.v1.XmlPullParser) throws java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+    method public static void skip(@NonNull org.xmlpull.v1.XmlPullParser) throws java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+  }
+
+}
+

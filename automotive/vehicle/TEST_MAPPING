@@ -48,12 +48,7 @@
       "name": "GRPCVehicleHardwareUnitTest"
     },
     {
-      "name": "CarServiceUnitTest",
-      "options" : [
-        {
-          "include-filter": "com.android.car.hal.fakevhal.FakeVehicleStubUnitTest"
-        }
-      ]
+      "name": "CarServiceHalUnitTest"
     },
     {
       "name": "VehicleHalProtoMessageConverterTest"

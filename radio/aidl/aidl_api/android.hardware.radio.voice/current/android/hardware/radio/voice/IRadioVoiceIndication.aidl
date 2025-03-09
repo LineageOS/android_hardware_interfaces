@@ -37,8 +37,17 @@ package android.hardware.radio.voice;
 interface IRadioVoiceIndication {
   oneway void callRing(in android.hardware.radio.RadioIndicationType type, in boolean isGsm, in android.hardware.radio.voice.CdmaSignalInfoRecord record);
   oneway void callStateChanged(in android.hardware.radio.RadioIndicationType type);
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void cdmaCallWaiting(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.voice.CdmaCallWaiting callWaitingRecord);
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void cdmaInfoRec(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.voice.CdmaInformationRecord[] records);
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void cdmaOtaProvisionStatus(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.voice.CdmaOtaProvisionStatus status);
   oneway void currentEmergencyNumberList(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.voice.EmergencyNumber[] emergencyNumberList);
   oneway void enterEmergencyCallbackMode(in android.hardware.radio.RadioIndicationType type);

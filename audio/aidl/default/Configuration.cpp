@@ -324,9 +324,9 @@ std::unique_ptr<Configuration> getPrimaryConfiguration() {
 //
 // Mix ports:
 //  * "r_submix output", maximum 10 opened streams, maximum 10 active streams
-//    - profile PCM 16-bit; STEREO; 8000, 11025, 16000, 32000, 44100, 48000
+//    - profile PCM 16-bit; STEREO; 8000, 11025, 16000, 32000, 44100, 48000, 192000
 //  * "r_submix input", maximum 10 opened streams, maximum 10 active streams
-//    - profile PCM 16-bit; STEREO; 8000, 11025, 16000, 32000, 44100, 48000
+//    - profile PCM 16-bit; STEREO; 8000, 11025, 16000, 32000, 44100, 48000, 192000
 //
 // Routes:
 //  "r_submix output" -> "Remote Submix Out"
@@ -337,7 +337,7 @@ std::unique_ptr<Configuration> getRSubmixConfiguration() {
         Configuration c;
         const std::vector<AudioProfile> remoteSubmixPcmAudioProfiles{
                 createProfile(PcmType::INT_16_BIT, {AudioChannelLayout::LAYOUT_STEREO},
-                              {8000, 11025, 16000, 32000, 44100, 48000})};
+                              {8000, 11025, 16000, 32000, 44100, 48000, 192000})};
 
         // Device ports
 

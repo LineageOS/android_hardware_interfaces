@@ -69,29 +69,36 @@ ConversionResult<AudioHalCapRule::CriterionRule> convertCriterionRuleToAidl(
     std::string criterionName = xsdcRule.getSelectionCriterion();
     std::string criterionValue = xsdcRule.getValue();
     if (iequals(criterionName, toString(Tag::availableInputDevices))) {
-        rule.criterion = AudioHalCapCriterionV2::make<Tag::availableInputDevices>();
-        rule.criterionTypeValue =
-                VALUE_OR_RETURN(convertDeviceTypeToAidl(gLegacyInputDevicePrefix + criterionValue));
+        AudioHalCapCriterionV2::AvailableDevices value;
+        value.values.emplace_back(VALUE_OR_RETURN(
+                convertDeviceTypeToAidl(gLegacyInputDevicePrefix + criterionValue)));
+        rule.criterionAndValue = AudioHalCapCriterionV2::make<Tag::availableInputDevices>(value);
+
     } else if (iequals(criterionName, toString(Tag::availableOutputDevices))) {
-        rule.criterion = AudioHalCapCriterionV2::make<Tag::availableOutputDevices>();
-        rule.criterionTypeValue = VALUE_OR_RETURN(
-                convertDeviceTypeToAidl(gLegacyOutputDevicePrefix + criterionValue));
+        AudioHalCapCriterionV2::AvailableDevices value;
+        value.values.emplace_back(VALUE_OR_RETURN(
+                convertDeviceTypeToAidl(gLegacyOutputDevicePrefix + criterionValue)));
+        rule.criterionAndValue = AudioHalCapCriterionV2::make<Tag::availableOutputDevices>(value);
     } else if (iequals(criterionName, toString(Tag::availableInputDevicesAddresses))) {
-        rule.criterion = AudioHalCapCriterionV2::make<Tag::availableInputDevicesAddresses>();
-        rule.criterionTypeValue =
-                AudioDeviceAddress::make<AudioDeviceAddress::Tag::id>(criterionValue);
+        AudioHalCapCriterionV2::AvailableDevicesAddresses value;
+        value.values.emplace_back(criterionValue);
+        rule.criterionAndValue =
+                AudioHalCapCriterionV2::make<Tag::availableInputDevicesAddresses>(value);
     } else if (iequals(criterionName, toString(Tag::availableOutputDevicesAddresses))) {
-        rule.criterion = AudioHalCapCriterionV2::make<Tag::availableOutputDevicesAddresses>();
-        rule.criterionTypeValue =
-                AudioDeviceAddress::make<AudioDeviceAddress::Tag::id>(criterionValue);
+        AudioHalCapCriterionV2::AvailableDevicesAddresses value;
+        value.values.emplace_back(criterionValue);
+        rule.criterionAndValue =
+                AudioHalCapCriterionV2::make<Tag::availableOutputDevicesAddresses>(value);
     } else if (iequals(criterionName, toString(Tag::telephonyMode))) {
-        rule.criterion = AudioHalCapCriterionV2::make<Tag::telephonyMode>();
-        rule.criterionTypeValue = VALUE_OR_RETURN(convertTelephonyModeToAidl(criterionValue));
+        AudioHalCapCriterionV2::TelephonyMode value;
+        value.values.emplace_back(VALUE_OR_RETURN(convertTelephonyModeToAidl(criterionValue)));
+        rule.criterionAndValue = AudioHalCapCriterionV2::make<Tag::telephonyMode>(value);
     } else if (!fastcmp<strncmp>(criterionName.c_str(), kXsdcForceConfigForUse,
             strlen(kXsdcForceConfigForUse))) {
-        rule.criterion = AudioHalCapCriterionV2::make<Tag::forceConfigForUse>(
-                VALUE_OR_RETURN(convertForceUseCriterionToAidl(criterionName)));
-        rule.criterionTypeValue = VALUE_OR_RETURN(convertForcedConfigToAidl(criterionValue));
+        AudioHalCapCriterionV2::ForceConfigForUse value;
+        value.values.emplace_back(
+                VALUE_OR_RETURN(convertForceUseToAidl(criterionName, criterionValue)));
+        rule.criterionAndValue = AudioHalCapCriterionV2::make<Tag::forceConfigForUse>(value);
     } else {
         LOG(ERROR) << __func__ << " unrecognized criterion " << criterionName;
         return unexpected(BAD_VALUE);

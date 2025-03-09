@@ -192,6 +192,12 @@ ndk::ScopedAStatus Health::getStorageInfo(std::vector<StorageInfo>*) {
     return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
 }
 
+ndk::ScopedAStatus Health::getHingeInfo(std::vector<HingeInfo>*) {
+    // This implementation does not support HingeInfo. An implementation may extend this
+    // class and override this function to support storage info.
+    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
 ndk::ScopedAStatus Health::getHealthInfo(HealthInfo* out) {
     battery_monitor_.updateValues();
 

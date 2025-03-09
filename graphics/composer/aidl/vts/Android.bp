@@ -71,6 +71,7 @@ cc_test {
         "libarect",
         "libbase",
         "libfmq",
+        "libgmock",
         "libgtest",
         "libmath",
         "librenderengine",

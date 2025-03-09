@@ -17,6 +17,7 @@
 package android.hardware.security.secretkeeper;
 
 import android.hardware.security.authgraph.IAuthGraphKeyExchange;
+import android.hardware.security.secretkeeper.PublicKey;
 import android.hardware.security.secretkeeper.SecretId;
 
 @VintfStability
@@ -101,4 +102,12 @@ interface ISecretkeeper {
      * Delete data of all clients.
      */
     void deleteAll();
+
+    /**
+     * Gets the public key of the secret keeper instance. This should be a CBOR-encoded
+     * COSE_Key, as a PubKeyEd25519 / PubKeyECDSA256 / PubKeyECDSA384, as defined in
+     * generateCertificateRequestV2.cddl. Clients must have a trusted way of ensuring
+     * this key is valid.
+     */
+    PublicKey getSecretkeeperIdentity();
 }

@@ -33,8 +33,9 @@
 
 package android.hardware.radio.ims.media;
 /* @hide */
-@Backing(type="int") @JavaDerive(toString=true) @VintfStability
+@Backing(type="int") @JavaDerive(toString=true) @SuppressWarnings(value={"redundant-name"}) @VintfStability
 enum EvsMode {
+  INVALID = 0,
   EVS_MODE_0 = (1 << 0) /* 1 */,
   EVS_MODE_1 = (1 << 1) /* 2 */,
   EVS_MODE_2 = (1 << 2) /* 4 */,

@@ -39,4 +39,9 @@ parcelable P2pCreateGroupOwnerInfo {
      * that no vendor data is provided.
      */
     @nullable OuiKeyedData[] vendorData;
+    /**
+     * Used to start a Group Owner that support P2P2 IE. The connection to this Group Owner can
+     * be established only using P2P Pairing protocol.
+     */
+    boolean isP2pV2;
 }

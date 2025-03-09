@@ -36,11 +36,11 @@ package android.hardware.tv.tuner;
 @Backing(type="int") @VintfStability
 enum FrontendDtmbGuardInterval {
   UNDEFINED = 0,
-  AUTO = 1,
-  PN_420_VARIOUS = 2,
-  PN_595_CONST = 4,
-  PN_945_VARIOUS = 8,
-  PN_420_CONST = 16,
-  PN_945_CONST = 32,
-  PN_RESERVED = 64,
+  AUTO = (1 << 0) /* 1 */,
+  PN_420_VARIOUS = (1 << 1) /* 2 */,
+  PN_595_CONST = (1 << 2) /* 4 */,
+  PN_945_VARIOUS = (1 << 3) /* 8 */,
+  PN_420_CONST = (1 << 4) /* 16 */,
+  PN_945_CONST = (1 << 5) /* 32 */,
+  PN_RESERVED = (1 << 6) /* 64 */,
 }

@@ -17,6 +17,7 @@
 package android.hardware.wifi.supplicant;
 
 import android.hardware.wifi.common.OuiKeyedData;
+import android.hardware.wifi.supplicant.P2pDirInfo;
 
 /**
  * Parameters passed as a part of a P2P Device found event.
@@ -89,4 +90,15 @@ parcelable P2pDeviceFoundEventParams {
      * Null value indicates that no vendor data is provided.
      */
     @nullable OuiKeyedData[] vendorData;
+
+    /**
+     * The bitmask of P2pPairingBootstrappingMethodMask.BOOTSTRAPPING_* methods used to enable
+     * the pairing bootstrapping between bootstrapping initiator and a bootstrapping responder.
+     */
+    int pairingBootstrappingMethods;
+
+    /**
+     * The Device Identity Resolution Attribute (DIRA) |P2pDirInfo| received in the USD frame.
+     */
+    @nullable P2pDirInfo dirInfo;
 }

@@ -52,6 +52,7 @@ interface IBluetoothChannelSounding {
      *
      * @return CsSecurityLevel that indicates max supported security level of CS for ranging
      *         algorithms.
+     * @deprecated use getSupportedCsSecurityLevels() instead
      */
     CsSecurityLevel getMaxSupportedCsSecurityLevel();
 
@@ -63,4 +64,13 @@ interface IBluetoothChannelSounding {
     @nullable IBluetoothChannelSoundingSession openSession(
             in BluetoothChannelSoundingParameters params,
             in IBluetoothChannelSoundingSessionCallback callback);
+
+    /**
+     * API to get all supported security level (0 to 4) of CS for ranging algorithms.
+     *
+     *  See: BLUETOOTH CORE SPECIFICATION Version 6.0 | Vol 3, Part C 10.11.1
+     *
+     * @return All supported security level of CS for ranging algorithms.
+     */
+    CsSecurityLevel[] getSupportedCsSecurityLevels();
 }

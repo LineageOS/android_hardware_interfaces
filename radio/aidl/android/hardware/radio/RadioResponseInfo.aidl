@@ -26,7 +26,7 @@ parcelable RadioResponseInfo {
     /**
      * Response type
      */
-    RadioResponseType type;
+    RadioResponseType type = RadioResponseType.SOLICITED;
     /**
      * Serial number of the request
      */
@@ -34,5 +34,5 @@ parcelable RadioResponseInfo {
     /**
      * Response error
      */
-    RadioError error;
+    RadioError error = RadioError.NONE;
 }

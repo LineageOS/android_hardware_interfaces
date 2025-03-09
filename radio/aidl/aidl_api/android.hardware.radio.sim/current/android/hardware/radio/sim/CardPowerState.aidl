@@ -33,7 +33,7 @@
 
 package android.hardware.radio.sim;
 /* @hide */
-@Backing(type="int") @JavaDerive(toString=true) @VintfStability
+@Backing(type="int") @JavaDerive(toString=true) @SuppressWarnings(value={"redundant-name"}) @VintfStability
 enum CardPowerState {
   POWER_DOWN,
   POWER_UP,

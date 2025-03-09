@@ -64,8 +64,8 @@ void statsToStream(std::stringstream& ss, const Buffer<nlattr> attr) {
        << data.tx_heartbeat_errors << ','  //
        << data.tx_window_errors << ','     //
        << data.rx_compressed << ','        //
-       << data.tx_compressed << ','        //
-       << data.rx_nohandler << '}';
+       << data.tx_compressed << '}';
+    // Not printed (due to portability): rx_nohandler, rx_otherhost_dropped
 }
 
 }  // namespace android::nl::protocols::route

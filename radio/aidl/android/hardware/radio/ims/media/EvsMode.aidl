@@ -23,7 +23,10 @@ package android.hardware.radio.ims.media;
 @VintfStability
 @Backing(type="int")
 @JavaDerive(toString=true)
+@SuppressWarnings(value={"redundant-name"})
 enum EvsMode {
+    /** Do not use. */
+    INVALID = 0,
     /** 6.6 kbps for EVS AMR-WB IO */
     EVS_MODE_0 = 1 << 0,
     /** 8.855 kbps for AMR-WB IO */

@@ -43,4 +43,6 @@ interface IRadioConfigResponse {
   oneway void setPreferredDataModemResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void setSimSlotsMappingResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void getSimultaneousCallingSupportResponse(in android.hardware.radio.RadioResponseInfo info, in int[] enabledLogicalSlots);
+  oneway void getSimTypeInfoResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.config.SimTypeInfo[] simTypeInfo);
+  oneway void setSimTypeResponse(in android.hardware.radio.RadioResponseInfo info);
 }

@@ -33,16 +33,16 @@
 
 package android.hardware.radio.sim;
 /* @hide */
-@JavaDerive(toString=true) @VintfStability
+@JavaDerive(toString=true) @SuppressWarnings(value={"redundant-name"}) @VintfStability
 parcelable AppStatus {
   int appType;
   int appState;
-  android.hardware.radio.sim.PersoSubstate persoSubstate;
+  android.hardware.radio.sim.PersoSubstate persoSubstate = android.hardware.radio.sim.PersoSubstate.UNKNOWN;
   String aidPtr;
   String appLabelPtr;
   boolean pin1Replaced;
-  android.hardware.radio.sim.PinState pin1;
-  android.hardware.radio.sim.PinState pin2;
+  android.hardware.radio.sim.PinState pin1 = android.hardware.radio.sim.PinState.UNKNOWN;
+  android.hardware.radio.sim.PinState pin2 = android.hardware.radio.sim.PinState.UNKNOWN;
   const int APP_STATE_UNKNOWN = 0;
   const int APP_STATE_DETECTED = 1;
   const int APP_STATE_PIN = 2;

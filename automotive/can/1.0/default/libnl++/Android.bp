@@ -25,8 +25,18 @@ package {
 
 cc_library_static {
     name: "libnl++",
-    defaults: ["android.hardware.automotive.can@defaults"],
+    host_supported: true,
     vendor_available: true,
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-DANDROID_BASE_UNIQUE_FD_DISABLE_IMPLICIT_CONVERSION",
+    ],
+    shared_libs: [
+        "libbase",
+        "libutils",
+    ],
     srcs: [
         "protocols/common/Empty.cpp",
         "protocols/common/Error.cpp",

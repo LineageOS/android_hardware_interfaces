@@ -35,13 +35,35 @@ package android.hardware.automotive.vehicle;
 @JavaDerive(equals=true, toString=true) @RustDerive(Clone=true) @VintfStability
 parcelable VehicleAreaConfig {
   int areaId;
+  /**
+   * @deprecated client should use {@code getMinMaxSupportedValue} instead. Only applicable for {@code INT32} type property. Ignored for other types. The optional minimum value at boot time. For backward compatibility, if {@code HasSupportedValueInfo.hasMinSupportedValue} is {@code true}, and {@code HasSupportedValueInfo.hasMaxSupportedValue} is {@code true}, this must be equal to the min supported value ({@code MinMaxSupportedValueResult.minSupportedValue}) at boot time. If no minimum or maximum value is available at boot time, both {@code minInt32Value} and {@code maxInt32Value} must be set to 0. If either one is not 0, then we assume min and max both take effect.
+   */
   int minInt32Value;
+  /**
+   * @deprecated client should use {@code getMinMaxSupportedValue} instead. Only applicable for {@code INT32} type property. Ignored for other types. The optional maximum value at boot time. For backward compatibility, if {@code HasSupportedValueInfo.hasMinSupportedValue} is {@code true}, and {@code HasSupportedValueInfo.hasMaxSupportedValue} is {@code true}, this must be equal to the max supported value ({@code MinMaxSupportedValueResult.maxSupportedValue}) at boot time. If no minimum or maximum value is available at boot time, both {@code minInt32Value} and {@code maxInt32Value} must be set to 0. If either one is not 0, then we assume min and max both take effect.
+   */
   int maxInt32Value;
+  /**
+   * @deprecated client should use {@code getMinMaxSupportedValue} instead. Only applicable for {@code INT64} type property. Ignored for other types. The optional minimum value at boot time. For backward compatibility, if {@code HasSupportedValueInfo.hasMinSupportedValue} is {@code true}, and {@code HasSupportedValueInfo.hasMaxSupportedValue} is {@code true}, this must be equal to the min supported value ({@code MinMaxSupportedValueResult.minSupportedValue}) at boot time. If no minimum or maximum value is available at boot time, both {@code minInt64Value} and {@code maxInt64Value} must be set to 0. If either one is not 0, then we assume min and max both take effect.
+   */
   long minInt64Value;
+  /**
+   * @deprecated client should use {@code getMinMaxSupportedValue} instead. Only applicable for {@code INT64} type property. Ignored for other types. The optional maximum value at boot time. For backward compatibility, if {@code HasSupportedValueInfo.hasMinSupportedValue} is {@code true}, and {@code HasSupportedValueInfo.hasMaxSupportedValue} is {@code true}, this must be equal to the max supported value ({@code MinMaxSupportedValueResult.maxSupportedValue}) at boot time. If no minimum or maximum value is available at boot time, both {@code minInt64Value} and {@code maxInt64Value} must be set to 0. If either one is not 0, then we assume min and max both take effect.
+   */
   long maxInt64Value;
+  /**
+   * @deprecated client should use {@code getMinMaxSupportedValue} instead. Only applicable for {@code FLOAT} type property. Ignored for other types. The optional minimum value at boot time. For backward compatibility, if {@code HasSupportedValueInfo.hasMinSupportedValue} is {@code true}, and {@code HasSupportedValueInfo.hasMaxSupportedValue} is {@code true}, this must be equal to the min supported value ({@code MinMaxSupportedValueResult.minSupportedValue}) at boot time. If no minimum or maximum value is available at boot time, both {@code minFloatValue} and {@code maxFloatValue} must be set to 0. If either one is not 0, then we assume min and max both take effect.
+   */
   float minFloatValue;
+  /**
+   * @deprecated client should use {@code getMinMaxSupportedValue} instead. Only applicable for {@code FLOAT} type property. Ignored for other types. The optional maximum value at boot time. For backward compatibility, if {@code HasSupportedValueInfo.hasMinSupportedValue} is {@code true}, and {@code HasSupportedValueInfo.hasMaxSupportedValue} is {@code true}, this must be equal to the max supported value ({@code MinMaxSupportedValueResult.maxSupportedValue}) at boot time. If no minimum or maximum value is available at boot time, both {@code minFloatValue} and {@code maxFloatValue} must be set to 0. If either one is not 0, then we assume min and max both take effect.
+   */
   float maxFloatValue;
+  /**
+   * @deprecated client should use {@code getMinMaxSupportedValue} instead. Only applicable for property with {@code @data_enum} annotation. Ignored for other properties. Optional supported subset of supported values at boot time. If the property has a @data_enum and supportedEnumValues is {@code null}, then it is assumed all @data_enum values are supported unless specified through another mechanism. For backward compatibility, if {@code HasSupportedValueInfo.hasSupportedValuesList} is {@code true} and this property has {@code data_enum} annotation, this must be set to the same as {@code SupportedValuesListResult.supportedValuesList} at boot time.
+   */
   @nullable long[] supportedEnumValues;
   android.hardware.automotive.vehicle.VehiclePropertyAccess access = android.hardware.automotive.vehicle.VehiclePropertyAccess.NONE;
   boolean supportVariableUpdateRate;
+  @nullable android.hardware.automotive.vehicle.HasSupportedValueInfo hasSupportedValueInfo;
 }

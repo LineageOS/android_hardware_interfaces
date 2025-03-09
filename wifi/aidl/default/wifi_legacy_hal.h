@@ -63,6 +63,7 @@ using ::NAN_DP_REQUEST_ACCEPT;
 using ::NAN_DP_REQUEST_CHANNEL_SETUP;
 using ::NAN_DP_REQUEST_REJECT;
 using ::NAN_DP_RESPONDER_RESPONSE;
+using ::NAN_ENABLE_RANGE_REPORT;
 using ::NAN_GET_CAPABILITIES;
 using ::NAN_MATCH_ALG_MATCH_CONTINUOUS;
 using ::NAN_MATCH_ALG_MATCH_NEVER;
@@ -212,10 +213,16 @@ using ::RTT_STATUS_INVALID_REQ;
 using ::RTT_STATUS_NAN_RANGING_CONCURRENCY_NOT_SUPPORTED;
 using ::RTT_STATUS_NAN_RANGING_PROTOCOL_FAILURE;
 using ::RTT_STATUS_NO_WIFI;
+using ::RTT_STATUS_SECURE_RANGING_FAILURE_INVALID_AKM;
+using ::RTT_STATUS_SECURE_RANGING_FAILURE_INVALID_CIPHER;
+using ::RTT_STATUS_SECURE_RANGING_FAILURE_INVALID_CONFIG;
+using ::RTT_STATUS_SECURE_RANGING_FAILURE_REJECTED;
+using ::RTT_STATUS_SECURE_RANGING_FAILURE_UNKNOWN;
 using ::RTT_STATUS_SUCCESS;
 using ::RTT_TYPE_1_SIDED;
 using ::RTT_TYPE_2_SIDED;
 using ::RTT_TYPE_2_SIDED_11AZ_NTB;
+using ::RTT_TYPE_2_SIDED_11AZ_NTB_SECURE;
 using ::RTT_TYPE_2_SIDED_11MC;
 using ::RX_PKT_FATE_DRV_DROP_FILTER;
 using ::RX_PKT_FATE_DRV_DROP_INVALID;
@@ -482,6 +489,8 @@ struct NanCallbackHandlers {
     std::function<void(const NanBootstrappingRequestInd&)> on_event_bootstrapping_request;
     std::function<void(const NanBootstrappingConfirmInd&)> on_event_bootstrapping_confirm;
     std::function<void(const NanSuspensionModeChangeInd&)> on_event_suspension_mode_change;
+    std::function<void(wifi_rtt_result* rtt_results[], uint32_t num_results, uint16_t session_id)>
+            on_ranging_results;
 };
 
 // Full scan results contain IE info and are hence passed by reference, to

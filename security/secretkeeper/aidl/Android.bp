@@ -25,7 +25,7 @@ aidl_interface {
         "android.hardware.security.authgraph-V1",
     ],
     stability: "vintf",
-    frozen: true,
+    frozen: false,
     backend: {
         java: {
             enabled: true,
@@ -88,6 +88,6 @@ cc_defaults {
 rust_defaults {
     name: "secretkeeper_use_latest_hal_aidl_rust",
     rustlibs: [
-        "android.hardware.security.secretkeeper-V1-rust",
+        "android.hardware.security.secretkeeper-V2-rust",
     ],
 }

@@ -19,27 +19,28 @@
 #include "ifreqs.h"
 
 #include <linux/ethtool.h>
+#include <linux/sockios.h>
 
 namespace android::netdevice::ethtool {
 
-std::optional<uint32_t> getValue(const std::string& ifname, uint32_t command) {
+std::optional<uint32_t> getValue(std::string_view ifname, uint32_t command) {
     struct ethtool_value valueop = {};
     valueop.cmd = command;
 
     auto ifr = ifreqs::fromName(ifname);
-    ifr.ifr_data = &valueop;
+    ifr.ifr_data = reinterpret_cast<caddr_t>(&valueop);
 
     if (!ifreqs::send(SIOCETHTOOL, ifr)) return std::nullopt;
     return valueop.data;
 }
 
-bool setValue(const std::string& ifname, uint32_t command, uint32_t value) {
+bool setValue(std::string_view ifname, uint32_t command, uint32_t value) {
     struct ethtool_value valueop = {};
     valueop.cmd = command;
     valueop.data = value;
 
     auto ifr = ifreqs::fromName(ifname);
-    ifr.ifr_data = &valueop;
+    ifr.ifr_data = reinterpret_cast<caddr_t>(&valueop);
 
     return ifreqs::send(SIOCETHTOOL, ifr);
 }

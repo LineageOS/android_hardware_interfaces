@@ -36,8 +36,8 @@ package android.hardware.tv.tuner;
 @Backing(type="int") @VintfStability
 enum FrontendIsdbtMode {
   UNDEFINED = 0,
-  AUTO = 1,
-  MODE_1 = 2,
-  MODE_2 = 4,
-  MODE_3 = 8,
+  AUTO = (1 << 0) /* 1 */,
+  MODE_1 = (1 << 1) /* 2 */,
+  MODE_2 = (1 << 2) /* 4 */,
+  MODE_3 = (1 << 3) /* 8 */,
 }

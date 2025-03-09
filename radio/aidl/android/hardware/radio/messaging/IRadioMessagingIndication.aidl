@@ -32,6 +32,7 @@ oneway interface IRadioMessagingIndication {
      *
      * @param type Type of radio indication
      * @param msg Cdma Sms Message
+     * @deprecated Legacy CDMA is unsupported.
      */
     void cdmaNewSms(in RadioIndicationType type, in CdmaSmsMessage msg);
 
@@ -40,6 +41,7 @@ oneway interface IRadioMessagingIndication {
      * space is freed.
      *
      * @param type Type of radio indication
+     * @deprecated Legacy CDMA is unsupported.
      */
     void cdmaRuimSmsStorageFull(in RadioIndicationType type);
 

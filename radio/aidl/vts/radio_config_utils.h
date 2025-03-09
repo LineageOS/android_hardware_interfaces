@@ -62,6 +62,11 @@ class RadioConfigResponse : public BnRadioConfigResponse {
 
     virtual ndk::ScopedAStatus getHalDeviceCapabilitiesResponse(
             const RadioResponseInfo& info, bool modemReducedFeatureSet1) override;
+
+    virtual ndk::ScopedAStatus getSimTypeInfoResponse(
+            const RadioResponseInfo& info, const std::vector<SimTypeInfo>& simTypeInfo) override;
+
+    virtual ndk::ScopedAStatus setSimTypeResponse(const RadioResponseInfo& info) override;
 };
 
 /* Callback class for radio config indication */

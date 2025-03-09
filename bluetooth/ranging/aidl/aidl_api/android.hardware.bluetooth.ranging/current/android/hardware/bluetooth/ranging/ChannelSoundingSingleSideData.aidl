@@ -32,6 +32,9 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.bluetooth.ranging;
+/**
+ * @deprecated use ChannelSoundingProcedureData
+ */
 @VintfStability
 parcelable ChannelSoundingSingleSideData {
   @nullable android.hardware.bluetooth.ranging.StepTonePct[] stepTonePcts;

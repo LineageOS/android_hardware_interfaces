@@ -25,6 +25,7 @@
 #include <android/hardware/gnss/IGnssMeasurementInterface.h>
 #include <android/hardware/gnss/IGnssPowerIndication.h>
 #include <android/hardware/gnss/IGnssPsds.h>
+#include <android/hardware/gnss/gnss_assistance/IGnssAssistanceInterface.h>
 #include <android/hardware/gnss/measurement_corrections/IMeasurementCorrectionsInterface.h>
 #include <android/hardware/gnss/visibility_control/IGnssVisibilityControl.h>
 #include <cutils/properties.h>
@@ -73,6 +74,8 @@ using android::hardware::gnss::IGnssPsds;
 using android::hardware::gnss::PsdsType;
 using android::hardware::gnss::SatellitePvt;
 using android::hardware::gnss::common::Utils;
+using android::hardware::gnss::gnss_assistance::GnssAssistance;
+using android::hardware::gnss::gnss_assistance::IGnssAssistanceInterface;
 using android::hardware::gnss::measurement_corrections::IMeasurementCorrectionsInterface;
 using android::hardware::gnss::visibility_control::IGnssVisibilityControl;
 
@@ -1875,5 +1878,24 @@ TEST_P(GnssHalTest, TestSvStatusIntervals) {
                 ASSERT_TRUE(status.isOk());
             }
         }
+    }
+}
+
+/*
+ * Test GnssAssistanceExtension:
+ * 1. Gets the GnssAssistanceExtension
+ * 2. Injects empty GnssAssistance data and verifies that it returns an error.
+ */
+TEST_P(GnssHalTest, TestGnssAssistanceExtension) {
+    // Only runs on devices launched in Android 16+
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 4) {
+        return;
+    }
+    sp<IGnssAssistanceInterface> iGnssAssistance;
+    auto status = aidl_gnss_hal_->getExtensionGnssAssistanceInterface(&iGnssAssistance);
+    if (status.isOk() && iGnssAssistance != nullptr) {
+        GnssAssistance gnssAssistance = {};
+        status = iGnssAssistance->injectGnssAssistance(gnssAssistance);
+        ASSERT_FALSE(status.isOk());
     }
 }

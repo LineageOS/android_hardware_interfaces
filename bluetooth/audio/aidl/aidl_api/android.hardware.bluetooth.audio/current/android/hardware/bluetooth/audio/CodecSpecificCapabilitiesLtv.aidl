@@ -59,8 +59,10 @@ union CodecSpecificCapabilitiesLtv {
     int bitmask;
     const int US7500 = 0x01;
     const int US10000 = 0x02;
+    const int US20000 = 0x04;
     const int US7500PREFERRED = 0x10;
     const int US10000PREFERRED = 0x20;
+    const int US20000PREFERRED = 0x40;
   }
   parcelable SupportedAudioChannelCounts {
     int bitmask;

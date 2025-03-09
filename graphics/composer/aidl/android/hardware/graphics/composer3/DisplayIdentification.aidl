@@ -16,6 +16,7 @@
 
 package android.hardware.graphics.composer3;
 
+import android.hardware.graphics.composer3.ScreenPartStatus;
 /**
  * Output parameters for IComposerClient.getDisplayIdentificationData
  */
@@ -29,4 +30,8 @@ parcelable DisplayIdentification {
      * The EDID 1.3 blob identifying the display.
      */
     byte[] data;
+    /**
+     * Indicator for part originality of the screen
+     */
+    ScreenPartStatus screenPartStatus = ScreenPartStatus.UNSUPPORTED;
 }

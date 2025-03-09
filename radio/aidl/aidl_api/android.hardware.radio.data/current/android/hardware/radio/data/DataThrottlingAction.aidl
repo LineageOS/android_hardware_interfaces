@@ -33,7 +33,7 @@
 
 package android.hardware.radio.data;
 /* @hide */
-@Backing(type="byte") @JavaDerive(toString=true) @VintfStability
+@Backing(type="byte") @JavaDerive(toString=true) @SuppressWarnings(value={"redundant-name"}) @VintfStability
 enum DataThrottlingAction {
   NO_DATA_THROTTLING,
   THROTTLE_SECONDARY_CARRIER,

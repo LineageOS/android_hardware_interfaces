@@ -34,6 +34,7 @@ union CellIdentity {
     CellIdentityGsm gsm;
     CellIdentityWcdma wcdma;
     CellIdentityTdscdma tdscdma;
+    /** @deprecated Legacy CDMA is unsupported. */
     CellIdentityCdma cdma;
     CellIdentityLte lte;
     CellIdentityNr nr;

@@ -35,9 +35,9 @@ package android.hardware.tv.tuner;
 /* @hide */
 @Backing(type="int") @VintfStability
 enum FrontendStatusReadiness {
-  UNDEFINED = 0,
-  UNAVAILABLE = 1,
-  UNSTABLE = 2,
-  STABLE = 3,
-  UNSUPPORTED = 4,
+  UNDEFINED,
+  UNAVAILABLE,
+  UNSTABLE,
+  STABLE,
+  UNSUPPORTED,
 }

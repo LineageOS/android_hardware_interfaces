@@ -22,6 +22,7 @@ import android.hardware.radio.network.CellInfo;
 /** @hide */
 @VintfStability
 @JavaDerive(toString=true)
+@SuppressWarnings(value={"redundant-name"})
 parcelable NetworkScanResult {
     /**
      * The result contains a part of the scan results.
@@ -40,7 +41,7 @@ parcelable NetworkScanResult {
     /**
      * The error code of the incremental result.
      */
-    RadioError error;
+    RadioError error = RadioError.NONE;
     /**
      * List of network information as CellInfo.
      */

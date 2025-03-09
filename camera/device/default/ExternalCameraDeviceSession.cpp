@@ -1136,6 +1136,11 @@ int ExternalCameraDeviceSession::configureV4l2StreamLocked(const SupportedV4L2Fo
 
     uint32_t v4lBufferCount = (fps >= kDefaultFps) ? mCfg.numVideoBuffers : mCfg.numStillBuffers;
 
+    // Double the max lag in theory.
+    mMaxLagNs = v4lBufferCount * 1000000000LL * 2 / fps;
+    ALOGI("%s: set mMaxLagNs to %" PRIu64 " ns, v4lBufferCount %u", __FUNCTION__, mMaxLagNs,
+          v4lBufferCount);
+
     // VIDIOC_REQBUFS: create buffers
     v4l2_requestbuffers req_buffers{};
     req_buffers.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -1232,40 +1237,67 @@ std::unique_ptr<V4L2Frame> ExternalCameraDeviceSession::dequeueV4l2FrameLocked(n
         }
     }
 
-    ATRACE_BEGIN("VIDIOC_DQBUF");
+    uint64_t lagNs = 0;
     v4l2_buffer buffer{};
-    buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    buffer.memory = V4L2_MEMORY_MMAP;
-    if (TEMP_FAILURE_RETRY(ioctl(mV4l2Fd.get(), VIDIOC_DQBUF, &buffer)) < 0) {
-        ALOGE("%s: DQBUF fails: %s", __FUNCTION__, strerror(errno));
-        return ret;
-    }
-    ATRACE_END();
+    do {
+        ATRACE_BEGIN("VIDIOC_DQBUF");
+        buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        buffer.memory = V4L2_MEMORY_MMAP;
+        if (TEMP_FAILURE_RETRY(ioctl(mV4l2Fd.get(), VIDIOC_DQBUF, &buffer)) < 0) {
+            ALOGE("%s: DQBUF fails: %s", __FUNCTION__, strerror(errno));
+            return ret;
+        }
+        ATRACE_END();
 
-    if (buffer.index >= mV4L2BufferCount) {
-        ALOGE("%s: Invalid buffer id: %d", __FUNCTION__, buffer.index);
-        return ret;
-    }
+        if (buffer.index >= mV4L2BufferCount) {
+            ALOGE("%s: Invalid buffer id: %d", __FUNCTION__, buffer.index);
+            return ret;
+        }
 
-    if (buffer.flags & V4L2_BUF_FLAG_ERROR) {
-        ALOGE("%s: v4l2 buf error! buf flag 0x%x", __FUNCTION__, buffer.flags);
-        // TODO: try to dequeue again
-    }
+        if (buffer.flags & V4L2_BUF_FLAG_ERROR) {
+            ALOGE("%s: v4l2 buf error! buf flag 0x%x", __FUNCTION__, buffer.flags);
+            // TODO: try to dequeue again
+        }
 
-    if (buffer.bytesused > mMaxV4L2BufferSize) {
-        ALOGE("%s: v4l2 buffer bytes used: %u maximum %u", __FUNCTION__, buffer.bytesused,
-              mMaxV4L2BufferSize);
-        return ret;
-    }
+        if (buffer.bytesused > mMaxV4L2BufferSize) {
+            ALOGE("%s: v4l2 buffer bytes used: %u maximum %u", __FUNCTION__, buffer.bytesused,
+                  mMaxV4L2BufferSize);
+            return ret;
+        }
 
-    if (buffer.flags & V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC) {
-        // Ideally we should also check for V4L2_BUF_FLAG_TSTAMP_SRC_SOE, but
-        // even V4L2_BUF_FLAG_TSTAMP_SRC_EOF is better than capture a timestamp now
-        *shutterTs = static_cast<nsecs_t>(buffer.timestamp.tv_sec) * 1000000000LL +
-                     buffer.timestamp.tv_usec * 1000LL;
-    } else {
-        *shutterTs = systemTime(SYSTEM_TIME_MONOTONIC);
-    }
+        nsecs_t curTimeNs = systemTime(SYSTEM_TIME_MONOTONIC);
+
+        if (buffer.flags & V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC) {
+            // Ideally we should also check for V4L2_BUF_FLAG_TSTAMP_SRC_SOE, but
+            // even V4L2_BUF_FLAG_TSTAMP_SRC_EOF is better than capture a timestamp now
+            *shutterTs = static_cast<nsecs_t>(buffer.timestamp.tv_sec) * 1000000000LL +
+                         buffer.timestamp.tv_usec * 1000LL;
+        } else {
+            *shutterTs = curTimeNs;
+        }
+
+        // The tactic only takes effect on v4l2 buffers with flag V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC.
+        // Most USB cameras should have the feature.
+        if (curTimeNs < *shutterTs) {
+            lagNs = 0;
+            ALOGW("%s: should not happen, the monotonic clock has issue, shutterTs is in the "
+                  "future, curTimeNs %" PRId64 "  < "
+                  "shutterTs %" PRId64 "",
+                  __func__, curTimeNs, *shutterTs);
+        } else {
+            lagNs = curTimeNs - *shutterTs;
+        }
+
+        if (lagNs > mMaxLagNs) {
+            ALOGI("%s: drop too old buffer, index %d, lag %" PRIu64 " ns > max %" PRIu64 " ns", __FUNCTION__,
+                  buffer.index, lagNs, mMaxLagNs);
+            int retVal = ioctl(mV4l2Fd.get(), VIDIOC_QBUF, &buffer);
+            if (retVal) {
+                ALOGE("%s: unexpected VIDIOC_QBUF failed, retVal %d", __FUNCTION__, retVal);
+                return ret;
+            }
+        }
+    } while (lagNs > mMaxLagNs);
 
     {
         std::lock_guard<std::mutex> lk(mV4l2BufferLock);

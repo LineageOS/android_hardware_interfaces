@@ -225,4 +225,20 @@ interface IThermal {
      *         getMessage() must be populated with human-readable error message.
      */
     void unregisterCoolingDeviceChangedCallback(in ICoolingDeviceChangedCallback callback);
+
+    /**
+     * Retrieves the forecasted skin temperature in Celsius.
+     *
+     * @param forecastSeconds the number of seconds to forecast the skin temperature, it should
+     *                        at least support superset of [0, 60] seconds range.
+     *
+     * @return forecasted skin temperature in Celsius.
+     *
+     * @throws EX_ILLEGAL_STATE If the Thermal HAL is not initialized successfully
+     * @throws EX_ILLEGAL_ARGUMENT If the provided forecastSeconds is negative
+     * @throws EX_UNSUPPORTED_OPERATION if API is not supported or the forecastSeconds exceeds the
+     *         supported range. And the getMessage() must be populated with human-readable
+     *         error message.
+     */
+    float forecastSkinTemperature(in int forecastSeconds);
 }

@@ -61,4 +61,9 @@ parcelable NanPublishRequest {
      * that no vendor data is provided.
      */
     @nullable OuiKeyedData[] vendorData;
+    /**
+     * If |NanCapabilities.supportsPeriodicRanging| is true, then this field specifies whether the
+     * ranging results need to be notified to the Publisher when they are available.
+     */
+    boolean rangingResultsRequired;
 }

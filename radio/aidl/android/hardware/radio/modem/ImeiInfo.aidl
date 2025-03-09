@@ -29,6 +29,8 @@ parcelable ImeiInfo {
      * ImeiType enum is used identify the IMEI as primary or secondary as mentioned in GSMA TS.37
      */
     enum ImeiType {
+        /** Must not be used. */
+        INVALID = 0,
         /**
          * This is the primary IMEI of the device as mentioned in the GSMA TS.37. In a multi-SIM
          * device the modem must set one IMEI with this type as mentioned in GSMA TS37_2.2_REQ_8.
@@ -40,7 +42,7 @@ parcelable ImeiInfo {
     }
 
     /** Primary or secondary IMEI as mentioned in GSMA spec TS.37 */
-    ImeiType type;
+    ImeiType type = ImeiType.INVALID;
     /**
      * IMEI value, see 3gpp spec 23.003 section 6. Note: This primary IMEI mapping must be
      * permanent throughout the lifetime of the device irrespective of the factory data reset,

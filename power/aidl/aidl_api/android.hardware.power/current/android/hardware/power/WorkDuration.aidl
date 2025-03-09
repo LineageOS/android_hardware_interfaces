@@ -39,4 +39,5 @@ parcelable WorkDuration {
   long workPeriodStartTimestampNanos;
   long cpuDurationNanos;
   long gpuDurationNanos;
+  long intendedPresentTimestampNanos;
 }

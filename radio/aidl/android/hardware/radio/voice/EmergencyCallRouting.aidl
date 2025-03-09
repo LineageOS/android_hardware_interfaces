@@ -23,6 +23,7 @@ package android.hardware.radio.voice;
 @VintfStability
 @Backing(type="int")
 @JavaDerive(toString=true)
+@SuppressWarnings(value={"redundant-name"})
 enum EmergencyCallRouting {
     /**
      * Indicates Android does not require how to handle the corresponding emergency call; it is

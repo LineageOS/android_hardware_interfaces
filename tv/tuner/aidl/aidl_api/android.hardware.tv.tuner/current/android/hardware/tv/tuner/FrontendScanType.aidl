@@ -36,6 +36,6 @@ package android.hardware.tv.tuner;
 @Backing(type="int") @VintfStability
 enum FrontendScanType {
   SCAN_UNDEFINED = 0,
-  SCAN_AUTO = 1,
-  SCAN_BLIND = 2,
+  SCAN_AUTO = (1 << 0) /* 1 */,
+  SCAN_BLIND = (1 << 1) /* 2 */,
 }

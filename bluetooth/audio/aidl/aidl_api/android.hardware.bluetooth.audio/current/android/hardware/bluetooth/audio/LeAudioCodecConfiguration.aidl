@@ -37,6 +37,7 @@ union LeAudioCodecConfiguration {
   android.hardware.bluetooth.audio.Lc3Configuration lc3Config;
   android.hardware.bluetooth.audio.LeAudioCodecConfiguration.VendorConfiguration vendorConfig;
   android.hardware.bluetooth.audio.AptxAdaptiveLeConfiguration aptxAdaptiveLeConfig;
+  android.hardware.bluetooth.audio.OpusConfiguration opusConfig;
   @VintfStability
   parcelable VendorConfiguration {
     ParcelableHolder extension;

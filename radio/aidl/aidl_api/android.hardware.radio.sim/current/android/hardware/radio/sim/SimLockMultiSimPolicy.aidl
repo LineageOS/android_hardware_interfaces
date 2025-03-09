@@ -33,7 +33,7 @@
 
 package android.hardware.radio.sim;
 /* @hide */
-@Backing(type="int") @JavaDerive(toString=true) @VintfStability
+@Backing(type="int") @JavaDerive(toString=true) @SuppressWarnings(value={"redundant-name"}) @VintfStability
 enum SimLockMultiSimPolicy {
   NO_MULTISIM_POLICY,
   ONE_VALID_SIM_MUST_BE_PRESENT,

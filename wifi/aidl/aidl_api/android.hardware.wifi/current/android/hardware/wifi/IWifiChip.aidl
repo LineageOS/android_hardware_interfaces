@@ -35,7 +35,13 @@ package android.hardware.wifi;
 @VintfStability
 interface IWifiChip {
   void configureChip(in int modeId);
+  /**
+   * @deprecated This method is deprecated from AIDL v3, newer HALs should use createApOrBridgedApIfaceWithParams.
+   */
   @PropagateAllowBlocking android.hardware.wifi.IWifiApIface createApIface();
+  /**
+   * @deprecated This method is deprecated from AIDL v3, newer HALs should use createApOrBridgedApIfaceWithParams.
+   */
   @PropagateAllowBlocking android.hardware.wifi.IWifiApIface createBridgedApIface();
   @PropagateAllowBlocking android.hardware.wifi.IWifiNanIface createNanIface();
   @PropagateAllowBlocking android.hardware.wifi.IWifiP2pIface createP2pIface();
@@ -83,8 +89,12 @@ interface IWifiChip {
   void triggerSubsystemRestart();
   void enableStaChannelForPeerNetwork(in int channelCategoryEnableFlag);
   void setMloMode(in android.hardware.wifi.IWifiChip.ChipMloMode mode);
+  /**
+   * @deprecated This method is deprecated from AIDL v3, newer HALs should use createApOrBridgedApIfaceWithParams.
+   */
   @PropagateAllowBlocking android.hardware.wifi.IWifiApIface createApOrBridgedApIface(in android.hardware.wifi.IfaceConcurrencyType iface, in android.hardware.wifi.common.OuiKeyedData[] vendorData);
   void setVoipMode(in android.hardware.wifi.IWifiChip.VoipMode mode);
+  @PropagateAllowBlocking android.hardware.wifi.IWifiApIface createApOrBridgedApIfaceWithParams(in android.hardware.wifi.IWifiChip.ApIfaceParams params);
   const int NO_POWER_CAP_CONSTANT = 0x7FFFFFFF;
   @Backing(type="int") @VintfStability
   enum FeatureSetMask {
@@ -98,6 +108,8 @@ interface IWifiChip {
     SET_AFC_CHANNEL_ALLOWANCE = (1 << 7) /* 128 */,
     T2LM_NEGOTIATION = (1 << 8) /* 256 */,
     SET_VOIP_MODE = (1 << 9) /* 512 */,
+    MLO_SAP = (1 << 10) /* 1024 */,
+    MULTIPLE_MLD_ON_SAP = (1 << 11) /* 2048 */,
   }
   @VintfStability
   parcelable ChipConcurrencyCombinationLimit {
@@ -179,5 +191,11 @@ interface IWifiChip {
     LOW_LATENCY = 1,
     HIGH_THROUGHPUT = 2,
     LOW_POWER = 3,
+  }
+  @VintfStability
+  parcelable ApIfaceParams {
+    android.hardware.wifi.IfaceConcurrencyType ifaceType;
+    boolean usesMlo;
+    @nullable android.hardware.wifi.common.OuiKeyedData[] vendorData;
   }
 }

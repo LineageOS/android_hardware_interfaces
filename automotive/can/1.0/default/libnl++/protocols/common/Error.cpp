@@ -22,6 +22,17 @@
 
 #include <map>
 
+#include <linux/netlink.h>
+#ifndef _UAPI__LINUX_NETLINK_H
+// linux_glibc (host) includes source headers instead of uapi headers
+enum nlmsgerr_attrs {
+    NLMSGERR_ATTR_UNUSED,
+    NLMSGERR_ATTR_MSG,
+    NLMSGERR_ATTR_OFFS,
+    NLMSGERR_ATTR_COOKIE,
+};
+#endif
+
 namespace android::nl::protocols::base {
 
 using DataType = AttributeDefinition::DataType;

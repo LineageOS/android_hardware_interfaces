@@ -20,6 +20,12 @@
 #include "attributes.h"
 #include "structs.h"
 
+// should be in linux/if_addr.h
+#define IFA_F_MANAGETEMPADDR 0x100
+#define IFA_F_NOPREFIXROUTE 0x200
+#define IFA_F_MCAUTOJOIN 0x400
+#define IFA_F_STABLE_PRIVACY 0x800
+
 namespace android::nl::protocols::route {
 
 using DataType = AttributeDefinition::DataType;

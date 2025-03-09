@@ -36,6 +36,10 @@ package android.hardware.bluetooth.ranging;
 interface IBluetoothChannelSounding {
   @nullable android.hardware.bluetooth.ranging.VendorSpecificData[] getVendorSpecificData();
   @nullable android.hardware.bluetooth.ranging.SessionType[] getSupportedSessionTypes();
+  /**
+   * @deprecated use getSupportedCsSecurityLevels() instead
+   */
   android.hardware.bluetooth.ranging.CsSecurityLevel getMaxSupportedCsSecurityLevel();
   @nullable android.hardware.bluetooth.ranging.IBluetoothChannelSoundingSession openSession(in android.hardware.bluetooth.ranging.BluetoothChannelSoundingParameters params, in android.hardware.bluetooth.ranging.IBluetoothChannelSoundingSessionCallback callback);
+  android.hardware.bluetooth.ranging.CsSecurityLevel[] getSupportedCsSecurityLevels();
 }

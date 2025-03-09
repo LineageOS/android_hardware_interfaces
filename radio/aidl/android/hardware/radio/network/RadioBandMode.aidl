@@ -20,6 +20,7 @@ package android.hardware.radio.network;
 @VintfStability
 @Backing(type="int")
 @JavaDerive(toString=true)
+@SuppressWarnings(value={"redundant-name"})
 enum RadioBandMode {
     /**
      * "Unspecified" (selected by baseband automatically)

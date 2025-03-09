@@ -36,4 +36,10 @@ package android.hardware.graphics.composer3;
 parcelable PresentFence {
   long display;
   ParcelFileDescriptor fence;
+  @nullable android.hardware.graphics.composer3.PresentFence.LayerPresentFence[] layerPresentFences;
+  parcelable LayerPresentFence {
+    long layer;
+    ParcelFileDescriptor bufferFence;
+    long bufferLatencyNanos;
+  }
 }

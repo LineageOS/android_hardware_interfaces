@@ -609,6 +609,11 @@ TEST_P(RadioNetworkTest, setSignalStrengthReportingCriteria_Cdma2000) {
         }
     }
 
+    if (!deviceSupportsFeature(FEATURE_TELEPHONY_CDMA)) {
+        GTEST_SKIP() << "Skipping setSignalStrengthReportingCriteria_Cdma2000 "
+                        "due to undefined FEATURE_TELEPHONY_CDMA";
+    }
+
     serial = GetRandomSerialNumber();
 
     SignalThresholdInfo signalThresholdInfo;
@@ -824,9 +829,12 @@ TEST_P(RadioNetworkTest, setSignalStrengthReportingCriteria_multiRansPerRequest)
     signalThresholdInfoNgran.isEnabled = true;
     signalThresholdInfoNgran.ran = AccessNetwork::NGRAN;
 
-    const static std::vector<SignalThresholdInfo> candidateSignalThresholdInfos = {
+    std::vector<SignalThresholdInfo> candidateSignalThresholdInfos = {
             signalThresholdInfoGeran, signalThresholdInfoUtran, signalThresholdInfoEutran,
-            signalThresholdInfoCdma2000, signalThresholdInfoNgran};
+            signalThresholdInfoNgran};
+    if (deviceSupportsFeature(FEATURE_TELEPHONY_CDMA)) {
+        candidateSignalThresholdInfos.push_back(signalThresholdInfoCdma2000);
+    }
 
     std::vector<SignalThresholdInfo> supportedSignalThresholdInfos;
     for (size_t i = 0; i < candidateSignalThresholdInfos.size(); i++) {
@@ -2605,4 +2613,83 @@ TEST_P(RadioNetworkTest, isSecurityAlgorithmsUpdatedEnabled) {
     ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
                                  {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
                                   RadioError::MODEM_ERR, RadioError::REQUEST_NOT_SUPPORTED}));
+}
+
+/*
+ * Test IRadioNetwork.setSatellitePlmn for the response returned.
+ */
+TEST_P(RadioNetworkTest, setSatellitePlmn) {
+    int32_t aidl_version;
+    ndk::ScopedAStatus aidl_status = radio_network->getInterfaceVersion(&aidl_version);
+    ASSERT_OK(aidl_status);
+    if (aidl_version < 4) {
+        ALOGI("Skipped the test since"
+              " setSatellitePlmn is not supported on version < 4");
+        GTEST_SKIP();
+    }
+
+    serial = GetRandomSerialNumber();
+    radio_network->setSatellitePlmn(serial, 0, {"123456"}, {"123456, 3456789"});
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
+
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
+                                 {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
+                                  RadioError::MODEM_ERR, RadioError::REQUEST_NOT_SUPPORTED}));
+}
+
+/*
+ * Test IRadioNetwork.setSatelliteEnabledForCarrier for the response returned.
+ */
+TEST_P(RadioNetworkTest, setSatelliteEnabledForCarrier) {
+    int32_t aidl_version;
+    ndk::ScopedAStatus aidl_status = radio_network->getInterfaceVersion(&aidl_version);
+    ASSERT_OK(aidl_status);
+    if (aidl_version < 4) {
+        ALOGI("Skipped the test since"
+              " setSatelliteEnabledForCarrier is not supported on version < 4");
+        GTEST_SKIP();
+    }
+
+    // Get current value
+    serial = GetRandomSerialNumber();
+    radio_network->isSatelliteEnabledForCarrier(serial, 0);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    bool originalSatelliteEnabledSetting = radioRsp_network->isSatelliteEnabledForCarrier;
+
+    // We want to test flipping the value, so we are going to set it to the opposite of what
+    // the existing setting is. The test for isSatelliteEnabledForCarrier should check
+    // for the right default value.
+    bool valueToSet = !originalSatelliteEnabledSetting;
+    serial = GetRandomSerialNumber();
+    radio_network->setSatelliteEnabledForCarrier(serial, 0, valueToSet);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
+
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
+                                 {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
+                                  RadioError::MODEM_ERR, RadioError::REQUEST_NOT_SUPPORTED}));
+
+    if (radioRsp_network->rspInfo.error == RadioError::NONE) {
+        // Assert the value has changed
+        serial = GetRandomSerialNumber();
+        ndk::ScopedAStatus res = radio_network->isSatelliteEnabledForCarrier(serial, 0);
+
+        ASSERT_OK(res);
+        EXPECT_EQ(std::cv_status::no_timeout, wait());
+        EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
+        EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
+        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
+                                     {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
+                                      RadioError::MODEM_ERR, RadioError::REQUEST_NOT_SUPPORTED}));
+        EXPECT_EQ(valueToSet, radioRsp_network->isSatelliteEnabledForCarrier);
+
+        // Reset original state
+        radio_network->setSatelliteEnabledForCarrier(serial, 0, originalSatelliteEnabledSetting);
+        EXPECT_EQ(std::cv_status::no_timeout, wait());
+        EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
+        EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
+    }
 }

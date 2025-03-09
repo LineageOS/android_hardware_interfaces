@@ -36,4 +36,5 @@ package android.hardware.thermal;
 @VintfStability
 interface IThermalChangedCallback {
   oneway void notifyThrottling(in android.hardware.thermal.Temperature temperature);
+  oneway void notifyThresholdChanged(in android.hardware.thermal.TemperatureThreshold threshold);
 }

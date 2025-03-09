@@ -39,6 +39,7 @@ parcelable UnicastCapability {
   int deviceCount;
   int channelCountPerDevice;
   android.hardware.bluetooth.audio.UnicastCapability.LeAudioCodecCapabilities leAudioCodecCapabilities;
+  @nullable android.hardware.bluetooth.audio.CodecSpecificConfigurationLtv.AudioChannelAllocation audioLocation;
   @VintfStability
   parcelable VendorCapabilities {
     ParcelableHolder extension;
@@ -48,5 +49,6 @@ parcelable UnicastCapability {
     android.hardware.bluetooth.audio.Lc3Capabilities lc3Capabilities;
     android.hardware.bluetooth.audio.UnicastCapability.VendorCapabilities vendorCapabillities;
     android.hardware.bluetooth.audio.AptxAdaptiveLeCapabilities aptxAdaptiveLeCapabilities;
+    android.hardware.bluetooth.audio.OpusCapabilities opusCapabilities;
   }
 }

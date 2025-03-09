@@ -959,4 +959,17 @@ interface IKeyMintDevice {
      * not implemented.  TEE KeyMint implementations must return ErrorCode::UNIMPLEMENTED.
      */
     void sendRootOfTrust(in byte[] rootOfTrust);
+
+    /**
+     * Called by Android to deliver additional attestation information to the IKeyMintDevice.
+     *
+     * IKeyMintDevice must ignore KeyParameters with tags not included in the following list:
+     *
+     * o Tag::MODULE_HASH: holds a hash that must be included in attestations in the moduleHash
+     *   field of the software enforced authorization list. If Tag::MODULE_HASH is included in more
+     *   than one setAdditionalAttestationInfo call, the implementation should compare the initial
+     *   KeyParamValue with the more recent one. If they differ, the implementation should fail with
+     *   ErrorCode::MODULE_HASH_ALREADY_SET. If they are the same, no action needs to be taken.
+     */
+    void setAdditionalAttestationInfo(in KeyParameter[] info);
 }

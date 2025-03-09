@@ -38,6 +38,7 @@
 #include <aidl/android/media/audio/common/AudioIoFlags.h>
 #include <aidl/android/media/audio/common/AudioOffloadInfo.h>
 #include <aidl/android/media/audio/common/MicrophoneInfo.h>
+#include <android-base/thread_annotations.h>
 #include <error/expected_utils.h>
 #include <fmq/AidlMessageQueue.h>
 #include <system/thread_defs.h>
@@ -77,6 +78,10 @@ class StreamContext {
         bool forceTransientBurst = false;
         // Force the "drain" command to be synchronous, going directly to the IDLE state.
         bool forceSynchronousDrain = false;
+        // Force the "drain early notify" command to keep the SM in the DRAINING state
+        // after sending 'onDrainReady' callback. The SM moves to IDLE after
+        // 'transientStateDelayMs'.
+        bool forceDrainToDraining = false;
     };
 
     StreamContext() = default;
@@ -118,6 +123,7 @@ class StreamContext {
     ::aidl::android::media::audio::common::AudioIoFlags getFlags() const { return mFlags; }
     bool getForceTransientBurst() const { return mDebugParameters.forceTransientBurst; }
     bool getForceSynchronousDrain() const { return mDebugParameters.forceSynchronousDrain; }
+    bool getForceDrainToDraining() const { return mDebugParameters.forceDrainToDraining; }
     size_t getFrameSize() const;
     int getInternalCommandCookie() const { return mInternalCommandCookie; }
     int32_t getMixPortHandle() const { return mMixPortHandle; }
@@ -132,6 +138,9 @@ class StreamContext {
     ReplyMQ* getReplyMQ() const { return mReplyMQ.get(); }
     int getTransientStateDelayMs() const { return mDebugParameters.transientStateDelayMs; }
     int getSampleRate() const { return mSampleRate; }
+    bool isInput() const {
+        return mFlags.getTag() == ::aidl::android::media::audio::common::AudioIoFlags::input;
+    }
     bool isValid() const;
     // 'reset' is called on a Binder thread when closing the stream. Does not use
     // locking because it only cleans MQ pointers which were also set on the Binder thread.
@@ -297,6 +306,9 @@ class StreamOutWorkerLogic : public StreamWorkerCommonLogic {
     bool write(size_t clientSize, StreamDescriptor::Reply* reply);
 
     std::shared_ptr<IStreamOutEventCallback> mEventCallback;
+
+    enum OnDrainReadyStatus : int32_t { IGNORE /*used for DRAIN_ALL*/, UNSENT, SENT };
+    OnDrainReadyStatus mOnDrainReadyStatus = OnDrainReadyStatus::IGNORE;
 };
 using StreamOutWorker = StreamWorkerImpl<StreamOutWorkerLogic>;
 
@@ -342,6 +354,7 @@ struct StreamCommonInterface {
     virtual ndk::ScopedAStatus setConnectedDevices(
             const std::vector<::aidl::android::media::audio::common::AudioDevice>& devices) = 0;
     virtual ndk::ScopedAStatus bluetoothParametersUpdated() = 0;
+    virtual ndk::ScopedAStatus setGain(float gain) = 0;
 };
 
 // This is equivalent to automatically generated 'IStreamCommonDelegator' but uses
@@ -443,6 +456,7 @@ class StreamCommonImpl : virtual public StreamCommonInterface, virtual public Dr
             const std::vector<::aidl::android::media::audio::common::AudioDevice>& devices)
             override;
     ndk::ScopedAStatus bluetoothParametersUpdated() override;
+    ndk::ScopedAStatus setGain(float gain) override;
 
   protected:
     static StreamWorkerInterface::CreateInstance getDefaultInWorkerCreator() {
@@ -609,6 +623,12 @@ class StreamWrapper {
         return ndk::ScopedAStatus::ok();
     }
 
+    ndk::ScopedAStatus setGain(float gain) {
+        auto s = mStream.lock();
+        if (s) return s->setGain(gain);
+        return ndk::ScopedAStatus::ok();
+    }
+
   private:
     std::weak_ptr<StreamCommonInterface> mStream;
     ndk::SpAIBinder mStreamBinder;
@@ -643,6 +663,12 @@ class Streams {
         }
         return isOk ? ndk::ScopedAStatus::ok()
                     : ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+    }
+    ndk::ScopedAStatus setGain(int32_t portId, float gain) {
+        if (auto it = mStreams.find(portId); it != mStreams.end()) {
+            return it->second.setGain(gain);
+        }
+        return ndk::ScopedAStatus::ok();
     }
 
   private:

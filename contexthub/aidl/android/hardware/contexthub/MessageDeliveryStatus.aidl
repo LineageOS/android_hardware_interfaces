@@ -21,7 +21,8 @@ import android.hardware.contexthub.ErrorCode;
 @VintfStability
 parcelable MessageDeliveryStatus {
     /**
-     * The messageSequenceNumber of the ContextHubMessage to which this status applies.
+     * The messageSequenceNumber of the ContextHubMessage or Message to which this status is
+     * required.
      */
     int messageSequenceNumber;
 

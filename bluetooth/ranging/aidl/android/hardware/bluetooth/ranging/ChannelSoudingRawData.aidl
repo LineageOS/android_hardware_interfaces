@@ -24,6 +24,7 @@ import android.hardware.bluetooth.ranging.ModeType;
  * See Channel Sounding CR_PR 3.1.10 and Channel Sounding HCI Updates CR_PR 3.1.23 for details.
  *
  * Specification: https://www.bluetooth.com/specifications/specs/channel-sounding-cr-pr/
+ * @deprecated use ChannelSoundingProcedureData
  */
 @VintfStability
 parcelable ChannelSoudingRawData {

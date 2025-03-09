@@ -72,4 +72,5 @@ interface IWifiNanIfaceEventCallback {
   oneway void notifyInitiateBootstrappingResponse(in char id, in android.hardware.wifi.NanStatus status, in int bootstrappingInstanceId);
   oneway void notifyRespondToBootstrappingIndicationResponse(in char id, in android.hardware.wifi.NanStatus status);
   oneway void notifyTerminatePairingResponse(in char id, in android.hardware.wifi.NanStatus status);
+  oneway void notifyRangingResults(in android.hardware.wifi.RttResult[] results, in byte discoverySessionId);
 }

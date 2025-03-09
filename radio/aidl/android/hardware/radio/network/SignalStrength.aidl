@@ -30,37 +30,39 @@ import android.hardware.radio.network.WcdmaSignalStrength;
 parcelable SignalStrength {
     /**
      * If GSM measurements are provided, this structure must contain valid measurements; otherwise
-     * all fields should be set to INT_MAX to mark them as invalid.
+     * all fields should be set to RadioConst:VALUE_UNAVAILABLE to mark them as invalid.
      */
     GsmSignalStrength gsm;
     /**
      * If CDMA measurements are provided, this structure must contain valid measurements; otherwise
-     * all fields should be set to INT_MAX to mark them as invalid.
+     * all fields should be set to RadioConst:VALUE_UNAVAILABLE to mark them as invalid.
+     * @deprecated Legacy CDMA is unsupported.
      */
     CdmaSignalStrength cdma;
     /**
      * If EvDO measurements are provided, this structure must contain valid measurements; otherwise
-     * all fields should be set to INT_MAX to mark them as invalid.
+     * all fields should be set to RadioConst:VALUE_UNAVAILABLE to mark them as invalid.
+     * @deprecated Legacy CDMA is unsupported.
      */
     EvdoSignalStrength evdo;
     /**
      * If LTE measurements are provided, this structure must contain valid measurements; otherwise
-     * all fields should be set to INT_MAX to mark them as invalid.
+     * all fields should be set to RadioConst:VALUE_UNAVAILABLE to mark them as invalid.
      */
     LteSignalStrength lte;
     /**
      * If TD-SCDMA measurements are provided, this structure must contain valid measurements;
-     * otherwise all fields should be set to INT_MAX to mark them as invalid.
+     * otherwise all fields should be set to RadioConst:VALUE_UNAVAILABLE to mark them as invalid.
      */
     TdscdmaSignalStrength tdscdma;
     /**
      * If WCDMA measurements are provided, this structure must contain valid measurements; otherwise
-     * all fields should be set to INT_MAX to mark them as invalid.
+     * all fields should be set to RadioConst:VALUE_UNAVAILABLE to mark them as invalid.
      */
     WcdmaSignalStrength wcdma;
     /**
      * If NR 5G measurements are provided, this structure must contain valid measurements; otherwise
-     * all fields should be set to INT_MAX to mark them as invalid.
+     * all fields should be set to RadioConst:VALUE_UNAVAILABLE to mark them as invalid.
      */
     NrSignalStrength nr;
 }

@@ -17,10 +17,8 @@
 #include "BroadcastRadio.h"
 #include <broadcastradio-utils-aidl/Utils.h>
 #include <broadcastradio-utils-aidl/UtilsV2.h>
+#include <broadcastradio-utils-aidl/UtilsV3.h>
 #include "resources.h"
-
-#include <aidl/android/hardware/broadcastradio/IdentifierType.h>
-#include <aidl/android/hardware/broadcastradio/Result.h>
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
@@ -47,6 +45,8 @@ inline constexpr std::chrono::milliseconds kStepDelayTimeMs = 100ms;
 inline constexpr std::chrono::milliseconds kTuneDelayTimeMs = 150ms;
 inline constexpr std::chrono::seconds kListDelayTimeS = 1s;
 
+const string kAlertAreaDelimiter = "+";
+const string kAlertCoordinateGeocodeDelimiter = ",";
 // clang-format off
 const AmFmBandRange kFmFullBandRange = {65000, 108000, 10, 0};
 const AmFmBandRange kAmFullBandRange = {150, 30000, 1, 0};
@@ -142,6 +142,30 @@ ProgramInfo makeSampleProgramInfo(const ProgramSelector& selector) {
     return info;
 }
 
+static Alert createSampleAlert() {
+    Polygon polygon = {{{-38.47, -120.14},
+                        {38.34, -119.95},
+                        {38.52, -119.74},
+                        {38.62, -119.89},
+                        {-38.47, -120.14}}};
+    AlertArea alertArea1 = {{polygon}, {{"SAME", "006109"}, {"SAME", "006209"}}};
+    AlertArea alertArea2 = {{}, {{"SAME", "006009"}}};
+    AlertInfo alertInfo;
+    alertInfo.categoryArray = {AlertCategory::GEO, AlertCategory::TRANSPORT};
+    alertInfo.urgency = AlertUrgency::FUTURE;
+    alertInfo.severity = AlertSeverity::SEVERE;
+    alertInfo.certainty = AlertCertainty::POSSIBLE;
+    alertInfo.description = "Sample radio alert.";
+    alertInfo.language = "en-US";
+    alertInfo.areas.push_back(alertArea1);
+    alertInfo.areas.push_back(alertArea2);
+    Alert alert;
+    alert.status = AlertStatus::ACTUAL;
+    alert.messageType = AlertMessageType::ALERT;
+    alert.infoArray.push_back(alertInfo);
+    return alert;
+}
+
 static bool checkDumpCallerHasWritePermissions(int fd) {
     uid_t uid = AIBinder_getCallingUid();
     if (uid == AID_ROOT || uid == AID_SHELL || uid == AID_SYSTEM) {
@@ -149,6 +173,87 @@ static bool checkDumpCallerHasWritePermissions(int fd) {
     }
     dprintf(fd, "BroadcastRadio HAL dump must be root, shell or system\n");
     return false;
+}
+
+static bool parseGeocode(int fd, const string& geocodeString, Geocode& parsedGeocode) {
+    vector<string> geocodeStringPair =
+            ::android::base::Split(geocodeString, kAlertCoordinateGeocodeDelimiter);
+    if (geocodeStringPair.size() != 2) {
+        dprintf(fd, "Geocode is not of \"VALUE_NAME,VALUE\" format: %s\n", geocodeString.c_str());
+        return false;
+    }
+    parsedGeocode.valueName = geocodeStringPair[0];
+    parsedGeocode.value = geocodeStringPair[1];
+    return true;
+}
+
+static bool parsePolygon(int fd, const string& polygonString, Polygon& parsedPolygon) {
+    vector<Coordinate> coordinates;
+    vector<string> coordinateStrings =
+            ::android::base::Split(polygonString, kAlertCoordinateGeocodeDelimiter);
+    if (coordinateStrings.size() % 2) {
+        dprintf(fd, "Incomplete \"LATITUDE,LONGITUDE\" coordinate pairs separated by \",\": %s\n",
+                polygonString.c_str());
+        return false;
+    }
+    for (size_t i = 0; i < coordinateStrings.size(); i += 2) {
+        double latitude;
+        double longitude;
+        if (!utils::parseArgDouble(coordinateStrings[i], &latitude) ||
+            !utils::parseArgDouble(coordinateStrings[i + 1], &longitude)) {
+            dprintf(fd, "Value of \"LATITUDE,LONGITUDE\" coordinate pair is not double-type: %s\n",
+                    coordinateStrings[i].c_str());
+            return false;
+        }
+        coordinates.push_back(Coordinate(latitude, longitude));
+    }
+    parsedPolygon.coordinates = coordinates;
+    return true;
+}
+
+static bool parseAreaString(int fd, const string& areaString, AlertArea& parsedAlertArea) {
+    vector<string> areaEntryStrings = ::android::base::Split(areaString, "_");
+    for (const auto& areaEntryString : areaEntryStrings) {
+        vector<string> areaTypeValuePair = ::android::base::Split(areaEntryString, ":");
+        if (areaTypeValuePair.size() != 2) {
+            dprintf(fd, "Area is not of \"<TYPE>:<VALUE>\" format: %s\n", areaEntryString.c_str());
+            return false;
+        }
+        if (EqualsIgnoreCase(areaTypeValuePair[0], "polygon")) {
+            Polygon parsedPolygon;
+            if (!parsePolygon(fd, areaTypeValuePair[1], parsedPolygon)) {
+                return false;
+            }
+            parsedAlertArea.polygons.push_back(parsedPolygon);
+        } else if (EqualsIgnoreCase(areaTypeValuePair[0], "geocode")) {
+            Geocode parsedGeocode;
+            if (!parseGeocode(fd, areaTypeValuePair[1], parsedGeocode)) {
+                return false;
+            }
+            parsedAlertArea.geocodes.push_back(parsedGeocode);
+        } else {
+            dprintf(fd, "Invalid area <TYPE> other than \"polygon\" and \"geocode\": %s\n",
+                    areaTypeValuePair[0].c_str());
+            return false;
+        }
+    }
+    return true;
+}
+
+static bool parseAreaListString(int fd, const string& areaListString,
+                                vector<AlertArea>& parsedAlertAreas) {
+    if (EqualsIgnoreCase(areaListString, kAlertAreaDelimiter)) {
+        return true;
+    }
+    vector<string> areaStrings = ::android::base::Split(areaListString, kAlertAreaDelimiter);
+    for (const auto& areaString : areaStrings) {
+        AlertArea parsedArea;
+        if (!parseAreaString(fd, areaString, parsedArea)) {
+            return false;
+        }
+        parsedAlertAreas.push_back(parsedArea);
+    }
+    return true;
 }
 
 }  // namespace
@@ -162,9 +267,9 @@ BroadcastRadio::BroadcastRadio(const VirtualRadio& virtualRadio)
         ProgramSelector sel = utils::makeSelectorAmfm(ranges[0].lowerBound);
         VirtualProgram virtualProgram = {};
         if (mVirtualRadio.getProgram(sel, &virtualProgram)) {
-            mCurrentProgram = virtualProgram.selector;
+            mCurrentProgramSelector = virtualProgram.selector;
         } else {
-            mCurrentProgram = sel;
+            mCurrentProgramSelector = sel;
         }
         adjustAmFmRangeLocked();
     }
@@ -230,13 +335,13 @@ ProgramInfo BroadcastRadio::tuneInternalLocked(const ProgramSelector& sel) {
             isDigitalProgramAllowed(sel, isConfigFlagSetLocked(ConfigFlag::FORCE_ANALOG_FM),
                                     isConfigFlagSetLocked(ConfigFlag::FORCE_ANALOG_AM));
     if (isProgramAllowed && mVirtualRadio.getProgram(sel, &virtualProgram)) {
-        mCurrentProgram = virtualProgram.selector;
+        mCurrentProgramSelector = virtualProgram.selector;
         programInfo = virtualProgram;
     } else {
         if (!isProgramAllowed) {
-            mCurrentProgram = utils::makeSelectorAmfm(utils::getAmFmFrequency(sel));
+            mCurrentProgramSelector = utils::makeSelectorAmfm(utils::getAmFmFrequency(sel));
         } else {
-            mCurrentProgram = sel;
+            mCurrentProgramSelector = sel;
         }
         programInfo = makeSampleProgramInfo(sel);
     }
@@ -277,6 +382,10 @@ ScopedAStatus BroadcastRadio::unsetTunerCallback() {
 void BroadcastRadio::handleProgramInfoUpdateRadioCallback(
         ProgramInfo programInfo, const std::shared_ptr<ITunerCallback>& callback) {
     callback->onCurrentProgramInfoChanged(programInfo);
+    {
+        lock_guard<mutex> lk(mMutex);
+        mCurrentProgramInfo = programInfo;
+    }
     if (programInfo.selector.primaryId.type != IdentifierType::HD_STATION_ID_EXT) {
         return;
     }
@@ -285,12 +394,14 @@ void BroadcastRadio::handleProgramInfoUpdateRadioCallback(
     programInfo.infoFlags |= ProgramInfo::FLAG_HD_SIS_ACQUISITION;
     auto sisAcquiredTask = [this, callback, programInfo, cancelTask]() {
         callback->onCurrentProgramInfoChanged(programInfo);
+        mCurrentProgramInfo = programInfo;
         auto audioAcquiredTask = [this, callback, programInfo]() {
             ProgramInfo hdProgramInfoWithAudio = programInfo;
             hdProgramInfoWithAudio.infoFlags |= ProgramInfo::FLAG_HD_AUDIO_ACQUISITION;
             callback->onCurrentProgramInfoChanged(hdProgramInfoWithAudio);
             lock_guard<mutex> lk(mMutex);
             mIsTuneCompleted = true;
+            mCurrentProgramInfo = hdProgramInfoWithAudio;
         };
         lock_guard<mutex> lk(mMutex);
         mTuningThread->schedule(audioAcquiredTask, cancelTask, kTuneDelayTimeMs);
@@ -481,7 +592,8 @@ ScopedAStatus BroadcastRadio::seek(bool directionUp, bool skipSubChannel) {
     auto cancelTask = [callback]() { callback->onTuneFailed(Result::CANCELED, {}); };
 
     VirtualProgram nextProgram = {};
-    bool foundNext = findNextLocked(mCurrentProgram, directionUp, skipSubChannel, &nextProgram);
+    bool foundNext =
+            findNextLocked(mCurrentProgramSelector, directionUp, skipSubChannel, &nextProgram);
     mIsTuneCompleted = false;
     if (!foundNext) {
         auto task = [callback]() {
@@ -520,10 +632,10 @@ ScopedAStatus BroadcastRadio::step(bool directionUp) {
     cancelLocked();
 
     int64_t stepTo;
-    if (utils::hasId(mCurrentProgram, IdentifierType::AMFM_FREQUENCY_KHZ)) {
-        stepTo = utils::getId(mCurrentProgram, IdentifierType::AMFM_FREQUENCY_KHZ);
-    } else if (mCurrentProgram.primaryId.type == IdentifierType::HD_STATION_ID_EXT) {
-        stepTo = utils::getHdFrequency(mCurrentProgram);
+    if (utils::hasId(mCurrentProgramSelector, IdentifierType::AMFM_FREQUENCY_KHZ)) {
+        stepTo = utils::getId(mCurrentProgramSelector, IdentifierType::AMFM_FREQUENCY_KHZ);
+    } else if (mCurrentProgramSelector.primaryId.type == IdentifierType::HD_STATION_ID_EXT) {
+        stepTo = utils::getHdFrequency(mCurrentProgramSelector);
     } else {
         LOG(WARNING) << __func__ << ": can't step in anything else than AM/FM";
         return ScopedAStatus::fromServiceSpecificErrorWithMessage(
@@ -568,7 +680,7 @@ void BroadcastRadio::cancelLocked() {
     LOG(DEBUG) << __func__ << ": cancelling current tuning operations...";
 
     mTuningThread->cancelAll();
-    if (mCurrentProgram.primaryId.type != IdentifierType::INVALID) {
+    if (mCurrentProgramSelector.primaryId.type != IdentifierType::INVALID) {
         mIsTuneCompleted = true;
     }
 }
@@ -692,13 +804,13 @@ ScopedAStatus BroadcastRadio::getParameters([[maybe_unused]] const vector<string
 
 bool BroadcastRadio::adjustAmFmRangeLocked() {
     bool hasBandBefore = mCurrentAmFmBandRange.has_value();
-    if (!utils::hasAmFmFrequency(mCurrentProgram)) {
+    if (!utils::hasAmFmFrequency(mCurrentProgramSelector)) {
         LOG(WARNING) << __func__ << ": current program does not has AMFM_FREQUENCY_KHZ identifier";
         mCurrentAmFmBandRange.reset();
         return hasBandBefore;
     }
 
-    int32_t freq = static_cast<int32_t>(utils::getAmFmFrequency(mCurrentProgram));
+    int32_t freq = static_cast<int32_t>(utils::getAmFmFrequency(mCurrentProgramSelector));
     for (const auto& range : mAmFmConfig.ranges) {
         if (range.lowerBound <= freq && range.upperBound >= freq) {
             bool isBandChanged = hasBandBefore ? *mCurrentAmFmBandRange != range : true;
@@ -709,6 +821,24 @@ bool BroadcastRadio::adjustAmFmRangeLocked() {
 
     mCurrentAmFmBandRange.reset();
     return !hasBandBefore;
+}
+
+void BroadcastRadio::updateCurrentProgramInfoWithAlert(std::optional<Alert>& alert) {
+    std::shared_ptr<ITunerCallback> callback;
+    ProgramInfo currentProgramInfo;
+    {
+        lock_guard<mutex> lk(mMutex);
+        if (mCallback == nullptr) {
+            return;
+        }
+        if (mCurrentProgramInfo.selector.primaryId.type == IdentifierType::INVALID) {
+            return;
+        }
+        callback = mCallback;
+        currentProgramInfo = mCurrentProgramInfo;
+    }
+    currentProgramInfo.emergencyAlert = alert.value();
+    callback->onCurrentProgramInfoChanged(currentProgramInfo);
 }
 
 ScopedAStatus BroadcastRadio::registerAnnouncementListener(
@@ -745,6 +875,8 @@ binder_status_t BroadcastRadio::dump(int fd, const char** args, uint32_t numArgs
         return cmdStartProgramListUpdates(fd, args, numArgs);
     } else if (EqualsIgnoreCase(option, "--stopProgramListUpdates")) {
         return cmdStopProgramListUpdates(fd, numArgs);
+    } else if (EqualsIgnoreCase(option, "--simulateAlert")) {
+        return cmdSimulateAlert(fd, args, numArgs);
     }
     dprintf(fd, "Invalid option: %s\n", option.c_str());
     return STATUS_BAD_VALUE;
@@ -767,7 +899,7 @@ binder_status_t BroadcastRadio::dumpsys(int fd) {
     } else {
         dprintf(fd, "ITunerCallback registered\n");
     }
-    dprintf(fd, "CurrentProgram: %s \n", mCurrentProgram.toString().c_str());
+    dprintf(fd, "CurrentProgram: %s \n", mCurrentProgramSelector.toString().c_str());
     return STATUS_OK;
 }
 
@@ -798,13 +930,41 @@ binder_status_t BroadcastRadio::cmdHelp(int fd) const {
             "excludeModifications (string, should be either \"true\" or \"false\")\n");
     dprintf(fd, "--stopProgramListUpdates: stop current pending program list updates\n");
     dprintf(fd,
-            "Note on <TYPE> for --startProgramList command: it is int for identifier type. "
+            "\t<TYPE>: it is int for identifier type. "
             "Please see broadcastradio/aidl/android/hardware/broadcastradio/IdentifierType.aidl "
             "for its definition.\n");
     dprintf(fd,
-            "Note on <VALUE> for --startProgramList command: it is long type for identifier value. "
+            "\t<VALUE>: it is long type for identifier value. "
             "Please see broadcastradio/aidl/android/hardware/broadcastradio/IdentifierType.aidl "
             "for its value.\n");
+    dprintf(fd,
+            "--simulateAlert <STATUS> <MESSAGE_TYPE> <CATEGORIES> <URGENCY> <SEVERITY> "
+            "<CERTAINTY> <DESCRIPTION> <LANGUAGE> <AREAS>: simulate emergency alert on current "
+            "program; if no arguments following \"--simulateAlert\", the default alert message"
+            "is applied.\n");
+    dprintf(fd, "\t<STATUS>: string representation of alert scope.\n");
+    dprintf(fd, "\t<MESSAGE_TYPE>: string representation of alert message type.\n");
+    dprintf(fd,
+            "\t<CATEGORIES>: string representation of alert categories separated by "
+            "\",\".\n");
+    dprintf(fd, "\t<URGENCY>: string representation of alert urgency type.\n");
+    dprintf(fd, "\t<SEVERITY>: string representation of alert severity type.\n");
+    dprintf(fd, "\t<CERTAINTY>: string representation of alert certainty type.\n");
+    dprintf(fd, "\t<DESCRIPTION>: description of alert message within quotation mark(\"\").\n");
+    dprintf(fd, "\t<LANGUAGE>: language code of alert message, \"null\" if unspecified.\n");
+    dprintf(fd,
+            "\t<AREAS>: <TYPE>:<VALUE>_<TYPE>:<VALUE>_...+<TYPE>:<VALUE>_<TYPE>:<VALUE>_... "
+            "which represents list of affected areas of the alert separated by \"|\". "
+            "If no area, this field should be: |\n"
+            "Each area may contains multiple entries separated by \";\" where "
+            "<TYPE> can be either \"polygon\" or \"geocode\". If <TYPE> is polygon, <VALUE> is a "
+            "series of coordinates of \"LATITUDE,LONGITUDE\" format separated by \",\"; if "
+            "<TYPE> is geocode, <VALUE> is of \"VALUE_NAME,VALUE\" format.\n");
+    dprintf(fd,
+            "Example: --simulateAlert actual alert geo,transport future severe"
+            " possible \"alert message for testing\" en-US geocode:SAME,006109_geocode:SAME,006209"
+            "_polygon:-38.47,-120.14,38.34,-119.95,38.52,-119.74,38.62,-119.89,-38.47,-120.14"
+            "+geocode:SAME,006009\n");
 
     return STATUS_OK;
 }
@@ -1035,6 +1195,73 @@ binder_status_t BroadcastRadio::cmdStopProgramListUpdates(int fd, uint32_t numAr
         return STATUS_BAD_VALUE;
     }
     dprintf(fd, "Stop pending program list update\n");
+    return STATUS_OK;
+}
+
+binder_status_t BroadcastRadio::cmdSimulateAlert(int fd, const char** args, uint32_t numArgs) {
+    if (!checkDumpCallerHasWritePermissions(fd)) {
+        return STATUS_PERMISSION_DENIED;
+    }
+    std::optional<Alert> alertOpt;
+    if (numArgs == 1) {
+        alertOpt.emplace(createSampleAlert());
+        updateCurrentProgramInfoWithAlert(alertOpt);
+        return STATUS_OK;
+    }
+    if (numArgs != 10) {
+        dprintf(fd,
+                "Invalid number of arguments: please provide --simulateAlert "
+                "<STATUS> <MESSAGE_TYPE> <CATEGORIES> <URGENCY> "
+                "<SEVERITY> <CERTAINTY> <DESCRIPTION> <LANGUAGE> <AREAS>, provided: %d\n",
+                numArgs);
+        return STATUS_BAD_VALUE;
+    }
+    Alert parsedAlert;
+    if (!utils::parseAlertStatus(args[1], parsedAlert.status)) {
+        dprintf(fd, "Unknown alert status type: %s\n", args[2]);
+        return STATUS_BAD_VALUE;
+    }
+    if (!utils::parseAlertMessageType(args[2], parsedAlert.messageType)) {
+        dprintf(fd, "Unknown alert message type: %s\n", args[3]);
+        return STATUS_BAD_VALUE;
+    }
+    AlertInfo parsedAlertInfo;
+    vector<string> categoryStrings = ::android::base::Split(args[3], ",");
+    for (const auto& categoryString : categoryStrings) {
+        AlertCategory category;
+        if (!utils::parseAlertCategory(categoryString, category)) {
+            dprintf(fd, "Unknown alert category type: %s\n", args[3]);
+            return STATUS_BAD_VALUE;
+        }
+        parsedAlertInfo.categoryArray.push_back(category);
+    }
+    if (!utils::parseAlertUrgency(args[4], parsedAlertInfo.urgency)) {
+        dprintf(fd, "Unknown alert urgency type: %s\n", args[4]);
+        return STATUS_BAD_VALUE;
+    }
+    if (!utils::parseAlertSeverity(args[5], parsedAlertInfo.severity)) {
+        dprintf(fd, "Unknown alert severity type: %s\n", args[5]);
+        return STATUS_BAD_VALUE;
+    }
+    if (!utils::parseAlertCertainty(args[6], parsedAlertInfo.certainty)) {
+        dprintf(fd, "Unknown alert certainty type: %s\n", args[6]);
+        return STATUS_BAD_VALUE;
+    }
+    parsedAlertInfo.description = string(args[7]);
+    string languageStr = string(args[8]);
+    if (!EqualsIgnoreCase(languageStr, "null")) {
+        parsedAlertInfo.language.emplace(languageStr);
+    }
+    string areaListString = string(args[9]);
+    vector<AlertArea> areaList;
+    if (!parseAreaListString(fd, areaListString, areaList)) {
+        return STATUS_BAD_VALUE;
+    }
+    parsedAlertInfo.areas = areaList;
+    parsedAlert.infoArray = {parsedAlertInfo};
+    LOG(INFO) << "Simulate alert: " << parsedAlert.toString().c_str();
+    alertOpt.emplace(parsedAlert);
+    updateCurrentProgramInfoWithAlert(alertOpt);
     return STATUS_OK;
 }
 

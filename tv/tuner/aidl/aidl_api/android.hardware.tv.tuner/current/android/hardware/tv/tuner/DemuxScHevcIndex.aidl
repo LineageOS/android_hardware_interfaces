@@ -36,12 +36,12 @@ package android.hardware.tv.tuner;
 @Backing(type="int") @VintfStability
 enum DemuxScHevcIndex {
   UNDEFINED = 0,
-  SPS = 1,
-  AUD = 2,
-  SLICE_CE_BLA_W_LP = 4,
-  SLICE_BLA_W_RADL = 8,
-  SLICE_BLA_N_LP = 16,
-  SLICE_IDR_W_RADL = 32,
-  SLICE_IDR_N_LP = 64,
-  SLICE_TRAIL_CRA = 128,
+  SPS = (1 << 0) /* 1 */,
+  AUD = (1 << 1) /* 2 */,
+  SLICE_CE_BLA_W_LP = (1 << 2) /* 4 */,
+  SLICE_BLA_W_RADL = (1 << 3) /* 8 */,
+  SLICE_BLA_N_LP = (1 << 4) /* 16 */,
+  SLICE_IDR_W_RADL = (1 << 5) /* 32 */,
+  SLICE_IDR_N_LP = (1 << 6) /* 64 */,
+  SLICE_TRAIL_CRA = (1 << 7) /* 128 */,
 }

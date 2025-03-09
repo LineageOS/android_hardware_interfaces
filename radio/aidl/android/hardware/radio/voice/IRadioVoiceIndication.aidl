@@ -42,8 +42,8 @@ oneway interface IRadioVoiceIndication {
      * value of 3000 (3 seconds) if absent.
      *
      * @param type Type of radio indication
-     * @param isGsm true for GSM & false for CDMA
-     * @param record Cdma Signal Information
+     * @param isGsm Always true (Legacy CDMA is unsupported)
+     * @param record Always empty (Legacy CDMA is unsupported)
      */
     void callRing(in RadioIndicationType type, in boolean isGsm, in CdmaSignalInfoRecord record);
 
@@ -62,6 +62,7 @@ oneway interface IRadioVoiceIndication {
      *
      * @param type Type of radio indication
      * @param callWaitingRecord Cdma CallWaiting information
+     * @deprecated Legacy CDMA is unsupported.
      */
     void cdmaCallWaiting(in RadioIndicationType type, in CdmaCallWaiting callWaitingRecord);
 
@@ -71,6 +72,7 @@ oneway interface IRadioVoiceIndication {
      * @param type Type of radio indication
      * @param records New CDMA information records.
      *        Max length is RadioConst:CDMA_MAX_NUMBER_OF_INFO_RECS
+     * @deprecated Legacy CDMA is unsupported.
      */
     void cdmaInfoRec(in RadioIndicationType type, in CdmaInformationRecord[] records);
 
@@ -79,6 +81,7 @@ oneway interface IRadioVoiceIndication {
      *
      * @param type Type of radio indication
      * @param status Cdma OTA provision status
+     * @deprecated Legacy CDMA is unsupported.
      */
     void cdmaOtaProvisionStatus(in RadioIndicationType type, in CdmaOtaProvisionStatus status);
 

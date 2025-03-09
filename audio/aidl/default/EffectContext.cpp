@@ -258,4 +258,18 @@ RetCode EffectContext::reset() {
     return RetCode::SUCCESS;
 }
 
+RetCode EffectContext::startDraining() {
+    mIsDraining = true;
+    return RetCode::SUCCESS;
+}
+
+RetCode EffectContext::finishDraining() {
+    mIsDraining = false;
+    return RetCode::SUCCESS;
+}
+
+bool EffectContext::isDraining() {
+    return mIsDraining;
+}
+
 }  // namespace aidl::android::hardware::audio::effect

@@ -36,8 +36,8 @@ package android.hardware.tv.tuner;
 @Backing(type="byte") @VintfStability
 enum FrontendDvbsStandard {
   UNDEFINED = 0,
-  AUTO = 1,
-  S = 2,
-  S2 = 4,
-  S2X = 8,
+  AUTO = (1 << 0) /* 1 */,
+  S = (1 << 1) /* 2 */,
+  S2 = (1 << 2) /* 4 */,
+  S2X = (1 << 3) /* 8 */,
 }

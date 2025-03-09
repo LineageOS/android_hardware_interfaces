@@ -36,26 +36,50 @@ package android.hardware.radio.messaging;
 @VintfStability
 interface IRadioMessaging {
   oneway void acknowledgeIncomingGsmSmsWithPdu(in int serial, in boolean success, in String ackPdu);
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void acknowledgeLastIncomingCdmaSms(in int serial, in android.hardware.radio.messaging.CdmaSmsAck smsAck);
   oneway void acknowledgeLastIncomingGsmSms(in int serial, in boolean success, in android.hardware.radio.messaging.SmsAcknowledgeFailCause cause);
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void deleteSmsOnRuim(in int serial, in int index);
   oneway void deleteSmsOnSim(in int serial, in int index);
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void getCdmaBroadcastConfig(in int serial);
   oneway void getGsmBroadcastConfig(in int serial);
   oneway void getSmscAddress(in int serial);
   oneway void reportSmsMemoryStatus(in int serial, in boolean available);
   oneway void responseAcknowledgement();
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void sendCdmaSms(in int serial, in android.hardware.radio.messaging.CdmaSmsMessage sms);
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void sendCdmaSmsExpectMore(in int serial, in android.hardware.radio.messaging.CdmaSmsMessage sms);
   oneway void sendImsSms(in int serial, in android.hardware.radio.messaging.ImsSmsMessage message);
   oneway void sendSms(in int serial, in android.hardware.radio.messaging.GsmSmsMessage message);
   oneway void sendSmsExpectMore(in int serial, in android.hardware.radio.messaging.GsmSmsMessage message);
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void setCdmaBroadcastActivation(in int serial, in boolean activate);
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void setCdmaBroadcastConfig(in int serial, in android.hardware.radio.messaging.CdmaBroadcastSmsConfigInfo[] configInfo);
   oneway void setGsmBroadcastActivation(in int serial, in boolean activate);
   oneway void setGsmBroadcastConfig(in int serial, in android.hardware.radio.messaging.GsmBroadcastSmsConfigInfo[] configInfo);
   oneway void setResponseFunctions(in android.hardware.radio.messaging.IRadioMessagingResponse radioMessagingResponse, in android.hardware.radio.messaging.IRadioMessagingIndication radioMessagingIndication);
   oneway void setSmscAddress(in int serial, in String smsc);
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void writeSmsToRuim(in int serial, in android.hardware.radio.messaging.CdmaSmsWriteArgs cdmaSms);
   oneway void writeSmsToSim(in int serial, in android.hardware.radio.messaging.SmsWriteArgs smsWriteArgs);
 }

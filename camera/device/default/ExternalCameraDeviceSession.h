@@ -122,7 +122,7 @@ class ExternalCameraDeviceSession : public BnCameraDeviceSession, public OutputT
 
     static const int kMaxProcessedStream = 2;
     static const int kMaxStallStream = 1;
-    static const uint32_t kMaxBytesPerPixel = 2;
+    static const uint32_t kMaxBytesPerPixel = 3;
 
     class BufferRequestThread : public SimpleThread {
       public:
@@ -382,6 +382,9 @@ class ExternalCameraDeviceSession : public BnCameraDeviceSession, public OutputT
     std::string mExifMake;
     std::string mExifModel;
     /* End of members not changed after initialize() */
+
+    // The max tolerant lag between the dequeued v4l2 buffer and current capture request.
+    uint64_t mMaxLagNs;
 };
 
 }  // namespace implementation

@@ -17,6 +17,7 @@
 package android.hardware.bluetooth.ranging;
 
 import android.hardware.bluetooth.ranging.Nadm;
+import android.hardware.bluetooth.ranging.RangingResultStatus;
 
 /**
  * Generic structure to return the ranging result
@@ -90,4 +91,13 @@ parcelable RangingResult {
      * Parameter for vendors to place vendor-specific ranging results data.
      */
     @nullable byte[] vendorSpecificCsRangingResultsData;
+    /**
+     * If the result is valid, for e.g. the result was gotten from an aborted procedure.
+     */
+    RangingResultStatus rangingResultStatus;
+    /**
+     * The timestamp of the first subevent with the measured procedure.
+     * see SubeventResultData#timestampNanos
+     */
+    long timestampNanos;
 }

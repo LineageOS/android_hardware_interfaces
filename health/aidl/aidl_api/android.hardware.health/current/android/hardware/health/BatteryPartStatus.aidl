@@ -34,7 +34,7 @@
 package android.hardware.health;
 @Backing(type="int") @VintfStability
 enum BatteryPartStatus {
-  UNSUPPORTED,
-  ORIGINAL,
-  REPLACED,
+  UNSUPPORTED = 0,
+  ORIGINAL = 1,
+  REPLACED = 2,
 }

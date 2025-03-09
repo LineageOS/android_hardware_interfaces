@@ -16,6 +16,8 @@
 
 package android.hardware.radio.network;
 
+import android.hardware.radio.RadioConst;
+
 /** @hide */
 @VintfStability
 @JavaDerive(toString=true)
@@ -23,44 +25,44 @@ parcelable NrSignalStrength {
     /**
      * SS reference signal received power, multiplied by -1.
      * Reference: 3GPP TS 38.215.
-     * Range [44, 140], INT_MAX means invalid/unreported.
+     * Range [44, 140], RadioConst:VALUE_UNAVAILABLE means invalid/unreported.
      */
     int ssRsrp;
     /**
      * SS reference signal received quality, multiplied by -1.
      * Reference: 3GPP TS 38.215, 3GPP TS 38.133 section 10.
-     * Range [-20 dB, 43 dB], INT_MAX means invalid/unreported.
+     * Range [-20 dB, 43 dB], RadioConst:VALUE_UNAVAILABLE means invalid/unreported.
      */
     int ssRsrq;
     /**
      * SS signal-to-noise and interference ratio.
      * Reference: 3GPP TS 38.215 section 5.1.*, 3GPP TS 38.133 section 10.1.16.1.
-     * Range [-23, 40], INT_MAX means invalid/unreported.
+     * Range [-23, 40], RadioConst:VALUE_UNAVAILABLE means invalid/unreported.
      */
     int ssSinr;
     /**
      * CSI reference signal received power, multiplied by -1.
      * Reference: 3GPP TS 38.215.
-     * Range [44, 140], INT_MAX means invalid/unreported.
+     * Range [44, 140], RadioConst:VALUE_UNAVAILABLE means invalid/unreported.
      */
     int csiRsrp;
     /**
      * CSI reference signal received quality, multiplied by -1.
      * Reference: 3GPP TS 38.215.
-     * Range [3, 20], INT_MAX means invalid/unreported.
+     * Range [3, 20], RadioConst:VALUE_UNAVAILABLE means invalid/unreported.
      */
     int csiRsrq;
     /**
      * CSI signal-to-noise and interference ratio.
      * Reference: 3GPP TS 138.215 section 5.1.*, 3GPP TS 38.133 section 10.1.16.1.
-     * Range [-23, 40], INT_MAX means invalid/unreported.
+     * Range [-23, 40], RadioConst:VALUE_UNAVAILABLE means invalid/unreported.
      */
     int csiSinr;
     /**
      * CSI channel quality indicator (CQI) table index. There are multiple CQI tables.
      * The definition of CQI in each table is different.
      * Reference: 3GPP TS 138.214 section 5.2.2.1.
-     * Range [1, 3], INT_MAX means invalid/unreported.
+     * Range [1, 3], RadioConst:VALUE_UNAVAILABLE means invalid/unreported.
      */
     int csiCqiTableIndex;
     /**
@@ -69,14 +71,14 @@ parcelable NrSignalStrength {
      * index is provided for each subband, in ascending order of subband index. If CQI is not
      * available, the CQI report is empty.
      * Reference: 3GPP TS 138.214 section 5.2.2.1.
-     * Range [0, 15], 0xFF means invalid/unreported.
+     * Range [0, 15], RadioConst:VALUE_UNAVAILABLE_BYTE means invalid/unreported.
      */
     byte[] csiCqiReport;
     /**
      * Timing advance in micro seconds for a one way trip from cell to device. Approximate distance
      * is calculated using 300m/us * timingAdvance. Range: 0 to 1282 inclusive.
-     * INT_MAX: 0x7FFFFFFF denotes invalid/unreported value.
+     * RadioConst:VALUE_UNAVAILABLE denotes invalid/unreported value.
      * Reference: 3GPP 36.213 section 4.2.3
      */
-    int timingAdvance = 0x7FFFFFFF;
+    int timingAdvance = RadioConst.VALUE_UNAVAILABLE;
 }

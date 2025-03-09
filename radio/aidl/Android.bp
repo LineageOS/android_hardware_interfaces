@@ -14,6 +14,7 @@ aidl_interface {
     host_supported: true,
     srcs: ["android/hardware/radio/*.aidl"],
     stability: "vintf",
+    flags: ["-Werror"],
     backend: {
         cpp: {
             enabled: true,
@@ -37,7 +38,7 @@ aidl_interface {
         },
 
     ],
-    frozen: true,
+    frozen: false,
 
 }
 
@@ -47,7 +48,8 @@ aidl_interface {
     host_supported: true,
     srcs: ["android/hardware/radio/config/*.aidl"],
     stability: "vintf",
-    imports: ["android.hardware.radio-V3"],
+    imports: ["android.hardware.radio-V4"],
+    flags: ["-Werror"],
     backend: {
         cpp: {
             enabled: true,
@@ -71,7 +73,7 @@ aidl_interface {
         },
 
     ],
-    frozen: true,
+    frozen: false,
 
 }
 
@@ -81,7 +83,8 @@ aidl_interface {
     host_supported: true,
     srcs: ["android/hardware/radio/data/*.aidl"],
     stability: "vintf",
-    imports: ["android.hardware.radio-V3"],
+    imports: ["android.hardware.radio-V4"],
+    flags: ["-Werror"],
     backend: {
         cpp: {
             enabled: true,
@@ -105,7 +108,7 @@ aidl_interface {
         },
 
     ],
-    frozen: true,
+    frozen: false,
 }
 
 aidl_interface {
@@ -114,7 +117,8 @@ aidl_interface {
     host_supported: true,
     srcs: ["android/hardware/radio/messaging/*.aidl"],
     stability: "vintf",
-    imports: ["android.hardware.radio-V3"],
+    imports: ["android.hardware.radio-V4"],
+    flags: ["-Werror"],
     backend: {
         cpp: {
             enabled: true,
@@ -138,7 +142,7 @@ aidl_interface {
         },
 
     ],
-    frozen: true,
+    frozen: false,
 }
 
 aidl_interface {
@@ -147,7 +151,8 @@ aidl_interface {
     host_supported: true,
     srcs: ["android/hardware/radio/modem/*.aidl"],
     stability: "vintf",
-    imports: ["android.hardware.radio-V3"],
+    imports: ["android.hardware.radio-V4"],
+    flags: ["-Werror"],
     backend: {
         cpp: {
             enabled: true,
@@ -171,7 +176,7 @@ aidl_interface {
         },
 
     ],
-    frozen: true,
+    frozen: false,
 }
 
 aidl_interface {
@@ -180,7 +185,8 @@ aidl_interface {
     host_supported: true,
     srcs: ["android/hardware/radio/network/*.aidl"],
     stability: "vintf",
-    imports: ["android.hardware.radio-V3"],
+    imports: ["android.hardware.radio-V4"],
+    flags: ["-Werror"],
     backend: {
         cpp: {
             enabled: true,
@@ -204,7 +210,7 @@ aidl_interface {
         },
 
     ],
-    frozen: true,
+    frozen: false,
 }
 
 aidl_interface {
@@ -213,6 +219,7 @@ aidl_interface {
     host_supported: true,
     srcs: ["android/hardware/radio/sap/*.aidl"],
     stability: "vintf",
+    flags: ["-Werror"],
     backend: {
         cpp: {
             enabled: true,
@@ -241,9 +248,10 @@ aidl_interface {
     host_supported: true,
     srcs: ["android/hardware/radio/sim/*.aidl"],
     stability: "vintf",
+    flags: ["-Werror"],
     imports: [
-        "android.hardware.radio-V3",
-        "android.hardware.radio.config-V3",
+        "android.hardware.radio-V4",
+        "android.hardware.radio.config-V4",
     ],
     backend: {
         cpp: {
@@ -277,7 +285,7 @@ aidl_interface {
         },
 
     ],
-    frozen: true,
+    frozen: false,
 }
 
 aidl_interface {
@@ -286,7 +294,8 @@ aidl_interface {
     host_supported: true,
     srcs: ["android/hardware/radio/voice/*.aidl"],
     stability: "vintf",
-    imports: ["android.hardware.radio-V3"],
+    imports: ["android.hardware.radio-V4"],
+    flags: ["-Werror"],
     backend: {
         cpp: {
             enabled: true,
@@ -310,7 +319,7 @@ aidl_interface {
         },
 
     ],
-    frozen: true,
+    frozen: false,
 }
 
 aidl_interface {
@@ -319,9 +328,10 @@ aidl_interface {
     srcs: ["android/hardware/radio/ims/media/*.aidl"],
     stability: "vintf",
     imports: [
-        "android.hardware.radio-V3",
-        "android.hardware.radio.data-V3",
+        "android.hardware.radio-V4",
+        "android.hardware.radio.data-V4",
     ],
+    flags: ["-Werror"],
     backend: {
         cpp: {
             enabled: false,
@@ -347,7 +357,7 @@ aidl_interface {
         },
 
     ],
-    frozen: true,
+    frozen: false,
 }
 
 aidl_interface {
@@ -355,7 +365,8 @@ aidl_interface {
     vendor_available: true,
     srcs: ["android/hardware/radio/ims/*.aidl"],
     stability: "vintf",
-    imports: ["android.hardware.radio-V3"],
+    imports: ["android.hardware.radio-V4"],
+    flags: ["-Werror"],
     backend: {
         cpp: {
             enabled: false,
@@ -375,5 +386,5 @@ aidl_interface {
         },
 
     ],
-    frozen: true,
+    frozen: false,
 }

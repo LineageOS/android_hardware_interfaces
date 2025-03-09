@@ -36,7 +36,7 @@ package android.hardware.tv.tuner;
 @Backing(type="byte") @VintfStability
 enum FrontendDvbcAnnex {
   UNDEFINED = 0,
-  A = 1,
-  B = 2,
-  C = 4,
+  A = (1 << 0) /* 1 */,
+  B = (1 << 1) /* 2 */,
+  C = (1 << 2) /* 4 */,
 }

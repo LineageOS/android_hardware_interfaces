@@ -36,5 +36,5 @@ package android.hardware.tv.tuner;
 @VintfStability
 parcelable AudioPresentation {
   android.hardware.tv.tuner.AudioPreselection preselection;
-  int ac4ShortProgramId = -1;
+  int ac4ShortProgramId = (-1) /* -1 */;
 }

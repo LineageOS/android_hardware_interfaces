@@ -38,6 +38,9 @@ parcelable BluetoothChannelSoundingParameters {
   int aclHandle;
   int l2capCid;
   int realTimeProcedureDataAttHandle;
+  /**
+   * @deprecated use the role in Config.aidl
+   */
   android.hardware.bluetooth.ranging.Role role;
   boolean localSupportsSoundingPhaseBasedRanging;
   boolean remoteSupportsSoundingPhaseBaseRanging;

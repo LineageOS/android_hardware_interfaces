@@ -35,6 +35,6 @@ package android.hardware.tv.tuner;
 /* @hide */
 @Backing(type="int") @VintfStability
 enum DemuxQueueNotifyBits {
-  DATA_READY = 1,
-  DATA_CONSUMED = 2,
+  DATA_READY = (1 << 0) /* 1 */,
+  DATA_CONSUMED = (1 << 1) /* 2 */,
 }

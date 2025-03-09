@@ -35,6 +35,6 @@ package android.hardware.tv.tuner;
 /* @hide */
 @Backing(type="byte") @VintfStability
 enum DvrType {
-  RECORD = 0,
-  PLAYBACK = 1,
+  RECORD,
+  PLAYBACK,
 }

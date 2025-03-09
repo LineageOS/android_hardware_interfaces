@@ -17,6 +17,7 @@
 package android.hardware.automotive.vehicle;
 
 import android.hardware.automotive.vehicle.GetValueResults;
+import android.hardware.automotive.vehicle.PropIdAreaId;
 import android.hardware.automotive.vehicle.SetValueResults;
 import android.hardware.automotive.vehicle.StatusCode;
 import android.hardware.automotive.vehicle.VehiclePropErrors;
@@ -96,4 +97,16 @@ interface IVehicleCallback {
      *     does not batch the errors, this may only contain one error.
      */
     oneway void onPropertySetError(in VehiclePropErrors errors);
+
+    /**
+     * Called when the min/max supported value or supported value list for
+     * the registered [propId, areaId]s changes.
+     *
+     * The caller is supposed to call {@code getMinMaxSupportedValue} or
+     * {@code getSupportedValuesLists} to get the new supported value range.
+     *
+     * @param propIdAreaIds The list of [propId, areaId]s whose supported
+     *    value range changes.
+     */
+    oneway void onSupportedValueChange(in List<PropIdAreaId> propIdAreaIds);
 }

@@ -74,14 +74,22 @@ void KeyMintRemoteProv::process() {
     uint8_t challengeSize = mFdp.ConsumeIntegralInRange<uint8_t>(kMinSize, kChallengeSize);
     std::vector<uint8_t> challenge = mFdp.ConsumeBytes<uint8_t>(challengeSize);
 
+    RpcHardwareInfo rpcHardwareInfo;
+    gRPC->getHardwareInfo(&rpcHardwareInfo);
+
     std::vector<uint8_t> csr;
     gRPC->generateCertificateRequestV2(keysToSign, challenge, &csr);
 
     while (mFdp.remaining_bytes()) {
         auto invokeProvAPI = mFdp.PickValueInArray<const std::function<void()>>({
-                [&]() { verifyFactoryCsr(cborKeysToSign, csr, gRPC.get(), challenge); },
-                [&]() { verifyProductionCsr(cborKeysToSign, csr, gRPC.get(), challenge); },
-                [&]() { isCsrWithProperDiceChain(csr); },
+                [&]() {
+                    verifyFactoryCsr(cborKeysToSign, csr, rpcHardwareInfo, kServiceName, challenge);
+                },
+                [&]() {
+                    verifyProductionCsr(cborKeysToSign, csr, rpcHardwareInfo, kServiceName,
+                                        challenge);
+                },
+                [&]() { isCsrWithProperDiceChain(csr, kServiceName); },
         });
         invokeProvAPI();
     }

@@ -106,7 +106,7 @@ cc_library_static {
         "libwifi-hal",
         "libwifi-system-iface",
         "libxml2",
-        "android.hardware.wifi-V2-ndk",
+        "android.hardware.wifi-V3-ndk",
     ],
 
     export_include_dirs: ["."],
@@ -138,7 +138,7 @@ cc_binary {
         "libwifi-hal",
         "libwifi-system-iface",
         "libxml2",
-        "android.hardware.wifi-V2-ndk",
+        "android.hardware.wifi-V3-ndk",
     ],
     static_libs: ["android.hardware.wifi-service-lib"],
     init_rc: ["android.hardware.wifi-service.rc"],
@@ -167,7 +167,7 @@ cc_binary {
         "libwifi-hal",
         "libwifi-system-iface",
         "libxml2",
-        "android.hardware.wifi-V2-ndk",
+        "android.hardware.wifi-V3-ndk",
     ],
     static_libs: ["android.hardware.wifi-service-lib"],
     init_rc: ["android.hardware.wifi-service-lazy.rc"],
@@ -199,8 +199,8 @@ cc_test {
     static_libs: [
         "libgmock",
         "libgtest",
-        "android.hardware.wifi-V2-ndk",
-        "android.hardware.wifi.common-V1-ndk",
+        "android.hardware.wifi-V3-ndk",
+        "android.hardware.wifi.common-V2-ndk",
         "android.hardware.wifi-service-lib",
     ],
     shared_libs: [

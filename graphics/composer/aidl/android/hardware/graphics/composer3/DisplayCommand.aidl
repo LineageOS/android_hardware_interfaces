@@ -185,4 +185,21 @@ parcelable DisplayCommand {
      * close as possible to the cadence.
      */
     int frameIntervalNs;
+
+    /**
+     * If the display supports DisplayCapability.PICTURE_PROCESSING, then this value is used to look
+     * up a picture profile which defines the parameters used when configuring a picture-processing
+     * pipeline applied to the composition result, enhancing the quality of the entire composed
+     * image. If the server does not recognize the picture profile, it must continue composition
+     * and ignore this value. If the value is zero, then the server's default picture processing,
+     * if possible, must be applied.
+     *
+     * Note that the client will never send a DisplayCommand.pictureProfileId if
+     * IComposerClient.getMaxLayerPictureProfiles is non-zero. Picture profiles will only be
+     * specified on a per-layer basis via LayerCommand.pictureProfileId.
+     *
+     * @see IComposerClient.getMaxLayerPictureProfiles
+     * @see DisplayCommand.pictureProfileId
+     */
+    long pictureProfileId;
 }

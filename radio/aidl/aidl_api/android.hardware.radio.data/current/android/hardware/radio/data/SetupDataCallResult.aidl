@@ -33,13 +33,13 @@
 
 package android.hardware.radio.data;
 /* @hide */
-@JavaDerive(toString=true) @VintfStability
+@JavaDerive(toString=true) @SuppressWarnings(value={"redundant-name"}) @VintfStability
 parcelable SetupDataCallResult {
-  android.hardware.radio.data.DataCallFailCause cause;
+  android.hardware.radio.data.DataCallFailCause cause = android.hardware.radio.data.DataCallFailCause.NONE;
   long suggestedRetryTime;
   int cid;
   int active;
-  android.hardware.radio.data.PdpProtocolType type;
+  android.hardware.radio.data.PdpProtocolType type = android.hardware.radio.data.PdpProtocolType.IP;
   String ifname;
   android.hardware.radio.data.LinkAddress[] addresses;
   String[] dnses;

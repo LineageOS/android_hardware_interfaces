@@ -19,6 +19,7 @@ cc_library_static {
     ],
     export_include_dirs: ["include"],
     srcs: [
+        "VibrationSession.cpp",
         "Vibrator.cpp",
         "VibratorManager.cpp",
     ],
@@ -44,7 +45,7 @@ cc_binary {
     name: "android.hardware.vibrator-service.example",
     relative_install_path: "hw",
     init_rc: ["vibrator-default.rc"],
-    vintf_fragments: [":android.hardware.vibrator.xml"],
+    vintf_fragments: ["android.hardware.vibrator.xml"],
     vendor: true,
     shared_libs: [
         "libbase",

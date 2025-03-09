@@ -39,6 +39,9 @@ enum AccessNetwork {
   GERAN,
   UTRAN,
   EUTRAN,
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   CDMA2000,
   IWLAN,
   NGRAN,

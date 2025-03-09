@@ -62,6 +62,7 @@ oneway interface IRadioMessagingResponse {
      *   RadioError:OPERATION_NOT_ALLOWED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
+     * @deprecated Legacy CDMA is unsupported.
      */
     void acknowledgeLastIncomingCdmaSmsResponse(in RadioResponseInfo info);
 
@@ -108,6 +109,7 @@ oneway interface IRadioMessagingResponse {
      *   RadioError:INVALID_MODEM_STATE
      *   RadioError:OPERATION_NOT_ALLOWED
      *   RadioError:SIM_ABSENT
+     * @deprecated Legacy CDMA is unsupported.
      */
     void deleteSmsOnRuimResponse(in RadioResponseInfo info);
 
@@ -153,6 +155,7 @@ oneway interface IRadioMessagingResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:INVALID_MODEM_STATE
+     * @deprecated Legacy CDMA is unsupported.
      */
     void getCdmaBroadcastConfigResponse(
             in RadioResponseInfo info, in CdmaBroadcastSmsConfigInfo[] configs);
@@ -257,6 +260,7 @@ oneway interface IRadioMessagingResponse {
      *   RadioError:SIMULTANEOUS_SMS_AND_CALL_NOT_ALLOWED
      *   RadioError:ACCESS_BARRED
      *   RadioError:BLOCKED_DUE_TO_CALL
+     * @deprecated Legacy CDMA is unsupported.
      */
     void sendCdmaSmsExpectMoreResponse(in RadioResponseInfo info, in SendSmsResult sms);
 
@@ -291,6 +295,7 @@ oneway interface IRadioMessagingResponse {
      *   RadioError:SIMULTANEOUS_SMS_AND_CALL_NOT_ALLOWED
      *   RadioError:ACCESS_BARRED
      *   RadioError:BLOCKED_DUE_TO_CALL
+     * @deprecated Legacy CDMA is unsupported.
      */
     void sendCdmaSmsResponse(in RadioResponseInfo info, in SendSmsResult sms);
 
@@ -407,6 +412,7 @@ oneway interface IRadioMessagingResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:INVALID_MODEM_STATE
+     * @deprecated Legacy CDMA is unsupported.
      */
     void setCdmaBroadcastActivationResponse(in RadioResponseInfo info);
 
@@ -427,6 +433,7 @@ oneway interface IRadioMessagingResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:INVALID_MODEM_STATE
+     * @deprecated Legacy CDMA is unsupported.
      */
     void setCdmaBroadcastConfigResponse(in RadioResponseInfo info);
 
@@ -520,6 +527,7 @@ oneway interface IRadioMessagingResponse {
      *   RadioError:CANCELLED
      *   RadioError:INVALID_MODEM_STATE
      *   RadioError:SIM_ABSENT
+     * @deprecated Legacy CDMA is unsupported.
      */
     void writeSmsToRuimResponse(in RadioResponseInfo info, in int index);
 

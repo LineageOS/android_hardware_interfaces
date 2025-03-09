@@ -35,8 +35,8 @@ package android.hardware.radio.network;
 /* @hide */
 @JavaDerive(toString=true) @VintfStability
 parcelable PhysicalChannelConfig {
-  android.hardware.radio.network.CellConnectionStatus status;
-  android.hardware.radio.RadioTechnology rat;
+  android.hardware.radio.network.CellConnectionStatus status = android.hardware.radio.network.CellConnectionStatus.NONE;
+  android.hardware.radio.RadioTechnology rat = android.hardware.radio.RadioTechnology.UNKNOWN;
   int downlinkChannelNumber;
   int uplinkChannelNumber;
   int cellBandwidthDownlinkKhz;

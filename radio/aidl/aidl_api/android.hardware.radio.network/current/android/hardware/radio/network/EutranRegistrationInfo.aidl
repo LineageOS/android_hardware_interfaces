@@ -37,7 +37,7 @@ package android.hardware.radio.network;
 parcelable EutranRegistrationInfo {
   android.hardware.radio.network.LteVopsInfo lteVopsInfo;
   android.hardware.radio.network.NrIndicators nrIndicators;
-  android.hardware.radio.network.EutranRegistrationInfo.AttachResultType lteAttachResultType;
+  android.hardware.radio.network.EutranRegistrationInfo.AttachResultType lteAttachResultType = android.hardware.radio.network.EutranRegistrationInfo.AttachResultType.NONE;
   int extraInfo;
   const int EXTRA_CSFB_NOT_PREFERRED = (1 << 0) /* 1 */;
   const int EXTRA_SMS_ONLY = (1 << 1) /* 2 */;

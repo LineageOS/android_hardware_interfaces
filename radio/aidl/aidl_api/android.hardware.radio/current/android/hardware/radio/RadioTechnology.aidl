@@ -39,15 +39,36 @@ enum RadioTechnology {
   GPRS,
   EDGE,
   UMTS,
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   IS95A,
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   IS95B,
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   ONE_X_RTT,
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   EVDO_0,
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   EVDO_A,
   HSDPA,
   HSUPA,
   HSPA,
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   EVDO_B,
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   EHRPD,
   LTE,
   HSPAP,
@@ -59,4 +80,5 @@ enum RadioTechnology {
    */
   LTE_CA,
   NR,
+  NB_IOT_NTN,
 }

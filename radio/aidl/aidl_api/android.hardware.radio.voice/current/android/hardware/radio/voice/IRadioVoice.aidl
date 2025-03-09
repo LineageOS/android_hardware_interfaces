@@ -59,6 +59,9 @@ interface IRadioVoice {
   oneway void rejectCall(in int serial);
   oneway void responseAcknowledgement();
   oneway void sendBurstDtmf(in int serial, in String dtmf, in int on, in int off);
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void sendCdmaFeatureCode(in int serial, in String featureCode);
   oneway void sendDtmf(in int serial, in String s);
   oneway void sendUssd(in int serial, in String ussd);

@@ -28,9 +28,9 @@ rust_library {
     vendor_available: true,
     defaults: [
         "authgraph_use_latest_hal_aidl_rust",
+        "secretkeeper_use_latest_hal_aidl_rust",
     ],
     rustlibs: [
-        "android.hardware.security.secretkeeper-V1-rust",
         "libauthgraph_boringssl",
         "libauthgraph_core",
         "libauthgraph_hal",
@@ -50,9 +50,9 @@ rust_binary {
     prefer_rlib: true,
     defaults: [
         "authgraph_use_latest_hal_aidl_rust",
+        "secretkeeper_use_latest_hal_aidl_rust",
     ],
     rustlibs: [
-        "android.hardware.security.secretkeeper-V1-rust",
         "libandroid_logger",
         "libbinder_rs",
         "liblog_rust",

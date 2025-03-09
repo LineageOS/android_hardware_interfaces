@@ -25,9 +25,7 @@
 #include <error/Result.h>
 #include <error/expected_utils.h>
 
-#include "PrimaryMixer.h"
 #include "core-impl/StreamPrimary.h"
-#include "core-impl/StreamStub.h"
 
 using aidl::android::hardware::audio::common::SinkMetadata;
 using aidl::android::hardware::audio::common::SourceMetadata;
@@ -41,19 +39,51 @@ using android::base::GetBoolProperty;
 
 namespace aidl::android::hardware::audio::core {
 
-const static constexpr std::pair<int, int> kDefaultCardAndDeviceId = {
-        primary::PrimaryMixer::kAlsaCard, primary::PrimaryMixer::kAlsaDevice};
-
-StreamPrimary::StreamPrimary(
-        StreamContext* context, const Metadata& metadata,
-        const std::vector<::aidl::android::media::audio::common::AudioDevice>& devices)
+StreamPrimary::StreamPrimary(StreamContext* context, const Metadata& metadata)
     : StreamAlsa(context, metadata, 3 /*readWriteRetries*/),
       mIsAsynchronous(!!getContext().getAsyncCallback()),
-      mCardAndDeviceId(getCardAndDeviceId(devices)) {
+      mStubDriver(getContext()) {
     context->startStreamDataProcessor();
 }
 
+::android::status_t StreamPrimary::init() {
+    RETURN_STATUS_IF_ERROR(mStubDriver.init());
+    return StreamAlsa::init();
+}
+
+::android::status_t StreamPrimary::drain(StreamDescriptor::DrainMode mode) {
+    return isStubStreamOnWorker() ? mStubDriver.drain(mode) : StreamAlsa::drain(mode);
+}
+
+::android::status_t StreamPrimary::flush() {
+    RETURN_STATUS_IF_ERROR(isStubStreamOnWorker() ? mStubDriver.flush() : StreamAlsa::flush());
+    // TODO(b/372951987): consider if this needs to be done from 'StreamInWorkerLogic::cycle'.
+    return mIsInput ? standby() : ::android::OK;
+}
+
+::android::status_t StreamPrimary::pause() {
+    return isStubStreamOnWorker() ? mStubDriver.pause() : StreamAlsa::pause();
+}
+
+::android::status_t StreamPrimary::standby() {
+    return isStubStreamOnWorker() ? mStubDriver.standby() : StreamAlsa::standby();
+}
+
 ::android::status_t StreamPrimary::start() {
+    bool isStub = true, shutdownAlsaStream = false;
+    {
+        std::lock_guard l(mLock);
+        isStub = mAlsaDeviceId == kStubDeviceId;
+        shutdownAlsaStream =
+                mCurrAlsaDeviceId != mAlsaDeviceId && mCurrAlsaDeviceId != kStubDeviceId;
+        mCurrAlsaDeviceId = mAlsaDeviceId;
+    }
+    if (shutdownAlsaStream) {
+        StreamAlsa::shutdown();  // Close currently opened ALSA devices.
+    }
+    if (isStub) {
+        return mStubDriver.start();
+    }
     RETURN_STATUS_IF_ERROR(StreamAlsa::start());
     mStartTimeNs = ::android::uptimeNanos();
     mFramesSinceStart = 0;
@@ -63,6 +93,9 @@ StreamPrimary::StreamPrimary(
 
 ::android::status_t StreamPrimary::transfer(void* buffer, size_t frameCount,
                                             size_t* actualFrameCount, int32_t* latencyMs) {
+    if (isStubStreamOnWorker()) {
+        return mStubDriver.transfer(buffer, frameCount, actualFrameCount, latencyMs);
+    }
     // This is a workaround for the emulator implementation which has a host-side buffer
     // and is not being able to achieve real-time behavior similar to ADSPs (b/302587331).
     if (!mSkipNextTransfer) {
@@ -102,19 +135,52 @@ StreamPrimary::StreamPrimary(
     return ::android::OK;
 }
 
+void StreamPrimary::shutdown() {
+    StreamAlsa::shutdown();
+    mStubDriver.shutdown();
+}
+
+ndk::ScopedAStatus StreamPrimary::setConnectedDevices(const ConnectedDevices& devices) {
+    LOG(DEBUG) << __func__ << ": " << ::android::internal::ToString(devices);
+    if (devices.size() > 1) {
+        LOG(ERROR) << __func__ << ": primary stream can only be connected to one device, got: "
+                   << devices.size();
+        return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+    }
+    {
+        const bool useStubDriver = devices.empty() || useStubStream(mIsInput, devices[0]);
+        std::lock_guard l(mLock);
+        mAlsaDeviceId = useStubDriver ? kStubDeviceId : getCardAndDeviceId(devices);
+    }
+    if (!devices.empty()) {
+        auto streamDataProcessor = getContext().getStreamDataProcessor().lock();
+        if (streamDataProcessor != nullptr) {
+            streamDataProcessor->setAudioDevice(devices[0]);
+        }
+    }
+    return StreamAlsa::setConnectedDevices(devices);
+}
+
 std::vector<alsa::DeviceProfile> StreamPrimary::getDeviceProfiles() {
-    return {alsa::DeviceProfile{.card = mCardAndDeviceId.first,
-                                .device = mCardAndDeviceId.second,
+    return {alsa::DeviceProfile{.card = mCurrAlsaDeviceId.first,
+                                .device = mCurrAlsaDeviceId.second,
                                 .direction = mIsInput ? PCM_IN : PCM_OUT,
                                 .isExternal = false}};
 }
 
-std::pair<int, int> StreamPrimary::getCardAndDeviceId(const std::vector<AudioDevice>& devices) {
+bool StreamPrimary::isStubStream() {
+    std::lock_guard l(mLock);
+    return mAlsaDeviceId == kStubDeviceId;
+}
+
+// static
+StreamPrimary::AlsaDeviceId StreamPrimary::getCardAndDeviceId(
+        const std::vector<AudioDevice>& devices) {
     if (devices.empty() || devices[0].address.getTag() != AudioDeviceAddress::id) {
         return kDefaultCardAndDeviceId;
     }
     std::string deviceAddress = devices[0].address.get<AudioDeviceAddress::id>();
-    std::pair<int, int> cardAndDeviceId;
+    AlsaDeviceId cardAndDeviceId;
     if (const size_t suffixPos = deviceAddress.rfind("CARD_");
         suffixPos == std::string::npos ||
         sscanf(deviceAddress.c_str() + suffixPos, "CARD_%d_DEV_%d", &cardAndDeviceId.first,
@@ -126,57 +192,38 @@ std::pair<int, int> StreamPrimary::getCardAndDeviceId(const std::vector<AudioDev
     return cardAndDeviceId;
 }
 
+// static
+bool StreamPrimary::useStubStream(
+        bool isInput, const ::aidl::android::media::audio::common::AudioDevice& device) {
+    static const bool kSimulateInput =
+            GetBoolProperty("ro.boot.audio.tinyalsa.simulate_input", false);
+    static const bool kSimulateOutput =
+            GetBoolProperty("ro.boot.audio.tinyalsa.ignore_output", false);
+    if (isInput) {
+        return kSimulateInput || device.type.type == AudioDeviceType::IN_TELEPHONY_RX ||
+               device.type.type == AudioDeviceType::IN_FM_TUNER ||
+               device.type.connection == AudioDeviceDescription::CONNECTION_BUS /*deprecated */;
+    }
+    return kSimulateOutput || device.type.type == AudioDeviceType::OUT_TELEPHONY_TX ||
+           device.type.connection == AudioDeviceDescription::CONNECTION_BUS /*deprecated*/;
+}
+
 StreamInPrimary::StreamInPrimary(StreamContext&& context, const SinkMetadata& sinkMetadata,
                                  const std::vector<MicrophoneInfo>& microphones)
     : StreamIn(std::move(context), microphones),
-      StreamSwitcher(&mContextInstance, sinkMetadata),
+      StreamPrimary(&mContextInstance, sinkMetadata),
       StreamInHwGainHelper(&mContextInstance) {}
-
-bool StreamInPrimary::useStubStream(const AudioDevice& device) {
-    static const bool kSimulateInput =
-            GetBoolProperty("ro.boot.audio.tinyalsa.simulate_input", false);
-    return kSimulateInput || device.type.type == AudioDeviceType::IN_TELEPHONY_RX ||
-           device.type.type == AudioDeviceType::IN_FM_TUNER ||
-           device.type.connection == AudioDeviceDescription::CONNECTION_BUS /*deprecated */;
-}
-
-StreamSwitcher::DeviceSwitchBehavior StreamInPrimary::switchCurrentStream(
-        const std::vector<::aidl::android::media::audio::common::AudioDevice>& devices) {
-    LOG(DEBUG) << __func__;
-    if (devices.size() > 1) {
-        LOG(ERROR) << __func__ << ": primary stream can only be connected to one device, got: "
-                   << devices.size();
-        return DeviceSwitchBehavior::UNSUPPORTED_DEVICES;
-    }
-    if (devices.empty() || useStubStream(devices[0]) == isStubStream()) {
-        return DeviceSwitchBehavior::USE_CURRENT_STREAM;
-    }
-    return DeviceSwitchBehavior::CREATE_NEW_STREAM;
-}
-
-std::unique_ptr<StreamCommonInterfaceEx> StreamInPrimary::createNewStream(
-        const std::vector<::aidl::android::media::audio::common::AudioDevice>& devices,
-        StreamContext* context, const Metadata& metadata) {
-    if (devices.empty()) {
-        LOG(FATAL) << __func__ << ": called with empty devices";  // see 'switchCurrentStream'
-    }
-    if (useStubStream(devices[0])) {
-        return std::unique_ptr<StreamCommonInterfaceEx>(
-                new InnerStreamWrapper<StreamStub>(context, metadata));
-    }
-    return std::unique_ptr<StreamCommonInterfaceEx>(
-            new InnerStreamWrapper<StreamPrimary>(context, metadata, devices));
-}
 
 ndk::ScopedAStatus StreamInPrimary::getHwGain(std::vector<float>* _aidl_return) {
     if (isStubStream()) {
         return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
     }
-    float gain;
-    RETURN_STATUS_IF_ERROR(primary::PrimaryMixer::getInstance().getMicGain(&gain));
-    _aidl_return->resize(0);
-    _aidl_return->resize(mChannelCount, gain);
-    RETURN_STATUS_IF_ERROR(setHwGainImpl(*_aidl_return));
+    if (mHwGains.empty()) {
+        float gain;
+        RETURN_STATUS_IF_ERROR(primary::PrimaryMixer::getInstance().getMicGain(&gain));
+        _aidl_return->resize(mChannelCount, gain);
+        RETURN_STATUS_IF_ERROR(setHwGainImpl(*_aidl_return));
+    }
     return getHwGainImpl(_aidl_return);
 }
 
@@ -195,57 +242,32 @@ ndk::ScopedAStatus StreamInPrimary::setHwGain(const std::vector<float>& in_chann
         mHwGains = currentGains;
         return status;
     }
+    float gain;
+    RETURN_STATUS_IF_ERROR(primary::PrimaryMixer::getInstance().getMicGain(&gain));
+    // Due to rounding errors, round trip conversions between percents and indexed values may not
+    // match.
+    if (gain != in_channelGains[0]) {
+        LOG(WARNING) << __func__ << ": unmatched gain: set: " << in_channelGains[0]
+                     << ", from mixer: " << gain;
+    }
     return ndk::ScopedAStatus::ok();
 }
 
 StreamOutPrimary::StreamOutPrimary(StreamContext&& context, const SourceMetadata& sourceMetadata,
                                    const std::optional<AudioOffloadInfo>& offloadInfo)
     : StreamOut(std::move(context), offloadInfo),
-      StreamSwitcher(&mContextInstance, sourceMetadata),
+      StreamPrimary(&mContextInstance, sourceMetadata),
       StreamOutHwVolumeHelper(&mContextInstance) {}
-
-bool StreamOutPrimary::useStubStream(const AudioDevice& device) {
-    static const bool kSimulateOutput =
-            GetBoolProperty("ro.boot.audio.tinyalsa.ignore_output", false);
-    return kSimulateOutput || device.type.type == AudioDeviceType::OUT_TELEPHONY_TX ||
-           device.type.connection == AudioDeviceDescription::CONNECTION_BUS /*deprecated*/;
-}
-
-StreamSwitcher::DeviceSwitchBehavior StreamOutPrimary::switchCurrentStream(
-        const std::vector<::aidl::android::media::audio::common::AudioDevice>& devices) {
-    LOG(DEBUG) << __func__;
-    if (devices.size() > 1) {
-        LOG(ERROR) << __func__ << ": primary stream can only be connected to one device, got: "
-                   << devices.size();
-        return DeviceSwitchBehavior::UNSUPPORTED_DEVICES;
-    }
-    if (devices.empty() || useStubStream(devices[0]) == isStubStream()) {
-        return DeviceSwitchBehavior::USE_CURRENT_STREAM;
-    }
-    return DeviceSwitchBehavior::CREATE_NEW_STREAM;
-}
-
-std::unique_ptr<StreamCommonInterfaceEx> StreamOutPrimary::createNewStream(
-        const std::vector<::aidl::android::media::audio::common::AudioDevice>& devices,
-        StreamContext* context, const Metadata& metadata) {
-    if (devices.empty()) {
-        LOG(FATAL) << __func__ << ": called with empty devices";  // see 'switchCurrentStream'
-    }
-    if (useStubStream(devices[0])) {
-        return std::unique_ptr<StreamCommonInterfaceEx>(
-                new InnerStreamWrapper<StreamStub>(context, metadata));
-    }
-    return std::unique_ptr<StreamCommonInterfaceEx>(
-            new InnerStreamWrapper<StreamPrimary>(context, metadata, devices));
-}
 
 ndk::ScopedAStatus StreamOutPrimary::getHwVolume(std::vector<float>* _aidl_return) {
     if (isStubStream()) {
         return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
     }
-    RETURN_STATUS_IF_ERROR(primary::PrimaryMixer::getInstance().getVolumes(_aidl_return));
-    _aidl_return->resize(mChannelCount);
-    RETURN_STATUS_IF_ERROR(setHwVolumeImpl(*_aidl_return));
+    if (mHwVolumes.empty()) {
+        RETURN_STATUS_IF_ERROR(primary::PrimaryMixer::getInstance().getVolumes(_aidl_return));
+        _aidl_return->resize(mChannelCount);
+        RETURN_STATUS_IF_ERROR(setHwVolumeImpl(*_aidl_return));
+    }
     return getHwVolumeImpl(_aidl_return);
 }
 
@@ -261,18 +283,16 @@ ndk::ScopedAStatus StreamOutPrimary::setHwVolume(const std::vector<float>& in_ch
         mHwVolumes = currentVolumes;
         return status;
     }
-    return ndk::ScopedAStatus::ok();
-}
-
-ndk::ScopedAStatus StreamOutPrimary::setConnectedDevices(
-        const std::vector<::aidl::android::media::audio::common::AudioDevice>& devices) {
-    if (!devices.empty()) {
-        auto streamDataProcessor = mContextInstance.getStreamDataProcessor().lock();
-        if (streamDataProcessor != nullptr) {
-            streamDataProcessor->setAudioDevice(devices[0]);
-        }
+    std::vector<float> volumes;
+    RETURN_STATUS_IF_ERROR(primary::PrimaryMixer::getInstance().getVolumes(&volumes));
+    // Due to rounding errors, round trip conversions between percents and indexed values may not
+    // match.
+    if (volumes != in_channelVolumes) {
+        LOG(WARNING) << __func__ << ": unmatched volumes: set: "
+                     << ::android::internal::ToString(in_channelVolumes)
+                     << ", from mixer: " << ::android::internal::ToString(volumes);
     }
-    return StreamSwitcher::setConnectedDevices(devices);
+    return ndk::ScopedAStatus::ok();
 }
 
 }  // namespace aidl::android::hardware::audio::core

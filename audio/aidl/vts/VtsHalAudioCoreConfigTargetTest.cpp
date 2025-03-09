@@ -55,7 +55,6 @@ using aidl::android::media::audio::common::AudioHalVolumeCurve;
 using aidl::android::media::audio::common::AudioHalVolumeGroup;
 using aidl::android::media::audio::common::AudioMode;
 using aidl::android::media::audio::common::AudioPolicyForceUse;
-using aidl::android::media::audio::common::AudioPolicyForcedConfig;
 using aidl::android::media::audio::common::AudioProductStrategyType;
 using aidl::android::media::audio::common::AudioSource;
 using aidl::android::media::audio::common::AudioStreamType;
@@ -355,7 +354,6 @@ class AudioCoreConfig : public testing::TestWithParam<std::string> {
             const AudioHalCapRule& rule,
             const std::vector<std::optional<AudioHalCapCriterionV2>>& criteria) {
         const auto& compoundRule = rule.compoundRule;
-        using TypeTag = AudioHalCapCriterionV2::Type::Tag;
         if (rule.nestedRules.empty() && rule.criterionRules.empty()) {
             EXPECT_EQ(compoundRule, AudioHalCapRule::CompoundRule::ALL);
         }
@@ -365,8 +363,8 @@ class AudioCoreConfig : public testing::TestWithParam<std::string> {
             ValidateAudioHalConfigurationRule(nestedRule, criteria);
         }
         for (const auto& criterionRule : rule.criterionRules) {
-            auto selectionCriterion = criterionRule.criterion;
-            auto criterionValue = criterionRule.criterionTypeValue;
+            auto selectionCriterion = criterionRule.criterionAndValue;
+            auto criterionValue = criterionRule.criterionAndValue;
             auto matchesWhen = criterionRule.matchingRule;
             auto criteriaIt = find_if(criteria.begin(), criteria.end(), [&](const auto& criterion) {
                 return criterion.has_value() &&
@@ -377,50 +375,65 @@ class AudioCoreConfig : public testing::TestWithParam<std::string> {
             AudioHalCapCriterionV2 matchingCriterion = (*criteriaIt).value();
             switch (selectionCriterion.getTag()) {
                 case AudioHalCapCriterionV2::availableInputDevices: {
-                    EXPECT_EQ(criterionValue.getTag(), TypeTag::availableDevicesType);
+                    const auto& values =
+                            criterionValue.get<AudioHalCapCriterionV2::availableInputDevices>()
+                                    .values;
+                    ASSERT_FALSE(values.empty());
                     validateAudioHalCapRule(
                             matchingCriterion.get<AudioHalCapCriterionV2::availableInputDevices>(),
-                            criterionValue.get<TypeTag::availableDevicesType>(), matchesWhen);
+                            values[0], matchesWhen);
                     break;
                 }
                 case AudioHalCapCriterionV2::availableOutputDevices: {
-                    EXPECT_EQ(criterionValue.getTag(), TypeTag::availableDevicesType);
+                    const auto& values =
+                            criterionValue.get<AudioHalCapCriterionV2::availableOutputDevices>()
+                                    .values;
+                    ASSERT_FALSE(values.empty());
                     validateAudioHalCapRule(
                             matchingCriterion.get<AudioHalCapCriterionV2::availableOutputDevices>(),
-                            criterionValue.get<TypeTag::availableDevicesType>(), matchesWhen);
+                            values[0], matchesWhen);
                     break;
                 }
                 case AudioHalCapCriterionV2::availableInputDevicesAddresses: {
-                    EXPECT_EQ(criterionValue.getTag(), TypeTag::availableDevicesAddressesType);
+                    const auto& values =
+                            criterionValue
+                                    .get<AudioHalCapCriterionV2::availableInputDevicesAddresses>()
+                                    .values;
+                    ASSERT_FALSE(values.empty());
                     validateAudioHalCapRule(
                             matchingCriterion
                                     .get<AudioHalCapCriterionV2::availableInputDevicesAddresses>(),
-                            criterionValue.get<TypeTag::availableDevicesAddressesType>(),
-                            matchesWhen);
+                            values[0], matchesWhen);
                     break;
                 }
                 case AudioHalCapCriterionV2::availableOutputDevicesAddresses: {
-                    EXPECT_EQ(criterionValue.getTag(), TypeTag::availableDevicesAddressesType);
+                    const auto& values =
+                            criterionValue
+                                    .get<AudioHalCapCriterionV2::availableOutputDevicesAddresses>()
+                                    .values;
+                    ASSERT_FALSE(values.empty());
                     validateAudioHalCapRule(
                             matchingCriterion
                                     .get<AudioHalCapCriterionV2::availableOutputDevicesAddresses>(),
-                            criterionValue.get<TypeTag::availableDevicesAddressesType>(),
-                            matchesWhen);
+                            values[0], matchesWhen);
                     break;
                 }
                 case AudioHalCapCriterionV2::telephonyMode: {
-                    EXPECT_EQ(criterionValue.getTag(), TypeTag::telephonyModeType);
+                    const auto& values =
+                            criterionValue.get<AudioHalCapCriterionV2::telephonyMode>().values;
+                    ASSERT_FALSE(values.empty());
                     validateAudioHalCapRule(
                             matchingCriterion.get<AudioHalCapCriterionV2::telephonyMode>(),
-                            criterionValue.get<TypeTag::telephonyModeType>(), matchesWhen);
+                            values[0], matchesWhen);
                     break;
                 }
                 case AudioHalCapCriterionV2::forceConfigForUse: {
-                    EXPECT_EQ(criterionValue.getTag(), TypeTag::forcedConfigType);
+                    const auto& values =
+                            criterionValue.get<AudioHalCapCriterionV2::forceConfigForUse>().values;
+                    ASSERT_FALSE(values.empty());
                     validateAudioHalCapRule(
-                            matchingCriterion
-                                    .get<AudioHalCapCriterionV2::forceConfigForUse>(),
-                            criterionValue.get<TypeTag::forcedConfigType>(), matchesWhen);
+                            matchingCriterion.get<AudioHalCapCriterionV2::forceConfigForUse>(),
+                            values[0], matchesWhen);
                     break;
                 }
                 default:
@@ -563,7 +576,7 @@ class AudioCoreConfig : public testing::TestWithParam<std::string> {
     void ValidateCapSpecificConfig(const AudioHalEngineConfig::CapSpecificConfig& capCfg) {
         EXPECT_TRUE(capCfg.criteriaV2.has_value());
         std::unordered_set<AudioHalCapCriterionV2::Tag> criterionTagSet;
-        std::unordered_set<AudioPolicyForceUse> forceUseCriterionUseSet;
+        std::unordered_set<AudioPolicyForceUse::Tag> forceUseCriterionUseSet;
         for (const auto& criterion : capCfg.criteriaV2.value()) {
             EXPECT_TRUE(criterion.has_value());
             if (criterion.value().getTag() != AudioHalCapCriterionV2::forceConfigForUse) {
@@ -571,7 +584,9 @@ class AudioCoreConfig : public testing::TestWithParam<std::string> {
             } else {
                 auto forceUseCriterion =
                         criterion.value().get<AudioHalCapCriterionV2::forceConfigForUse>();
-                EXPECT_TRUE(forceUseCriterionUseSet.insert(forceUseCriterion.forceUse).second);
+                ASSERT_FALSE(forceUseCriterion.values.empty());
+                EXPECT_TRUE(forceUseCriterionUseSet.insert(forceUseCriterion.values[0].getTag())
+                                    .second);
             }
             EXPECT_NO_FATAL_FAILURE(ValidateAudioHalCapCriterion(criterion.value()));
         }

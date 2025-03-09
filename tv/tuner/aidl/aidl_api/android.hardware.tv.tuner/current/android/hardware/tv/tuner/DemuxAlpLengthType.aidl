@@ -36,6 +36,6 @@ package android.hardware.tv.tuner;
 @Backing(type="byte") @VintfStability
 enum DemuxAlpLengthType {
   UNDEFINED = 0,
-  WITHOUT_ADDITIONAL_HEADER = 1,
-  WITH_ADDITIONAL_HEADER = 2,
+  WITHOUT_ADDITIONAL_HEADER,
+  WITH_ADDITIONAL_HEADER,
 }

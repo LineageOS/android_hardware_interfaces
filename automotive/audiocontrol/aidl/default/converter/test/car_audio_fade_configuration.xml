@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2024 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<carAudioFadeConfiguration version="1">
+    <configs>
+        <config name="relaxed fading" defaultFadeOutDurationInMillis="800" defaultFadeInDurationInMillis="500" defaultFadeInDelayForOffenders="10000" >
+            <fadeState value="1" />
+            <fadeableUsages>
+                <usage value="AUDIO_USAGE_MEDIA" />
+                <usage value="AUDIO_USAGE_GAME" />
+                <usage value="AUDIO_USAGE_ASSISTANCE_SONIFICATION" />
+                <usage value="AUDIO_USAGE_ASSISTANCE_ACCESSIBILITY" />
+                <usage value="AUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE" />
+                <usage value="AUDIO_USAGE_ASSISTANT" />
+                <usage value="AUDIO_USAGE_NOTIFICATION" />
+                <usage value="AUDIO_USAGE_ANNOUNCEMENT"/>
+            </fadeableUsages>
+            <unfadeableContentTypes>
+                <contentType value="AUDIO_CONTENT_TYPE_SPEECH" />
+                <contentType value="AUDIO_CONTENT_TYPE_SONIFICATION" />
+            </unfadeableContentTypes>
+            <unfadeableAudioAttributes>
+                <audioAttributes>
+                    <audioAttribute usage="AUDIO_USAGE_MEDIA" tags="oem_specific_tag1" />
+                </audioAttributes>
+            </unfadeableAudioAttributes>
+            <fadeOutConfigurations>
+                <fadeConfiguration fadeDurationMillis="500">
+                    <audioAttributes>
+                        <usage value="AUDIO_USAGE_MEDIA" />
+                        <usage value="AUDIO_USAGE_GAME" />
+                        <audioAttribute usage="AUDIO_USAGE_ASSISTANT" tags="oem_specific_tag2" />
+                    </audioAttributes>
+                </fadeConfiguration>
+                <fadeConfiguration fadeDurationMillis="800">
+                    <audioAttributes>
+                        <usage value="AUDIO_USAGE_ASSISTANCE_SONIFICATION" />
+                        <usage value="AUDIO_USAGE_ASSISTANCE_ACCESSIBILITY" />
+                        <usage value="AUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE" />
+                        <usage value="AUDIO_USAGE_ASSISTANT" />
+                        <usage value="AUDIO_USAGE_ANNOUNCEMENT"/>
+                    </audioAttributes>
+                </fadeConfiguration>
+            </fadeOutConfigurations>
+            <fadeInConfigurations>
+                <fadeConfiguration fadeDurationMillis="1000">
+                    <audioAttributes>
+                        <usage value="AUDIO_USAGE_MEDIA" />
+                        <usage value="AUDIO_USAGE_GAME" />
+                        <audioAttribute usage="AUDIO_USAGE_ASSISTANT" tags="oem_specific_tag2" />
+                    </audioAttributes>
+                </fadeConfiguration>
+                <fadeConfiguration fadeDurationMillis="800">
+                    <audioAttributes>
+                        <usage value="AUDIO_USAGE_ASSISTANCE_SONIFICATION" />
+                        <usage value="AUDIO_USAGE_ASSISTANCE_ACCESSIBILITY" />
+                        <usage value="AUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE" />
+                        <usage value="AUDIO_USAGE_ASSISTANT" />
+                        <usage value="AUDIO_USAGE_ANNOUNCEMENT"/>
+                    </audioAttributes>
+                </fadeConfiguration>
+            </fadeInConfigurations>
+        </config>
+        <config name="aggressive fading">
+            <fadeState value="FADE_STATE_ENABLED_DEFAULT" />
+            <fadeableUsages>
+                <usage value="AUDIO_USAGE_MEDIA" />
+                <usage value="AUDIO_USAGE_GAME" />
+                <usage value="AUDIO_USAGE_ASSISTANCE_SONIFICATION" />
+                <usage value="AUDIO_USAGE_ASSISTANCE_ACCESSIBILITY" />
+                <usage value="AUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE" />
+                <usage value="AUDIO_USAGE_ASSISTANT" />
+                <usage value="AUDIO_USAGE_NOTIFICATION" />
+                <usage value="AUDIO_USAGE_ANNOUNCEMENT"/>
+            </fadeableUsages>
+            <unfadeableContentTypes>
+                <contentType value="AUDIO_CONTENT_TYPE_SPEECH" />
+                <contentType value="AUDIO_CONTENT_TYPE_MUSIC" />
+            </unfadeableContentTypes>
+            <unfadeableAudioAttributes>
+                <audioAttributes>
+                    <audioAttribute usage="AUDIO_USAGE_MEDIA" tags="oem_specific_tag1" />
+                    <audioAttribute usage="AUDIO_USAGE_ASSISTANT" tags="oem_projection_service" />
+                </audioAttributes>
+            </unfadeableAudioAttributes>
+            <fadeOutConfigurations>
+                <fadeConfiguration fadeDurationMillis="150">
+                    <audioAttributes>
+                        <usage value="AUDIO_USAGE_MEDIA" />
+                        <usage value="AUDIO_USAGE_GAME" />
+                    </audioAttributes>
+                </fadeConfiguration>
+                <fadeConfiguration fadeDurationMillis="400">
+                    <audioAttributes>
+                        <usage value="AUDIO_USAGE_ASSISTANCE_SONIFICATION" />
+                        <usage value="AUDIO_USAGE_ASSISTANCE_ACCESSIBILITY" />
+                        <usage value="AUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE" />
+                        <usage value="AUDIO_USAGE_ASSISTANT" />
+                        <usage value="AUDIO_USAGE_ANNOUNCEMENT"/>
+                    </audioAttributes>
+                </fadeConfiguration>
+            </fadeOutConfigurations>
+            <fadeInConfigurations>
+                <fadeConfiguration fadeDurationMillis="300">
+                    <audioAttributes>
+                        <usage value="AUDIO_USAGE_MEDIA" />
+                        <usage value="AUDIO_USAGE_GAME" />
+                    </audioAttributes>
+                </fadeConfiguration>
+                <fadeConfiguration fadeDurationMillis="550">
+                    <audioAttributes>
+                        <usage value="AUDIO_USAGE_ASSISTANCE_SONIFICATION" />
+                        <usage value="AUDIO_USAGE_ASSISTANCE_ACCESSIBILITY" />
+                        <usage value="AUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE" />
+                        <usage value="AUDIO_USAGE_ASSISTANT" />
+                        <usage value="AUDIO_USAGE_ANNOUNCEMENT"/>
+                    </audioAttributes>
+                </fadeConfiguration>
+            </fadeInConfigurations>
+        </config>
+        <config name="disabled fading">
+            <fadeState value="0" />
+        </config>
+        <config name="dynamic fading" defaultFadeOutDurationInMillis="800" defaultFadeInDurationInMillis="500">
+            <fadeState value="1" />
+            <fadeableUsages>
+                <usage value="AUDIO_USAGE_MEDIA" />
+                <usage value="AUDIO_USAGE_GAME" />
+                <usage value="AUDIO_USAGE_ASSISTANCE_SONIFICATION" />
+                <usage value="AUDIO_USAGE_ASSISTANCE_ACCESSIBILITY" />
+                <usage value="AUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE" />
+                <usage value="AUDIO_USAGE_ASSISTANT" />
+                <usage value="AUDIO_USAGE_NOTIFICATION" />
+                <usage value="AUDIO_USAGE_ANNOUNCEMENT"/>
+            </fadeableUsages>
+            <unfadeableContentTypes>
+                <contentType value="AUDIO_CONTENT_TYPE_SPEECH" />
+                <contentType value="AUDIO_CONTENT_TYPE_MOVIE" />
+            </unfadeableContentTypes>
+            <unfadeableAudioAttributes>
+                <audioAttributes>
+                    <audioAttribute usage="AUDIO_USAGE_MEDIA" tags="oem_specific_tag1" />
+                </audioAttributes>
+            </unfadeableAudioAttributes>
+            <fadeOutConfigurations>
+                <fadeConfiguration fadeDurationMillis="500">
+                    <audioAttributes>
+                        <audioAttribute usage="AUDIO_USAGE_ASSISTANT" tags="oem_specific_tag2" />
+                    </audioAttributes>
+                </fadeConfiguration>
+                <fadeConfiguration fadeDurationMillis="800">
+                    <audioAttributes>
+                        <usage value="AUDIO_USAGE_ASSISTANCE_SONIFICATION" />
+                        <usage value="AUDIO_USAGE_ASSISTANCE_ACCESSIBILITY" />
+                        <usage value="AUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE" />
+                        <usage value="AUDIO_USAGE_ASSISTANT" />
+                        <usage value="AUDIO_USAGE_ANNOUNCEMENT"/>
+                    </audioAttributes>
+                </fadeConfiguration>
+            </fadeOutConfigurations>
+            <fadeInConfigurations>
+                <fadeConfiguration fadeDurationMillis="1000">
+                    <audioAttributes>
+                        <audioAttribute usage="AUDIO_USAGE_ASSISTANT" tags="oem_specific_tag2" />
+                    </audioAttributes>
+                </fadeConfiguration>
+                <fadeConfiguration fadeDurationMillis="800">
+                    <audioAttributes>
+                        <usage value="AUDIO_USAGE_ASSISTANCE_SONIFICATION" />
+                        <usage value="AUDIO_USAGE_ASSISTANCE_ACCESSIBILITY" />
+                        <usage value="AUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE" />
+                        <usage value="AUDIO_USAGE_ASSISTANT" />
+                        <usage value="AUDIO_USAGE_ANNOUNCEMENT"/>
+                    </audioAttributes>
+                </fadeConfiguration>
+            </fadeInConfigurations>
+        </config>
+    </configs>
+</carAudioFadeConfiguration>

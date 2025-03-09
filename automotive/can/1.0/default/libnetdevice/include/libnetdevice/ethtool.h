@@ -29,7 +29,7 @@ namespace android::netdevice::ethtool {
  * \param command Fetch command (ETHTOOL_G*)
  * \return value, or nullopt if fetch failed
  */
-std::optional<uint32_t> getValue(const std::string& ifname, uint32_t command);
+std::optional<uint32_t> getValue(std::string_view ifname, uint32_t command);
 
 /**
  * Set a single value with ethtool_value.
@@ -40,6 +40,6 @@ std::optional<uint32_t> getValue(const std::string& ifname, uint32_t command);
  * \param value New value
  * \return true if succeeded, false otherwise
  */
-bool setValue(const std::string& ifname, uint32_t command, uint32_t value);
+bool setValue(std::string_view ifname, uint32_t command, uint32_t value);
 
 }  // namespace android::netdevice::ethtool

@@ -12,6 +12,34 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *//**
+ * Important note on Metadata:
+ * Metadata qualifies a playback track for an output stream.
+ * This is highly closed to {@link android.media.AudioAttributes}.
+ * It allows to identify the audio stream rendered / requesting / abandonning the focus.
+ *
+ * AudioControl 1.0 was limited to identification through {@code AttributeUsage} listed as
+ * {@code audioUsage} in audio_policy_configuration.xsd.
+ *
+ * Any new OEM needs would not be possible without extension.
+ *
+ * Relying on {@link android.hardware.automotive.audiocontrol.PlaybackTrackMetadata} allows
+ * to use a combination of {@code AttributeUsage}, {@code AttributeContentType} and
+ * {@code AttributeTags} to identify the use case / routing thanks to
+ * {@link android.media.audiopolicy.AudioProductStrategy}.
+ * The belonging to a strategy is deduced by an AOSP logic (in sync at native and java layer).
+ *
+ * IMPORTANT NOTE ON TAGS:
+ * To limit the possibilies and prevent from confusion, we expect the String to follow
+ * a given formalism that will be enforced.
+ *
+ * 1 / By convention, tags shall be a "key=value" pair.
+ * Vendor must namespace their tag's key (for example com.google.strategy=VR) to avoid conflicts.
+ * vendor specific applications and must be prefixed by "VX_". Vendor must
+ *
+ * 2 / Tags reported here shall be the same as the tags used to define a given
+ * {@link android.media.audiopolicy.AudioProductStrategy} and so in
+ * audio_policy_engine_configuration.xml file.
  */
 ///////////////////////////////////////////////////////////////////////////////
 // THIS FILE IS IMMUTABLE. DO NOT EDIT IN ANY CASE.                          //
@@ -48,4 +76,7 @@ interface IAudioControl {
   oneway void registerGainCallback(in android.hardware.automotive.audiocontrol.IAudioGainCallback callback);
   void setModuleChangeCallback(in android.hardware.automotive.audiocontrol.IModuleChangeCallback callback);
   void clearModuleChangeCallback();
+  android.hardware.automotive.audiocontrol.AudioDeviceConfiguration getAudioDeviceConfiguration();
+  List<android.media.audio.common.AudioPort> getOutputMirroringDevices();
+  List<android.hardware.automotive.audiocontrol.AudioZone> getCarAudioZones();
 }

@@ -636,7 +636,7 @@ void FrontendTests::statusReadinessTest(FrontendConfig frontendConf) {
     ASSERT_TRUE(tuneFrontend(frontendConf, false /*testWithDemux*/));
 
     // TODO: find a better way to push all frontend status types
-    for (int32_t i = 0; i <= static_cast<int32_t>(FrontendStatusType::ATSC3_ALL_PLP_INFO); i++) {
+    for (int32_t i = 0; i <= static_cast<int32_t>(FrontendStatusType::STANDARD_EXT); i++) {
         allTypes.push_back(static_cast<FrontendStatusType>(i));
     }
 

@@ -50,9 +50,11 @@ union CodecSpecificCapabilitiesLtv {
     parcelable SupportedFrameDurations {
         const int US7500 = 0x01;
         const int US10000 = 0x02;
+        const int US20000 = 0x04;
         /* Bits 2-3 are RFU */
         const int US7500PREFERRED = 0x10;
         const int US10000PREFERRED = 0x20;
+        const int US20000PREFERRED = 0x40;
 
         /* 8 bit wide bit mask */
         int bitmask;

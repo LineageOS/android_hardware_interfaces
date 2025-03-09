@@ -38,4 +38,5 @@ parcelable ClientInfo {
   String apIfaceInstance;
   byte[] clientAddress;
   boolean isConnected;
+  android.hardware.wifi.common.DeauthenticationReasonCode disconnectReasonCode;
 }

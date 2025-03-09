@@ -27,4 +27,40 @@ parcelable PresentFence {
      * The present fence for this display.
      */
     ParcelFileDescriptor fence;
+
+    /**
+     * A LayerPresentFence is provided by the server when a LayerCommand.pictureProfileId, specified
+     * by the client, results in the buffer being rendered on the display with some latency after
+     * the rest of the DisplayCommand has been rendered. This can happen due to the picture
+     * processing pipeline adding additional latency for the buffer, itself. LayerPresentFences are
+     * intended to arrive in the same order for each buffer submission on that layer.
+     *
+     * Note that this violates the SurfaceControl.Transaction API contract and therefore is only
+     * allowed on TV devices that require this feature to support high quality video playback on
+     * large displays.
+     */
+    parcelable LayerPresentFence {
+        /**
+         * The layer which this fence refers to.
+         */
+        long layer;
+
+        /**
+         * The present fence for the buffer contents.
+         *
+         * If the buffer ends up being dropped by the server and not rendered, this fence should be
+         * fired at the same time as the next buffer's present fence (or the display fence if
+         * picture processing for this layer was removed).
+         */
+        ParcelFileDescriptor bufferFence;
+
+        /**
+         * The latency that is required for applying picture processing to the layer's buffer.
+         */
+        long bufferLatencyNanos;
+    }
+    /**
+     * The LayerPresentFences for the display.
+     */
+    @nullable LayerPresentFence[] layerPresentFences;
 }

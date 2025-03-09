@@ -136,6 +136,7 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:SIM_ABSENT
+     * @deprecated Legacy CDMA is unsupported.
      */
     void getCdmaRoamingPreferenceResponse(in RadioResponseInfo info, in CdmaRoamingType type);
 
@@ -372,6 +373,7 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:SIM_ABSENT
+     * @deprecated Legacy CDMA is unsupported.
      */
     void setCdmaRoamingPreferenceResponse(in RadioResponseInfo info);
 
@@ -603,7 +605,7 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:SIM_ABSENT
      */
-    oneway void setUsageSettingResponse(in RadioResponseInfo info);
+    void setUsageSettingResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error.
@@ -617,7 +619,7 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:SIM_ABSENT
      */
-    oneway void getUsageSettingResponse(in RadioResponseInfo info, in UsageSetting usageSetting);
+    void getUsageSettingResponse(in RadioResponseInfo info, in UsageSetting usageSetting);
 
     /**
      * Response of setEmergencyMode.
@@ -814,4 +816,53 @@ oneway interface IRadioNetworkResponse {
      */
     void isSecurityAlgorithmsUpdatedEnabledResponse(
             in RadioResponseInfo info, in boolean isEnabled);
+
+    /**
+     * Response of setSatellitePlmn.
+     * This is an optional API.
+     *
+     * @param info Response info struct containing response type, serial no. and error.
+     *
+     * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:INVALID_STATE
+     */
+    void setSatellitePlmnResponse(in RadioResponseInfo info);
+
+    /**
+     * Response of setSatelliteEnabledForCarrier.
+     * This is an optional API.
+     *
+     * @param info Response info struct containing response type, serial no. and error.
+     *
+     * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:INVALID_STATE
+     */
+    void setSatelliteEnabledForCarrierResponse(in RadioResponseInfo info);
+
+    /**
+     * Response of isSatelliteEnabledForCarrier.
+     * This is an optional API.
+     *
+     * @param info Response info struct containing response type, serial no. and error.
+     * @param isEnabled Indicates whether satellite is enabled for carrier or not.
+     *
+     * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:INVALID_STATE
+     */
+    void isSatelliteEnabledForCarrierResponse(in RadioResponseInfo info, boolean isEnabled);
 }

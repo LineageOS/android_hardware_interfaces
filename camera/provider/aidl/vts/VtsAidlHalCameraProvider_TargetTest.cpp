@@ -118,7 +118,8 @@ TEST_P(CameraAidlTest, setCallback) {
     ScopedAStatus ret = mProvider->setCallback(cb);
     ASSERT_TRUE(ret.isOk());
     ret = mProvider->setCallback(nullptr);
-    ASSERT_EQ(static_cast<int32_t>(Status::ILLEGAL_ARGUMENT), ret.getServiceSpecificError());
+    ASSERT_TRUE(static_cast<int32_t>(Status::ILLEGAL_ARGUMENT) == ret.getServiceSpecificError() ||
+                EX_NULL_POINTER == ret.getExceptionCode());
 }
 
 // Test if ICameraProvider::getCameraDeviceInterface returns Status::OK and non-null device

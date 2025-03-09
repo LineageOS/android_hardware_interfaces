@@ -39,4 +39,5 @@ enum SessionTag {
   HWUI,
   GAME,
   APP,
+  SYSUI,
 }

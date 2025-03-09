@@ -41,6 +41,10 @@ interface IVehicle {
   void subscribe(in android.hardware.automotive.vehicle.IVehicleCallback callback, in android.hardware.automotive.vehicle.SubscribeOptions[] options, int maxSharedMemoryFileCount);
   void unsubscribe(in android.hardware.automotive.vehicle.IVehicleCallback callback, in int[] propIds);
   void returnSharedMemory(in android.hardware.automotive.vehicle.IVehicleCallback callback, long sharedMemoryId);
+  android.hardware.automotive.vehicle.SupportedValuesListResults getSupportedValuesLists(in List<android.hardware.automotive.vehicle.PropIdAreaId> propIdAreaIds);
+  android.hardware.automotive.vehicle.MinMaxSupportedValueResults getMinMaxSupportedValue(in List<android.hardware.automotive.vehicle.PropIdAreaId> propIdAreaIds);
+  void registerSupportedValueChangeCallback(in android.hardware.automotive.vehicle.IVehicleCallback callback, in List<android.hardware.automotive.vehicle.PropIdAreaId> propIdAreaIds);
+  void unregisterSupportedValueChangeCallback(in android.hardware.automotive.vehicle.IVehicleCallback callback, in List<android.hardware.automotive.vehicle.PropIdAreaId> propIdAreaIds);
   const long INVALID_MEMORY_ID = 0;
   const int MAX_SHARED_MEMORY_FILES_PER_CLIENT = 3;
 }

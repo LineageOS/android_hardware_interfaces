@@ -50,4 +50,5 @@ parcelable NfcConfig {
   byte[] offHostRouteEse;
   byte defaultIsoDepRoute;
   byte[] offHostSimPipeIds = {};
+  boolean t4tNfceeEnable;
 }

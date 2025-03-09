@@ -36,7 +36,7 @@ package android.hardware.tv.tuner;
 @Backing(type="int") @VintfStability
 enum FrontendDtmbBandwidth {
   UNDEFINED = 0,
-  AUTO = 1,
-  BANDWIDTH_8MHZ = 2,
-  BANDWIDTH_6MHZ = 4,
+  AUTO = (1 << 0) /* 1 */,
+  BANDWIDTH_8MHZ = (1 << 1) /* 2 */,
+  BANDWIDTH_6MHZ = (1 << 2) /* 4 */,
 }

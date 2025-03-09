@@ -24,6 +24,8 @@ using ::aidl::android::hardware::broadcastradio::VirtualRadio;
 using ::android::fuzzService;
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
+    // TODO(b/183141167): need to rewrite 'dump' to avoid SIGPIPE.
+    signal(SIGPIPE, SIG_IGN);
     const VirtualRadio& amFmRadioMock = VirtualRadio::getAmFmRadio();
     std::shared_ptr<BroadcastRadio> amFmRadio =
             ::ndk::SharedRefBase::make<BroadcastRadio>(amFmRadioMock);

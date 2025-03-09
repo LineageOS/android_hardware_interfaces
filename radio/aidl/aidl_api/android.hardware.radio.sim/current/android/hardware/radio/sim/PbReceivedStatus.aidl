@@ -33,7 +33,7 @@
 
 package android.hardware.radio.sim;
 /* @hide */
-@Backing(type="byte") @JavaDerive(toString=true) @VintfStability
+@Backing(type="byte") @JavaDerive(toString=true) @SuppressWarnings(value={"redundant-name"}) @VintfStability
 enum PbReceivedStatus {
   PB_RECEIVED_OK = 1,
   PB_RECEIVED_ERROR = 2,

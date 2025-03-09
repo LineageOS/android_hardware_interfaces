@@ -35,6 +35,6 @@ package android.hardware.tv.tuner;
 /* @hide */
 @Backing(type="int") @VintfStability
 enum DemuxFilterMonitorEventType {
-  SCRAMBLING_STATUS = 1,
-  IP_CID_CHANGE = 2,
+  SCRAMBLING_STATUS = (1 << 0) /* 1 */,
+  IP_CID_CHANGE = (1 << 1) /* 2 */,
 }

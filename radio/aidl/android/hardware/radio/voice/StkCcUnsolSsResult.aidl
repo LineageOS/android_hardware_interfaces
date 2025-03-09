@@ -84,7 +84,7 @@ parcelable StkCcUnsolSsResult {
      * Values are a bitfield of SUPP_SERVICE_CLASS_
      */
     int serviceClass;
-    RadioError result;
+    RadioError result = RadioError.NONE;
     /**
      * Valid only for all serviceType except SERVICE_TYPE_CF_* else empty.
      * Only one of ssInfo and cfData may contain values and the other must be empty.

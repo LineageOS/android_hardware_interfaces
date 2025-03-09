@@ -27,6 +27,7 @@ enum RadioTechnologyFamily {
     THREE_GPP,
     /**
      * 3GPP2 Technologies - CDMA
+     * @deprecated Legacy CDMA is unsupported.
      */
     THREE_GPP2,
 }

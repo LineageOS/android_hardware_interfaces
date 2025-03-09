@@ -23,6 +23,7 @@ import android.hardware.radio.ims.SuggestedAction;
 /** @hide */
 @VintfStability
 @JavaDerive(toString=true)
+@SuppressWarnings(value={"redundant-name"})
 parcelable ImsRegistration {
     /** Default value */
     const int IMS_MMTEL_CAPABILITY_NONE = 0;
@@ -36,15 +37,15 @@ parcelable ImsRegistration {
     const int IMS_RCS_CAPABILITIES = 1 << 3;
 
     /** Indicates the current IMS registration state. */
-    ImsRegistrationState regState;
+    ImsRegistrationState regState = ImsRegistrationState.NOT_REGISTERED;
 
     /**
      * Indicates the type of the radio access network where IMS is registered.
      */
-    AccessNetwork accessNetworkType;
+    AccessNetwork accessNetworkType = AccessNetwork.UNKNOWN;
 
     /** Indicates the expected action for the radio to do. */
-    SuggestedAction suggestedAction;
+    SuggestedAction suggestedAction = SuggestedAction.NONE;
 
     /**
      * Values are bitwise ORs of IMS_MMTEL_CAPABILITY_* constants and IMS_RCS_CAPABILITIES.

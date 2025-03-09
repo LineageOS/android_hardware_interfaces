@@ -32,5 +32,5 @@ parcelable EmergencyNetworkScanTrigger {
      * Scan type indicates the type of scans to be performed i.e. limited scan, full service scan or
      * any scan.
      */
-    EmergencyScanType scanType;
+    EmergencyScanType scanType = EmergencyScanType.NO_PREFERENCE;
 }

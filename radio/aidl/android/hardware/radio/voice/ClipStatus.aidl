@@ -20,6 +20,7 @@ package android.hardware.radio.voice;
 @VintfStability
 @Backing(type="int")
 @JavaDerive(toString=true)
+@SuppressWarnings(value={"redundant-name"})
 enum ClipStatus {
     /**
      * CLIP provisioned

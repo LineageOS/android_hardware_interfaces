@@ -33,4 +33,5 @@ parcelable ProtocolDiscoveryConfig {
     byte discoveryPollKovio;
     byte discoveryPollBPrime;
     byte discoveryListenBPrime;
+    byte protocolChineseId;
 }

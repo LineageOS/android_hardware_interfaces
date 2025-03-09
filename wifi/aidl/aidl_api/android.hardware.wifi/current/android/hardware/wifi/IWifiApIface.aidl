@@ -40,4 +40,5 @@ interface IWifiApIface {
   void setCountryCode(in byte[2] code);
   void resetToFactoryMacAddress();
   void setMacAddress(in byte[6] mac);
+  boolean usesMlo();
 }

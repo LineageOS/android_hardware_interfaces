@@ -10,6 +10,7 @@ package {
 aidl_interface {
     name: "android.hardware.authsecret",
     vendor_available: true,
+    frozen: true,
     srcs: ["android/hardware/authsecret/*.aidl"],
     stability: "vintf",
     backend: {

@@ -105,17 +105,30 @@ void FilterCallback::readFilterEventsData(const vector<DemuxFilterEvent>& events
     // todo separate filter handlers
     for (int i = 0; i < events.size(); i++) {
         switch (events[i].getTag()) {
-            case DemuxFilterEvent::Tag::media:
-                ALOGD("[vts] Media filter event, avMemHandle numFds=%zu.",
-                      events[i].get<DemuxFilterEvent::Tag::media>().avMemory.fds.size());
+            case DemuxFilterEvent::Tag::media: {
+                int numDataPieces = events[i].get<DemuxFilterEvent::Tag::media>().numDataPieces;
+                int indexInDataGroup
+                    = events[i].get<DemuxFilterEvent::Tag::media>().indexInDataGroup;
+                ALOGD("[vts] Media filter event, avMemHandle numFds=%zu, numDataPieces=%d,"
+                      " indexInDataGroup=%d, dataGroupId=%d.",
+                      events[i].get<DemuxFilterEvent::Tag::media>().avMemory.fds.size(),
+                      numDataPieces,
+                      indexInDataGroup,
+                      events[i].get<DemuxFilterEvent::Tag::media>().dataGroupId);
+                if (numDataPieces > 1) {
+                    EXPECT_TRUE(indexInDataGroup >= 0);
+                    EXPECT_TRUE(indexInDataGroup < numDataPieces);
+                }
                 dumpAvData(events[i].get<DemuxFilterEvent::Tag::media>());
                 break;
-            case DemuxFilterEvent::Tag::tsRecord:
+            }
+            case DemuxFilterEvent::Tag::tsRecord: {
                 ALOGD("[vts] TS record filter event, pts=%" PRIu64 ", firstMbInSlice=%d",
                       events[i].get<DemuxFilterEvent::Tag::tsRecord>().pts,
                       events[i].get<DemuxFilterEvent::Tag::tsRecord>().firstMbInSlice);
                 break;
-            case DemuxFilterEvent::Tag::mmtpRecord:
+            }
+            case DemuxFilterEvent::Tag::mmtpRecord: {
                 ALOGD("[vts] MMTP record filter event, pts=%" PRIu64
                       ", firstMbInSlice=%d, mpuSequenceNumber=%d, tsIndexMask=%d",
                       events[i].get<DemuxFilterEvent::Tag::mmtpRecord>().pts,
@@ -123,7 +136,8 @@ void FilterCallback::readFilterEventsData(const vector<DemuxFilterEvent>& events
                       events[i].get<DemuxFilterEvent::Tag::mmtpRecord>().mpuSequenceNumber,
                       events[i].get<DemuxFilterEvent::Tag::mmtpRecord>().tsIndexMask);
                 break;
-            case DemuxFilterEvent::Tag::monitorEvent:
+            }
+            case DemuxFilterEvent::Tag::monitorEvent: {
                 switch (events[i].get<DemuxFilterEvent::Tag::monitorEvent>().getTag()) {
                     case DemuxFilterMonitorEvent::Tag::scramblingStatus:
                         mScramblingStatusEvent++;
@@ -135,13 +149,16 @@ void FilterCallback::readFilterEventsData(const vector<DemuxFilterEvent>& events
                         break;
                 }
                 break;
-            case DemuxFilterEvent::Tag::startId:
+            }
+            case DemuxFilterEvent::Tag::startId: {
                 ALOGD("[vts] Restart filter event, startId=%d",
                       events[i].get<DemuxFilterEvent::Tag::startId>());
                 mStartIdReceived = true;
                 break;
-            default:
+            }
+            default: {
                 break;
+            }
         }
     }
 }

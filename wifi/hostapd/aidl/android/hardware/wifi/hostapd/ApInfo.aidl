@@ -63,4 +63,9 @@ parcelable ApInfo {
      * Optional vendor-specific information.
      */
     @nullable OuiKeyedData[] vendorData;
+
+    /**
+     * MAC Address of the multiple link device (MLD) which apIfaceInstance is associated with.
+     */
+    @nullable byte[6] mldMacAddress;
 }

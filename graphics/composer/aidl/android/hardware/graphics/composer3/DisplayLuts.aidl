@@ -16,7 +16,7 @@
 
 package android.hardware.graphics.composer3;
 
-import android.hardware.graphics.composer3.Lut;
+import android.hardware.graphics.composer3.Luts;
 
 /**
  * LUT (Look-Up Table) Interface for Color Transformation.
@@ -37,9 +37,9 @@ parcelable DisplayLuts {
          */
         long layer;
         /**
-         * A Lut specified by the HWC for given HDR layers that don't have Luts provided.
+         * Lut(s) specified by the HWC for given HDR layers that don't have Luts provided.
          */
-        Lut lut;
+        Luts luts;
     }
 
     LayerLut[] layerLuts;

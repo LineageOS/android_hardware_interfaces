@@ -1,0 +1,48 @@
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+cc_binary {
+    name: "android.hardware.bluetooth.socket-service.default",
+    relative_install_path: "hw",
+    init_rc: ["bluetooth-socket-service-default.rc"],
+    vintf_fragments: [":manifest_android.hardware.bluetooth.socket-service.default.xml"],
+    vendor: true,
+    srcs: [
+        "BluetoothSocket.cpp",
+        "service.cpp",
+    ],
+    shared_libs: [
+        "android.hardware.bluetooth.socket-V1-ndk",
+        "libbase",
+        "libbinder_ndk",
+        "libhidlbase",
+        "libutils",
+        "liblog",
+    ],
+}
+
+cc_fuzz {
+    name: "android.hardware.bluetooth.socket-service_fuzzer",
+    team: "trendy_team_bluetooth",
+    defaults: ["service_fuzzer_defaults"],
+    srcs: [
+        "fuzzer.cpp",
+        "BluetoothSocket.cpp",
+    ],
+    static_libs: [
+        "android.hardware.bluetooth.socket-V1-ndk",
+        "android.hardware.contexthub-V4-ndk",
+        "liblog",
+    ],
+    fuzz_config: {
+        cc: [
+            "jaydenk@google.com",
+        ],
+    },
+}
+
+filegroup {
+    name: "manifest_android.hardware.bluetooth.socket-service.default.xml",
+    srcs: ["bluetooth-socket-service-default.xml"],
+}

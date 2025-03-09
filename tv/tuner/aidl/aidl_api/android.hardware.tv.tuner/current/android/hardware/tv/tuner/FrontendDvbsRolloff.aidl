@@ -35,11 +35,11 @@ package android.hardware.tv.tuner;
 /* @hide */
 @Backing(type="int") @VintfStability
 enum FrontendDvbsRolloff {
-  UNDEFINED = 0,
-  ROLLOFF_0_35 = 1,
-  ROLLOFF_0_25 = 2,
-  ROLLOFF_0_20 = 3,
-  ROLLOFF_0_15 = 4,
-  ROLLOFF_0_10 = 5,
-  ROLLOFF_0_5 = 6,
+  UNDEFINED,
+  ROLLOFF_0_35,
+  ROLLOFF_0_25,
+  ROLLOFF_0_20,
+  ROLLOFF_0_15,
+  ROLLOFF_0_10,
+  ROLLOFF_0_5,
 }

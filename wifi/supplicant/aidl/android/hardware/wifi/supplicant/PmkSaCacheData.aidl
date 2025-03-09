@@ -34,4 +34,9 @@ parcelable PmkSaCacheData {
      * The content is opaque for the framework and depends on the native implementation.
      */
     byte[] serializedEntry;
+    /**
+     * Pairwise Master Key Identifier (PMKID), which is a unique key identifier used by AP to
+     * track PMK used (Pairwise Master Key) for a station.
+     */
+    @nullable byte[] pmkid;
 }

@@ -81,6 +81,7 @@ Frontend::Frontend(FrontendType type, int32_t id) {
                     FrontendStatusType::SIGNAL_STRENGTH, FrontendStatusType::SYMBOL_RATE,
                     FrontendStatusType::MODULATION,      FrontendStatusType::MODULATIONS,
                     FrontendStatusType::ROLL_OFF,        FrontendStatusType::IS_MISO,
+                    FrontendStatusType::STANDARD_EXT,
             };
             break;
         }
@@ -96,6 +97,7 @@ Frontend::Frontend(FrontendType type, int32_t id) {
                     FrontendStatusType::TRANSMISSION_MODE,
                     FrontendStatusType::T2_SYSTEM_ID,
                     FrontendStatusType::DVBT_CELL_IDS,
+                    FrontendStatusType::STANDARD_EXT,
             };
             break;
         }
@@ -983,6 +985,17 @@ void Frontend::scanThreadLoop() {
             }
             case FrontendStatusType::IPTV_AVERAGE_JITTER_MS: {
                 status.set<FrontendStatus::iptvAverageJitterMs>(5);
+                break;
+            }
+            case FrontendStatusType::STANDARD_EXT: {
+                FrontendStandardExt standardExt;
+                if (mType == FrontendType::DVBS) {
+                    standardExt.set<FrontendStandardExt::dvbsStandardExt>(
+                            FrontendDvbsStandard::S2X);
+                } else if (mType == FrontendType::DVBT) {
+                    standardExt.set<FrontendStandardExt::dvbtStandardExt>(FrontendDvbtStandard::T2);
+                }
+                status.set<FrontendStatus::standardExt>(standardExt);
                 break;
             }
             default: {

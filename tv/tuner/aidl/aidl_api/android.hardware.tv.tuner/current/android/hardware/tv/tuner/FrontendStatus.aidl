@@ -82,4 +82,5 @@ union FrontendStatus {
   long iptvPacketsLost;
   int iptvWorstJitterMs;
   int iptvAverageJitterMs;
+  android.hardware.tv.tuner.FrontendStandardExt standardExt;
 }

@@ -21,15 +21,18 @@ package android.hardware.radio.network;
 @JavaDerive(toString=true)
 parcelable GsmSignalStrength {
     /**
-     * Valid values are (0-61, 99) as defined in TS 27.007 8.69; INT_MAX means invalid/unreported.
+     * Valid values are (0-61, 99) as defined in TS 27.007 8.69; RadioConst:VALUE_UNAVAILABLE means
+     * invalid/unreported.
      */
     int signalStrength;
     /**
-     * Bit error rate (0-7, 99) as defined in TS 27.007 8.5; INT_MAX means invalid/unreported.
+     * Bit error rate (0-7, 99) as defined in TS 27.007 8.5; RadioConst:VALUE_UNAVAILABLE means
+     * invalid/unreported.
      */
     int bitErrorRate;
     /**
-     * Timing advance in bit periods. 1 bit period = 48/13 us. INT_MAX means invalid/unreported.
+     * Timing advance in bit periods. 1 bit period = 48/13 us. RadioConst:VALUE_UNAVAILABLE means
+     * invalid/unreported.
      */
     int timingAdvance;
 }

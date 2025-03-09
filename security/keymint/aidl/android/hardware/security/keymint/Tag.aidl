@@ -901,6 +901,17 @@ enum Tag {
     ATTESTATION_ID_SECOND_IMEI = TagType.BYTES | 723,
 
     /**
+     * Tag::MODULE_HASH specifies the SHA-256 hash of the DER-encoded module information (see
+     * KeyCreationResult.aidl for the ASN.1 schema).
+     *
+     * This tag is never provided or returned from KeyMint in the key characteristics. It exists
+     * only to define the tag for use in the attestation record.
+     *
+     * Must never appear in KeyCharacteristics.
+     */
+    MODULE_HASH = TagType.BYTES | 724,
+
+    /**
      * OBSOLETE: Do not use.
      *
      * This tag value is included for historical reasons -- in Keymaster it was used to hold

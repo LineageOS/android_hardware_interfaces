@@ -88,4 +88,24 @@ enum RttStatus {
      * NAN concurrency not supported (NDP + RTT).
      */
     NAN_RANGING_CONCURRENCY_NOT_SUPPORTED = 17,
+    /**
+     * Secure Ranging failed due to invalid AKM (Authentication and Key Management)
+     */
+    SECURE_RANGING_FAILURE_INVALID_AKM = 18,
+    /**
+     * Secure Ranging failed due to invalid Cipher.
+     */
+    SECURE_RANGING_FAILURE_INVALID_CIPHER = 19,
+    /**
+     * Secure Ranging failed due to invalid configuration.
+     */
+    SECURE_RANGING_FAILURE_INVALID_CONFIG = 20,
+    /**
+     * Secure ranging rejected by the AP.
+     */
+    SECURE_RANGING_FAILURE_REJECTED = 21,
+    /**
+     * Secure ranging failure unknown.
+     */
+    SECURE_RANGING_FAILURE_UNKNOWN = 22,
 }

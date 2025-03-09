@@ -13,7 +13,7 @@ aidl_interface {
     host_supported: true,
     vendor_available: true,
     srcs: ["android/hardware/camera/metadata/*.aidl"],
-    frozen: true,
+    frozen: false,
     stability: "vintf",
     backend: {
         cpp: {

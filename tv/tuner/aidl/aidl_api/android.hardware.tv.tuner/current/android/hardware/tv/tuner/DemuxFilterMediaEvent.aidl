@@ -49,4 +49,7 @@ parcelable DemuxFilterMediaEvent {
   boolean isPesPrivateData;
   android.hardware.tv.tuner.DemuxFilterMediaEventExtraMetaData extraMetaData;
   android.hardware.tv.tuner.DemuxFilterScIndexMask scIndexMask;
+  int numDataPieces;
+  int indexInDataGroup;
+  int dataGroupId;
 }

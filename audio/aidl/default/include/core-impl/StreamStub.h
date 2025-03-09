@@ -16,38 +16,15 @@
 
 #pragma once
 
+#include "core-impl/DriverStubImpl.h"
 #include "core-impl/Stream.h"
 
 namespace aidl::android::hardware::audio::core {
 
-class StreamStub : public StreamCommonImpl {
+class StreamStub : public StreamCommonImpl, public DriverStubImpl {
   public:
     StreamStub(StreamContext* context, const Metadata& metadata);
     ~StreamStub();
-
-    // Methods of 'DriverInterface'.
-    ::android::status_t init() override;
-    ::android::status_t drain(StreamDescriptor::DrainMode) override;
-    ::android::status_t flush() override;
-    ::android::status_t pause() override;
-    ::android::status_t standby() override;
-    ::android::status_t start() override;
-    ::android::status_t transfer(void* buffer, size_t frameCount, size_t* actualFrameCount,
-                                 int32_t* latencyMs) override;
-    void shutdown() override;
-
-  private:
-    const size_t mBufferSizeFrames;
-    const size_t mFrameSizeBytes;
-    const int mSampleRate;
-    const bool mIsAsynchronous;
-    const bool mIsInput;
-    bool mIsInitialized = false;  // Used for validating the state machine logic.
-    bool mIsStandby = true;       // Used for validating the state machine logic.
-
-    // Used by the worker thread.
-    int64_t mStartTimeNs = 0;
-    long mFramesSinceStart = 0;
 };
 
 class StreamInStub final : public StreamIn, public StreamStub {

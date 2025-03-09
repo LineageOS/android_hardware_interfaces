@@ -88,7 +88,7 @@ parcelable Event {
          * SensorType::GLANCE_GESTURE, SensorType::PICK_UP_GESTURE,
          * SensorType::WRIST_TILT_GESTURE, SensorType::STATIONARY_DETECT,
          * SensorType::MOTION_DETECT, SensorType::HEART_BEAT,
-         * SensorType::LOW_LATENCY_OFFBODY_DETECT
+         * SensorType::LOW_LATENCY_OFFBODY_DETECT, SensorType::MOISTURE_INTRUSION
          */
         float scalar;
 

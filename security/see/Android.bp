@@ -1,0 +1,5 @@
+dirgroup {
+    name: "trusty_dirgroup_hardware_interfaces_security_see",
+    dirs: ["."],
+    visibility: ["//trusty/vendor/google/aosp/scripts"],
+}

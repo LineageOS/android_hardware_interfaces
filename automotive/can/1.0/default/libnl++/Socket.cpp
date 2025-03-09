@@ -20,6 +20,9 @@
 
 #include <android-base/logging.h>
 
+// Should be in sys/socket.h or linux/socket.h
+#define SOL_NETLINK 270
+
 namespace android::nl {
 
 /**

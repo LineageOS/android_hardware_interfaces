@@ -40,6 +40,8 @@ interface ITvInput {
   void setCallback(in android.hardware.tv.input.ITvInputCallback callback);
   void setTvMessageEnabled(int deviceId, int streamId, in android.hardware.tv.input.TvMessageEventType type, boolean enabled);
   void getTvMessageQueueDesc(out android.hardware.common.fmq.MQDescriptor<byte,android.hardware.common.fmq.SynchronizedReadWrite> queue, int deviceId, int streamId);
+  void setPictureProfileId(in int deviceId, in int streamId, in long profileId);
+  void setSoundProfileId(in int deviceId, in int streamId, in long profileId);
   const int STATUS_UNKNOWN = 1;
   const int STATUS_NO_RESOURCE = 2;
   const int STATUS_INVALID_ARGUMENTS = 3;

@@ -1,0 +1,72 @@
+/*
+ * Copyright (C) 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package {
+    default_team: "trendy_team_aaos_framework",
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+cc_test {
+    name: "FakeVehicleHardwareTest-V3",
+    vendor: true,
+    srcs: [
+        "*.cpp",
+        ":VhalTestVendorProperties-V3",
+    ],
+    cflags: ["-DENABLE_VEHICLE_HAL_TEST_PROPERTIES"],
+    header_libs: [
+        "IVehicleHardware-V3",
+        "libbinder_headers",
+    ],
+    static_libs: [
+        "VehicleHalJsonConfigLoaderEnableTestProperties-V3",
+        "VehicleHalUtils-V3",
+        "FakeVehicleHardware-V3",
+        "FakeVehicleHalValueGenerators-V3",
+        "FakeObd2Frame-V3",
+        "FakeUserHal-V3",
+        "libgtest",
+        "libgmock",
+        "libjsoncpp",
+    ],
+    shared_libs: [
+        "libgrpc++",
+        "libprotobuf-cpp-full",
+    ],
+    data: [
+        ":VehicleHalDefaultProperties_JSON-V3",
+        ":VehicleHalTestProperties_JSON-V3",
+        ":VehicleHalVendorClusterTestProperties_JSON-V3",
+        ":FakeVehicleHardwareTestOverrideJson-V3",
+        ":FakeVehicleHardwareTestPropJson-V3",
+    ],
+    defaults: [
+        "VehicleHalDefaults-V3",
+    ],
+    // Need root to use vendor lib: libgrpc++.
+    require_root: true,
+    test_suites: ["device-tests"],
+}
+
+filegroup {
+    name: "FakeVehicleHardwareTestOverrideJson-V3",
+    srcs: ["override/*"],
+}
+
+filegroup {
+    name: "FakeVehicleHardwareTestPropJson-V3",
+    srcs: ["fakedata/prop.json"],
+}

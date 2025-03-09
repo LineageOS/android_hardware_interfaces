@@ -30,6 +30,6 @@ parcelable CellInfo {
     /**
      * Connection status for the cell.
      */
-    CellConnectionStatus connectionStatus;
+    CellConnectionStatus connectionStatus = CellConnectionStatus.NONE;
     CellInfoRatSpecificInfo ratSpecificInfo;
 }

@@ -35,13 +35,13 @@ package android.hardware.tv.tuner;
 /* @hide */
 @Backing(type="int") @VintfStability
 enum LnbVoltage {
-  NONE = 0,
-  VOLTAGE_5V = 1,
-  VOLTAGE_11V = 2,
-  VOLTAGE_12V = 3,
-  VOLTAGE_13V = 4,
-  VOLTAGE_14V = 5,
-  VOLTAGE_15V = 6,
-  VOLTAGE_18V = 7,
-  VOLTAGE_19V = 8,
+  NONE,
+  VOLTAGE_5V,
+  VOLTAGE_11V,
+  VOLTAGE_12V,
+  VOLTAGE_13V,
+  VOLTAGE_14V,
+  VOLTAGE_15V,
+  VOLTAGE_18V,
+  VOLTAGE_19V,
 }

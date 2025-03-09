@@ -33,7 +33,7 @@
 
 package android.hardware.radio.ims;
 /* @hide */
-@Backing(type="int") @JavaDerive(toString=true) @VintfStability
+@Backing(type="int") @JavaDerive(toString=true) @SuppressWarnings(value={"redundant-name"}) @VintfStability
 enum ImsDeregistrationReason {
   REASON_SIM_REMOVED = 1,
   REASON_SIM_REFRESH = 2,

@@ -38,4 +38,5 @@ enum RttType {
   TWO_SIDED = 2,
   TWO_SIDED_11MC = TWO_SIDED /* 2 */,
   TWO_SIDED_11AZ_NTB = 3,
+  TWO_SIDED_11AZ_NTB_SECURE = 4,
 }

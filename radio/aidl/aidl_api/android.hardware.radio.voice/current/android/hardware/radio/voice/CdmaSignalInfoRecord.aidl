@@ -35,8 +35,20 @@ package android.hardware.radio.voice;
 /* @hide */
 @JavaDerive(toString=true) @VintfStability
 parcelable CdmaSignalInfoRecord {
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   boolean isPresent;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   byte signalType;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   byte alertPitch;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   byte signal;
 }

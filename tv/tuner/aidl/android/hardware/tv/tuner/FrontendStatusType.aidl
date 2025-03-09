@@ -259,4 +259,9 @@ enum FrontendStatusType {
      * Average jitter (milliseconds).
      */
     IPTV_AVERAGE_JITTER_MS,
+
+    /**
+     * Standard extension.
+     */
+    STANDARD_EXT,
 }

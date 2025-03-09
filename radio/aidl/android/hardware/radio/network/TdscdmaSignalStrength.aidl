@@ -22,17 +22,17 @@ package android.hardware.radio.network;
 parcelable TdscdmaSignalStrength {
     /**
      * UTRA carrier RSSI as defined in TS 25.225 5.1.4. Valid values are (0-31, 99) as defined in
-     * TS 27.007 8.5. INT_MAX denotes that the value is invalid/unreported.
+     * TS 27.007 8.5. RadioConst:VALUE_UNAVAILABLE denotes that the value is invalid/unreported.
      */
     int signalStrength;
     /**
      * Transport Channel BER as defined in TS 25.225 5.2.5. Valid values are (0-7, 99) as defined in
-     * TS 27.007 8.5. INT_MAX denotes that the value is invalid/unreported.
+     * TS 27.007 8.5. RadioConst:VALUE_UNAVAILABLE denotes that the value is invalid/unreported.
      */
     int bitErrorRate;
     /**
      * P-CCPCH RSCP as defined in TS 25.225 5.1.1. Valid values are (0-96, 255) as defined in
-     * TS 27.007 8.69. INT_MAX denotes that the value is invalid/unreported.
+     * TS 27.007 8.69. RadioConst:VALUE_UNAVAILABLE denotes that the value is invalid/unreported.
      */
     int rscp;
 }

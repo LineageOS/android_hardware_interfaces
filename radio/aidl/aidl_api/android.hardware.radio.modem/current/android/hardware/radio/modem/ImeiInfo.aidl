@@ -35,11 +35,12 @@ package android.hardware.radio.modem;
 /* @hide */
 @JavaDerive(toString=true) @VintfStability
 parcelable ImeiInfo {
-  android.hardware.radio.modem.ImeiInfo.ImeiType type;
+  android.hardware.radio.modem.ImeiInfo.ImeiType type = android.hardware.radio.modem.ImeiInfo.ImeiType.INVALID;
   String imei;
   String svn;
   @Backing(type="int") @VintfStability
   enum ImeiType {
+    INVALID = 0,
     PRIMARY = 1,
     SECONDARY = 2,
   }

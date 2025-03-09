@@ -36,9 +36,9 @@ package android.hardware.tv.tuner;
 @Backing(type="int") @VintfStability
 enum FrontendIsdbtModulation {
   UNDEFINED = 0,
-  AUTO = 1,
-  MOD_DQPSK = 2,
-  MOD_QPSK = 4,
-  MOD_16QAM = 8,
-  MOD_64QAM = 16,
+  AUTO = (1 << 0) /* 1 */,
+  MOD_DQPSK = (1 << 1) /* 2 */,
+  MOD_QPSK = (1 << 2) /* 4 */,
+  MOD_16QAM = (1 << 3) /* 8 */,
+  MOD_64QAM = (1 << 4) /* 16 */,
 }

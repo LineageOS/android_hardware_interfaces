@@ -36,7 +36,7 @@ package android.hardware.radio.data;
 @JavaDerive(toString=true) @VintfStability
 parcelable RouteSelectionDescriptor {
   byte precedence;
-  android.hardware.radio.data.PdpProtocolType sessionType;
+  android.hardware.radio.data.PdpProtocolType sessionType = android.hardware.radio.data.PdpProtocolType.IP;
   byte sscMode;
   android.hardware.radio.data.SliceInfo[] sliceInfo;
   String[] dnn;

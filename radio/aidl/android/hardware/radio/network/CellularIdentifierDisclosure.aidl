@@ -31,9 +31,9 @@ parcelable CellularIdentifierDisclosure {
     // The PLMN-ID to which the UE transmitted the cellular identifier
     String plmn;
     // The type of cellular identifier that was disclosed
-    CellularIdentifier identifier;
+    CellularIdentifier identifier = CellularIdentifier.UNKNOWN;
     // The NAS protocol message within which the cellular identifier was transmitted.
-    NasProtocolMessage protocolMessage;
+    NasProtocolMessage protocolMessage = NasProtocolMessage.UNKNOWN;
     // Whether or not this cellular identifier disclosure is in service of an emergency call.
     boolean isEmergency;
 }

@@ -69,46 +69,53 @@ aidl_interface {
                 "android.hardware.common-V2",
             ],
         },
-
     ],
-    frozen: true,
-
+    frozen: false,
 }
+
+power_version = "android.hardware.power-V6"
 
 cc_defaults {
     name: "android.hardware.power-ndk_shared",
     shared_libs: [
-        "android.hardware.power-V5-ndk",
+        power_version + "-ndk",
     ],
 }
 
 cc_defaults {
     name: "android.hardware.power-ndk_export_shared",
     shared_libs: [
-        "android.hardware.power-V5-ndk",
+        power_version + "-ndk",
     ],
     export_shared_lib_headers: [
-        "android.hardware.power-V5-ndk",
+        power_version + "-ndk",
     ],
 }
 
 cc_defaults {
     name: "android.hardware.power-ndk_static",
     static_libs: [
-        "android.hardware.power-V5-ndk",
+        power_version + "-ndk",
     ],
 }
 
 java_defaults {
     name: "android.hardware.power-java_shared",
     libs: [
-        "android.hardware.power-V5-java",
+        power_version + "-java",
     ],
 }
 
 java_defaults {
     name: "android.hardware.power-java_static",
     static_libs: [
-        "android.hardware.power-V5-java",
+        power_version + "-java",
+    ],
+}
+
+aidl_interface_defaults {
+    name: "android.hardware.power-aidl",
+    imports: [
+        power_version,
     ],
 }

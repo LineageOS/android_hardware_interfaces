@@ -68,7 +68,11 @@ RetCode EffectThread::destroyThread() {
 RetCode EffectThread::startThread() {
     {
         std::lock_guard lg(mThreadMutex);
-        mStop = false;
+        if (mDraining) {
+            mDraining = false;
+        } else {
+            mStop = false;
+        }
         mCv.notify_one();
     }
 
@@ -82,6 +86,25 @@ RetCode EffectThread::stopThread() {
         mStop = true;
         mCv.notify_one();
     }
+
+    LOG(VERBOSE) << mName << __func__;
+    return RetCode::SUCCESS;
+}
+
+RetCode EffectThread::startDraining() {
+    std::lock_guard lg(mThreadMutex);
+    mDraining = true;
+    mCv.notify_one();
+
+    LOG(VERBOSE) << mName << __func__;
+    return RetCode::SUCCESS;
+}
+
+RetCode EffectThread::finishDraining() {
+    std::lock_guard lg(mThreadMutex);
+    mDraining = false;
+    mStop = true;
+    mCv.notify_one();
 
     LOG(VERBOSE) << mName << __func__;
     return RetCode::SUCCESS;

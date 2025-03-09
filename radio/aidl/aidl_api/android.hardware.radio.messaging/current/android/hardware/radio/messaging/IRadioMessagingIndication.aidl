@@ -35,7 +35,13 @@ package android.hardware.radio.messaging;
 /* @hide */
 @VintfStability
 interface IRadioMessagingIndication {
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void cdmaNewSms(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.messaging.CdmaSmsMessage msg);
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   oneway void cdmaRuimSmsStorageFull(in android.hardware.radio.RadioIndicationType type);
   oneway void newBroadcastSms(in android.hardware.radio.RadioIndicationType type, in byte[] data);
   oneway void newSms(in android.hardware.radio.RadioIndicationType type, in byte[] pdu);

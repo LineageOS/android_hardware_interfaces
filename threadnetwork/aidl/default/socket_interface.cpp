@@ -36,6 +36,7 @@
 #include <vector>
 
 #include "common/code_utils.hpp"
+#include "openthread/error.h"
 #include "openthread/openthread-system.h"
 #include "platform-posix.h"
 
@@ -56,14 +57,9 @@ SocketInterface::SocketInterface(const ot::Url::Url& aRadioUrl)
 
 otError SocketInterface::Init(ReceiveFrameCallback aCallback, void* aCallbackContext,
                               RxFrameBuffer& aFrameBuffer) {
-    otError error = OT_ERROR_NONE;
+    otError error = InitSocket();
 
-    VerifyOrExit(mSockFd == -1, error = OT_ERROR_ALREADY);
-
-    WaitForSocketFileCreated(mRadioUrl.GetPath());
-
-    mSockFd = OpenFile(mRadioUrl);
-    VerifyOrExit(mSockFd != -1, error = OT_ERROR_FAILED);
+    VerifyOrExit(error == OT_ERROR_NONE);
 
     mReceiveFrameCallback = aCallback;
     mReceiveFrameContext = aCallbackContext;
@@ -155,9 +151,22 @@ otError SocketInterface::WaitForHardwareResetCompletion(uint32_t aTimeoutMs) {
 
     VerifyOrExit(!mIsHardwareResetting, error = OT_ERROR_FAILED);
 
-    WaitForSocketFileCreated(mRadioUrl.GetPath());
-    mSockFd = OpenFile(mRadioUrl);
-    VerifyOrExit(mSockFd != -1, error = OT_ERROR_FAILED);
+exit:
+    return error;
+}
+
+otError SocketInterface::InitSocket() {
+    otError error = OT_ERROR_NONE;
+    int retries = 0;
+
+    VerifyOrExit(mSockFd == -1, error = OT_ERROR_ALREADY);
+
+    while (retries++ < kMaxRetriesForSocketInit) {
+        WaitForSocketFileCreated(mRadioUrl.GetPath());
+        mSockFd = OpenFile(mRadioUrl);
+        VerifyOrExit(mSockFd == -1);
+    }
+    error = OT_ERROR_FAILED;
 
 exit:
     return error;
@@ -168,11 +177,16 @@ void SocketInterface::UpdateFdSet(void* aMainloopContext) {
 
     assert(context != nullptr);
 
+    VerifyOrExit(mSockFd != -1);
+
     FD_SET(mSockFd, &context->mReadFdSet);
 
     if (context->mMaxFd < mSockFd) {
         context->mMaxFd = mSockFd;
     }
+
+exit:
+    return;
 }
 
 void SocketInterface::Process(const void* aMainloopContext) {
@@ -181,9 +195,14 @@ void SocketInterface::Process(const void* aMainloopContext) {
 
     assert(context != nullptr);
 
+    VerifyOrExit(mSockFd != -1);
+
     if (FD_ISSET(mSockFd, &context->mReadFdSet)) {
         Read();
     }
+
+exit:
+    return;
 }
 
 otError SocketInterface::HardwareReset(void) {
@@ -198,22 +217,24 @@ otError SocketInterface::HardwareReset(void) {
 
 void SocketInterface::Read(void) {
     uint8_t buffer[kMaxFrameSize];
+    ssize_t rval;
 
-    ssize_t rval = TEMP_FAILURE_RETRY(read(mSockFd, buffer, sizeof(buffer)));
+    VerifyOrExit(mSockFd != -1);
+
+    rval = TEMP_FAILURE_RETRY(read(mSockFd, buffer, sizeof(buffer)));
 
     if (rval > 0) {
         ProcessReceivedData(buffer, static_cast<uint16_t>(rval));
     } else if (rval < 0) {
         DieNow(OT_EXIT_ERROR_ERRNO);
     } else {
-        if (mIsHardwareResetting) {
-            LogInfo("Socket connection is closed due to hardware reset.");
-            ResetStates();
-        } else {
-            LogCrit("Socket connection is closed by remote.");
-            exit(OT_EXIT_FAILURE);
-        }
+        LogWarn("Socket connection is closed by remote, isHardwareReset: %d", mIsHardwareResetting);
+        ResetStates();
+        InitSocket();
     }
+
+exit:
+    return;
 }
 
 void SocketInterface::Write(const uint8_t* aFrame, uint16_t aLength) {

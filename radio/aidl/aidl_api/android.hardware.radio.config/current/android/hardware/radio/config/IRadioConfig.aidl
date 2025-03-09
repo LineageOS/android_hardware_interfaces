@@ -17,9 +17,10 @@
  * This interface is used by telephony and telecom to talk to cellular radio for the purpose of
  * radio configuration, and it is not associated with any specific modem or slot.
  * All the functions have minimum one parameter:
- * serial: which corresponds to serial no. of request. Serial numbers must only be memorized for the
- * duration of a method call. If clients provide colliding serials (including passing the same
- * serial to different methods), multiple responses (one for each method call) must still be served.
+ * serial: which corresponds to the serial number of the request. Serial numbers must only be
+ * memorized for the duration of a method call. If clients provide colliding serials (including
+ * passing the same serial to different methods), multiple responses (one for each method call) must
+ * still be served.
  */
 ///////////////////////////////////////////////////////////////////////////////
 // THIS FILE IS IMMUTABLE. DO NOT EDIT IN ANY CASE.                          //
@@ -52,4 +53,6 @@ interface IRadioConfig {
   oneway void setResponseFunctions(in android.hardware.radio.config.IRadioConfigResponse radioConfigResponse, in android.hardware.radio.config.IRadioConfigIndication radioConfigIndication);
   oneway void setSimSlotsMapping(in int serial, in android.hardware.radio.config.SlotPortMapping[] slotMap);
   oneway void getSimultaneousCallingSupport(in int serial);
+  oneway void getSimTypeInfo(in int serial);
+  oneway void setSimType(in int serial, in android.hardware.radio.config.SimType[] simTypes);
 }

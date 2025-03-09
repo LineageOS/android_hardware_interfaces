@@ -55,4 +55,7 @@ parcelable NanDiscoveryCommonConfig {
   char distanceIngressCm;
   char distanceEgressCm;
   boolean enableSessionSuspendability;
+  int rttBurstSize;
+  android.hardware.wifi.RttPreamble preamble;
+  @nullable android.hardware.wifi.WifiChannelInfo channelInfo;
 }

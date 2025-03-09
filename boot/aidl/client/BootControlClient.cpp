@@ -18,6 +18,7 @@
 
 #include <aidl/android/hardware/boot/IBootControl.h>
 #include <android-base/logging.h>
+#include <android/binder_ibinder.h>
 #include <android/binder_manager.h>
 #include <android/hardware/boot/1.0/IBootControl.h>
 #include <android/hardware/boot/1.1/IBootControl.h>
@@ -35,6 +36,17 @@
     } while (0)
 
 using aidl::android::hardware::boot::MergeStatus;
+
+#define TEST_OP(_x, _y, op)                                                            \
+    do {                                                                               \
+        const auto& x = _x;                                                            \
+        const auto& y = _y;                                                            \
+        if (!(x op y)) {                                                               \
+            LOG(ERROR) << #_x " " #op " " #_y << " failed: " << x << " " #op " " << y; \
+            return {};                                                                 \
+        }                                                                              \
+    } while (0)
+#define TEST_NE(_x, _y) TEST_OP(_x, _y, !=)
 
 std::ostream& operator<<(std::ostream& os, MergeStatus status) {
     switch (status) {
@@ -65,85 +77,144 @@ class BootControlClientAidl final : public BootControlClient {
     using IBootControl = ::aidl::android::hardware::boot::IBootControl;
 
   public:
-    BootControlClientAidl(std::shared_ptr<IBootControl> module) : module_(module) {}
+    explicit BootControlClientAidl(std::shared_ptr<IBootControl> module)
+        : module_(module),
+          boot_control_death_recipient(AIBinder_DeathRecipient_new(onBootControlServiceDied)) {
+        binder_status_t status =
+                AIBinder_linkToDeath(module->asBinder().get(), boot_control_death_recipient, this);
+        if (status != STATUS_OK) {
+            LOG(ERROR) << "Could not link to binder death";
+            return;
+        }
+    }
 
     BootControlVersion GetVersion() const override { return BootControlVersion::BOOTCTL_AIDL; }
 
-    ~BootControlClientAidl() = default;
-    virtual int32_t GetNumSlots() const {
+    void onBootControlServiceDied() {
+        LOG(ERROR) << "boot control service AIDL died. Attempting to reconnect...";
+        const auto instance_name =
+                std::string(::aidl::android::hardware::boot::IBootControl::descriptor) + "/default";
+        if (AServiceManager_isDeclared(instance_name.c_str())) {
+            module_ = ::aidl::android::hardware::boot::IBootControl::fromBinder(
+                    ndk::SpAIBinder(AServiceManager_waitForService(instance_name.c_str())));
+            if (module_ == nullptr) {
+                LOG(ERROR) << "AIDL " << instance_name
+                           << " is declared but waitForService returned nullptr when trying to "
+                              "reconnect boot control service";
+                return;
+            }
+            LOG(INFO) << "Reconnected to AIDL version of IBootControl";
+            binder_status_t status = AIBinder_linkToDeath(module_->asBinder().get(),
+                                                          boot_control_death_recipient, this);
+            if (status != STATUS_OK) {
+                LOG(ERROR) << "Could not link to binder death";
+                return;
+            }
+
+        } else {
+            LOG(ERROR) << "Failed to get service manager for: " << instance_name;
+        }
+    }
+
+    int32_t GetNumSlots() const override {
         int32_t ret = -1;
+        if (!module_) {
+            LOG(ERROR) << "bootctl module not set";
+            return ret;
+        }
         LOG_NDK_STATUS(module_->getNumberSlots(&ret));
         return ret;
     }
 
-    int32_t GetCurrentSlot() const {
+    int32_t GetCurrentSlot() const override {
         int32_t ret = -1;
+        if (!module_) {
+            LOG(ERROR) << "bootctl module not set";
+            return ret;
+        }
         LOG_NDK_STATUS(module_->getCurrentSlot(&ret));
         return ret;
     }
-    MergeStatus getSnapshotMergeStatus() const {
+
+    MergeStatus getSnapshotMergeStatus() const override {
         MergeStatus status = MergeStatus::UNKNOWN;
+        if (!module_) {
+            LOG(ERROR) << "bootctl module not set";
+            return status;
+        }
         LOG_NDK_STATUS(module_->getSnapshotMergeStatus(&status));
         return status;
     }
-    std::string GetSuffix(int32_t slot) const {
+
+    std::string GetSuffix(int32_t slot) const override {
+        TEST_NE(module_, nullptr);
         std::string ret;
         const auto status = module_->getSuffix(slot, &ret);
         if (!status.isOk()) {
-            LOG(ERROR) << __FUNCTION__ << "(" << slot << ")"
-                       << " failed " << status.getDescription();
+            LOG(ERROR) << __FUNCTION__ << "(" << slot << ")" << " failed "
+                       << status.getDescription();
             return {};
         }
         return ret;
     }
 
-    std::optional<bool> IsSlotBootable(int32_t slot) const {
+    std::optional<bool> IsSlotBootable(int32_t slot) const override {
+        TEST_NE(module_, nullptr);
         bool ret = false;
         const auto status = module_->isSlotBootable(slot, &ret);
         if (!status.isOk()) {
-            LOG(ERROR) << __FUNCTION__ << "(" << slot << ")"
-                       << " failed " << status.getDescription();
+            LOG(ERROR) << __FUNCTION__ << "(" << slot << ")" << " failed "
+                       << status.getDescription();
             return {};
         }
         return ret;
     }
 
-    CommandResult MarkSlotUnbootable(int32_t slot) {
+    CommandResult MarkSlotUnbootable(int32_t slot) override {
+        TEST_NE(module_, nullptr);
         const auto status = module_->setSlotAsUnbootable(slot);
         if (!status.isOk()) {
-            LOG(ERROR) << __FUNCTION__ << "(" << slot << ")"
-                       << " failed " << status.getDescription();
+            LOG(ERROR) << __FUNCTION__ << "(" << slot << ")" << " failed "
+                       << status.getDescription();
         }
         return {.success = status.isOk(), .errMsg = status.getDescription()};
     }
 
-    CommandResult SetActiveBootSlot(int slot) {
+    CommandResult SetActiveBootSlot(int slot) override {
+        TEST_NE(module_, nullptr);
         const auto status = module_->setActiveBootSlot(slot);
         if (!status.isOk()) {
-            LOG(ERROR) << __FUNCTION__ << "(" << slot << ")"
-                       << " failed " << status.getDescription();
+            LOG(ERROR) << __FUNCTION__ << "(" << slot << ")" << " failed "
+                       << status.getDescription();
         }
         return {.success = status.isOk(), .errMsg = status.getDescription()};
     }
+
     int GetActiveBootSlot() const {
         int ret = -1;
+        if (!module_) {
+            LOG(ERROR) << "bootctl module not set";
+            return ret;
+        }
         LOG_NDK_STATUS(module_->getActiveBootSlot(&ret));
         return ret;
     }
 
     // Check if |slot| is marked boot successfully.
-    std::optional<bool> IsSlotMarkedSuccessful(int slot) const {
+    std::optional<bool> IsSlotMarkedSuccessful(int slot) const override {
+        TEST_NE(module_, nullptr);
         bool ret = false;
         const auto status = module_->isSlotMarkedSuccessful(slot, &ret);
         if (!status.isOk()) {
-            LOG(ERROR) << __FUNCTION__ << "(" << slot << ")"
-                       << " failed " << status.getDescription();
+            LOG(ERROR) << __FUNCTION__ << "(" << slot << ")" << " failed "
+                       << status.getDescription();
             return {};
         }
         return ret;
     }
 
-    CommandResult MarkBootSuccessful() {
+    CommandResult MarkBootSuccessful() override {
+        TEST_NE(module_, nullptr);
         const auto status = module_->markBootSuccessful();
         if (!status.isOk()) {
             LOG(ERROR) << __FUNCTION__ << " failed " << status.getDescription();
@@ -151,17 +222,24 @@ class BootControlClientAidl final : public BootControlClient {
         return {.success = status.isOk(), .errMsg = status.getDescription()};
     }
 
-    CommandResult SetSnapshotMergeStatus(aidl::android::hardware::boot::MergeStatus merge_status) {
+    CommandResult SetSnapshotMergeStatus(
+            aidl::android::hardware::boot::MergeStatus merge_status) override {
+        TEST_NE(module_, nullptr);
         const auto status = module_->setSnapshotMergeStatus(merge_status);
         if (!status.isOk()) {
-            LOG(ERROR) << __FUNCTION__ << "(" << merge_status << ")"
-                       << " failed " << status.getDescription();
+            LOG(ERROR) << __FUNCTION__ << "(" << merge_status << ")" << " failed "
+                       << status.getDescription();
         }
         return {.success = status.isOk(), .errMsg = status.getDescription()};
     }
 
   private:
-    const std::shared_ptr<IBootControl> module_;
+    std::shared_ptr<IBootControl> module_;
+    AIBinder_DeathRecipient* boot_control_death_recipient;
+    static void onBootControlServiceDied(void* client) {
+        BootControlClientAidl* self = static_cast<BootControlClientAidl*>(client);
+        self->onBootControlServiceDied();
+    }
 };
 
 using namespace android::hardware::boot;
@@ -183,7 +261,7 @@ class BootControlClientHIDL final : public BootControlClient {
             return BootControlVersion::BOOTCTL_V1_0;
         }
     }
-    int32_t GetNumSlots() const {
+    int32_t GetNumSlots() const override {
         const auto ret = module_v1_->getNumberSlots();
         if (!ret.isOk()) {
             LOG(ERROR) << __FUNCTION__ << " failed " << ret.description();
@@ -191,7 +269,7 @@ class BootControlClientHIDL final : public BootControlClient {
         return ret.withDefault(-1);
     }
 
-    int32_t GetCurrentSlot() const {
+    int32_t GetCurrentSlot() const override {
         const auto ret = module_v1_->getCurrentSlot();
         if (!ret.isOk()) {
             LOG(ERROR) << __FUNCTION__ << " failed " << ret.description();
@@ -199,23 +277,21 @@ class BootControlClientHIDL final : public BootControlClient {
         return ret.withDefault(-1);
     }
 
-    std::string GetSuffix(int32_t slot) const {
+    std::string GetSuffix(int32_t slot) const override {
         std::string suffix;
         const auto ret = module_v1_->getSuffix(
                 slot,
                 [&](const ::android::hardware::hidl_string& slotSuffix) { suffix = slotSuffix; });
         if (!ret.isOk()) {
-            LOG(ERROR) << __FUNCTION__ << "(" << slot << ")"
-                       << " failed " << ret.description();
+            LOG(ERROR) << __FUNCTION__ << "(" << slot << ")" << " failed " << ret.description();
         }
         return suffix;
     }
 
-    std::optional<bool> IsSlotBootable(int32_t slot) const {
+    std::optional<bool> IsSlotBootable(int32_t slot) const override {
         const auto ret = module_v1_->isSlotBootable(slot);
         if (!ret.isOk()) {
-            LOG(ERROR) << __FUNCTION__ << "(" << slot << ")"
-                       << " failed " << ret.description();
+            LOG(ERROR) << __FUNCTION__ << "(" << slot << ")" << " failed " << ret.description();
             return {};
         }
         const auto bool_result = ret.withDefault(V1_0::BoolResult::INVALID_SLOT);
@@ -225,7 +301,7 @@ class BootControlClientHIDL final : public BootControlClient {
         return bool_result == V1_0::BoolResult::TRUE;
     }
 
-    CommandResult MarkSlotUnbootable(int32_t slot) {
+    CommandResult MarkSlotUnbootable(int32_t slot) override {
         CommandResult result;
         const auto ret =
                 module_v1_->setSlotAsUnbootable(slot, [&](const V1_0::CommandResult& error) {
@@ -233,26 +309,24 @@ class BootControlClientHIDL final : public BootControlClient {
                     result.errMsg = error.errMsg;
                 });
         if (!ret.isOk()) {
-            LOG(ERROR) << __FUNCTION__ << "(" << slot << ")"
-                       << " failed " << ret.description();
+            LOG(ERROR) << __FUNCTION__ << "(" << slot << ")" << " failed " << ret.description();
         }
         return result;
     }
 
-    CommandResult SetActiveBootSlot(int32_t slot) {
+    CommandResult SetActiveBootSlot(int32_t slot) override {
         CommandResult result;
         const auto ret = module_v1_->setActiveBootSlot(slot, [&](const V1_0::CommandResult& error) {
             result.success = error.success;
             result.errMsg = error.errMsg;
         });
         if (!ret.isOk()) {
-            LOG(ERROR) << __FUNCTION__ << "(" << slot << ")"
-                       << " failed " << ret.description();
+            LOG(ERROR) << __FUNCTION__ << "(" << slot << ")" << " failed " << ret.description();
         }
         return result;
     }
 
-    CommandResult MarkBootSuccessful() {
+    CommandResult MarkBootSuccessful() override {
         CommandResult result;
         const auto ret = module_v1_->markBootSuccessful([&](const V1_0::CommandResult& error) {
             result.success = error.success;
@@ -264,11 +338,10 @@ class BootControlClientHIDL final : public BootControlClient {
         return result;
     }
 
-    std::optional<bool> IsSlotMarkedSuccessful(int32_t slot) const {
+    std::optional<bool> IsSlotMarkedSuccessful(int32_t slot) const override {
         const auto ret = module_v1_->isSlotMarkedSuccessful(slot);
         if (!ret.isOk()) {
-            LOG(ERROR) << __FUNCTION__ << "(" << slot << ")"
-                       << " failed " << ret.description();
+            LOG(ERROR) << __FUNCTION__ << "(" << slot << ")" << " failed " << ret.description();
             return {};
         }
         const auto bool_result = ret.withDefault(V1_0::BoolResult::INVALID_SLOT);
@@ -278,7 +351,7 @@ class BootControlClientHIDL final : public BootControlClient {
         return bool_result == V1_0::BoolResult::TRUE;
     }
 
-    MergeStatus getSnapshotMergeStatus() const {
+    MergeStatus getSnapshotMergeStatus() const override {
         if (module_v1_1_ == nullptr) {
             LOG(ERROR) << __FUNCTION__ << " is unsupported, requires at least boot v1.1";
             return MergeStatus::UNKNOWN;
@@ -291,7 +364,7 @@ class BootControlClientHIDL final : public BootControlClient {
                 ret.withDefault(static_cast<V1_1::MergeStatus>(MergeStatus::UNKNOWN)));
     }
 
-    CommandResult SetSnapshotMergeStatus(MergeStatus merge_status) {
+    CommandResult SetSnapshotMergeStatus(MergeStatus merge_status) override {
         if (module_v1_1_ == nullptr) {
             return {.success = false,
                     .errMsg = "setSnapshotMergeStatus is unsupported, requires at least boot v1.1"};
@@ -299,13 +372,13 @@ class BootControlClientHIDL final : public BootControlClient {
         const auto ret =
                 module_v1_1_->setSnapshotMergeStatus(static_cast<V1_1::MergeStatus>(merge_status));
         if (!ret.isOk()) {
-            LOG(ERROR) << __FUNCTION__ << "(" << merge_status << ")"
-                       << " failed " << ret.description();
+            LOG(ERROR) << __FUNCTION__ << "(" << merge_status << ")" << " failed "
+                       << ret.description();
         }
         return {.success = ret.isOk(), .errMsg = ret.description()};
     }
 
-    int32_t GetActiveBootSlot() const {
+    int32_t GetActiveBootSlot() const override {
         if (module_v1_2_ == nullptr) {
             LOG(ERROR) << __FUNCTION__ << " is unsupported, requires at least boot v1.2";
             return -1;
@@ -326,7 +399,6 @@ class BootControlClientHIDL final : public BootControlClient {
 std::unique_ptr<BootControlClient> BootControlClient::WaitForService() {
     const auto instance_name =
             std::string(::aidl::android::hardware::boot::IBootControl::descriptor) + "/default";
-
     if (AServiceManager_isDeclared(instance_name.c_str())) {
         auto module = ::aidl::android::hardware::boot::IBootControl::fromBinder(
                 ndk::SpAIBinder(AServiceManager_waitForService(instance_name.c_str())));

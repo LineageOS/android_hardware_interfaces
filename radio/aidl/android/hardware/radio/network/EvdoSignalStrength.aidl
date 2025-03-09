@@ -22,17 +22,20 @@ package android.hardware.radio.network;
 parcelable EvdoSignalStrength {
     /**
      * This value is the actual RSSI value multiplied by -1. Example: If the actual RSSI is -75,
-     * then this response value will be 75; INT_MAX means invalid/unreported.
+     * then this response value will be 75; RadioConst:VALUE_UNAVAILABLE means invalid/unreported.
+     * @deprecated Legacy CDMA is unsupported.
      */
     int dbm;
     /**
      * This value is the actual Ec/Io multiplied by -10. Example: If the actual Ec/Io is -12.5 dB,
-     * then this response value will be 125; INT_MAX means invalid/unreported.
+     * then this response value will be 125; RadioConst:VALUE_UNAVAILABLE means invalid/unreported.
+     * @deprecated Legacy CDMA is unsupported.
      */
     int ecio;
     /**
-     * Valid values are 0-8. 8 is the highest signal to noise ratio; INT_MAX means
-     * invalid/unreported.
+     * Valid values are 0-8. 8 is the highest signal to noise ratio; RadioConst:VALUE_UNAVAILABLE
+     * means invalid/unreported.
+     * @deprecated Legacy CDMA is unsupported.
      */
     int signalNoiseRatio;
 }

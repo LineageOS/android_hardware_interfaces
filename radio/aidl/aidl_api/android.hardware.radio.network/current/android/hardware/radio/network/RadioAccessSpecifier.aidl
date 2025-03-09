@@ -35,7 +35,7 @@ package android.hardware.radio.network;
 /* @hide */
 @JavaDerive(toString=true) @VintfStability
 parcelable RadioAccessSpecifier {
-  android.hardware.radio.AccessNetwork accessNetwork;
+  android.hardware.radio.AccessNetwork accessNetwork = android.hardware.radio.AccessNetwork.UNKNOWN;
   android.hardware.radio.network.RadioAccessSpecifierBands bands;
   int[] channels;
 }

@@ -26,6 +26,7 @@ aidl_interface {
     vendor_available: true,
     srcs: ["android/hardware/dumpstate/*.aidl"],
     stability: "vintf",
+    frozen: true,
     backend: {
         cpp: {
             enabled: false,

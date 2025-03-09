@@ -753,7 +753,7 @@ TEST_P(GraphicsMapperStableCTests, LockUnlockBasic) {
  * Test IMapper::lock and IMapper::unlock with no CPU usage requested.
  */
 TEST_P(GraphicsMapperStableCTests, LockUnlockNoCPUUsage) {
-    constexpr auto usage = BufferUsage::CPU_READ_NEVER | BufferUsage::CPU_WRITE_NEVER;
+    constexpr auto usage = BufferUsage::CPU_READ_RARELY | BufferUsage::CPU_WRITE_NEVER;
     auto buffer = allocate({
             .name = {"VTS_TEMP"},
             .width = 64,
@@ -771,15 +771,12 @@ TEST_P(GraphicsMapperStableCTests, LockUnlockNoCPUUsage) {
     auto handle = buffer->import();
     uint8_t* data = nullptr;
 
-    EXPECT_EQ(AIMAPPER_ERROR_BAD_VALUE,
-              mapper()->v5.lock(*handle, static_cast<int64_t>(info.usage),
-                                region, -1,(void**)&data))
-              << "Locking with 0 access succeeded";
+    EXPECT_EQ(AIMAPPER_ERROR_BAD_VALUE, mapper()->v5.lock(*handle, 0, region, -1, (void**)&data))
+            << "Locking with 0 access succeeded";
 
     int releaseFence = -1;
-    EXPECT_EQ(AIMAPPER_ERROR_BAD_BUFFER,
-              mapper()->v5.unlock(*handle, &releaseFence))
-              << "Unlocking not locked buffer succeeded";
+    EXPECT_EQ(AIMAPPER_ERROR_BAD_BUFFER, mapper()->v5.unlock(*handle, &releaseFence))
+            << "Unlocking not locked buffer succeeded";
     if (releaseFence != -1) {
         close(releaseFence);
     }

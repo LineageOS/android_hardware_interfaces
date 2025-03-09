@@ -35,10 +35,28 @@ package android.hardware.radio.network;
 /* @hide */
 @JavaDerive(toString=true) @VintfStability
 parcelable CellIdentityCdma {
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   int networkId;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   int systemId;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   int baseStationId;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   int longitude;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   int latitude;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   android.hardware.radio.network.OperatorInfo operatorNames;
 }

@@ -26,6 +26,9 @@ namespace wifi {
 namespace aidl_struct_util {
 
 WifiChannelWidthInMhz convertLegacyWifiChannelWidthToAidl(legacy_hal::wifi_channel_width type);
+bool convertAidlWifiChannelInfoToLegacy(const WifiChannelInfo& aidl_info,
+                                        legacy_hal::wifi_channel_info* legacy_info);
+RttBw convertLegacyRttBwToAidl(legacy_hal::wifi_rtt_bw type);
 
 std::string safeConvertChar(const char* str, size_t max_len) {
     const char* c = str;
@@ -61,6 +64,8 @@ IWifiChip::FeatureSetMask convertLegacyChipFeatureToAidl(uint64_t feature) {
             return IWifiChip::FeatureSetMask::SET_AFC_CHANNEL_ALLOWANCE;
         case WIFI_FEATURE_SET_VOIP_MODE:
             return IWifiChip::FeatureSetMask::SET_VOIP_MODE;
+        case WIFI_FEATURE_MLO_SAP:
+            return IWifiChip::FeatureSetMask::MLO_SAP;
     };
     CHECK(false) << "Unknown legacy feature: " << feature;
     return {};
@@ -2294,6 +2299,10 @@ bool convertLegacyNanCapabilitiesResponseToAidl(const legacy_hal::NanCapabilitie
     aidl_response->supportsPairing = legacy_response.is_pairing_supported;
     aidl_response->supportsSetClusterId = legacy_response.is_set_cluster_id_supported;
     aidl_response->supportsSuspension = legacy_response.is_suspension_supported;
+    // TODO: Retrieve values from the legacy HAL
+    aidl_response->supportsPeriodicRanging = false;
+    aidl_response->maxSupportedBandwidth = RttBw::BW_UNSPECIFIED;
+    aidl_response->maxNumRxChainsSupported = 2;
 
     return true;
 }
@@ -2476,6 +2485,8 @@ legacy_hal::wifi_rtt_type convertAidlRttTypeToLegacy(RttType type) {
             return legacy_hal::RTT_TYPE_2_SIDED_11MC;
         case RttType::TWO_SIDED_11AZ_NTB:
             return legacy_hal::RTT_TYPE_2_SIDED_11AZ_NTB;
+        case RttType::TWO_SIDED_11AZ_NTB_SECURE:
+            return legacy_hal::RTT_TYPE_2_SIDED_11AZ_NTB_SECURE;
     };
     CHECK(false);
 }
@@ -2489,6 +2500,8 @@ RttType convertLegacyRttTypeToAidl(legacy_hal::wifi_rtt_type type) {
             return RttType::TWO_SIDED_11MC;
         case legacy_hal::RTT_TYPE_2_SIDED_11AZ_NTB:
             return RttType::TWO_SIDED_11AZ_NTB;
+        case legacy_hal::RTT_TYPE_2_SIDED_11AZ_NTB_SECURE:
+            return RttType::TWO_SIDED_11AZ_NTB_SECURE;
     };
     CHECK(false) << "Unknown legacy type: " << type;
 }
@@ -2721,6 +2734,16 @@ RttStatus convertLegacyRttStatusToAidl(legacy_hal::wifi_rtt_status status) {
             return RttStatus::NAN_RANGING_PROTOCOL_FAILURE;
         case legacy_hal::RTT_STATUS_NAN_RANGING_CONCURRENCY_NOT_SUPPORTED:
             return RttStatus::NAN_RANGING_CONCURRENCY_NOT_SUPPORTED;
+        case legacy_hal::RTT_STATUS_SECURE_RANGING_FAILURE_INVALID_AKM:
+            return RttStatus::SECURE_RANGING_FAILURE_INVALID_AKM;
+        case legacy_hal::RTT_STATUS_SECURE_RANGING_FAILURE_INVALID_CIPHER:
+            return RttStatus::SECURE_RANGING_FAILURE_INVALID_CIPHER;
+        case legacy_hal::RTT_STATUS_SECURE_RANGING_FAILURE_INVALID_CONFIG:
+            return RttStatus::SECURE_RANGING_FAILURE_INVALID_CONFIG;
+        case legacy_hal::RTT_STATUS_SECURE_RANGING_FAILURE_REJECTED:
+            return RttStatus::SECURE_RANGING_FAILURE_REJECTED;
+        case legacy_hal::RTT_STATUS_SECURE_RANGING_FAILURE_UNKNOWN:
+            return RttStatus::SECURE_RANGING_FAILURE_UNKNOWN;
     };
     CHECK(false) << "Unknown legacy status: " << status;
 }

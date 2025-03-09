@@ -27,11 +27,11 @@ parcelable PhysicalChannelConfig {
     /**
      * Connection status for cell. Valid values are PRIMARY_SERVING and SECONDARY_SERVING
      */
-    CellConnectionStatus status;
+    CellConnectionStatus status = CellConnectionStatus.NONE;
     /**
      * The radio technology for this physical channel
      */
-    RadioTechnology rat;
+    RadioTechnology rat = RadioTechnology.UNKNOWN;
     /**
      * Downlink Absolute Radio Frequency Channel Number
      */

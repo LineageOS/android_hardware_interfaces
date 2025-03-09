@@ -26,17 +26,17 @@ parcelable EmergencyRegResult {
     /**
      * Indicates the cellular access network of the current emergency capable system.
      */
-    AccessNetwork accessNetwork;
+    AccessNetwork accessNetwork = AccessNetwork.UNKNOWN;
 
     /**
      * Registration state of the current emergency capable system.
      */
-    RegState regState;
+    RegState regState = RegState.NOT_REG_MT_NOT_SEARCHING_OP;
 
     /**
      * EMC domain indicates the current domain of the acquired system.
      */
-    Domain emcDomain;
+    Domain emcDomain = Domain.INVALID;
 
     /**
      * This indicates whether the network supports voice over PS network.

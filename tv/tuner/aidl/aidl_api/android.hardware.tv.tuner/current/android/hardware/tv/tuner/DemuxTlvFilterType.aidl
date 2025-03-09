@@ -35,8 +35,8 @@ package android.hardware.tv.tuner;
 /* @hide */
 @Backing(type="int") @VintfStability
 enum DemuxTlvFilterType {
-  UNDEFINED = 0,
-  SECTION = 1,
-  TLV = 2,
-  PAYLOAD_THROUGH = 3,
+  UNDEFINED,
+  SECTION,
+  TLV,
+  PAYLOAD_THROUGH,
 }

@@ -718,6 +718,20 @@ enum SensorType {
     HEADING = 42,
 
     /**
+     * MOISTURE_INTRUSION
+     * trigger mode: on-change
+     *
+     * Detects moisture intrusion in the chassis of device. This detection is
+     * one-way and persistent. Once a device is detected to have water damage,
+     * it will always report 1 (across factory reset /reboot) even if moisture
+     * is no longer present, until the device has been repaired.
+     * The only allowed values to return are:
+     *   0.0: no moisture intrusion detected in relevant history
+     *   1.0: moisture intrusion detected now or previously
+     */
+    MOISTURE_INTRUSION = 43,
+
+    /**
      * Base of the range reserved for device manufacturers' private sensor
      * types. These sensor types aren't documented in the SDK.
      */

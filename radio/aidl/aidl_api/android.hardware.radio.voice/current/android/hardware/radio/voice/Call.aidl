@@ -42,13 +42,16 @@ parcelable Call {
   boolean isMT;
   byte als;
   boolean isVoice;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   boolean isVoicePrivacy;
   String number;
   int numberPresentation;
   String name;
   int namePresentation;
   android.hardware.radio.voice.UusInfo[] uusInfo;
-  android.hardware.radio.voice.AudioQuality audioQuality;
+  android.hardware.radio.voice.AudioQuality audioQuality = android.hardware.radio.voice.AudioQuality.UNSPECIFIED;
   String forwardedNumber;
   const int PRESENTATION_ALLOWED = 0;
   const int PRESENTATION_RESTRICTED = 1;

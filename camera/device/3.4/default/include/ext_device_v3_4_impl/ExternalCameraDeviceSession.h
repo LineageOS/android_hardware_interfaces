@@ -109,7 +109,7 @@ struct ExternalCameraDeviceSession : public virtual RefBase,
 
     static const int kMaxProcessedStream = 2;
     static const int kMaxStallStream = 1;
-    static const uint32_t kMaxBytesPerPixel = 2;
+    static const uint32_t kMaxBytesPerPixel = 3;
 
     class OutputThread : public android::Thread {
     public:

@@ -72,11 +72,9 @@ static constexpr uint8_t kMinLeAdvSetForBt5ForTv = 10;
 static constexpr uint8_t kMinLeResolvingListForBt5 = 8;
 
 static constexpr size_t kNumHciCommandsBandwidth = 100;
-static constexpr size_t kNumScoPacketsBandwidth = 100;
 static constexpr size_t kNumAclPacketsBandwidth = 100;
 static constexpr std::chrono::milliseconds kWaitForInitTimeout(2000);
 static constexpr std::chrono::milliseconds kWaitForHciEventTimeout(2000);
-static constexpr std::chrono::milliseconds kWaitForScoDataTimeout(1000);
 static constexpr std::chrono::milliseconds kWaitForAclDataTimeout(1000);
 static constexpr std::chrono::milliseconds kInterfaceCloseDelayMs(200);
 
@@ -216,7 +214,6 @@ class BluetoothAidlTest : public ::testing::TestWithParam<std::string> {
 
   // Functions called from within tests in loopback mode
   void sendAndCheckHci(int num_packets);
-  void sendAndCheckSco(int num_packets, size_t size, uint16_t handle);
   void sendAndCheckAcl(int num_packets, size_t size, uint16_t handle);
 
   // Helper functions to try to get a handle on verbosity
@@ -563,38 +560,6 @@ void BluetoothAidlTest::sendAndCheckHci(int num_packets) {
   logger.setTotalBytes(command_size * num_packets * 2);
 }
 
-// Send a SCO data packet (in Loopback mode) and check the response.
-void BluetoothAidlTest::sendAndCheckSco(int num_packets, size_t size,
-                                        uint16_t handle) {
-  ThroughputLogger logger{__func__};
-  for (int n = 0; n < num_packets; n++) {
-    // Send a SCO packet
-    std::vector<uint8_t> sco_packet;
-    std::vector<uint8_t> payload;
-    for (size_t i = 0; i < size; i++) {
-      payload.push_back(static_cast<uint8_t>(i + n));
-    }
-    ::bluetooth::packet::BitInserter bi{sco_packet};
-    ::bluetooth::hci::ScoBuilder::Create(
-        handle, ::bluetooth::hci::PacketStatusFlag::CORRECTLY_RECEIVED, payload)
-        ->Serialize(bi);
-    hci->sendScoData(sco_packet);
-
-    // Check the loopback of the SCO packet
-    std::vector<uint8_t> sco_loopback;
-    ASSERT_TRUE(
-        sco_queue.tryPopWithTimeout(sco_loopback, kWaitForScoDataTimeout));
-
-    if (sco_loopback.size() < size) {
-      // The packets may have been split for USB. Reassemble before checking.
-      reassemble_sco_loopback_pkt(sco_loopback, size);
-    }
-
-    ASSERT_EQ(sco_packet, sco_loopback);
-  }
-  logger.setTotalBytes(num_packets * size * 2);
-}
-
 // Send an ACL data packet (in Loopback mode) and check the response.
 void BluetoothAidlTest::sendAndCheckAcl(int num_packets, size_t size,
                                         uint16_t handle) {
@@ -724,22 +689,6 @@ void BluetoothAidlTest::send_and_wait_for_cmd_complete(
       wait_for_command_complete_event(view.GetOpCode(), cmd_complete));
 }
 
-// Handle the loopback packet.
-void BluetoothAidlTest::reassemble_sco_loopback_pkt(std::vector<uint8_t>& scoPackets,
-        size_t size) {
-    std::vector<uint8_t> sco_packet_whole;
-    sco_packet_whole.assign(scoPackets.begin(), scoPackets.end());
-    while (size + 3 > sco_packet_whole.size()) {
-      std::vector<uint8_t> sco_packets;
-      ASSERT_TRUE(
-      sco_queue.tryPopWithTimeout(sco_packets, kWaitForScoDataTimeout));
-      sco_packet_whole.insert(sco_packet_whole.end(), sco_packets.begin() + 3,
-          sco_packets.end());
-    }
-    scoPackets.assign(sco_packet_whole.begin(), sco_packet_whole.end());
-    scoPackets[2] = size;
-}
-
 // Empty test: Initialize()/Close() are called in SetUp()/TearDown().
 TEST_P(BluetoothAidlTest, InitializeAndClose) {}
 
@@ -829,26 +778,6 @@ TEST_P(BluetoothAidlTest, LoopbackModeSingleCommand) {
   sendAndCheckHci(1);
 }
 
-// Enter loopback mode and send a single SCO packet.
-TEST_P(BluetoothAidlTest, LoopbackModeSingleSco) {
-  setBufferSizes();
-  setSynchronousFlowControlEnable();
-
-  enterLoopbackMode();
-
-  if (!sco_connection_handles.empty()) {
-    ASSERT_LT(0, max_sco_data_packet_length);
-    sendAndCheckSco(1, max_sco_data_packet_length, sco_connection_handles[0]);
-    int sco_packets_sent = 1;
-    int completed_packets =
-        wait_for_completed_packets_event(sco_connection_handles[0]);
-    if (sco_packets_sent != completed_packets) {
-      ALOGW("%s: packets_sent (%d) != completed_packets (%d)", __func__,
-            sco_packets_sent, completed_packets);
-    }
-  }
-}
-
 // Enter loopback mode and send a single ACL packet.
 TEST_P(BluetoothAidlTest, LoopbackModeSingleAcl) {
   setBufferSizes();
@@ -877,27 +806,6 @@ TEST_P(BluetoothAidlTest, LoopbackModeCommandBandwidth) {
   enterLoopbackMode();
 
   sendAndCheckHci(kNumHciCommandsBandwidth);
-}
-
-// Enter loopback mode and send SCO packets for bandwidth measurements.
-TEST_P(BluetoothAidlTest, LoopbackModeScoBandwidth) {
-  setBufferSizes();
-  setSynchronousFlowControlEnable();
-
-  enterLoopbackMode();
-
-  if (!sco_connection_handles.empty()) {
-    ASSERT_LT(0, max_sco_data_packet_length);
-    sendAndCheckSco(kNumScoPacketsBandwidth, max_sco_data_packet_length,
-                    sco_connection_handles[0]);
-    int sco_packets_sent = kNumScoPacketsBandwidth;
-    int completed_packets =
-        wait_for_completed_packets_event(sco_connection_handles[0]);
-    if (sco_packets_sent != completed_packets) {
-      ALOGW("%s: packets_sent (%d) != completed_packets (%d)", __func__,
-            sco_packets_sent, completed_packets);
-    }
-  }
 }
 
 // Enter loopback mode and send packets for ACL bandwidth measurements.

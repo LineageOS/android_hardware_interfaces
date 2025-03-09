@@ -61,6 +61,7 @@ interface IGnss {
   void stopSvStatus();
   void startNmea();
   void stopNmea();
+  android.hardware.gnss.gnss_assistance.IGnssAssistanceInterface getExtensionGnssAssistanceInterface();
   const int ERROR_INVALID_ARGUMENT = 1;
   const int ERROR_ALREADY_INIT = 2;
   const int ERROR_GENERIC = 3;

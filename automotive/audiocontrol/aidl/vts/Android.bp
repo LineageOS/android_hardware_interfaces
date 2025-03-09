@@ -22,6 +22,25 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
+cc_library {
+    name: "AudioControlHalTestUtils",
+    srcs: [
+        "src/AudioControlTestUtils.cpp",
+    ],
+    export_include_dirs: [
+        "include",
+    ],
+    defaults: [
+        "latest_android_hardware_audio_common_cpp_static",
+        "latest_android_hardware_automotive_audiocontrol_cpp_static",
+        "latest_android_media_audio_common_types_cpp_static",
+    ],
+    shared_libs: [
+        "libbase",
+        "libutils",
+    ],
+}
+
 cc_test {
     name: "VtsAidlHalAudioControlTest",
     defaults: [
@@ -39,9 +58,11 @@ cc_test {
         "libbinder",
         "libbase",
         "libxml2",
+        "libutils",
     ],
     static_libs: [
         "libgmock",
+        "AudioControlHalTestUtils",
     ],
     test_suites: [
         "general-tests",

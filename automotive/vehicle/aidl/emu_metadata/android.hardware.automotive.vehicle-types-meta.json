@@ -93,6 +93,20 @@
                 "description": "Multiple EV port locations\nImplement this property if the vehicle has multiple EV ports. Port locations are defined in PortLocationType. For example, a car has one port in front left and one port in rear left: int32Values[0] = PortLocationType::FRONT_LEFT int32Values[1] = PortLocationType::REAR_LEFT\nIf only one port exists on the vehicle, this property's value should list just one element. See INFO_EV_PORT_LOCATION for describing just one port location."
             },
             {
+                "name": "INFO_MODEL_TRIM",
+                "value": 286261517,
+                "description": "Public trim name of the vehicle.\nThis property must communicate the vehicle's public trim name.\nFor example, say an OEM manufactures two different versions of a vehicle model: \"makeName modelName\" and \"makeName modelName Sport\" This property must be empty for the first vehicle (i.e. base model), and set to \"Sport\" for the second vehicle."
+            },
+            {
+                "name": "Vehicle Size Class.",
+                "value": 289472782,
+                "data_enums": [
+                    "VehicleSizeClass"
+                ],
+                "data_enum": "VehicleSizeClass",
+                "description": "Vehicle Size Class.\nThis property must communicate an integer array that contains the size classifications followed by the vehicle as enumerated in VehicleSizeClass.aidl. If the vehicle follows a single standard, then the array size of the property's value should be 1. If the vehicle follows multiple standards that the OEM wants to communicate, this may be communicated as additional values in the array.\nFor example, suppose a vehicle model follows the VehicleSizeClass.EU_A_SEGMENT standard in the EU and the VehicleSizeClass.JPN_KEI standard in Japan. In this scenario this property must return an intArray = [VehicleSizeClass.EU_A_SEGMENT, VehicleSizeClass.JPN_KEI]. If this vehicle only followed the VehicleSizeClass.EU_A_SEGMENT standard, then we expect intArray = [VehicleSizeClass.EU_A_SEGMENT]."
+            },
+            {
                 "name": "PERF_ODOMETER",
                 "value": 291504644,
                 "description": "Current odometer value of the vehicle"
@@ -116,6 +130,16 @@
                 "name": "PERF_REAR_STEERING_ANGLE",
                 "value": 291504656,
                 "description": "Rear bicycle model steering angle for vehicle\nAngle is in degrees.  Left is negative.\nThis property is independent of the angle of the steering wheel. This property must communicate the angle of the rear wheels with respect to the vehicle, not the angle of the steering wheel."
+            },
+            {
+                "name": "INSTANTANEOUS_FUEL_ECONOMY",
+                "value": 291504657,
+                "description": "Instantaneous Fuel Economy in L\/100km.\nThis property must communicate the instantaneous fuel economy of the vehicle in units of L\/100km. The property's value is independent of DISTANCE_DISPLAY_UNITS, FUEL_VOLUME_DISPLAY_UNITS, and FUEL_CONSUMPTION_UNITS_DISTANCE_OVER_VOLUME property i.e. this property must always communicate the value in L\/100km.\nFor the EV version of this property, see INSTANTANEOUS_EV_EFFICIENCY."
+            },
+            {
+                "name": "INSTANTANEOUS_EV_EFFICIENCY",
+                "value": 291504658,
+                "description": "Instantaneous EV efficiency in km\/kWh.\nThis property must communicate the instantaneous EV battery efficiency of the vehicle in units of km\/kWh. The property's value is independent of the DISTANCE_DISPLAY_UNITS and EV_BATTERY_DISPLAY_UNITS properties i.e. this property must always communicate the value in km\/kWh.\nFor the fuel version of this property, see INSTANTANEOUS_FUEL_ECONOMY."
             },
             {
                 "name": "Temperature of engine coolant",
@@ -194,12 +218,37 @@
             {
                 "name": "Tire pressure",
                 "value": 392168201,
-                "description": "Tire pressure\nEach tires is identified by its areaConfig.areaId config and their minFloatValue\/maxFloatValue are used to store OEM recommended pressure range. The minFloatValue and maxFloatValue in VehicleAreaConfig must be defined. The minFloatValue in the areaConfig data represents the lower bound of the recommended tire pressure. The maxFloatValue in the areaConfig data represents the upper bound of the recommended tire pressure. For example: The following areaConfig indicates the recommended tire pressure of left_front tire is from 200.0 KILOPASCAL to 240.0 KILOPASCAL. .areaConfigs = { VehicleAreaConfig { .areaId = VehicleAreaWheel::LEFT_FRONT, .minFloatValue = 200.0, .maxFloatValue = 240.0, } },"
+                "description": "Tire pressure\n{@code HasSupportedValueInfo.hasMinSupportedValue} and {@code HasSupportedValueInfo.hasMaxSupportedValue} must be {@code true} for all areas.\n{@code MinMaxSupportedValueResult.minSupportedValue} represents the lower bound of the recommended tire pressure for the tire at the specified area ID.\n{@code MinMaxSupportedValueResult.maxSupportedValue} represents the upper bound of the recommended tire pressure for the tire at the specified area ID.\nFor example, if the recommended tire pressure of left_front tire is from 200.0 KILOPASCAL to 240.0 KILOPASCAL, {@code getMinMaxSupportedValue} for [propId=TIRE_PRESSURE, areaId=VehicleAreaWheel::LEFT_FRONT] must return a {@code MinMaxSupportedValueResult} with OK status, 200.0 as minSupportedValue, 240.0 as maxSupportedValue.\nFor backward compatibility, minFloatValue and maxFloatValue in {@code VehicleAreaConfig} must be set to the same as minSupportedValue and maxSupportedValue at boot time.\nEach tire is identified by its areaConfig.areaId config.\nFor example: .areaConfigs = { VehicleAreaConfig { .areaId = VehicleAreaWheel::LEFT_FRONT, .minFloatValue = 200.0, .maxFloatValue = 240.0, } },"
             },
             {
                 "name": "Critically low tire pressure",
                 "value": 392168202,
                 "description": "Critically low tire pressure\nThis property indicates the critically low pressure threshold for each tire. It indicates when it is time for tires to be replaced or fixed. The value must be less than or equal to minFloatValue in TIRE_PRESSURE. Minimum and maximum property values (that is, minFloatValue, maxFloatValue) are not applicable to this property."
+            },
+            {
+                "name": "ACCELERATOR_PEDAL_COMPRESSION_PERCENTAGE",
+                "value": 291504911,
+                "description": "Accelerator pedal compression percentage.\nThis property must communicate the percentage that the physical accelerator pedal in the vehicle is compressed. This property must return a float value from 0 to 100.\n0 indicates the pedal is not compressed. 100 indicates the pedal is maximally compressed."
+            },
+            {
+                "name": "BRAKE_PEDAL_COMPRESSION_PERCENTAGE",
+                "value": 291504912,
+                "description": "Brake pedal compression percentage.\nThis property must communicate the percentage that the physical brake pedal in the vehicle is compressed. This property must return a float value from 0 to 100.\n0 indicates the pedal is not compressed. 100 indicates the pedal is maximally compressed."
+            },
+            {
+                "name": "Brake pad wear percentage.",
+                "value": 392168209,
+                "description": "Brake pad wear percentage.\nThis property must communicate the amount of brake pad wear accumulated by the vehicle as a percentage. This property return a float value from 0 to 100.\n0 indicates the brake pad has no wear. 100 indicates the brake pad is maximally worn."
+            },
+            {
+                "name": "Brake fluid low.",
+                "value": 287310610,
+                "description": "Brake fluid low.\nThis property must communicate that the brake fluid level in the vehicle is low according to the OEM. This property must match the vehicle's brake fluid level status as displayed on the instrument cluster. If the brake fluid level is low, this property must be set to true. If not, it must be set to false."
+            },
+            {
+                "name": "VEHICLE_PASSIVE_SUSPENSION_HEIGHT",
+                "value": 390071059,
+                "description": "Vehicle Passive Suspension Height in mm.\nThis property must communicate the real-time suspension displacement of the vehicle relative to its neutral position, given in mm. In other words, the displacement of the suspension at any given point in time relative to the suspension's position when the vehicle is on a flat surface with no passengers or cargo. When the suspension is compressed in comparison to the neutral position, the value should be negative. When the suspension is decompressed in comparison to the neutral position, the value should be positive.\nExamples for further clarity: 1) Suppose the user is driving on a smooth flat surface, and all wheels are currently compressed by 2 cm in comparison to the default suspension height. In this scenario, this property must be set to -20 for all wheels. 2) Suppose the user drives over a pothole. While the front left wheel is over the pothole, it's decompressed by 3 cm in comparison to the rest of the wheels, or 1 cm in comparison to the default suspension height. All the others are still compressed by 2 cm. In this scenario, this property must be set to -20 for all wheels except for the front left, which must be set to 10.\nHasSupportedValueInfo.hasMinSupportedValue and HasSupportedValueInfo.hasMaxSupportedValue must be true for all areas.\nMinMaxSupportedValueResult.minSupportedValue represents the lower bound of the suspension height for the wheel at the specified area ID.\nMinMaxSupportedValueResult.maxSupportedValue represents the upper bound of the suspension height for the wheel at the specified area ID."
             },
             {
                 "name": "ENGINE_IDLE_AUTO_STOP_ENABLED",
@@ -213,7 +262,12 @@
                     "ImpactSensorLocation"
                 ],
                 "data_enum": "ImpactSensorLocation",
-                "description": "Impact detected.\nBit flag property to relay information on whether an impact has occurred on a particular side of the vehicle as described through the ImpactSensorLocation enum. As a bit flag property, this property can be set to multiple ORed together values of the enum when necessary.\nFor the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined unless all bit flags of ImpactSensorLocation are supported."
+                "description": "Impact detected.\nBit flag property to relay information on whether an impact has occurred on a particular side of the vehicle as described through the ImpactSensorLocation enum. As a bit flag property, this property can be set to multiple ORed together values of the enum when necessary.\nFor the global area ID (0), {@code getSupportedValuesList} must return a {@code SupportedValuesListResult} that contains supported values unless all bit flags of ImpactSensorLocation are supported.\nFor backward compatibility, if {@code SupportedValuesListResult} is defined, {@code VehicleAreaConfig#supportedEnumValues} must be set to the same values."
+            },
+            {
+                "name": "Vehicle horn engaged.",
+                "value": 287310656,
+                "description": "Vehicle horn engaged.\nThis property must communicate if the vehicle's horn is currently engaged or not. If true, the horn is engaged. If false, the horn is disengaged."
             },
             {
                 "name": "Currently selected gear",
@@ -222,7 +276,7 @@
                     "VehicleGear"
                 ],
                 "data_enum": "VehicleGear",
-                "description": "Currently selected gear\nThis is the gear selected by the user.\nValues in the config data must represent the list of supported gears for this vehicle. For example, config data for an automatic transmission must contain {GEAR_NEUTRAL, GEAR_REVERSE, GEAR_PARK, GEAR_DRIVE, GEAR_1, GEAR_2,...} and for manual transmission the list must be {GEAR_NEUTRAL, GEAR_REVERSE, GEAR_1, GEAR_2,...}\nIn the case of an automatic transmission vehicle that allows the driver to select specific gears on demand (i.e. \"manual mode\"), GEAR_SELECTION's value must be set to the specific gear selected by the driver instead of simply GEAR_DRIVE."
+                "description": "Currently selected gear\nThis is the gear selected by the user.\n{@code VehicleAreaConfig.HasSupportedValueInfo.hasSupportedValuesList} for the global area ID (0) must be {@code true}.\n{@code getSupportedValuesList} for [GEAR_SELECTION, areaId=0] must return a {@code SupportedValuesListResult} that contains non-null {@code supportedValuesList}.\nThe supportedValues must represent the list of supported gears for this vehicle. For example, for an automatic transmission, the list can be {GEAR_NEUTRAL, GEAR_REVERSE, GEAR_PARK, GEAR_DRIVE, GEAR_1, GEAR_2,...} and for manual transmission it can be {GEAR_NEUTRAL, GEAR_REVERSE, GEAR_1, GEAR_2,...}.\nIn the case of an automatic transmission vehicle that allows the driver to select specific gears on demand (i.e. \"manual mode\"), GEAR_SELECTION's value must be set to the specific gear selected by the driver instead of simply GEAR_DRIVE.\nFor backward compatibility, config array for this property must be a list of values same as the supported values at boot-time."
             },
             {
                 "name": "CURRENT_GEAR",
@@ -231,7 +285,7 @@
                     "VehicleGear"
                 ],
                 "data_enum": "VehicleGear",
-                "description": "Current gear. In non-manual case, selected gear may not match the current gear. For example, if the selected gear is GEAR_DRIVE, the current gear will be one of GEAR_1, GEAR_2 etc, which reflects the actual gear the transmission is currently running in.\nValues in the config data must represent the list of supported gears for this vehicle.  For example, config data for an automatic transmission must contain {GEAR_NEUTRAL, GEAR_REVERSE, GEAR_PARK, GEAR_1, GEAR_2,...} and for manual transmission the list must be {GEAR_NEUTRAL, GEAR_REVERSE, GEAR_1, GEAR_2,...}. This list need not be the same as that of the supported gears reported in GEAR_SELECTION."
+                "description": "Current gear. In non-manual case, selected gear may not match the current gear. For example, if the selected gear is GEAR_DRIVE, the current gear will be one of GEAR_1, GEAR_2 etc, which reflects the actual gear the transmission is currently running in.\n{@code VehicleAreaConfig.HasSupportedValueInfo.hasSupportedValuesList} for the global area ID (0) must be {@code true}.\n{@code getSupportedValuesList} for [GEAR_SELECTION, areaId=0] must return a {@code SupportedValuesListResult} that contains non-null {@code supportedValuesList}.\nThe supported values list must represent the list of supported gears for this vehicle.  For example, for an automatic transmission, this list can be {GEAR_NEUTRAL, GEAR_REVERSE, GEAR_PARK, GEAR_1, GEAR_2,...} and for manual transmission the list can be {GEAR_NEUTRAL, GEAR_REVERSE, GEAR_1, GEAR_2,...}. This list need not be the same as that of the supported gears reported in GEAR_SELECTION.\nFor backward compatibility, config array for this property must be a list of values same as the supported values at boot-time."
             },
             {
                 "name": "Parking brake state.",
@@ -246,7 +300,7 @@
             {
                 "name": "EV_BRAKE_REGENERATION_LEVEL",
                 "value": 289408012,
-                "description": "Regenerative braking level of a electronic vehicle\nThe maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All values between minInt32Value and maxInt32Value must be supported. The minInt32Value must be 0.\nThe maxInt32Value indicates the setting for the maximum amount of energy regenerated from braking. The minInt32Value indicates the setting for no regenerative braking.\nThis property is a more granular form of EV_REGENERATIVE_BRAKING_STATE. It allows the user to set a more specific level of regenerative braking if the states in EvRegenerativeBrakingState are not granular enough for the OEM.\nThis property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to implement it as VehiclePropertyAccess.READ only."
+                "description": "Regenerative braking level of a electronic vehicle\n{@code HasSupportedValueInfo.hasMinSupportedValue} and {@code HasSupportedValueInfo.hasMaxSupportedValue} must be {@code true} for global area ID(0)\n{@code MinMaxSupportedValueResult.minSupportedValue} must be 0.\n{@code MinMaxSupportedValueResult.maxSupportedValue} indicates the setting for the maximum amount of energy regenerated from braking. The minSupportedValue indicates the setting for no regenerative braking.\nAll values between min and max supported value must be supported.\nFor backward compatibility, minInt32Value and maxInt32Value in {@code VehicleAreaConfig} must be set to the same as minSupportedValue and maxSupportedValue at boot time.\nThis property is a more granular form of EV_REGENERATIVE_BRAKING_STATE. It allows the user to set a more specific level of regenerative braking if the states in EvRegenerativeBrakingState are not granular enough for the OEM.\nThis property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to implement it as VehiclePropertyAccess.READ only."
             },
             {
                 "name": "Warning for fuel low level.",
@@ -265,7 +319,7 @@
                     "VehicleTurnSignal"
                 ],
                 "data_enum": "VehicleTurnSignal",
-                "description": "State of the vehicles turn signals"
+                "description": "(Deprecated) State of the vehicles turn signals\nThis property has been deprecated as it ambiguously defines the state of the vehicle turn signals without making clear if it means the state of the turn signal lights or the state of the turn signal switch. The introduction of TURN_SIGNAL_LIGHT_STATE and TURN_SIGNAL_SWITCH rectifies this problem."
             },
             {
                 "name": "Represents ignition state",
@@ -293,7 +347,7 @@
                     "EvStoppingMode"
                 ],
                 "data_enum": "EvStoppingMode",
-                "description": "Represents property for the current stopping mode of the vehicle.\nFor the global area ID (0), the VehicleAreaConfig#supportedEnumValues must be defined unless all enum values of EvStoppingMode are supported.\nThe EvStoppingMode enum may be extended to include more states in the future.\nThis property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to implement it as VehiclePropertyAccess.READ only."
+                "description": "Represents property for the current stopping mode of the vehicle.\nFor the global area ID (0), {@code getSupportedValuesList} must return a {@code SupportedValuesListResult} that contains supported values unless all enum values of EvStoppingMode are supported.\nFor backward compatibility, if {@code SupportedValuesListResult} is defined, {@code VehicleAreaConfig#supportedEnumValues} must be set to the same values.\nThe EvStoppingMode enum may be extended to include more states in the future.\nThis property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to implement it as VehiclePropertyAccess.READ only."
             },
             {
                 "name": "ELECTRONIC_STABILITY_CONTROL_ENABLED",
@@ -308,7 +362,25 @@
                     "ErrorState"
                 ],
                 "data_enum": "ElectronicStabilityControlState",
-                "description": "Electronic Stability Control (ESC) state.\nReturns the current state of ESC. This property must always return a valid state defined in ElectronicStabilityControlState or ErrorState. It must not surface errors through StatusCode and must use the supported error states instead.\nFor the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined unless all states of both ElectronicStabilityControlState (including OTHER, which is not recommended) and ErrorState are supported."
+                "description": "Electronic Stability Control (ESC) state.\nReturns the current state of ESC. This property must always return a valid state defined in ElectronicStabilityControlState or ErrorState. It must not surface errors through StatusCode and must use the supported error states instead.\nFor the global area ID (0), {@code getSupportedValuesList} must return a {@code SupportedValuesListResult} that contains supported values unless all states of both ElectronicStabilityControlState (including OTHER, which is not recommended) and ErrorState are supported.\nFor backward compatibility, if {@code SupportedValuesListResult} is defined, {@code VehicleAreaConfig#supportedEnumValues} must be set to the same values."
+            },
+            {
+                "name": "Turn signal light state.",
+                "value": 289408016,
+                "data_enums": [
+                    "VehicleTurnSignal"
+                ],
+                "data_enum": "VehicleTurnSignal",
+                "description": "Turn signal light state.\nThis property must communicate the actual state of the turn signal lights.\nExamples: 1) Left turn signal light is currently pulsing, right turn signal light is currently off. This property must return VehicleTurnSignal.LEFT while the light is on during the pulse, and VehicleTurnSignal.NONE when it is off during the pulse. 2) Right turn signal light is currently pulsing, left turn signal light is currently off. This property must return VehicleTurnSignal.RIGHT while the light is on during the pulse, and VehicleTurnSignal.NONE when it is off during the pulse. 3) Both turn signal lights are currently pulsing (e.g. when hazard lights switch is on). This property must return VehicleTurnSignal.LEFT | VehicleTurnSignal.RIGHT while the lights are on during the pulse, and VehicleTurnSignal.NONE when they are off during the pulse.\nNote that this property uses VehicleTurnSignal as a bit flag, unlike TURN_SIGNAL_SWITCH, which uses it like a regular enum. This means this property can support ORed together values in VehicleTurnSignal.\nThis is different from the function of TURN_SIGNAL_SWITCH, which must communicate the state of the turn signal lever\/switch.\nThis property is a replacement to the TURN_SIGNAL_STATE property, which is now deprecated."
+            },
+            {
+                "name": "Turn signal switch.",
+                "value": 289408017,
+                "data_enums": [
+                    "VehicleTurnSignal"
+                ],
+                "data_enum": "VehicleTurnSignal",
+                "description": "Turn signal switch.\nThis property must communicate the state of the turn signal lever\/switch. This is different from the function of TURN_SIGNAL_LIGHT_STATE, which must communicate the actual state of the turn signal lights.\nNote that this property uses VehicleTurnSignal as a regular enum, unlike TURN_SIGNAL_LIGHT_STATE, which uses it like a bit flag. This means this property cannot support ORed together values in VehicleTurnSignal.\nThis property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to implement it as VehiclePropertyAccess.READ only."
             },
             {
                 "name": "Fan speed setting",
@@ -322,7 +394,7 @@
                     "VehicleHvacFanDirection"
                 ],
                 "data_enum": "VehicleHvacFanDirection",
-                "description": "Fan direction setting\nThis property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to implement it as VehiclePropertyAccess.READ only."
+                "description": "Fan direction setting\nThis property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to implement it as VehiclePropertyAccess.READ only.\nThe supported hvac fan direction is exposed through {@code HVAC_FAN_DIRECTION_AVAILABLE} property. Caller should not call {@code getSupportedValuesList}, or use {@code VehicleAreaConfig#supportedEnumValues}."
             },
             {
                 "name": "HVAC current temperature.",
@@ -476,7 +548,11 @@
             {
                 "name": "Speed units for display",
                 "value": 289408517,
-                "description": "Speed units for display\nIndicates type of units the car is using to display speed to user. Eg. m\/s, km\/h, or mph.\nVehiclePropConfig.configArray is used to indicate the supported speed display units. Pressure units are defined in VehicleUnit. For example: configArray[0] = METER_PER_SEC configArray[1] = MILES_PER_HOUR configArray[2] = KILOMETERS_PER_HOUR\nIf updating VEHICLE_SPEED_DISPLAY_UNITS affects the values of other *_DISPLAY_UNITS properties, then their values must be updated and communicated to the AAOS framework as well.\nThis property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to implement it as VehiclePropertyAccess.READ only."
+                "data_enums": [
+                    "VehicleUnit"
+                ],
+                "data_enum": "VehicleUnit",
+                "description": "Speed units for display\nIndicates type of units the car is using to display speed to user. Eg. m\/s, km\/h, or mph.\n{@code VehicleAreaConfig.HasSupportedValueInfo.hasSupportedValuesList} for the global area ID (0) must be {@code true}.\n{@code getSupportedValuesLists} for [VEHICLE_SPEED_DISPLAY_UNITS, areaId=0] must return a {@code SupportedValuesListResult} that contains non-null {@code supportedValuesList}, e.g. [METER_PER_SEC, MILES_PER_HOUR, KILOMETERS_PER_HOUR].\nFor backward compatibility, config array for this property must contain the same values as supported values at boot time. For example: configArray[0] = METER_PER_SEC configArray[1] = MILES_PER_HOUR configArray[2] = KILOMETERS_PER_HOUR\nIf updating VEHICLE_SPEED_DISPLAY_UNITS affects the values of other *_DISPLAY_UNITS properties, then their values must be updated and communicated to the AAOS framework as well.\nThis property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to implement it as VehiclePropertyAccess.READ only."
             },
             {
                 "name": "EXTERNAL_CAR_TIME",
@@ -1352,7 +1428,16 @@
                     "VehicleAutonomousState"
                 ],
                 "data_enum": "VehicleAutonomousState",
-                "description": "Current state of vehicle autonomy.\nDefines the level of autonomy currently engaged in the vehicle from the J3016_202104 revision of the SAE standard levels 0-5, with 0 representing no autonomy and 5 representing full driving automation. These levels should be used in accordance with the standards defined in https:\/\/www.sae.org\/standards\/content\/j3016_202104\/ and https:\/\/www.sae.org\/blog\/sae-j3016-update\nFor the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined unless all states of VehicleAutonomousState are supported."
+                "description": "Current state of vehicle autonomy.\nDefines the level of autonomy currently engaged in the vehicle from the J3016_202104 revision of the SAE standard levels 0-5, with 0 representing no autonomy and 5 representing full driving automation.\nFor the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined unless all states of VehicleAutonomousState are supported."
+            },
+            {
+                "name": "VEHICLE_DRIVING_AUTOMATION_TARGET_LEVEL",
+                "value": 289410895,
+                "data_enums": [
+                    "VehicleAutonomousState"
+                ],
+                "data_enum": "VehicleAutonomousState",
+                "description": "Target state of vehicle autonomy.\nDefines the level of autonomy being targeted by the vehicle from the J3016_202104 revision of the SAE standard levels 0-5, with 0 representing no autonomy and 5 representing full driving automation.\nFor example, suppose the vehicle is currently in a Level 3 state of automation and wants to give the driver full manual control (i.e. Level 0) as soon as it's safe to do so. In this scenario, this property must be set to VehicleAutonomousState.LEVEL_0. Similarly, if the vehicle is currently in Level 1 state of automation and wants to go up to Level 2, this property must be set to VehicleAutonomousState.LEVEL_2. If the vehicle has already reached and is currently in the target level of autonomy, this property must be equal to the value of VEHICLE_DRIVING_AUTOMATION_CURRENT_LEVEL.\nFor the global area ID (0), the SupportedValuesListResult#supportedValuesList array must be defined unless all states of VehicleAutonomousState are supported. These values must match the values in supportedValuesList of VEHICLE_DRIVING_AUTOMATION_CURRENT_LEVEL.\nFor the property that communicates the current state of autonomy, see VEHICLE_DRIVING_AUTOMATION_CURRENT_LEVEL."
             },
             {
                 "name": "CAMERA_SERVICE_CURRENT_STATE",
@@ -2192,6 +2277,14 @@
                 "value": 11
             },
             {
+                "name": "SAE_J3400_AC",
+                "value": 8
+            },
+            {
+                "name": "SAE_J3400_DC",
+                "value": 9
+            },
+            {
                 "name": "OTHER",
                 "value": 101
             }
@@ -2946,6 +3039,152 @@
             {
                 "name": "OCCUPIED",
                 "value": 2
+            }
+        ]
+    },
+    {
+        "name": "VehicleSizeClass",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "EPA_TWO_SEATER",
+                "value": 256
+            },
+            {
+                "name": "EPA_MINICOMPACT",
+                "value": 257
+            },
+            {
+                "name": "EPA_SUBCOMPACT",
+                "value": 258
+            },
+            {
+                "name": "EPA_COMPACT",
+                "value": 259
+            },
+            {
+                "name": "EPA_MIDSIZE",
+                "value": 260
+            },
+            {
+                "name": "EPA_LARGE",
+                "value": 261
+            },
+            {
+                "name": "EPA_SMALL_STATION_WAGON",
+                "value": 262
+            },
+            {
+                "name": "EPA_MIDSIZE_STATION_WAGON",
+                "value": 263
+            },
+            {
+                "name": "EPA_LARGE_STATION_WAGON",
+                "value": 264
+            },
+            {
+                "name": "EPA_SMALL_PICKUP_TRUCK",
+                "value": 265
+            },
+            {
+                "name": "EPA_STANDARD_PICKUP_TRUCK",
+                "value": 266
+            },
+            {
+                "name": "EPA_VAN",
+                "value": 267
+            },
+            {
+                "name": "EPA_MINIVAN",
+                "value": 268
+            },
+            {
+                "name": "EPA_SMALL_SUV",
+                "value": 269
+            },
+            {
+                "name": "EPA_STANDARD_SUV",
+                "value": 270
+            },
+            {
+                "name": "EU_A_SEGMENT",
+                "value": 512
+            },
+            {
+                "name": "EU_B_SEGMENT",
+                "value": 513
+            },
+            {
+                "name": "EU_C_SEGMENT",
+                "value": 514
+            },
+            {
+                "name": "EU_D_SEGMENT",
+                "value": 515
+            },
+            {
+                "name": "EU_E_SEGMENT",
+                "value": 516
+            },
+            {
+                "name": "EU_F_SEGMENT",
+                "value": 517
+            },
+            {
+                "name": "EU_J_SEGMENT",
+                "value": 518
+            },
+            {
+                "name": "EU_M_SEGMENT",
+                "value": 519
+            },
+            {
+                "name": "EU_S_SEGMENT",
+                "value": 520
+            },
+            {
+                "name": "JPN_KEI",
+                "value": 768
+            },
+            {
+                "name": "JPN_SMALL_SIZE",
+                "value": 769
+            },
+            {
+                "name": "JPN_NORMAL_SIZE",
+                "value": 770
+            },
+            {
+                "name": "US_GVWR_CLASS_1_CV",
+                "value": 1024
+            },
+            {
+                "name": "US_GVWR_CLASS_2_CV",
+                "value": 1025
+            },
+            {
+                "name": "US_GVWR_CLASS_3_CV",
+                "value": 1026
+            },
+            {
+                "name": "US_GVWR_CLASS_4_CV",
+                "value": 1027
+            },
+            {
+                "name": "US_GVWR_CLASS_5_CV",
+                "value": 1028
+            },
+            {
+                "name": "US_GVWR_CLASS_6_CV",
+                "value": 1029
+            },
+            {
+                "name": "US_GVWR_CLASS_7_CV",
+                "value": 1030
+            },
+            {
+                "name": "US_GVWR_CLASS_8_CV",
+                "value": 1031
             }
         ]
     },

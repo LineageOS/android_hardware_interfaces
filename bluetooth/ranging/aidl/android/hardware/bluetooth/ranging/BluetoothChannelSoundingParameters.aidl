@@ -44,6 +44,7 @@ parcelable BluetoothChannelSoundingParameters {
     int realTimeProcedureDataAttHandle;
     /**
      * Role of the local device.
+     * @deprecated use the role in Config.aidl
      */
     Role role;
     /**

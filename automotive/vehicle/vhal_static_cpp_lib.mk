@@ -16,5 +16,5 @@
 # interface and VHAL properties.
 
 LOCAL_STATIC_LIBRARIES += \
-    android.hardware.automotive.vehicle-V3-ndk \
+    android.hardware.automotive.vehicle-V4-ndk \
     android.hardware.automotive.vehicle.property-V4-ndk

@@ -27,6 +27,7 @@
 #include <android/binder_process.h>
 #include <android/sharedmem.h>
 #include <cutils/native_handle.h>
+#include <cutils/properties.h>
 
 #include "drm_hal_clearkey_module.h"
 #include "drm_hal_common.h"
@@ -191,6 +192,13 @@ void DrmHalTest::SetUp() {
         ASSERT_NE(drmInstance, HalFullName(kDrmIface, "widevine")) << "Widevine requires vendor module.";
         ASSERT_NE(drmInstance, HalFullName(kDrmIface, "clearkey")) << "Clearkey requires vendor module.";
         GTEST_SKIP() << "No vendor module installed";
+    }
+
+    char bootloader_state[PROPERTY_VALUE_MAX] = {};
+    if (property_get("ro.boot.vbmeta.device_state", bootloader_state, "") != 0) {
+        if (!strcmp(bootloader_state, "unlocked")) {
+            GTEST_SKIP() << "Skip test because bootloader is unlocked";
+        }
     }
 
     if (drmInstance.find("IDrmFactory") != std::string::npos) {

@@ -23,9 +23,13 @@
 #include <libnl++/MessageFactory.h>
 #include <libnl++/Socket.h>
 
+#include <arpa/inet.h>
+#include <ifaddrs.h>
 #include <linux/can.h>
 #include <linux/rtnetlink.h>
 #include <net/if.h>
+#include <netdb.h>
+#include <sys/ioctl.h>
 
 #include <algorithm>
 #include <iterator>
@@ -37,27 +41,102 @@ void useSocketDomain(int domain) {
     ifreqs::socketDomain = domain;
 }
 
-bool exists(std::string ifname) {
+bool exists(std::string_view ifname) {
     return nametoindex(ifname) != 0;
 }
 
-bool up(std::string ifname) {
+bool up(std::string_view ifname) {
     auto ifr = ifreqs::fromName(ifname);
     if (!ifreqs::send(SIOCGIFFLAGS, ifr)) return false;
+    if (ifr.ifr_flags & IFF_UP) return true;
     ifr.ifr_flags |= IFF_UP;
     return ifreqs::send(SIOCSIFFLAGS, ifr);
 }
 
-bool down(std::string ifname) {
+bool down(std::string_view ifname) {
     auto ifr = ifreqs::fromName(ifname);
     if (!ifreqs::send(SIOCGIFFLAGS, ifr)) return false;
+    if (!(ifr.ifr_flags & IFF_UP)) return true;
     ifr.ifr_flags &= ~IFF_UP;
     return ifreqs::send(SIOCSIFFLAGS, ifr);
 }
 
-bool add(std::string dev, std::string type) {
-    nl::MessageFactory<ifinfomsg> req(RTM_NEWLINK,
-                                      NLM_F_REQUEST | NLM_F_CREATE | NLM_F_EXCL | NLM_F_ACK);
+static std::string toString(const sockaddr* addr) {
+    char host[NI_MAXHOST];
+    socklen_t addrlen = (addr->sa_family == AF_INET) ? sizeof(sockaddr_in) : sizeof(sockaddr_in6);
+    auto res = getnameinfo(addr, addrlen, host, sizeof(host), nullptr, 0, NI_NUMERICHOST);
+    CHECK(res == 0) << "getnameinfo failed: " << gai_strerror(res);
+    return host;
+}
+
+static std::unique_ptr<ifaddrs, decltype(&freeifaddrs)> getifaddrs() {
+    ifaddrs* addrs = nullptr;
+    CHECK(getifaddrs(&addrs) == 0) << "getifaddrs failed: " << strerror(errno);
+    return {addrs, freeifaddrs};
+}
+
+std::set<std::string> getAllAddr4(std::string_view ifname) {
+    std::set<std::string> addresses;
+    auto addrs = getifaddrs();
+    for (ifaddrs* addr = addrs.get(); addr != nullptr; addr = addr->ifa_next) {
+        if (ifname != addr->ifa_name) continue;
+        if (addr->ifa_addr == nullptr) continue;
+        if (addr->ifa_addr->sa_family != AF_INET) continue;
+        addresses.insert(toString(addr->ifa_addr));
+    }
+    return addresses;
+}
+
+static in_addr_t inetAddr(std::string_view addr) {
+    auto addrn = inet_addr(std::string(addr).c_str());
+    CHECK(addrn != INADDR_NONE) << "Invalid address " << addr;
+    return addrn;
+}
+
+static in_addr_t prefixLengthToIpv4Netmask(uint8_t prefixlen) {
+    in_addr_t zero = 0;
+    return htonl(~zero << (32 - prefixlen));
+}
+
+bool setAddr4(std::string_view ifname, std::string_view addr, std::optional<uint8_t> prefixlen) {
+    auto ifr = ifreqs::fromName(ifname);
+    auto ifrAddr = reinterpret_cast<sockaddr_in*>(&ifr.ifr_addr);
+    ifrAddr->sin_family = AF_INET;
+    ifrAddr->sin_addr.s_addr = inetAddr(addr);
+    if (!ifreqs::send(SIOCSIFADDR, ifr)) return false;
+
+    if (prefixlen.has_value()) {
+        if (*prefixlen < 0 || *prefixlen > 32) {
+            LOG(ERROR) << "Invalid prefix length: " << *prefixlen;
+            return false;
+        }
+        ifr = ifreqs::fromName(ifname);
+        auto ifrNetmask = reinterpret_cast<sockaddr_in*>(&ifr.ifr_netmask);
+        ifrNetmask->sin_family = AF_INET;
+        ifrNetmask->sin_addr.s_addr = prefixLengthToIpv4Netmask(*prefixlen);
+        if (!ifreqs::send(SIOCSIFNETMASK, ifr)) return false;
+    }
+
+    return true;
+}
+
+bool addAddr4(std::string_view ifname, std::string_view addr, uint8_t prefixlen) {
+    nl::MessageFactory<ifaddrmsg> req(RTM_NEWADDR, nl::kCreateFlags);
+    req->ifa_family = AF_INET;
+    req->ifa_prefixlen = prefixlen;
+    req->ifa_flags = IFA_F_SECONDARY;
+    req->ifa_index = nametoindex(ifname);
+
+    auto addrn = inetAddr(addr);
+    req.add(IFLA_ADDRESS, addrn);
+    req.add(IFLA_BROADCAST, addrn);
+
+    nl::Socket sock(NETLINK_ROUTE);
+    return sock.send(req) && sock.receiveAck(req);
+}
+
+bool add(std::string_view dev, std::string_view type) {
+    nl::MessageFactory<ifinfomsg> req(RTM_NEWLINK, nl::kCreateFlags);
     req.add(IFLA_IFNAME, dev);
 
     {
@@ -69,15 +148,15 @@ bool add(std::string dev, std::string type) {
     return sock.send(req) && sock.receiveAck(req);
 }
 
-bool del(std::string dev) {
-    nl::MessageFactory<ifinfomsg> req(RTM_DELLINK, NLM_F_REQUEST | NLM_F_ACK);
+bool del(std::string_view dev) {
+    nl::MessageFactory<ifinfomsg> req(RTM_DELLINK);
     req.add(IFLA_IFNAME, dev);
 
     nl::Socket sock(NETLINK_ROUTE);
     return sock.send(req) && sock.receiveAck(req);
 }
 
-std::optional<hwaddr_t> getHwAddr(const std::string& ifname) {
+std::optional<hwaddr_t> getHwAddr(std::string_view ifname) {
     auto ifr = ifreqs::fromName(ifname);
     if (!ifreqs::send(SIOCGIFHWADDR, ifr)) return std::nullopt;
 
@@ -86,7 +165,7 @@ std::optional<hwaddr_t> getHwAddr(const std::string& ifname) {
     return hwaddr;
 }
 
-bool setHwAddr(const std::string& ifname, hwaddr_t hwaddr) {
+bool setHwAddr(std::string_view ifname, hwaddr_t hwaddr) {
     auto ifr = ifreqs::fromName(ifname);
 
     // fetch sa_family
@@ -96,13 +175,13 @@ bool setHwAddr(const std::string& ifname, hwaddr_t hwaddr) {
     return ifreqs::send(SIOCSIFHWADDR, ifr);
 }
 
-std::optional<bool> isUp(std::string ifname) {
+std::optional<bool> isUp(std::string_view ifname) {
     auto ifr = ifreqs::fromName(ifname);
     if (!ifreqs::send(SIOCGIFFLAGS, ifr)) return std::nullopt;
     return ifr.ifr_flags & IFF_UP;
 }
 
-static bool hasIpv4(std::string ifname) {
+static bool hasIpv4(std::string_view ifname) {
     auto ifr = ifreqs::fromName(ifname);
     switch (ifreqs::trySend(SIOCGIFADDR, ifr)) {
         case 0:

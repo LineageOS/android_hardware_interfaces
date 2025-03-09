@@ -141,6 +141,7 @@ class EvsCameraForTest : public EvsCamera {
                 (override));
     MOCK_METHOD(::ndk::ScopedAStatus, setPrimaryClient, (), (override));
     MOCK_METHOD(::ndk::ScopedAStatus, unsetPrimaryClient, (), (override));
+    MOCK_METHOD(std::string, getId, (), (override));
 
     bool mStreamStarted = false;
     bool mStreamStopped = false;
@@ -160,7 +161,7 @@ class MockEvsCameraStream : public evs::IEvsCameraStream {
     MOCK_METHOD(::ndk::ScopedAStatus, notify,
                 (const ::aidl::android::hardware::automotive::evs::EvsEventDesc& in_event),
                 (override));
-    MOCK_METHOD(::ndk::ScopedAStatus, getInterfaceVersion, (int32_t * _aidl_return), (override));
+    MOCK_METHOD(::ndk::ScopedAStatus, getInterfaceVersion, (int32_t* _aidl_return), (override));
     MOCK_METHOD(::ndk::ScopedAStatus, getInterfaceHash, (std::string * _aidl_return), (override));
 };
 

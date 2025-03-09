@@ -78,7 +78,8 @@ class BroadcastRadio final : public BnBroadcastRadio {
             std::unique_ptr<::android::WorkerThread>(new ::android::WorkerThread());
     bool mIsTuneCompleted GUARDED_BY(mMutex) = true;
     Properties mProperties GUARDED_BY(mMutex);
-    ProgramSelector mCurrentProgram GUARDED_BY(mMutex) = {};
+    ProgramSelector mCurrentProgramSelector GUARDED_BY(mMutex) = {};
+    ProgramInfo mCurrentProgramInfo GUARDED_BY(mMutex) = {};
     std::vector<VirtualProgram> mProgramList GUARDED_BY(mMutex) = {};
     std::optional<AmFmBandRange> mCurrentAmFmBandRange GUARDED_BY(mMutex);
     std::shared_ptr<ITunerCallback> mCallback GUARDED_BY(mMutex);
@@ -99,6 +100,7 @@ class BroadcastRadio final : public BnBroadcastRadio {
     void jumpToFirstSubChannelLocked(std::vector<VirtualProgram>::const_iterator& it) const
             REQUIRES(mMutex);
     bool isConfigFlagSetLocked(ConfigFlag flag) const REQUIRES(mMutex);
+    void updateCurrentProgramInfoWithAlert(std::optional<Alert>& alert);
 
     binder_status_t cmdHelp(int fd) const;
     binder_status_t cmdTune(int fd, const char** args, uint32_t numArgs);
@@ -107,6 +109,7 @@ class BroadcastRadio final : public BnBroadcastRadio {
     binder_status_t cmdCancel(int fd, uint32_t numArgs);
     binder_status_t cmdStartProgramListUpdates(int fd, const char** args, uint32_t numArgs);
     binder_status_t cmdStopProgramListUpdates(int fd, uint32_t numArgs);
+    binder_status_t cmdSimulateAlert(int fd, const char** args, uint32_t numArgs);
 
     binder_status_t dumpsys(int fd) EXCLUDES(mMutex);
 };

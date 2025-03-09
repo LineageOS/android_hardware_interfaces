@@ -26,7 +26,7 @@ cc_binary {
     defaults: ["android.hardware.power-ndk_shared"],
     relative_install_path: "hw",
     init_rc: [":android.hardware.power.rc"],
-    vintf_fragments: [":android.hardware.power.xml"],
+    vintf_fragments: ["power-default.xml"],
     vendor: true,
     shared_libs: [
         "android.hardware.common-V2-ndk",

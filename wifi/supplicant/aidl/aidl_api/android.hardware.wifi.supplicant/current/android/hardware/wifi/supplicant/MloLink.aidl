@@ -40,4 +40,5 @@ parcelable MloLink {
   byte tidsDownlinkMap;
   @nullable byte[6] apLinkMacAddress;
   int frequencyMHz;
+  android.hardware.wifi.supplicant.WifiChannelWidthInMhz channelBandwidth;
 }

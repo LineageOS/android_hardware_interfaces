@@ -1,6 +1,20 @@
+/*
+ * Copyright (C) 2024 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 
 #include <aidl/android/media/audio/common/AudioHalCapCriterion.h>
 #include <aidl/android/media/audio/common/AudioHalCapCriterionType.h>
@@ -21,10 +35,8 @@ namespace aidlaudiocommon = ::aidl::android::media::audio::common;
 
 static constexpr const char kXsdcForceConfigForUse[] = "ForceUseFor";
 
-ConversionResult<aidlaudiocommon::AudioPolicyForceUse> convertForceUseCriterionToAidl(
-        const std::string& xsdcCriterionName);
-ConversionResult<aidlaudiocommon::AudioPolicyForcedConfig> convertForcedConfigToAidl(
-        const std::string& xsdcForcedConfigCriterionType);
+ConversionResult<aidlaudiocommon::AudioPolicyForceUse> convertForceUseToAidl(
+        const std::string& xsdcCriterionName, const std::string& xsdcCriterionValue);
 ConversionResult<aidlaudiocommon::AudioDeviceAddress> convertDeviceAddressToAidl(
         const std::string& xsdcAddress);
 ConversionResult<aidlaudiocommon::AudioMode> convertTelephonyModeToAidl(

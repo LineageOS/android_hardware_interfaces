@@ -26,6 +26,7 @@
 #include <utils/SystemClock.h>
 
 #include <fcntl.h>
+#include <libyuv.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -35,12 +36,45 @@
 #include <tuple>
 #include <utility>
 
+// Uncomment below line to dump decoded frames.
+// #define DUMP_FRAMES (1)
+
 namespace aidl::android::hardware::automotive::evs::implementation {
 
 namespace {
+
 struct FormatDeleter {
     void operator()(AMediaFormat* format) const { AMediaFormat_delete(format); }
 };
+
+int fillRGBAFromNv12(const uint8_t* src_y, int src_stride_y, const uint8_t* src_uv,
+                     int src_stride_uv, const uint8_t*, int, uint8_t* dst_abgr, int dst_stride_abgr,
+                     int width, int height) {
+    return libyuv::NV12ToABGR(src_y, src_stride_y, src_uv, src_stride_uv, dst_abgr, dst_stride_abgr,
+                              width, height);
+}
+
+int fillRGBAFromNv21(const uint8_t* src_y, int src_stride_y, const uint8_t* src_vu,
+                     int src_stride_vu, const uint8_t*, int, uint8_t* dst_abgr, int dst_stride_abgr,
+                     int width, int height) {
+    return libyuv::NV21ToABGR(src_y, src_stride_y, src_vu, src_stride_vu, dst_abgr, dst_stride_abgr,
+                              width, height);
+}
+
+int fillRGBAFromYv12(const uint8_t* src_y, int src_stride_y, const uint8_t* src_u, int src_stride_u,
+                     const uint8_t* src_v, int src_stride_v, uint8_t* dst_abgr, int dst_stride_abgr,
+                     int width, int height) {
+    return libyuv::I420ToABGR(src_y, src_stride_y, src_u, src_stride_u, src_v, src_stride_v,
+                              dst_abgr, dst_stride_abgr, width, height);
+}
+
+int fillRGBAFromI420(const uint8_t* src_y, int src_stride_y, const uint8_t* src_u, int src_stride_u,
+                     const uint8_t* src_v, int src_stride_v, uint8_t* dst_abgr, int dst_stride_abgr,
+                     int width, int height) {
+    return libyuv::I420ToABGR(src_y, src_stride_y, src_u, src_stride_u, src_v, src_stride_v,
+                              dst_abgr, dst_stride_abgr, width, height);
+}
+
 }  // namespace
 
 EvsVideoEmulatedCamera::EvsVideoEmulatedCamera(Sigil, const char* deviceName,
@@ -123,7 +157,7 @@ bool EvsVideoEmulatedCamera::initializeMediaCodec() {
     mDescription.vendorFlags = 0xFFFFFFFF;  // Arbitrary test value
     mUsage = GRALLOC_USAGE_HW_TEXTURE | GRALLOC_USAGE_HW_CAMERA_WRITE |
              GRALLOC_USAGE_SW_READ_RARELY | GRALLOC_USAGE_SW_WRITE_RARELY;
-    mFormat = HAL_PIXEL_FORMAT_YCBCR_420_888;
+    mFormat = HAL_PIXEL_FORMAT_RGBA_8888;
     AMediaFormat_setInt32(format.get(), AMEDIAFORMAT_KEY_COLOR_FORMAT, COLOR_FormatYUV420Flexible);
     {
         const media_status_t status =
@@ -137,6 +171,30 @@ bool EvsVideoEmulatedCamera::initializeMediaCodec() {
     format.reset(AMediaCodec_getOutputFormat(mVideoCodec.get()));
     AMediaFormat_getInt32(format.get(), AMEDIAFORMAT_KEY_WIDTH, &mWidth);
     AMediaFormat_getInt32(format.get(), AMEDIAFORMAT_KEY_HEIGHT, &mHeight);
+
+    switch (mCameraInfo->format) {
+        default:
+        case ConfigManager::CameraInfo::PixelFormat::NV12:
+            mFillBuffer = fillRGBAFromNv12;
+            mUvStride = mWidth;
+            mDstStride = mWidth * 4;
+            break;
+        case ConfigManager::CameraInfo::PixelFormat::NV21:
+            mFillBuffer = fillRGBAFromNv21;
+            mUvStride = mWidth;
+            mDstStride = mWidth * 4;
+            break;
+        case ConfigManager::CameraInfo::PixelFormat::YV12:
+            mFillBuffer = fillRGBAFromYv12;
+            mUvStride = mWidth / 2;
+            mDstStride = mWidth * 4;
+            break;
+        case ConfigManager::CameraInfo::PixelFormat::I420:
+            mFillBuffer = fillRGBAFromI420;
+            mUvStride = mWidth / 2;
+            mDstStride = mWidth * 4;
+            break;
+    }
     return true;
 }
 
@@ -190,6 +248,28 @@ void EvsVideoEmulatedCamera::onCodecOutputAvailable(const int32_t index,
     uint8_t* const codecOutputBuffer =
             AMediaCodec_getOutputBuffer(mVideoCodec.get(), index, &decodedOutSize) + info.offset;
 
+    int color_format = 0;
+    const auto outFormat = AMediaCodec_getOutputFormat(mVideoCodec.get());
+    if (!AMediaFormat_getInt32(outFormat, AMEDIAFORMAT_KEY_COLOR_FORMAT, &color_format)) {
+        LOG(ERROR) << "Failed to get the color format.";
+        return;
+    }
+
+    int stride = 0;
+    if (!AMediaFormat_getInt32(outFormat, AMEDIAFORMAT_KEY_STRIDE, &stride)) {
+        LOG(WARNING) << "Cannot find stride in format. Set as frame width.";
+        stride = mWidth;
+    }
+
+    int slice_height = 0;
+    if (!AMediaFormat_getInt32(outFormat, AMEDIAFORMAT_KEY_SLICE_HEIGHT, &slice_height)) {
+        LOG(WARNING) << "Cannot find slice-height in format. Set as frame height.";
+        slice_height = mHeight;
+    }
+
+    LOG(DEBUG) << "COLOR FORMAT: " << color_format << " stride: " << stride
+               << " height: " << slice_height;
+
     std::size_t renderBufferId = static_cast<std::size_t>(-1);
     buffer_handle_t renderBufferHandle = nullptr;
     {
@@ -200,7 +280,7 @@ void EvsVideoEmulatedCamera::onCodecOutputAvailable(const int32_t index,
         std::tie(renderBufferId, renderBufferHandle) = useBuffer_unsafe();
     }
     if (!renderBufferHandle) {
-        LOG(ERROR) << __func__ << ": Camera failed to get an available render buffer.";
+        LOG(DEBUG) << __func__ << ": Camera failed to get an available render buffer.";
         return;
     }
     std::vector<BufferDesc> renderBufferDescs;
@@ -236,19 +316,51 @@ void EvsVideoEmulatedCamera::onCodecOutputAvailable(const int32_t index,
         return;
     }
 
-    std::size_t ySize = mHeight * mStride;
+    // Decoded output is in YUV4:2:0.
+    std::size_t ySize = mHeight * mWidth;
     std::size_t uvSize = ySize / 4;
-
-    std::memcpy(pixels, codecOutputBuffer, ySize);
-    pixels += ySize;
 
     uint8_t* u_head = codecOutputBuffer + ySize;
     uint8_t* v_head = u_head + uvSize;
 
-    for (size_t i = 0; i < uvSize; ++i) {
-        *(pixels++) = *(u_head++);
-        *(pixels++) = *(v_head++);
+#if DUMP_FRAMES
+    // TODO: We may want to keep this "dump" option.
+    static int dumpCount = 0;
+    static bool dumpData = ++dumpCount < 10;
+    if (dumpData) {
+        std::string path = "/data/vendor/dump/";
+        path += "dump_" + std::to_string(dumpCount) + ".bin";
+
+        ::android::base::unique_fd fd(
+                open(path.data(), O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP));
+        if (fd < 0) {
+            LOG(ERROR) << "Failed to open " << path;
+        } else {
+            auto len = write(fd.get(), codecOutputBuffer, info.size);
+            LOG(ERROR) << "Write " << len << " to " << path;
+        }
     }
+#endif
+    if (auto result = mFillBuffer(codecOutputBuffer, mWidth, u_head, mUvStride, v_head, mUvStride,
+                                  pixels, mDstStride, mWidth, mHeight);
+        result != 0) {
+        LOG(ERROR) << "Failed to convert I420 to BGRA";
+    }
+#if DUMP_FRAMES
+    else if (dumpData) {
+        std::string path = "/data/vendor/dump/";
+        path += "dump_" + std::to_string(dumpCount) + "_rgba.bin";
+
+        ::android::base::unique_fd fd(
+                open(path.data(), O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP));
+        if (fd < 0) {
+            LOG(ERROR) << "Failed to open " << path;
+        } else {
+            auto len = write(fd.get(), pixels, mStride * mHeight * 4);
+            LOG(ERROR) << "Write " << len << " to " << path;
+        }
+    }
+#endif
 
     // Release our output buffer
     mapper.unlock(renderBufferHandle);
@@ -332,8 +444,8 @@ void EvsVideoEmulatedCamera::initializeParameters() {
 ::android::status_t EvsVideoEmulatedCamera::allocateOneFrame(buffer_handle_t* handle) {
     static auto& alloc = ::android::GraphicBufferAllocator::get();
     unsigned pixelsPerLine = 0;
-    const auto result = alloc.allocate(mWidth, mHeight, mFormat, 1, mUsage, handle, &pixelsPerLine,
-                                       0, "EvsVideoEmulatedCamera");
+    const auto result = alloc.allocate(mWidth, mHeight, HAL_PIXEL_FORMAT_RGBA_8888, 1, mUsage,
+                                       handle, &pixelsPerLine, 0, "EvsVideoEmulatedCamera");
     if (mStride == 0) {
         // Gralloc defines stride in terms of pixels per line
         mStride = pixelsPerLine;
@@ -350,7 +462,7 @@ bool EvsVideoEmulatedCamera::startVideoStreamImpl_locked(
 
     if (auto status = AMediaCodec_start(mVideoCodec.get()); status != AMEDIA_OK) {
         LOG(INFO) << __func__ << ": Received error in starting decoder. "
-                     << "Trying again after resetting this emulated device.";
+                  << "Trying again after resetting this emulated device.";
 
         if (!initializeMediaCodec()) {
             LOG(ERROR) << __func__ << ": Failed to re-configure the media codec.";
@@ -361,7 +473,7 @@ bool EvsVideoEmulatedCamera::startVideoStreamImpl_locked(
                                AMEDIAEXTRACTOR_SEEK_CLOSEST_SYNC);
         AMediaCodec_flush(mVideoCodec.get());
 
-        if(auto status = AMediaCodec_start(mVideoCodec.get()); status != AMEDIA_OK) {
+        if (auto status = AMediaCodec_start(mVideoCodec.get()); status != AMEDIA_OK) {
             LOG(ERROR) << __func__ << ": Received error again in starting decoder. "
                        << "Error code: " << status;
             return false;
@@ -389,7 +501,9 @@ bool EvsVideoEmulatedCamera::postVideoStreamStop_locked(ndk::ScopedAStatus& stat
         return false;
     }
 
-    EvsEventDesc event = { .aType = EvsEventType::STREAM_STOPPED, };
+    EvsEventDesc event = {
+            .aType = EvsEventType::STREAM_STOPPED,
+    };
     if (auto result = mStream->notify(event); !result.isOk()) {
         LOG(WARNING) << "Failed to notify the end of the stream.";
     }

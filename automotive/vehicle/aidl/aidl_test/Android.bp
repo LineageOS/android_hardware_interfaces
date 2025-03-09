@@ -52,7 +52,7 @@ android_test {
         ":IVehicleGeneratedJavaFiles-V4",
     ],
     static_libs: [
-        "android.hardware.automotive.vehicle-V3-java",
+        "android.hardware.automotive.vehicle-V4-java",
         "android.hardware.automotive.vehicle.property-V4-java",
         "androidx.test.runner",
         "truth",

@@ -86,4 +86,20 @@ union Spatializer {
      * Headtracking sensor data.
      */
     HeadTracking.SensorData headTrackingSensorData;
+
+    /**
+     * Spatialized channel layouts.
+     * A spatialized channel layout is one where each virtual speaker position is rendered
+     * at its corresponding virtual position, and is not downmixed with any other.
+     * For instance if a spatializer is only capable of distinct positions for 5.1, it would only
+     * return 5.1:
+     *  - the list wouldn't include 4.0, because that mask is "contained" within 5.1
+     *  - the list wouldn't include 7.1 (and so on) because the side and rear channels would be
+     *     downmixed together.
+     * Another example is a spatializer that can only spatialize up to 9 channels (not counting .1)
+     * and that supports 5.1.4, and 7.1.2, the list should include both.
+     * The values must also be part of the values reported by supportedChannelLayout.
+     * The array containing the values cannot be empty.
+     */
+    AudioChannelLayout[] spatializedChannelLayout;
 }

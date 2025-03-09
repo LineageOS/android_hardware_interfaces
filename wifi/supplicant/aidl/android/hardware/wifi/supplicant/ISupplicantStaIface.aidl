@@ -35,6 +35,10 @@ import android.hardware.wifi.supplicant.QosPolicyScsRequestStatus;
 import android.hardware.wifi.supplicant.QosPolicyStatus;
 import android.hardware.wifi.supplicant.RxFilterType;
 import android.hardware.wifi.supplicant.SignalPollResult;
+import android.hardware.wifi.supplicant.UsdCapabilities;
+import android.hardware.wifi.supplicant.UsdMessageInfo;
+import android.hardware.wifi.supplicant.UsdPublishConfig;
+import android.hardware.wifi.supplicant.UsdSubscribeConfig;
 import android.hardware.wifi.supplicant.WpaDriverCapabilitiesMask;
 import android.hardware.wifi.supplicant.WpsConfigMethods;
 
@@ -877,4 +881,83 @@ interface ISupplicantStaIface {
      *         |SupplicantStatusCode.FAILURE_UNKNOWN|
      */
     void disableMscs();
+
+    /**
+     * Retrieve capabilities related to Unsynchronized Service Discovery (USD).
+     *
+     * @return Instance of |UsdCapabilities| containing the capability info.
+     */
+    UsdCapabilities getUsdCapabilities();
+
+    /**
+     * Start a USD publish session. Triggers a response via
+     * |ISupplicantStaIfaceCallback.onUsdPublishStarted| if successful, or
+     * |ISupplicantStaIfaceCallback.onUsdPublishConfigFailed| if failed.
+     *
+     * @param cmdId Identifier for this request. Will be returned in the callback to identify
+     *              the request.
+     * @param usdPublishConfig Parameters for the requested publish session.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+     *         |SupplicantStatusCode.FAILURE_UNSUPPORTED|
+     */
+    void startUsdPublish(in int cmdId, in UsdPublishConfig usdPublishConfig);
+
+    /**
+     * Start a USD subscribe session. Triggers a response via
+     * |ISupplicantStaIfaceCallback.onUsdSubscribeStarted| if successful, or
+     * |ISupplicantStaIfaceCallback.onUsdSubscribeConfigFailed| if failed.
+     *
+     * @param cmdId Identifier for this request. Will be returned in the callback to identify
+     *              the request.
+     * @param usdSubscribeConfig Parameters for the requested subscribe session.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+     *         |SupplicantStatusCode.FAILURE_UNSUPPORTED|
+     */
+    void startUsdSubscribe(in int cmdId, in UsdSubscribeConfig usdSubscribeConfig);
+
+    /**
+     * Update the service-specific info for an active publish session.
+     *
+     * @param publishId Identifier for the active publish session.
+     * @param serviceSpecificInfo Byte array containing the service-specific info. Note that the
+     *                            maximum info length is |UsdCapabilities.maxLocalSsiLengthBytes|.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+     *         |SupplicantStatusCode.FAILURE_UNSUPPORTED|
+     */
+    void updateUsdPublish(in int publishId, in byte[] serviceSpecificInfo);
+
+    /**
+     * Cancel an existing USD publish session. |ISupplicantStaIfaceCallback.onUsdPublishTerminated|
+     * will be called upon completion.
+     *
+     * @param publishId Identifier for the publish session to cancel.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+     *         |SupplicantStatusCode.FAILURE_UNSUPPORTED|
+     */
+    void cancelUsdPublish(in int publishId);
+
+    /**
+     * Cancel an existing USD subscribe session.
+     * |ISupplicantStaIfaceCallback.onUsdSubscribeTerminated| will be called upon completion.
+     *
+     * @param subscribeId Identifier for the subscribe session to cancel.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+     *         |SupplicantStatusCode.FAILURE_UNSUPPORTED|
+     */
+    void cancelUsdSubscribe(in int subscribeId);
+
+    /**
+     * Send a message to a peer device across an active USD link.
+     *
+     * @param messageInfo Information for the message to be sent.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+     *         |SupplicantStatusCode.FAILURE_UNSUPPORTED|
+     */
+    void sendUsdMessage(in UsdMessageInfo messageInfo);
 }

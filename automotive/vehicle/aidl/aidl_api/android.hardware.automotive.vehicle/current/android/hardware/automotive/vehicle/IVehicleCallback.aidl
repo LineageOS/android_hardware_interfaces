@@ -38,4 +38,5 @@ interface IVehicleCallback {
   oneway void onSetValues(in android.hardware.automotive.vehicle.SetValueResults responses);
   oneway void onPropertyEvent(in android.hardware.automotive.vehicle.VehiclePropValues propValues, int sharedMemoryFileCount);
   oneway void onPropertySetError(in android.hardware.automotive.vehicle.VehiclePropErrors errors);
+  oneway void onSupportedValueChange(in List<android.hardware.automotive.vehicle.PropIdAreaId> propIdAreaIds);
 }

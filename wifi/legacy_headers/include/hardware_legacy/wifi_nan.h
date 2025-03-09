@@ -19,6 +19,7 @@
 
 #include <net/if.h>
 #include <stdbool.h>
+#include "rtt.h"
 #include "wifi_hal.h"
 
 #ifdef __cplusplus
@@ -3103,6 +3104,7 @@ typedef struct {
     void (*EventBootstrappingRequest) (NanBootstrappingRequestInd* event);
     void (*EventBootstrappingConfirm) (NanBootstrappingConfirmInd* event);
     void (*EventSuspensionModeChange) (NanSuspensionModeChangeInd* event);
+    void (*EventRangingResults)(wifi_rtt_result* rtt_result[], u32 num_results, u16 session_id);
 } NanCallbackHandler;
 
 /**@brief nan_enable_request

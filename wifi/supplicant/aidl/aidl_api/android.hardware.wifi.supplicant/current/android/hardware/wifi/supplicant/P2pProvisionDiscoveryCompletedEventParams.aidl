@@ -41,4 +41,6 @@ parcelable P2pProvisionDiscoveryCompletedEventParams {
   String generatedPin;
   String groupInterfaceName;
   @nullable android.hardware.wifi.common.OuiKeyedData[] vendorData;
+  int pairingBootstrappingMethod;
+  @nullable String password;
 }

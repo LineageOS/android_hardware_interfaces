@@ -1,0 +1,66 @@
+/*
+ * Copyright (C) 2022 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+cc_library {
+    name: "VehicleHalJsonConfigLoader-V3",
+    vendor: true,
+    srcs: ["src/*.cpp"],
+    local_include_dirs: ["include"],
+    export_include_dirs: ["include"],
+    defaults: ["VehicleHalDefaults-V3"],
+    static_libs: ["VehicleHalUtils-V3"],
+    header_libs: [
+        "IVehicleGeneratedHeaders-V3-default",
+    ],
+    shared_libs: ["libjsoncpp"],
+}
+
+cc_library {
+    name: "VehicleHalJsonConfigLoaderEnableTestProperties-V3",
+    vendor: true,
+    srcs: [
+        "src/*.cpp",
+        ":VhalTestVendorProperties-V3",
+    ],
+    local_include_dirs: ["include"],
+    export_include_dirs: ["include"],
+    defaults: ["VehicleHalDefaults-V3"],
+    static_libs: ["VehicleHalUtils-V3"],
+    header_libs: [
+        "IVehicleGeneratedHeaders-V3-default",
+        "libbinder_headers",
+    ],
+    cflags: ["-DENABLE_VEHICLE_HAL_TEST_PROPERTIES"],
+    shared_libs: ["libjsoncpp"],
+    host_supported: true,
+}
+
+cc_library_headers {
+    name: "VehicleHalJsonConfigLoaderHeaders-V3",
+    vendor: true,
+    local_include_dirs: ["include"],
+    export_include_dirs: ["include"],
+    defaults: ["VehicleHalDefaults-V3"],
+    static_libs: ["VehicleHalUtils-V3"],
+    header_libs: [
+        "IVehicleGeneratedHeaders-V3-default",
+    ],
+    shared_libs: ["libjsoncpp"],
+}

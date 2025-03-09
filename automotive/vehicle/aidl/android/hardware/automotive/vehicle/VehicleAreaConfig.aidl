@@ -16,6 +16,7 @@
 
 package android.hardware.automotive.vehicle;
 
+import android.hardware.automotive.vehicle.HasSupportedValueInfo;
 import android.hardware.automotive.vehicle.VehiclePropertyAccess;
 
 @VintfStability
@@ -28,26 +29,142 @@ parcelable VehicleAreaConfig {
     int areaId;
 
     /**
-     * If the property has @data_enum, leave the range to zero.
+     * @deprecated client should use {@code getMinMaxSupportedValue} instead.
      *
-     * Range will be ignored in the following cases:
-     *    - The VehiclePropertyType is not INT32, INT64 or FLOAT.
-     *    - Both of min value and max value are zero.
+     * Only applicable for {@code INT32} type property. Ignored for other types.
+     *
+     * The optional minimum value at boot time.
+     *
+     * For backward compatibility,
+     * if {@code HasSupportedValueInfo.hasMinSupportedValue} is {@code true},
+     * and {@code HasSupportedValueInfo.hasMaxSupportedValue} is {@code true},
+     * this must be equal to the min supported value
+     * ({@code MinMaxSupportedValueResult.minSupportedValue}) at boot time.
+     *
+     * If no minimum or maximum value is available at boot time, both
+     * {@code minInt32Value} and {@code maxInt32Value} must be set to 0.
+     *
+     * If either one is not 0, then we assume min and max both take effect.
      */
-
     int minInt32Value;
+
+    /**
+     * @deprecated client should use {@code getMinMaxSupportedValue} instead.
+     *
+     * Only applicable for {@code INT32} type property. Ignored for other types.
+     *
+     * The optional maximum value at boot time.
+     *
+     * For backward compatibility,
+     * if {@code HasSupportedValueInfo.hasMinSupportedValue} is {@code true},
+     * and {@code HasSupportedValueInfo.hasMaxSupportedValue} is {@code true},
+     * this must be equal to the max supported value
+     * ({@code MinMaxSupportedValueResult.maxSupportedValue}) at boot time.
+     *
+     * If no minimum or maximum value is available at boot time, both
+     * {@code minInt32Value} and {@code maxInt32Value} must be set to 0.
+     *
+     * If either one is not 0, then we assume min and max both take effect.
+     */
     int maxInt32Value;
 
+    /**
+     * @deprecated client should use {@code getMinMaxSupportedValue} instead.
+     *
+     * Only applicable for {@code INT64} type property. Ignored for other types.
+     *
+     * The optional minimum value at boot time.
+     *
+     * For backward compatibility,
+     * if {@code HasSupportedValueInfo.hasMinSupportedValue} is {@code true},
+     * and {@code HasSupportedValueInfo.hasMaxSupportedValue} is {@code true},
+     * this must be equal to the min supported value
+     * ({@code MinMaxSupportedValueResult.minSupportedValue}) at boot time.
+     *
+     * If no minimum or maximum value is available at boot time, both
+     * {@code minInt64Value} and {@code maxInt64Value} must be set to 0.
+     *
+     * If either one is not 0, then we assume min and max both take effect.
+     */
     long minInt64Value;
+
+    /**
+     * @deprecated client should use {@code getMinMaxSupportedValue} instead.
+     *
+     * Only applicable for {@code INT64} type property. Ignored for other types.
+     *
+     * The optional maximum value at boot time.
+     *
+     * For backward compatibility,
+     * if {@code HasSupportedValueInfo.hasMinSupportedValue} is {@code true},
+     * and {@code HasSupportedValueInfo.hasMaxSupportedValue} is {@code true},
+     * this must be equal to the max supported value
+     * ({@code MinMaxSupportedValueResult.maxSupportedValue}) at boot time.
+     *
+     * If no minimum or maximum value is available at boot time, both
+     * {@code minInt64Value} and {@code maxInt64Value} must be set to 0.
+     *
+     * If either one is not 0, then we assume min and max both take effect.
+     */
     long maxInt64Value;
 
+    /**
+     * @deprecated client should use {@code getMinMaxSupportedValue} instead.
+     *
+     * Only applicable for {@code FLOAT} type property. Ignored for other types.
+     *
+     * The optional minimum value at boot time.
+     *
+     * For backward compatibility,
+     * if {@code HasSupportedValueInfo.hasMinSupportedValue} is {@code true},
+     * and {@code HasSupportedValueInfo.hasMaxSupportedValue} is {@code true},
+     * this must be equal to the min supported value
+     * ({@code MinMaxSupportedValueResult.minSupportedValue}) at boot time.
+     *
+     * If no minimum or maximum value is available at boot time, both
+     * {@code minFloatValue} and {@code maxFloatValue} must be set to 0.
+     *
+     * If either one is not 0, then we assume min and max both take effect.
+     */
     float minFloatValue;
+
+    /**
+     * @deprecated client should use {@code getMinMaxSupportedValue} instead.
+     *
+     * Only applicable for {@code FLOAT} type property. Ignored for other types.
+     *
+     * The optional maximum value at boot time.
+     *
+     * For backward compatibility,
+     * if {@code HasSupportedValueInfo.hasMinSupportedValue} is {@code true},
+     * and {@code HasSupportedValueInfo.hasMaxSupportedValue} is {@code true},
+     * this must be equal to the max supported value
+     * ({@code MinMaxSupportedValueResult.maxSupportedValue}) at boot time.
+     *
+     * If no minimum or maximum value is available at boot time, both
+     * {@code minFloatValue} and {@code maxFloatValue} must be set to 0.
+     *
+     * If either one is not 0, then we assume min and max both take effect.
+     */
     float maxFloatValue;
 
     /**
-     * If the property has a @data_enum, then it is possible to specify a supported subset of the
-     * @data_enum. If the property has a @data_enum and supportedEnumValues is null, then it is
-     * assumed all @data_enum values are supported unless specified through another mechanism.
+     * @deprecated client should use {@code getMinMaxSupportedValue} instead.
+     *
+     * Only applicable for property with {@code @data_enum} annotation. Ignored
+     * for other properties.
+     *
+     * Optional supported subset of supported values at boot time.
+     *
+     * If the property has a @data_enum and supportedEnumValues is {@code null},
+     * then it is assumed all @data_enum values are supported unless specified
+     * through another mechanism.
+     *
+     * For backward compatibility, if
+     * {@code HasSupportedValueInfo.hasSupportedValuesList} is {@code true}
+     * and this property has {@code data_enum} annotation,
+     * this must be set to the same as
+     * {@code SupportedValuesListResult.supportedValuesList} at boot time.
      */
     @nullable long[] supportedEnumValues;
 
@@ -83,6 +200,8 @@ parcelable VehicleAreaConfig {
     /**
      * Whether variable update rate is supported.
      *
+     * This is always {@code false} for VHAL implementation < V3.
+     *
      * This applies for continuous property only.
      *
      * It is HIGHLY RECOMMENDED to support variable update rate for all non-heartbeat continuous
@@ -109,4 +228,12 @@ parcelable VehicleAreaConfig {
      * so this should be false if the property is large (e.g. a byte array of 1k in size).
      */
     boolean supportVariableUpdateRate;
+
+    /**
+     * For VHAL implementation >= V4, this must not be {@code null}. This specifies whether
+     * this property may have min/max supported value or supported values list.
+     *
+     * For VHAL implementation < V4, this is always {@code null} and is not accessed.
+     */
+    @nullable HasSupportedValueInfo hasSupportedValueInfo;
 }

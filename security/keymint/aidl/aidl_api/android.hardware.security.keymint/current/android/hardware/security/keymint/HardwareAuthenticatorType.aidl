@@ -36,7 +36,7 @@ package android.hardware.security.keymint;
 @Backing(type="int") @VintfStability
 enum HardwareAuthenticatorType {
   NONE = 0,
-  PASSWORD = 1,
-  FINGERPRINT = 2,
-  ANY = -1,
+  PASSWORD = (1 << 0) /* 1 */,
+  FINGERPRINT = (1 << 1) /* 2 */,
+  ANY = 0xFFFFFFFF,
 }

@@ -46,7 +46,7 @@ parcelable IfaceParams {
      */
     @nullable String[] instanceIdentities;
     /**
-     * Whether the current iface is MLO.
+     * Whether the current iface is using multi-link operation.
      */
-    boolean isMlo;
+    boolean usesMlo;
 }

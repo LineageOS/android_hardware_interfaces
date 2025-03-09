@@ -1,0 +1,26 @@
+[
+    {
+        "timestamp": 1000000,
+        "areaId": 0,
+        "value": 8,
+        "prop": 289408000
+    },
+    {
+        "timestamp": 2000000,
+        "areaId": 0,
+        "value": 4,
+        "prop": 289408000
+    },
+    {
+        "timestamp": 3000000,
+        "areaId": 0,
+        "value": 16,
+        "prop": 289408000
+    },
+    {
+        "timestamp": 4000000,
+        "areaId": 0,
+        "value": 10,
+        "prop": 289408000
+    }
+]

@@ -1,0 +1,83 @@
+/*
+ * Copyright (C) 2024 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+SignedConnectionRequestProtected = {
+    1 : AlgorithmEdDSA / AlgorithmES256,
+}
+
+SignedConnectionRequest = [ ; COSE_Sign1 (untagged) [RFC9052 s4.2]
+    protected: bstr .cbor SignedConnectionRequesProtected,
+    unprotected: {},
+    payload: bstr .cbor ConnectionRequest,
+    signature: bstr     ; PureEd25519(privateKey, SignedResponseSigStruct) /
+                        ; ECDSA(privateKey, SignedResponseSigStruct)
+]
+
+ConnectionRequestSigStruct = [ ; Sig_structure for SignedConnectionRequest [ RFC9052 s4.4]
+    context: "Signature1",
+    body_protected: bstr .cbor SignedConnectionRequesProtected,
+    external_aad: bstr .cbor ExternalAADForDICESignedConnectionRequest,
+    payload: bstr .cbor ConnectionRequest,
+]
+
+; The payload structure signed by the DICE signing key
+ConnectionRequest [
+    challenge: bstr .size 32,
+    transport_type: TransportType,  ; this indicates what CBOR structure should be exected for the
+                                    ; next element (i.e. transport_id_info)
+    transport_id_info: TransportIdInfo, ; this information is used to detect person-in-the-middle
+                                        ; attacks
+]
+
+; The unique id assigned to the `ConnectionRequest` payload structure
+ConnectionRequestUuid = h'34c82916 9579 4d86 baef 592a066419e4' ; bstr .size 16 (UUID v4 - RFC 9562)
+
+; An integer that identifies the type of the transport used for communication between clients and
+; trusted services
+TransportType = &(
+    FFA: 1,
+    ; Any other transport type(s) also be defined here
+)
+
+; Identity information of the peers provided by the transport layer
+TransportIdInfo = &(
+    FFATransportId,
+    ; Any other type(s) containing transport layer identity information should also be defiend here
+)
+
+; Transport ids (a.k.a VM IDs) provided by the FFA transport
+FFATransportId = [
+    feID: uint .size 2, ; FF-A partition ID of the AuthMgr FE
+    beID: uint .size 2, ; FF-A partition ID of the AuthMgr BE
+]
+
+; External AAD to be added to any Sig_structure signed by the DICE signing key, with the mandatory
+; field of `uuid_of_payload_struct` of type UUID v4 (RFC 9562). This field is required to ensure
+; that both the signer and the verifier refer to the same payload structure, given that there are
+; various payload structures signed by the DICE signing key in different protocols in Android.
+ExternalAADForDICESigned = [
+    uuid_of_payload_struct: buuid,
+]
+
+; RFC8610 - Section 3.6
+buuid = #6.37(bstr .size 16)
+
+ExternalAADForDICESignedConnectionRequest = [ ; ExternalAADForDICESigned for ConnectionRequest
+    uuid_of_payload_struct: #6.37(ConnectionRequestUuid),
+]
+
+AlgorithmES256 = -7              ; [RFC9053 s2.1]
+AlgorithmEdDSA = -8              ; [RFC9053 s2.2]

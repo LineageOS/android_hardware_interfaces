@@ -32,6 +32,9 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.bluetooth.ranging;
+/**
+ * @deprecated use ModeTwoData
+ */
 @VintfStability
 parcelable StepTonePct {
   List<android.hardware.bluetooth.ranging.ComplexNumber> tonePcts;

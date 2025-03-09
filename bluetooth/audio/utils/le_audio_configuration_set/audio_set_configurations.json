@@ -18,6 +18,7 @@
     " Example values which can be used as 'codec_configuration.compound_value'",
     "   Codec Coding formats:",
     "     LC3 = 6",
+    "     OPUS = 225",
     "   Sampling Frequencies: ",
     "     8000Hz = 1",
     "     11025Hz = 2",
@@ -34,7 +35,8 @@
     "     384000Hz = 13",
     "   Frame Durations:",
     "     7500us = 0",
-    "     10000us = 1"
+    "     10000us = 1",
+    "     20000us = 2"
   ],
   "configurations": [
     {

@@ -24,7 +24,7 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
-cc_library_static {
+cc_library {
     name: "android.hardware.broadcastradio@common-utils-aidl-lib",
     defaults: [
         "BroadcastRadioUtilsDefaults",
@@ -34,7 +34,7 @@ cc_library_static {
     ],
 }
 
-cc_library_static {
+cc_library {
     name: "android.hardware.broadcastradio@common-utils-aidl-lib-V2",
     defaults: [
         "BroadcastRadioUtilsDefaults",
@@ -47,7 +47,21 @@ cc_library_static {
     ],
 }
 
-cc_library_static {
+cc_library {
+    name: "android.hardware.broadcastradio@common-utils-aidl-lib-V3",
+    defaults: [
+        "BroadcastRadioUtilsDefaults",
+    ],
+    srcs: [
+        "src/UtilsV2.cpp",
+        "src/UtilsV3.cpp",
+    ],
+    shared_libs: [
+        "android.hardware.broadcastradio-V3-ndk",
+    ],
+}
+
+cc_library {
     name: "android.hardware.broadcastradio@common-utils-aidl-lib-latest",
     defaults: [
         "BroadcastRadioUtilsDefaults",
@@ -55,6 +69,7 @@ cc_library_static {
     ],
     srcs: [
         "src/UtilsV2.cpp",
+        "src/UtilsV3.cpp",
     ],
 }
 

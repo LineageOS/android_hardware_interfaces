@@ -33,7 +33,7 @@
 
 package android.hardware.radio.network;
 /* @hide */
-@Backing(type="int") @JavaDerive(toString=true) @VintfStability
+@Backing(type="int") @JavaDerive(toString=true) @SuppressWarnings(value={"redundant-name"}) @VintfStability
 enum EmergencyMode {
   EMERGENCY_WWAN = 1,
   EMERGENCY_WLAN = 2,

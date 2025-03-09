@@ -23,10 +23,20 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
-cc_library_static {
-    name: "android.hardware.automotive.can@libnetdevice",
-    defaults: ["android.hardware.automotive.can@defaults"],
+cc_defaults {
+    name: "libnetdevice-common",
+    host_supported: true,
     vendor_available: true,
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-DANDROID_BASE_UNIQUE_FD_DISABLE_IMPLICIT_CONVERSION",
+    ],
+    shared_libs: [
+        "libbase",
+        "libutils",
+    ],
     srcs: [
         "can.cpp",
         "common.cpp",
@@ -39,4 +49,15 @@ cc_library_static {
     static_libs: [
         "libnl++",
     ],
+}
+
+// TODO: migrate to "libnetdevice" and remove
+cc_library_static {
+    name: "android.hardware.automotive.can@libnetdevice",
+    defaults: ["libnetdevice-common"],
+}
+
+cc_library_static {
+    name: "libnetdevice",
+    defaults: ["libnetdevice-common"],
 }

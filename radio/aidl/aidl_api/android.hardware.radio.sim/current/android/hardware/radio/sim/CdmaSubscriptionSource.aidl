@@ -35,6 +35,12 @@ package android.hardware.radio.sim;
 /* @hide */
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum CdmaSubscriptionSource {
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   RUIM_SIM,
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   NV,
 }

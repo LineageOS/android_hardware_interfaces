@@ -23,7 +23,10 @@ package android.hardware.radio.ims.media;
 @VintfStability
 @Backing(type="int")
 @JavaDerive(toString=true)
+@SuppressWarnings(value={"redundant-name"})
 enum AmrMode {
+    /** Do not use. */
+    INVALID = 0,
     /** 4.75 kbps for AMR / 6.6 kbps for AMR-WB */
     AMR_MODE_0 = 1 << 0,
     /** 5.15 kbps for AMR / 8.855 kbps for AMR-WB */

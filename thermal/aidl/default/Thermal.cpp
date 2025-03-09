@@ -47,27 +47,85 @@ ScopedAStatus Thermal::getCoolingDevicesWithType(CoolingType in_type,
     return ScopedAStatus::ok();
 }
 
-ScopedAStatus Thermal::getTemperatures(std::vector<Temperature>* /* out_temperatures */) {
+ScopedAStatus Thermal::getTemperatures(std::vector<Temperature>* out_temperatures) {
     LOG(VERBOSE) << __func__;
+    std::vector<Temperature> temperatures;
+    temperatures.push_back(Temperature{
+            .name = "skin",
+            .type = TemperatureType::SKIN,
+            .value = 30.1f,
+    });
+    temperatures.push_back(Temperature{
+            .name = "battery",
+            .type = TemperatureType::BATTERY,
+            .value = 30.2f,
+    });
+    *out_temperatures = temperatures;
     return ScopedAStatus::ok();
 }
 
 ScopedAStatus Thermal::getTemperaturesWithType(TemperatureType in_type,
-                                               std::vector<Temperature>* /* out_temperatures */) {
+                                               std::vector<Temperature>* out_temperatures) {
     LOG(VERBOSE) << __func__ << " TemperatureType: " << static_cast<int32_t>(in_type);
+    if (in_type == TemperatureType::SKIN) {
+        std::vector<Temperature> temperatures;
+        temperatures.push_back(Temperature{
+                .name = "skin",
+                .type = TemperatureType::SKIN,
+                .value = 30.1f,
+        });
+        *out_temperatures = temperatures;
+    } else if (in_type == TemperatureType::BATTERY) {
+        std::vector<Temperature> temperatures;
+        temperatures.push_back(Temperature{
+                .name = "battery",
+                .type = TemperatureType::BATTERY,
+                .value = 30.2f,
+        });
+        *out_temperatures = temperatures;
+    }
     return ScopedAStatus::ok();
 }
 
 ScopedAStatus Thermal::getTemperatureThresholds(
-        std::vector<TemperatureThreshold>* /* out_temperatureThresholds */) {
+        std::vector<TemperatureThreshold>* out_temperatureThresholds) {
     LOG(VERBOSE) << __func__;
+    std::vector<TemperatureThreshold> temperatureThresholds;
+    temperatureThresholds.push_back(TemperatureThreshold{
+            .name = "skin",
+            .type = TemperatureType::SKIN,
+            .hotThrottlingThresholds = {30.0f, 31.0f, 32.0f, 33.0f, 34.0f, 35.0f, 36.0f},
+    });
+    temperatureThresholds.push_back(TemperatureThreshold{
+            .name = "battery",
+            .type = TemperatureType::BATTERY,
+            .hotThrottlingThresholds = {30.0f, 31.0f, 32.0f, 33.0f, 34.0f, 35.0f, 36.0f},
+    });
+    *out_temperatureThresholds = temperatureThresholds;
     return ScopedAStatus::ok();
 }
 
 ScopedAStatus Thermal::getTemperatureThresholdsWithType(
         TemperatureType in_type,
-        std::vector<TemperatureThreshold>* /* out_temperatureThresholds */) {
+        std::vector<TemperatureThreshold>* out_temperatureThresholds) {
     LOG(VERBOSE) << __func__ << " TemperatureType: " << static_cast<int32_t>(in_type);
+    if (in_type == TemperatureType::SKIN) {
+        std::vector<TemperatureThreshold> temperatureThresholds;
+        temperatureThresholds.push_back(TemperatureThreshold{
+                .name = "skin",
+                .type = TemperatureType::SKIN,
+                .hotThrottlingThresholds = {30.0f, 31.0f, 32.0f, 33.0f, 34.0f, 35.0f, 36.0f},
+        });
+        *out_temperatureThresholds = temperatureThresholds;
+    } else if (in_type == TemperatureType::BATTERY) {
+        std::vector<TemperatureThreshold> temperatureThresholds;
+        temperatureThresholds.push_back(TemperatureThreshold{
+                .name = "battery",
+                .type = TemperatureType::BATTERY,
+                .hotThrottlingThresholds = {30.0f, 31.0f, 32.0f, 33.0f, 34.0f, 35.0f, 36.0f},
+        });
+        *out_temperatureThresholds = temperatureThresholds;
+    }
     return ScopedAStatus::ok();
 }
 
@@ -191,4 +249,9 @@ ScopedAStatus Thermal::unregisterCoolingDeviceChangedCallback(
     }
     return ScopedAStatus::ok();
 }
+
+ndk::ScopedAStatus Thermal::forecastSkinTemperature(int32_t, float*) {
+    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
 }  // namespace aidl::android::hardware::thermal::impl::example

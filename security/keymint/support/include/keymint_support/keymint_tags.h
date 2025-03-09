@@ -103,6 +103,15 @@ DECLARE_TYPED_TAG(MAC_LENGTH);
 DECLARE_TYPED_TAG(MAX_USES_PER_BOOT);
 DECLARE_TYPED_TAG(MIN_MAC_LENGTH);
 DECLARE_TYPED_TAG(MIN_SECONDS_BETWEEN_OPS);
+// TODO: remove special case macro once v4 HAL is frozen
+#ifdef KEYMINT_HAL_V4
+DECLARE_TYPED_TAG(MODULE_HASH);
+#else
+// When building for previous frozen HAL, the `Tag::MODULE_NAME` constant is not available.
+static const Tag Tag_MODULE_HASH = static_cast<Tag>(-1879047468);
+typedef typename Tag2TypedTag<Tag_MODULE_HASH>::type TAG_MODULE_HASH_t;
+static TAG_MODULE_HASH_t TAG_MODULE_HASH;
+#endif
 DECLARE_TYPED_TAG(NONCE);
 DECLARE_TYPED_TAG(NO_AUTH_REQUIRED);
 DECLARE_TYPED_TAG(ORIGIN);

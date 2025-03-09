@@ -18,6 +18,8 @@ package android.hardware.wifi;
 
 import android.hardware.wifi.NanDataPathSecurityConfig;
 import android.hardware.wifi.NanMatchAlg;
+import android.hardware.wifi.RttPreamble;
+import android.hardware.wifi.WifiChannelInfo;
 
 /**
  * Configurations of NAN discovery sessions. Common to publish and subscribe discovery.
@@ -136,10 +138,14 @@ parcelable NanDiscoveryCommonConfig {
      */
     boolean rangingRequired;
     /**
-     * Interval in ms between two ranging measurements. Only relevant if |rangingRequired| is true.
+     * Interval in ms between two ranging measurements. Only applies to periodic ranging and is
+     * only relevant if |rangingRequired| is true.
+     *
      * If the Awake DW interval specified either in |discoveryWindowPeriod| or in
      * |NanBandSpecificConfig.discoveryWindowIntervalVal| is larger than the ranging interval then
      * priority is given to Awake DW interval.
+     *
+     * If this is set to 0, then only one ranging is performed.
      */
     int rangingIntervalMs;
     /**
@@ -162,4 +168,16 @@ parcelable NanDiscoveryCommonConfig {
      * |NanCapabilities.supportsSuspension| is false.
      */
     boolean enableSessionSuspendability;
+    /**
+     * The number of FTM packets used to estimate a range.
+     */
+    int rttBurstSize;
+    /**
+     * RTT preamble to be used in the RTT frames.
+     */
+    RttPreamble preamble;
+    /**
+     * Channel information.
+     */
+    @nullable WifiChannelInfo channelInfo;
 }

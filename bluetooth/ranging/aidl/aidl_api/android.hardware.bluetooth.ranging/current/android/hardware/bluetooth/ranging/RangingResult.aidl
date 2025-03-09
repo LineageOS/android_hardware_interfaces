@@ -45,4 +45,6 @@ parcelable RangingResult {
   android.hardware.bluetooth.ranging.Nadm detectedAttackLevel;
   double velocityMetersPerSecond;
   @nullable byte[] vendorSpecificCsRangingResultsData;
+  android.hardware.bluetooth.ranging.RangingResultStatus rangingResultStatus;
+  long timestampNanos;
 }

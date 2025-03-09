@@ -33,10 +33,10 @@
 
 package android.hardware.radio.network;
 /* @hide */
-@JavaDerive(toString=true) @VintfStability
+@JavaDerive(toString=true) @SuppressWarnings(value={"redundant-name"}) @VintfStability
 parcelable NetworkScanResult {
   int status;
-  android.hardware.radio.RadioError error;
+  android.hardware.radio.RadioError error = android.hardware.radio.RadioError.NONE;
   android.hardware.radio.network.CellInfo[] networkInfos;
   const int SCAN_STATUS_PARTIAL = 1;
   const int SCAN_STATUS_COMPLETE = 2;

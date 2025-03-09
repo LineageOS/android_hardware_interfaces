@@ -65,7 +65,9 @@ class EvsMockCamera : public EvsCamera {
     ndk::ScopedAStatus setPrimaryClient() override;
     ndk::ScopedAStatus unsetPrimaryClient() override;
 
-    const evs::CameraDesc& getDesc() { return mDescription; }
+    std::string getId() override { return mDescription.id; }
+
+    const CameraDesc& getDesc() { return mDescription; }
 
     static std::shared_ptr<EvsMockCamera> Create(const char* deviceName);
     static std::shared_ptr<EvsMockCamera> Create(

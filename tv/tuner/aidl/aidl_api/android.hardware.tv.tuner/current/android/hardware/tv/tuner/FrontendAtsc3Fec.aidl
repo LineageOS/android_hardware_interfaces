@@ -36,11 +36,11 @@ package android.hardware.tv.tuner;
 @Backing(type="int") @VintfStability
 enum FrontendAtsc3Fec {
   UNDEFINED = 0,
-  AUTO = 1,
-  BCH_LDPC_16K = 2,
-  BCH_LDPC_64K = 4,
-  CRC_LDPC_16K = 8,
-  CRC_LDPC_64K = 16,
-  LDPC_16K = 32,
-  LDPC_64K = 64,
+  AUTO = (1 << 0) /* 1 */,
+  BCH_LDPC_16K = (1 << 1) /* 2 */,
+  BCH_LDPC_64K = (1 << 2) /* 4 */,
+  CRC_LDPC_16K = (1 << 3) /* 8 */,
+  CRC_LDPC_64K = (1 << 4) /* 16 */,
+  LDPC_16K = (1 << 5) /* 32 */,
+  LDPC_64K = (1 << 6) /* 64 */,
 }

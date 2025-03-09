@@ -35,7 +35,7 @@ package android.hardware.tv.tuner;
 /* @hide */
 @Backing(type="int") @VintfStability
 enum FrontendSpectralInversion {
-  UNDEFINED = 0,
-  NORMAL = 1,
-  INVERTED = 2,
+  UNDEFINED,
+  NORMAL,
+  INVERTED,
 }

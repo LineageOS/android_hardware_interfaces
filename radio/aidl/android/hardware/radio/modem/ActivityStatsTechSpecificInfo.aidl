@@ -36,7 +36,7 @@ parcelable ActivityStatsTechSpecificInfo {
      * Radio access technology. Set UNKNOWN if the Activity statistics
      * is RAT independent.
      */
-    AccessNetwork rat;
+    AccessNetwork rat = AccessNetwork.UNKNOWN;
     /**
      * Frequency range. Values are FREQUENCY_RANGE_
      * Set FREQUENCY_RANGE_UNKNOWN if the Activity statistics when frequency range

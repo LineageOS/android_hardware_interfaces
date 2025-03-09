@@ -72,4 +72,18 @@ enum SessionHint {
      * baseline to prepare for an arbitrary load, and must wake up if inactive.
      */
     GPU_LOAD_RESET = 7,
+
+    /**
+     * This hint indicates an upcoming CPU workload that is abnormally large and
+     * not representative of the workload. This should be used for rare, one-time
+     * operations and should be ignored by any load tracking or session hysteresis.
+     */
+    CPU_LOAD_SPIKE = 8,
+
+    /**
+     * This hint indicates an upcoming GPU workload that is abnormally large and
+     * not representative of the workload. This should be used for rare, one-time
+     * operations and should be ignored by any load tracking or session hysteresis.
+     */
+    GPU_LOAD_SPIKE = 9,
 }

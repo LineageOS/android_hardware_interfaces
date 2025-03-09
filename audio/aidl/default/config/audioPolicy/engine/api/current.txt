@@ -148,6 +148,45 @@ package android.audio.policy.engine.configuration {
     method public void setValue(@Nullable java.util.List<android.audio.policy.engine.configuration.FlagType>);
   }
 
+  public enum ForcedConfigCommunicationDeviceType {
+    method @NonNull public String getRawName();
+    enum_constant public static final android.audio.policy.engine.configuration.ForcedConfigCommunicationDeviceType BT_BLE;
+    enum_constant public static final android.audio.policy.engine.configuration.ForcedConfigCommunicationDeviceType BT_SCO;
+    enum_constant public static final android.audio.policy.engine.configuration.ForcedConfigCommunicationDeviceType NONE;
+    enum_constant public static final android.audio.policy.engine.configuration.ForcedConfigCommunicationDeviceType SPEAKER;
+    enum_constant public static final android.audio.policy.engine.configuration.ForcedConfigCommunicationDeviceType WIRED_ACCESSORY;
+  }
+
+  public enum ForcedConfigDockType {
+    method @NonNull public String getRawName();
+    enum_constant public static final android.audio.policy.engine.configuration.ForcedConfigDockType ANALOG_DOCK;
+    enum_constant public static final android.audio.policy.engine.configuration.ForcedConfigDockType BT_CAR_DOCK;
+    enum_constant public static final android.audio.policy.engine.configuration.ForcedConfigDockType BT_DESK_DOCK;
+    enum_constant public static final android.audio.policy.engine.configuration.ForcedConfigDockType DIGITAL_DOCK;
+    enum_constant public static final android.audio.policy.engine.configuration.ForcedConfigDockType NONE;
+    enum_constant public static final android.audio.policy.engine.configuration.ForcedConfigDockType WIRED_ACCESSORY;
+  }
+
+  public enum ForcedConfigMediaDeviceType {
+    method @NonNull public String getRawName();
+    enum_constant public static final android.audio.policy.engine.configuration.ForcedConfigMediaDeviceType ANALOG_DOCK;
+    enum_constant public static final android.audio.policy.engine.configuration.ForcedConfigMediaDeviceType BT_A2DP;
+    enum_constant public static final android.audio.policy.engine.configuration.ForcedConfigMediaDeviceType DIGITAL_DOCK;
+    enum_constant public static final android.audio.policy.engine.configuration.ForcedConfigMediaDeviceType HEADPHONES;
+    enum_constant public static final android.audio.policy.engine.configuration.ForcedConfigMediaDeviceType NONE;
+    enum_constant public static final android.audio.policy.engine.configuration.ForcedConfigMediaDeviceType NO_BT_A2DP;
+    enum_constant public static final android.audio.policy.engine.configuration.ForcedConfigMediaDeviceType SPEAKER;
+    enum_constant public static final android.audio.policy.engine.configuration.ForcedConfigMediaDeviceType WIRED_ACCESSORY;
+  }
+
+  public enum ForcedEncodingSourroundConfigType {
+    method @NonNull public String getRawName();
+    enum_constant public static final android.audio.policy.engine.configuration.ForcedEncodingSourroundConfigType ALWAYS;
+    enum_constant public static final android.audio.policy.engine.configuration.ForcedEncodingSourroundConfigType MANUAL;
+    enum_constant public static final android.audio.policy.engine.configuration.ForcedEncodingSourroundConfigType NEVER;
+    enum_constant public static final android.audio.policy.engine.configuration.ForcedEncodingSourroundConfigType UNSPECIFIED;
+  }
+
   public enum PfwCriterionTypeEnum {
     method @NonNull public String getRawName();
     enum_constant public static final android.audio.policy.engine.configuration.PfwCriterionTypeEnum exclusive;
@@ -227,6 +266,7 @@ package android.audio.policy.engine.configuration {
     enum_constant public static final android.audio.policy.engine.configuration.UsageEnumType AUDIO_USAGE_NOTIFICATION_EVENT;
     enum_constant public static final android.audio.policy.engine.configuration.UsageEnumType AUDIO_USAGE_NOTIFICATION_TELEPHONY_RINGTONE;
     enum_constant public static final android.audio.policy.engine.configuration.UsageEnumType AUDIO_USAGE_SAFETY;
+    enum_constant public static final android.audio.policy.engine.configuration.UsageEnumType AUDIO_USAGE_SPEAKER_CLEANUP;
     enum_constant public static final android.audio.policy.engine.configuration.UsageEnumType AUDIO_USAGE_UNKNOWN;
     enum_constant public static final android.audio.policy.engine.configuration.UsageEnumType AUDIO_USAGE_VEHICLE_STATUS;
     enum_constant public static final android.audio.policy.engine.configuration.UsageEnumType AUDIO_USAGE_VIRTUAL_SOURCE;
@@ -244,10 +284,8 @@ package android.audio.policy.engine.configuration {
     ctor public ValueType();
     method @Nullable public String getAndroid_type();
     method @Nullable public String getLiteral();
-    method @Nullable public long getNumerical();
     method public void setAndroid_type(@Nullable String);
     method public void setLiteral(@Nullable String);
-    method public void setNumerical(@Nullable long);
   }
 
   public class ValuesType {

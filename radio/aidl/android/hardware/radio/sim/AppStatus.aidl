@@ -22,6 +22,7 @@ import android.hardware.radio.sim.PinState;
 /** @hide */
 @VintfStability
 @JavaDerive(toString=true)
+@SuppressWarnings(value={"redundant-name"})
 parcelable AppStatus {
     const int APP_STATE_UNKNOWN = 0;
     const int APP_STATE_DETECTED = 1;
@@ -57,7 +58,7 @@ parcelable AppStatus {
     /**
      * Applicable only if appState == SUBSCRIPTION_PERSO
      */
-    PersoSubstate persoSubstate;
+    PersoSubstate persoSubstate = PersoSubstate.UNKNOWN;
     /**
      * e.g., from 0xA0, 0x00 -> 0x41, 0x30, 0x30, 0x30
      */
@@ -67,6 +68,6 @@ parcelable AppStatus {
      * Applicable to USIM, CSIM and ISIM
      */
     boolean pin1Replaced;
-    PinState pin1;
-    PinState pin2;
+    PinState pin1 = PinState.UNKNOWN;
+    PinState pin2 = PinState.UNKNOWN;
 }

@@ -19,7 +19,7 @@
 #include <vector>
 
 #include "core-impl/Stream.h"
-#include "core-impl/StreamSwitcher.h"
+#include "deprecated/StreamSwitcher.h"
 #include "r_submix/SubmixRoute.h"
 
 namespace aidl::android::hardware::audio::core {
@@ -73,7 +73,7 @@ class StreamRemoteSubmix : public StreamCommonImpl {
     int mWriteShutdownCount = 0;
 };
 
-class StreamInRemoteSubmix final : public StreamIn, public StreamSwitcher {
+class StreamInRemoteSubmix final : public StreamIn, public deprecated::StreamSwitcher {
   public:
     friend class ndk::SharedRefBase;
     StreamInRemoteSubmix(
@@ -85,7 +85,7 @@ class StreamInRemoteSubmix final : public StreamIn, public StreamSwitcher {
     DeviceSwitchBehavior switchCurrentStream(
             const std::vector<::aidl::android::media::audio::common::AudioDevice>& devices)
             override;
-    std::unique_ptr<StreamCommonInterfaceEx> createNewStream(
+    std::unique_ptr<deprecated::StreamCommonInterfaceEx> createNewStream(
             const std::vector<::aidl::android::media::audio::common::AudioDevice>& devices,
             StreamContext* context, const Metadata& metadata) override;
     void onClose(StreamDescriptor::State) override { defaultOnClose(); }
@@ -94,7 +94,7 @@ class StreamInRemoteSubmix final : public StreamIn, public StreamSwitcher {
             override;
 };
 
-class StreamOutRemoteSubmix final : public StreamOut, public StreamSwitcher {
+class StreamOutRemoteSubmix final : public StreamOut, public deprecated::StreamSwitcher {
   public:
     friend class ndk::SharedRefBase;
     StreamOutRemoteSubmix(
@@ -107,7 +107,7 @@ class StreamOutRemoteSubmix final : public StreamOut, public StreamSwitcher {
     DeviceSwitchBehavior switchCurrentStream(
             const std::vector<::aidl::android::media::audio::common::AudioDevice>& devices)
             override;
-    std::unique_ptr<StreamCommonInterfaceEx> createNewStream(
+    std::unique_ptr<deprecated::StreamCommonInterfaceEx> createNewStream(
             const std::vector<::aidl::android::media::audio::common::AudioDevice>& devices,
             StreamContext* context, const Metadata& metadata) override;
     void onClose(StreamDescriptor::State) override { defaultOnClose(); }

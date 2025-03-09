@@ -35,24 +35,84 @@ package android.hardware.radio.voice;
 /* @hide */
 @JavaDerive(toString=true) @VintfStability
 parcelable CdmaCallWaiting {
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   String number;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   int numberPresentation;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   String name;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   android.hardware.radio.voice.CdmaSignalInfoRecord signalInfoRecord;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   int numberType;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   int numberPlan;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int NUMBER_PLAN_UNKNOWN = 0;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int NUMBER_PLAN_ISDN = 1;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int NUMBER_PLAN_DATA = 3;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int NUMBER_PLAN_TELEX = 4;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int NUMBER_PLAN_NATIONAL = 8;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int NUMBER_PLAN_PRIVATE = 9;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int NUMBER_PRESENTATION_ALLOWED = 0;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int NUMBER_PRESENTATION_RESTRICTED = 1;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int NUMBER_PRESENTATION_UNKNOWN = 2;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int NUMBER_TYPE_UNKNOWN = 0;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int NUMBER_TYPE_INTERNATIONAL = 1;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int NUMBER_TYPE_NATIONAL = 2;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int NUMBER_TYPE_NETWORK_SPECIFIC = 3;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int NUMBER_TYPE_SUBSCRIBER = 4;
 }

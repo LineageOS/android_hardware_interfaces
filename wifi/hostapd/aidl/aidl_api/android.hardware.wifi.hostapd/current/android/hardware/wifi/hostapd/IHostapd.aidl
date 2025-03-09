@@ -40,4 +40,5 @@ interface IHostapd {
   void removeAccessPoint(in String ifaceName);
   void setDebugParams(in android.hardware.wifi.hostapd.DebugLevel level);
   oneway void terminate();
+  void removeLinkFromMultipleLinkBridgedApIface(in String ifaceName, in String linkIdentity);
 }

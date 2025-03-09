@@ -26,15 +26,14 @@
 
 namespace android::netdevice::vlan {
 
-bool add(const std::string& eth, const std::string& vlan, uint16_t id) {
+bool add(std::string_view eth, std::string_view vlan, uint16_t id) {
     const auto ethidx = nametoindex(eth);
     if (ethidx == 0) {
         LOG(ERROR) << "Ethernet interface " << eth << " doesn't exist";
         return false;
     }
 
-    nl::MessageFactory<ifinfomsg> req(RTM_NEWLINK,
-                                      NLM_F_REQUEST | NLM_F_CREATE | NLM_F_EXCL | NLM_F_ACK);
+    nl::MessageFactory<ifinfomsg> req(RTM_NEWLINK, nl::kCreateFlags);
     req.add(IFLA_IFNAME, vlan);
     req.add<uint32_t>(IFLA_LINK, ethidx);
 

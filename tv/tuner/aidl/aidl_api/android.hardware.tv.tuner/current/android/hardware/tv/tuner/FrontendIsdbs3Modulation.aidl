@@ -36,10 +36,10 @@ package android.hardware.tv.tuner;
 @Backing(type="int") @VintfStability
 enum FrontendIsdbs3Modulation {
   UNDEFINED = 0,
-  AUTO = 1,
-  MOD_BPSK = 2,
-  MOD_QPSK = 4,
-  MOD_8PSK = 8,
-  MOD_16APSK = 16,
-  MOD_32APSK = 32,
+  AUTO = (1 << 0) /* 1 */,
+  MOD_BPSK = (1 << 1) /* 2 */,
+  MOD_QPSK = (1 << 2) /* 4 */,
+  MOD_8PSK = (1 << 3) /* 8 */,
+  MOD_16APSK = (1 << 4) /* 16 */,
+  MOD_32APSK = (1 << 5) /* 32 */,
 }

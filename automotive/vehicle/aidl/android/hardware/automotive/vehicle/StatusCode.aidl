@@ -96,4 +96,11 @@ enum StatusCode {
      * operation such as closing a trunk door, etc.
      */
     NOT_AVAILABLE_SAFETY = 10,
+    /**
+     * The feature cannot be accessed because the sub-system for the feature is
+     * not connected.
+     *
+     * E.g. trailer light state is not available when the trailer is detached.
+     */
+    NOT_AVAILABLE_SUBSYSTEM_NOT_CONNECTED = 11,
 }

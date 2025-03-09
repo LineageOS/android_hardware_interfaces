@@ -83,6 +83,16 @@ const uint32_t kInvalidPatchlevel = 99998877;
 // additional overhead, for the digest algorithmIdentifier required by PKCS#1.
 const size_t kPkcs1UndigestedSignaturePaddingOverhead = 11;
 
+// Determine whether the key description is for an asymmetric key.
+bool is_asymmetric(const AuthorizationSet& key_desc) {
+    auto algorithm = key_desc.GetTagValue(TAG_ALGORITHM);
+    if (algorithm && (algorithm.value() == Algorithm::RSA || algorithm.value() == Algorithm::EC)) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 size_t count_tag_invalid_entries(const std::vector<KeyParameter>& authorizations) {
     return std::count_if(authorizations.begin(), authorizations.end(),
                          [](const KeyParameter& e) -> bool { return e.tag == Tag::INVALID; });
@@ -149,7 +159,7 @@ void check_attestation_version(uint32_t attestation_version, int32_t aidl_versio
     // The multiplier should never be higher than the AIDL version, but can be less
     // (for example, if the implementation is from an earlier version but the HAL service
     // uses the default libraries and so reports the current AIDL version).
-    EXPECT_TRUE((attestation_version / 100) <= aidl_version);
+    EXPECT_LE((attestation_version / 100), aidl_version);
 }
 
 bool avb_verification_enabled() {
@@ -160,12 +170,13 @@ bool avb_verification_enabled() {
 char nibble2hex[16] = {'0', '1', '2', '3', '4', '5', '6', '7',
                        '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
 
-// Attestations don't contain everything in key authorization lists, so we need to filter the key
-// lists to produce the lists that we expect to match the attestations.
+// Attestations don't completely align with key authorization lists, so we need to filter the lists
+// to include only the tags that are in both.
 auto kTagsToFilter = {
         Tag::CREATION_DATETIME,
         Tag::HARDWARE_TYPE,
         Tag::INCLUDE_UNIQUE_ID,
+        Tag::MODULE_HASH,
 };
 
 AuthorizationSet filtered_tags(const AuthorizationSet& set) {
@@ -234,6 +245,83 @@ uint32_t KeyMintAidlTestBase::boot_patch_level() {
     return boot_patch_level(key_characteristics_);
 }
 
+std::optional<vector<uint8_t>> KeyMintAidlTestBase::getModuleHash() {
+    if (AidlVersion() < 4) {
+        // The `MODULE_HASH` tag was introduced in v4 of the HAL; earlier versions should never
+        // expect to encounter it.
+        return std::nullopt;
+    }
+
+    // The KeyMint instance should already have been informed of the `MODULE_HASH` value for the
+    // currently running system. Generate a single attestation so we can find out what the value
+    // is.
+    auto challenge = "hello";
+    auto app_id = "foo";
+    auto params = AuthorizationSetBuilder()
+                          .EcdsaSigningKey(EcCurve::P_256)
+                          .Digest(Digest::NONE)
+                          .Authorization(TAG_NO_AUTH_REQUIRED)
+                          .AttestationChallenge(challenge)
+                          .AttestationApplicationId(app_id)
+                          .SetDefaultValidity();
+    vector<uint8_t> key_blob;
+    vector<KeyCharacteristics> key_characteristics;
+    vector<Certificate> chain;
+    auto result = GenerateKey(params, &key_blob, &key_characteristics, &chain);
+    if (result != ErrorCode::OK) {
+        ADD_FAILURE() << "Failed to generate attestation:" << result;
+        return std::nullopt;
+    }
+    KeyBlobDeleter deleter(keymint_, key_blob);
+    if (chain.empty()) {
+        ADD_FAILURE() << "No attestation cert";
+        return std::nullopt;
+    }
+
+    // Parse the attestation record in the leaf cert.
+    X509_Ptr cert(parse_cert_blob(chain[0].encodedCertificate));
+    if (cert.get() == nullptr) {
+        ADD_FAILURE() << "Failed to parse attestation cert";
+        return std::nullopt;
+    }
+    ASN1_OCTET_STRING* attest_rec = get_attestation_record(cert.get());
+    if (attest_rec == nullptr) {
+        ADD_FAILURE() << "Failed to find attestation extension";
+        return std::nullopt;
+    }
+    AuthorizationSet att_sw_enforced;
+    AuthorizationSet att_hw_enforced;
+    uint32_t att_attestation_version;
+    uint32_t att_keymint_version;
+    SecurityLevel att_attestation_security_level;
+    SecurityLevel att_keymint_security_level;
+    vector<uint8_t> att_challenge;
+    vector<uint8_t> att_unique_id;
+    vector<uint8_t> att_app_id;
+
+    auto error = parse_attestation_record(attest_rec->data,                 //
+                                          attest_rec->length,               //
+                                          &att_attestation_version,         //
+                                          &att_attestation_security_level,  //
+                                          &att_keymint_version,             //
+                                          &att_keymint_security_level,      //
+                                          &att_challenge,                   //
+                                          &att_sw_enforced,                 //
+                                          &att_hw_enforced,                 //
+                                          &att_unique_id);
+    if (error != ErrorCode::OK) {
+        ADD_FAILURE() << "Failed to parse attestation extension";
+        return std::nullopt;
+    }
+
+    // The module hash should be present in the software-enforced list.
+    if (!att_sw_enforced.Contains(TAG_MODULE_HASH)) {
+        ADD_FAILURE() << "No TAG_MODULE_HASH in attestation extension";
+        return std::nullopt;
+    }
+    return att_sw_enforced.GetTagValue(TAG_MODULE_HASH);
+}
+
 /**
  * An API to determine device IDs attestation is required or not,
  * which is mandatory for KeyMint version 2 and first_api_level 33 or greater.
@@ -270,12 +358,7 @@ bool KeyMintAidlTestBase::Curve25519Supported() {
     }
 
     // Curve 25519 was included in version 2 of the KeyMint interface.
-    int32_t version = 0;
-    auto status = keymint_->getInterfaceVersion(&version);
-    if (!status.isOk()) {
-        ADD_FAILURE() << "Failed to determine interface version";
-    }
-    return version >= 2;
+    return AidlVersion() >= 2;
 }
 
 void KeyMintAidlTestBase::InitializeKeyMint(std::shared_ptr<IKeyMintDevice> keyMint) {
@@ -293,6 +376,20 @@ void KeyMintAidlTestBase::InitializeKeyMint(std::shared_ptr<IKeyMintDevice> keyM
     os_version_ = getOsVersion();
     os_patch_level_ = getOsPatchlevel();
     vendor_patch_level_ = getVendorPatchlevel();
+
+    // TODO(b/369375199): temporary code, remove when apexd -> keystore2 -> KeyMint transmission
+    // of module info happens.
+    {
+        GTEST_LOG_(INFO) << "Setting MODULE_HASH to fake value as fallback";
+        // Ensure that a MODULE_HASH value is definitely present in KeyMint (if it's >= v4).
+        vector<uint8_t> fakeModuleHash = {
+                0xf3, 0xf1, 0x1f, 0xe5, 0x13, 0x05, 0xfe, 0xfa, 0xe9, 0xc3, 0x53,
+                0xef, 0x69, 0xdf, 0x9f, 0xd7, 0x0c, 0x1e, 0xcc, 0x2c, 0x2c, 0x62,
+                0x1f, 0x5e, 0x2c, 0x1d, 0x19, 0xa1, 0xfd, 0xac, 0xa1, 0xb4,
+        };
+        vector<KeyParameter> info = {Authorization(TAG_MODULE_HASH, fakeModuleHash)};
+        keymint_->setAdditionalAttestationInfo(info);
+    }
 }
 
 int32_t KeyMintAidlTestBase::AidlVersion() const {
@@ -320,15 +417,25 @@ ErrorCode KeyMintAidlTestBase::GenerateKey(const AuthorizationSet& key_desc) {
 ErrorCode KeyMintAidlTestBase::GenerateKey(const AuthorizationSet& key_desc,
                                            vector<uint8_t>* key_blob,
                                            vector<KeyCharacteristics>* key_characteristics) {
+    return GenerateKey(key_desc, key_blob, key_characteristics, &cert_chain_);
+}
+
+ErrorCode KeyMintAidlTestBase::GenerateKey(const AuthorizationSet& key_desc,
+                                           vector<uint8_t>* key_blob,
+                                           vector<KeyCharacteristics>* key_characteristics,
+                                           vector<Certificate>* cert_chain) {
     std::optional<AttestationKey> attest_key = std::nullopt;
     vector<Certificate> attest_cert_chain;
     // If an attestation is requested, but the system is RKP-only, we need to supply an explicit
     // attestation key. Else the result is a key without an attestation.
-    // If the RKP-only value is undeterminable (i.e., when running on GSI), generate and use the
-    // attest key anyways. In the case that using an attest key is not supported
-    // (shouldSkipAttestKeyTest), assume the device has factory keys (so not RKP-only).
+    // - If the RKP-only value is undeterminable (i.e., when running on GSI), generate and use the
+    //   `ATTEST_KEY` anyways.
+    // - In the case that using an `ATTEST_KEY` is not supported
+    //   (shouldSkipAttestKeyTest), assume the device has factory keys (so not RKP-only).
+    // - If the key being generated is a symmetric key (from test cases that check that the
+    //   attestation parameters are correctly ignored), don't try to use an `ATTEST_KEY`.
     if (isRkpOnly().value_or(true) && key_desc.Contains(TAG_ATTESTATION_CHALLENGE) &&
-        !shouldSkipAttestKeyTest()) {
+        !shouldSkipAttestKeyTest() && is_asymmetric(key_desc)) {
         AuthorizationSet attest_key_desc =
                 AuthorizationSetBuilder().EcdsaKey(EcCurve::P_256).AttestKey().SetDefaultValidity();
         attest_key.emplace();
@@ -340,11 +447,10 @@ ErrorCode KeyMintAidlTestBase::GenerateKey(const AuthorizationSet& key_desc,
         attest_key.value().issuerSubjectName = make_name_from_str("Android Keystore Key");
     }
 
-    ErrorCode error =
-            GenerateKey(key_desc, attest_key, key_blob, key_characteristics, &cert_chain_);
+    ErrorCode error = GenerateKey(key_desc, attest_key, key_blob, key_characteristics, cert_chain);
 
     if (error == ErrorCode::OK && attest_cert_chain.size() > 0) {
-        cert_chain_.push_back(attest_cert_chain[0]);
+        cert_chain->push_back(attest_cert_chain[0]);
     }
 
     return error;
@@ -369,10 +475,7 @@ ErrorCode KeyMintAidlTestBase::GenerateKey(const AuthorizationSet& key_desc,
         *key_characteristics = std::move(creationResult.keyCharacteristics);
         *cert_chain = std::move(creationResult.certificateChain);
 
-        auto algorithm = key_desc.GetTagValue(TAG_ALGORITHM);
-        EXPECT_TRUE(algorithm);
-        if (algorithm &&
-            (algorithm.value() == Algorithm::RSA || algorithm.value() == Algorithm::EC)) {
+        if (is_asymmetric(key_desc)) {
             EXPECT_GE(cert_chain->size(), 1);
             if (key_desc.Contains(TAG_ATTESTATION_CHALLENGE)) {
                 if (attest_key) {
@@ -413,10 +516,7 @@ ErrorCode KeyMintAidlTestBase::ImportKey(const AuthorizationSet& key_desc, KeyFo
         *key_characteristics = std::move(creationResult.keyCharacteristics);
         cert_chain_ = std::move(creationResult.certificateChain);
 
-        auto algorithm = key_desc.GetTagValue(TAG_ALGORITHM);
-        EXPECT_TRUE(algorithm);
-        if (algorithm &&
-            (algorithm.value() == Algorithm::RSA || algorithm.value() == Algorithm::EC)) {
+        if (is_asymmetric(key_desc)) {
             EXPECT_GE(cert_chain_.size(), 1);
             if (key_desc.Contains(TAG_ATTESTATION_CHALLENGE)) EXPECT_GT(cert_chain_.size(), 1);
         } else {
@@ -461,10 +561,7 @@ ErrorCode KeyMintAidlTestBase::ImportWrappedKey(string wrapped_key, string wrapp
         for (auto& entry : key_characteristics_) {
             allAuths.push_back(AuthorizationSet(entry.authorizations));
         }
-        auto algorithm = allAuths.GetTagValue(TAG_ALGORITHM);
-        EXPECT_TRUE(algorithm);
-        if (algorithm &&
-            (algorithm.value() == Algorithm::RSA || algorithm.value() == Algorithm::EC)) {
+        if (is_asymmetric(allAuths)) {
             EXPECT_GE(cert_chain_.size(), 1);
         } else {
             // For symmetric keys there should be no certificates.
@@ -1049,13 +1146,12 @@ void KeyMintAidlTestBase::LocalVerifyMessage(const vector<uint8_t>& der_cert, co
                 int openssl_padding = RSA_NO_PADDING;
                 switch (padding) {
                     case PaddingMode::NONE:
-                        ASSERT_TRUE(data_size <= key_len);
+                        ASSERT_LE(data_size, key_len);
                         ASSERT_EQ(key_len, signature.size());
                         openssl_padding = RSA_NO_PADDING;
                         break;
                     case PaddingMode::RSA_PKCS1_1_5_SIGN:
-                        ASSERT_TRUE(data_size + kPkcs1UndigestedSignaturePaddingOverhead <=
-                                    key_len);
+                        ASSERT_LE(data_size + kPkcs1UndigestedSignaturePaddingOverhead, key_len);
                         openssl_padding = RSA_PKCS1_PADDING;
                         break;
                     default:
@@ -1812,16 +1908,29 @@ void verify_root_of_trust(const vector<uint8_t>& verified_boot_key, bool device_
         }
     }
 
-    // Verified boot key should be all 0's if the boot state is not verified or self signed
+    if (get_vsr_api_level() > __ANDROID_API_V__) {
+        // The Verified Boot key field should be exactly 32 bytes since it
+        // contains the SHA-256 hash of the key on locked devices or 32 bytes
+        // of zeroes on unlocked devices. This wasn't checked for earlier
+        // versions of the KeyMint HAL, so only only be strict for VSR-16+.
+        EXPECT_EQ(verified_boot_key.size(), 32);
+    } else if (get_vsr_api_level() == __ANDROID_API_V__) {
+        // The Verified Boot key field should be:
+        //   - Exactly 32 bytes on locked devices since it should contain
+        //     the SHA-256 hash of the key, or
+        //   - Up to 32 bytes of zeroes on unlocked devices (behaviour on
+        //     unlocked devices isn't specified in the HAL interface
+        //     specification).
+        // Thus, we can't check for strict equality in case unlocked devices
+        // report values with less than 32 bytes. This wasn't checked for
+        // earlier versions of the KeyMint HAL, so only check on VSR-15.
+        EXPECT_LE(verified_boot_key.size(), 32);
+    }
+
+    // Verified Boot key should be all zeroes if the boot state is "orange".
     std::string empty_boot_key(32, '\0');
     std::string verified_boot_key_str((const char*)verified_boot_key.data(),
                                       verified_boot_key.size());
-    if (get_vsr_api_level() >= __ANDROID_API_V__) {
-        // The attestation should contain the SHA-256 hash of the verified boot
-        // key.  However, this was not checked for earlier versions of the KeyMint
-        // HAL so only be strict for VSR-V and above.
-        EXPECT_LE(verified_boot_key.size(), 32);
-    }
     EXPECT_NE(property_get("ro.boot.verifiedbootstate", property_value, ""), 0);
     if (!strcmp(property_value, "green")) {
         EXPECT_EQ(verified_boot_state, VerifiedBoot::VERIFIED);
@@ -2136,6 +2245,33 @@ void KeyMintAidlTestBase::assert_mgf_digests_present_or_not_in_key_characteristi
 
 namespace {
 
+std::optional<std::string> validateP256Point(const std::vector<uint8_t>& x_buffer,
+                                             const std::vector<uint8_t>& y_buffer) {
+    auto group = EC_GROUP_Ptr(EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1));
+    if (group.get() == nullptr) {
+        return "Error creating EC group by curve name for prime256v1";
+    }
+
+    auto point = EC_POINT_Ptr(EC_POINT_new(group.get()));
+    BIGNUM_Ptr x(BN_bin2bn(x_buffer.data(), x_buffer.size(), nullptr));
+    BIGNUM_Ptr y(BN_bin2bn(y_buffer.data(), y_buffer.size(), nullptr));
+    if (!EC_POINT_set_affine_coordinates_GFp(group.get(), point.get(), x.get(), y.get(), nullptr)) {
+        return "Failed to set affine coordinates.";
+    }
+    if (!EC_POINT_is_on_curve(group.get(), point.get(), nullptr)) {
+        return "Point is not on curve.";
+    }
+    if (EC_POINT_is_at_infinity(group.get(), point.get())) {
+        return "Point is at infinity.";
+    }
+    const auto* generator = EC_GROUP_get0_generator(group.get());
+    if (!EC_POINT_cmp(group.get(), generator, point.get(), nullptr)) {
+        return "Point is equal to generator.";
+    }
+
+    return std::nullopt;
+}
+
 void check_cose_key(const vector<uint8_t>& data, bool testMode) {
     auto [parsedPayload, __, payloadParseErr] = cppbor::parse(data);
     ASSERT_TRUE(parsedPayload) << "Key parse failed: " << payloadParseErr;
@@ -2169,6 +2305,24 @@ void check_cose_key(const vector<uint8_t>& data, bool testMode) {
                              "  -3 : \\{(0x[0-9a-f]{2}, ){31}0x[0-9a-f]{2}\\},\n"  // pub_y: data
                              "\\}"));
     }
+
+    ASSERT_TRUE(parsedPayload->asMap()) << "CBOR item was not a map";
+
+    ASSERT_TRUE(parsedPayload->asMap()->get(CoseKey::Label::PUBKEY_X))
+            << "CBOR map did not contain x coordinate of public key";
+    ASSERT_TRUE(parsedPayload->asMap()->get(CoseKey::Label::PUBKEY_X)->asBstr())
+            << "x coordinate of public key was not a bstr";
+    const auto& x = parsedPayload->asMap()->get(CoseKey::Label::PUBKEY_X)->asBstr()->value();
+
+    ASSERT_TRUE(parsedPayload->asMap()->get(CoseKey::Label::PUBKEY_Y))
+            << "CBOR map did not contain y coordinate of public key";
+    ASSERT_TRUE(parsedPayload->asMap()->get(CoseKey::Label::PUBKEY_Y)->asBstr())
+            << "y coordinate of public key was not a bstr";
+    const auto& y = parsedPayload->asMap()->get(CoseKey::Label::PUBKEY_Y)->asBstr()->value();
+
+    auto errorMessage = validateP256Point(x, y);
+    EXPECT_EQ(errorMessage, std::nullopt)
+            << *errorMessage << " x: " << bin2hex(x) << " y: " << bin2hex(y);
 }
 
 }  // namespace
@@ -2271,7 +2425,7 @@ void device_id_attestation_check_acceptable_error(Tag tag, const ErrorCode& resu
         // ATTESTATION_IDS_NOT_PROVISIONED in this case.
         ASSERT_TRUE((tag == TAG_ATTESTATION_ID_IMEI || tag == TAG_ATTESTATION_ID_MEID ||
                      tag == TAG_ATTESTATION_ID_SECOND_IMEI))
-                << "incorrect error code on attestation ID mismatch";
+                << "incorrect error code on attestation ID mismatch for " << tag;
     } else {
         ADD_FAILURE() << "Error code " << result
                       << " returned on attestation ID mismatch, should be CANNOT_ATTEST_IDS";
@@ -2353,7 +2507,7 @@ std::string exec_command(const std::string& command) {
 
     FILE* pipe = popen(command.c_str(), "r");
     if (!pipe) {
-        LOG(ERROR) << "popen failed.";
+        GTEST_LOG_(ERROR) << "popen failed.";
         return result;
     }
 
@@ -2379,7 +2533,7 @@ std::string get_imei(int slot) {
     std::string output = exec_command(cmd);
 
     if (output.empty()) {
-        LOG(ERROR) << "Command failed. Cmd: " << cmd;
+        GTEST_LOG_(ERROR) << "Command failed. Cmd: " << cmd;
         return "";
     }
 
@@ -2387,17 +2541,55 @@ std::string get_imei(int slot) {
             ::android::base::Tokenize(::android::base::Trim(output), "Device IMEI:");
 
     if (out.size() != 1) {
-        LOG(ERROR) << "Error in parsing the command output. Cmd: " << cmd;
+        GTEST_LOG_(ERROR) << "Error in parsing the command output. Cmd: " << cmd;
         return "";
     }
 
     std::string imei = ::android::base::Trim(out[0]);
     if (imei.compare("null") == 0) {
-        LOG(WARNING) << "Failed to get IMEI from Telephony service: value is null. Cmd: " << cmd;
+        GTEST_LOG_(WARNING) << "Failed to get IMEI from Telephony service: value is null. Cmd: "
+                            << cmd;
         return "";
     }
 
     return imei;
+}
+
+std::optional<std::string> get_attestation_id(const char* prop) {
+    // The frameworks code (in AndroidKeyStoreKeyPairGeneratorSpi.java) populates device ID
+    // values from one of 3 places, so the same logic needs to be reproduced here so the tests
+    // check what's expected correctly.
+    //
+    // In order of preference, the properties checked are:
+    //
+    // 1) `ro.product.<device-id>_for_attestation`: This should only be set in special cases; in
+    //     particular, AOSP builds for reference devices use a different value than the normal
+    //     builds for the same device (e.g. model of "aosp_raven" instead of "raven").
+    ::android::String8 prop_name =
+            ::android::String8::format("ro.product.%s_for_attestation", prop);
+    std::string prop_value = ::android::base::GetProperty(prop_name.c_str(), /* default= */ "");
+    if (!prop_value.empty()) {
+        return prop_value;
+    }
+
+    // 2) `ro.product.vendor.<device-id>`: This property refers to the vendor code, and so is
+    //    retained even in a GSI environment.
+    prop_name = ::android::String8::format("ro.product.vendor.%s", prop);
+    prop_value = ::android::base::GetProperty(prop_name.c_str(), /* default= */ "");
+    if (!prop_value.empty()) {
+        return prop_value;
+    }
+
+    // 3) `ro.product.<device-id>`: Note that this property is replaced by a default value when
+    //    running a GSI environment, and so will *not* match the value expected/used by the
+    //    vendor code on the device.
+    prop_name = ::android::String8::format("ro.product.%s", prop);
+    prop_value = ::android::base::GetProperty(prop_name.c_str(), /* default= */ "");
+    if (!prop_value.empty()) {
+        return prop_value;
+    }
+
+    return std::nullopt;
 }
 
 }  // namespace test

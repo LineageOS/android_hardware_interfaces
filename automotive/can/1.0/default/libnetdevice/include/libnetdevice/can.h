@@ -28,7 +28,7 @@ namespace android::netdevice::can {
  * \param ifname Interface to open a socket against
  * \return Socket's FD or -1 in case of failure
  */
-base::unique_fd socket(const std::string& ifname);
+base::unique_fd socket(std::string_view ifname);
 
 /**
  * Sets CAN interface bitrate.
@@ -36,6 +36,6 @@ base::unique_fd socket(const std::string& ifname);
  * \param ifname Interface for which the bitrate is to be set
  * \return true on success, false on failure
  */
-bool setBitrate(std::string ifname, uint32_t bitrate);
+bool setBitrate(std::string_view ifname, uint32_t bitrate);
 
 }  // namespace android::netdevice::can

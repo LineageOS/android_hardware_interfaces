@@ -36,7 +36,7 @@ cc_library_static {
         "libhardware",
         "libbase",
         "libutils",
-        "android.hardware.sensors-V2-ndk",
+        "android.hardware.sensors-V3-ndk",
     ],
     whole_static_libs: [
         "sensors_common_convert",

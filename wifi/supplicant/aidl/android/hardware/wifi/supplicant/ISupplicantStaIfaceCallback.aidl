@@ -36,6 +36,9 @@ import android.hardware.wifi.supplicant.QosPolicyScsResponseStatus;
 import android.hardware.wifi.supplicant.StaIfaceCallbackState;
 import android.hardware.wifi.supplicant.StaIfaceReasonCode;
 import android.hardware.wifi.supplicant.SupplicantStateChangeData;
+import android.hardware.wifi.supplicant.UsdMessageInfo;
+import android.hardware.wifi.supplicant.UsdReasonCode;
+import android.hardware.wifi.supplicant.UsdServiceDiscoveryInfo;
 import android.hardware.wifi.supplicant.WpsConfigError;
 import android.hardware.wifi.supplicant.WpsErrorIndication;
 
@@ -336,13 +339,24 @@ oneway interface ISupplicantStaIfaceCallback {
          */
         TID_TO_LINK_MAP = 0,
         /**
-         * Multi-link reconfiguration - AP removal as described in
-         * IEEE 802.11be spec, section 35.3.6. This is a mandatory feature for
-         * station.
+         * Multi-link reconfiguration - AP removal as described in the Wi-Fi 7 R1 MRD section
+         * 6.3.2.18. This is a mandatory feature for station.
          *
          * Removed link will not be present in |ISupplicantStaIface.getConnectionMloLinksInfo|.
          */
         MULTI_LINK_RECONFIG_AP_REMOVAL = 1,
+        /**
+         * Multi-link reconfiguration add/delete links without re-association as described in
+         * the Wi-Fi 7 R2 MRD section 6.4.2.4. This is an optional feature.
+         *
+         * This feature enables dynamic link reconfiguration operations (add link and/or delete
+         * link) on the multi-link setup of a STA MLD, either triggered by the AP MLD or initiated
+         * by the STA MLD itself. This avoids reassociation for any link reconfiguration operation.
+         *
+         * Added link will be present in |ISupplicantStaIface.getConnectionMloLinksInfo|.
+         * Deleted link will not be present in |ISupplicantStaIface.getConnectionMloLinksInfo|.
+         */
+        MULTI_LINK_DYNAMIC_RECONFIG = 2,
     }
 
     /**
@@ -405,4 +419,80 @@ oneway interface ISupplicantStaIfaceCallback {
      *
      */
     void onPmkSaCacheAdded(in PmkSaCacheData pmkSaData);
+
+    /**
+     * Called in response to |ISupplicantStaIface.startUsdPublish| to indicate that the
+     * publish session was started successfully.
+     *
+     * @param cmdId Identifier for the original request.
+     * @param publishId Identifier for the publish session.
+     */
+    void onUsdPublishStarted(in int cmdId, in int publishId);
+
+    /**
+     * Called in response to |ISupplicantStaIface.startUsdSubscribe| to indicate that the
+     * subscribe session was started successfully.
+     *
+     * @param cmdId Identifier for the original request.
+     * @param subscribeId Identifier for the subscribe session.
+     */
+    void onUsdSubscribeStarted(in int cmdId, in int subscribeId);
+
+    /**
+     * Called in response to |ISupplicantStaIface.startUsdPublish| to indicate that the
+     * publish session could not be configured.
+     *
+     * @param cmdId Identifier for the original request.
+     */
+    void onUsdPublishConfigFailed(in int cmdId);
+
+    /**
+     * Called in response to |ISupplicantStaIface.startUsdSubscribe| to indicate that the
+     * subscribe session could not be configured.
+     *
+     * @param cmdId Identifier for the original request.
+     */
+    void onUsdSubscribeConfigFailed(in int cmdId);
+
+    /**
+     * Called in response to |ISupplicantStaIface.cancelUsdPublish| to indicate that the session
+     * was cancelled successfully. May also be called unsolicited if the session terminated
+     * by supplicant.
+     *
+     * @param publishId Identifier for the publish session.
+     * @param reasonCode Code indicating the reason for the session cancellation.
+     */
+    void onUsdPublishTerminated(in int publishId, in UsdReasonCode reasonCode);
+
+    /**
+     * Called in response to |ISupplicantStaIface.cancelUsdSubscribe| to indicate that the session
+     * was cancelled successfully. May also be called unsolicited if the session terminated
+     * by supplicant.
+     *
+     * @param subscribeId Identifier for the subscribe session.
+     * @param reasonCode Code indicating the reason for the session cancellation.
+     */
+    void onUsdSubscribeTerminated(in int subscribeId, in UsdReasonCode reasonCode);
+
+    /**
+     * Indicates that the publisher sent solicited publish message to the subscriber.
+     *
+     * @param info Instance of |UsdServiceDiscoveryInfo| containing information about the reply.
+     */
+    void onUsdPublishReplied(in UsdServiceDiscoveryInfo info);
+
+    /**
+     * Indicates that a publisher was discovered. Only called if this device is acting as a
+     * subscriber.
+     *
+     * @param info Instance of |UsdServiceDiscoveryInfo| containing information about the service.
+     */
+    void onUsdServiceDiscovered(in UsdServiceDiscoveryInfo info);
+
+    /**
+     * Indicates that a message was received on an active USD link.
+     *
+     * @param messageInfo Information about the message that was received.
+     */
+    void onUsdMessageReceived(in UsdMessageInfo messageInfo);
 }

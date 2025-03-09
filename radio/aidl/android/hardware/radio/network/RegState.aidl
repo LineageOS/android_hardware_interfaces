@@ -25,6 +25,7 @@ package android.hardware.radio.network;
 @VintfStability
 @Backing(type="int")
 @JavaDerive(toString=true)
+@SuppressWarnings(value={"redundant-name"})
 enum RegState {
     /**
      * Not registered, MT is not currently searching for a new operator to register

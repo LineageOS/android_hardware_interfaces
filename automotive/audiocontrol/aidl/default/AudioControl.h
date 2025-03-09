@@ -35,13 +35,17 @@
 #include <aidl/android/media/audio/common/AudioIoFlags.h>
 #include <aidl/android/media/audio/common/AudioOutputFlags.h>
 
+#include "converter/include/CarAudioConfigurationXmlConverter.h"
+
 namespace aidl::android::hardware::automotive::audiocontrol {
 
-namespace audiohalcommon = ::aidl::android::hardware::audio::common;
 namespace audiomediacommon = ::aidl::android::media::audio::common;
+namespace audiohalcommon = ::aidl::android::hardware::audio::common;
 
 class AudioControl : public BnAudioControl {
   public:
+    AudioControl();
+    AudioControl(const std::string& carAudioConfig, const std::string& audioFadeConfig);
     ndk::ScopedAStatus onAudioFocusChange(const std::string& in_usage, int32_t in_zoneId,
                                           AudioFocusChange in_focusChange) override;
     ndk::ScopedAStatus onDevicesToDuckChange(
@@ -63,6 +67,11 @@ class AudioControl : public BnAudioControl {
     ndk::ScopedAStatus setModuleChangeCallback(
             const std::shared_ptr<IModuleChangeCallback>& in_callback) override;
     ndk::ScopedAStatus clearModuleChangeCallback() override;
+    ndk::ScopedAStatus getAudioDeviceConfiguration(
+            AudioDeviceConfiguration* audioDeviceConfig) override;
+    ndk::ScopedAStatus getOutputMirroringDevices(
+            std::vector<::aidl::android::media::audio::common::AudioPort>* mirrorDevices) override;
+    ndk::ScopedAStatus getCarAudioZones(std::vector<AudioZone>* audioZones) override;
 
     binder_status_t dump(int fd, const char** args, uint32_t numArgs) override;
 
@@ -80,6 +89,9 @@ class AudioControl : public BnAudioControl {
     std::shared_ptr<IAudioGainCallback> mAudioGainCallback = nullptr;
 
     std::shared_ptr<IModuleChangeCallback> mModuleChangeCallback = nullptr;
+
+    std::shared_ptr<::android::hardware::audiocontrol::internal::CarAudioConfigurationXmlConverter>
+            mCarAudioConfigurationConverter = nullptr;
 
     binder_status_t cmdHelp(int fd) const;
     binder_status_t cmdRequestFocus(int fd, const char** args, uint32_t numArgs);

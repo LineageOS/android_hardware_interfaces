@@ -61,7 +61,7 @@ parcelable CarrierRestrictions {
      */
     boolean allowedCarriersPrioritized;
     /** Current restriction status as defined in CarrierRestrictionStatus enum */
-    CarrierRestrictionStatus status;
+    CarrierRestrictionStatus status = CarrierRestrictionStatus.UNKNOWN;
 
     /**  Allowed carriers. */
     CarrierInfo[] allowedCarrierInfoList = {};
@@ -71,5 +71,5 @@ parcelable CarrierRestrictions {
      * excludedCarriers has same mcc/mnc and gid1 is ABCD. It means except the carrier whose gid1
      * is ABCD, all carriers with the same mcc/mnc are allowed.
      */
-    CarrierInfo[]  excludedCarrierInfoList = {};
+    CarrierInfo[] excludedCarrierInfoList = {};
 }

@@ -36,8 +36,8 @@ package android.hardware.tv.tuner;
 @Backing(type="int") @VintfStability
 enum FrontendDvbsScanType {
   UNDEFINED = 0,
-  DIRECT = 1,
-  DISEQC = 2,
-  UNICABLE = 3,
-  JESS = 4,
+  DIRECT,
+  DISEQC,
+  UNICABLE,
+  JESS,
 }

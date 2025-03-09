@@ -26,6 +26,7 @@
 namespace {
 std::unordered_map<void* /* callback */, void* /* handler */> callback_handler_map_;
 std::mutex callback_handler_lock_;
+int32_t min_callback_version_ = INT_MAX;
 }
 
 namespace aidl {
@@ -45,6 +46,18 @@ class AidlCallbackHandler {
     ~AidlCallbackHandler() { invalidate(); }
 
     bool addCallback(const std::shared_ptr<CallbackType>& cb) {
+        if (cb == nullptr) {
+            LOG(ERROR) << "Unable to register a null callback";
+            return false;
+        }
+
+        // Callback interface version indicates which methods are available
+        int callbackVersion = getCallbackInterfaceVersion(cb);
+        if (callbackVersion < min_callback_version_) {
+            LOG(INFO) << "Setting min callback version to " << callbackVersion;
+            min_callback_version_ = callbackVersion;
+        }
+
         std::unique_lock<std::mutex> lk(callback_handler_lock_);
         void* cbPtr = reinterpret_cast<void*>(cb->asBinder().get());
         const auto& cbPosition = findCbInSet(cbPtr);
@@ -106,6 +119,8 @@ class AidlCallbackHandler {
         // unique_lock unlocked here
     }
 
+    int32_t getMinCallbackVersion() { return min_callback_version_; }
+
   private:
     std::set<std::shared_ptr<CallbackType>> cb_set_;
     AIBinder_DeathRecipient* death_handler_;
@@ -138,6 +153,15 @@ class AidlCallbackHandler {
         if (!removeCbFromHandlerMap(cbPtr)) {
             LOG(ERROR) << "Callback was not in callback handler map";
         }
+    }
+
+    static int32_t getCallbackInterfaceVersion(std::shared_ptr<CallbackType> callback) {
+        int32_t callbackVersion;
+        if (!callback->getInterfaceVersion(&callbackVersion).isOk()) {
+            LOG(ERROR) << "Unable to check the callback version";
+            return INT_MAX;
+        }
+        return callbackVersion;
     }
 
     DISALLOW_COPY_AND_ASSIGN(AidlCallbackHandler);

@@ -29,7 +29,6 @@
 #include <aidl/android/media/audio/common/AudioIoFlags.h>
 #include <aidl/android/media/audio/common/AudioMode.h>
 #include <aidl/android/media/audio/common/AudioOutputFlags.h>
-#include <aidl/android/media/audio/common/AudioPolicyForcedConfig.h>
 #include <aidl/android/media/audio/common/PcmType.h>
 #include <android/binder_auto_utils.h>
 #include <utils/FastStrcmp.h>
@@ -61,31 +60,6 @@ constexpr std::array<::aidl::android::media::audio::common::AudioMode, 5> kValid
         ::aidl::android::media::audio::common::AudioMode::IN_CALL,
         ::aidl::android::media::audio::common::AudioMode::IN_COMMUNICATION,
         ::aidl::android::media::audio::common::AudioMode::CALL_SCREEN,
-};
-
-constexpr std::array<::aidl::android::media::audio::common::AudioPolicyForcedConfig, 17>
-        kValidAudioPolicyForcedConfig = {
-                ::aidl::android::media::audio::common::AudioPolicyForcedConfig::NONE,
-                ::aidl::android::media::audio::common::AudioPolicyForcedConfig::SPEAKER,
-                ::aidl::android::media::audio::common::AudioPolicyForcedConfig::HEADPHONES,
-                ::aidl::android::media::audio::common::AudioPolicyForcedConfig::BT_SCO,
-                ::aidl::android::media::audio::common::AudioPolicyForcedConfig::BT_A2DP,
-                ::aidl::android::media::audio::common::AudioPolicyForcedConfig::WIRED_ACCESSORY,
-                ::aidl::android::media::audio::common::AudioPolicyForcedConfig::BT_CAR_DOCK,
-                ::aidl::android::media::audio::common::AudioPolicyForcedConfig::BT_DESK_DOCK,
-                ::aidl::android::media::audio::common::AudioPolicyForcedConfig::ANALOG_DOCK,
-                ::aidl::android::media::audio::common::AudioPolicyForcedConfig::DIGITAL_DOCK,
-                ::aidl::android::media::audio::common::AudioPolicyForcedConfig::NO_BT_A2DP,
-                ::aidl::android::media::audio::common::AudioPolicyForcedConfig::SYSTEM_ENFORCED,
-                ::aidl::android::media::audio::common::AudioPolicyForcedConfig::
-                        HDMI_SYSTEM_AUDIO_ENFORCED,
-                ::aidl::android::media::audio::common::AudioPolicyForcedConfig::
-                        ENCODED_SURROUND_NEVER,
-                ::aidl::android::media::audio::common::AudioPolicyForcedConfig::
-                        ENCODED_SURROUND_ALWAYS,
-                ::aidl::android::media::audio::common::AudioPolicyForcedConfig::
-                        ENCODED_SURROUND_MANUAL,
-                ::aidl::android::media::audio::common::AudioPolicyForcedConfig::BT_BLE,
 };
 
 constexpr bool iequals(const std::string& str1, const std::string& str2) {
@@ -166,12 +140,6 @@ constexpr bool isTelephonyDeviceType(
 constexpr bool isValidAudioMode(::aidl::android::media::audio::common::AudioMode mode) {
     return std::find(kValidAudioModes.begin(), kValidAudioModes.end(), mode) !=
            kValidAudioModes.end();
-}
-
-constexpr bool isValidAudioPolicyForcedConfig(
-        ::aidl::android::media::audio::common::AudioPolicyForcedConfig config) {
-    return std::find(kValidAudioPolicyForcedConfig.begin(), kValidAudioPolicyForcedConfig.end(),
-                     config) != kValidAudioPolicyForcedConfig.end();
 }
 
 static inline bool maybeVendorExtension(const std::string& s) {

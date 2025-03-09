@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (C) 2024 The Android Open Source Project
+
+         Licensed under the Apache License, Version 2.0 (the "License");
+         you may not use this file except in compliance with the License.
+         You may obtain a copy of the License at
+
+                    http://www.apache.org/licenses/LICENSE-2.0
+
+         Unless required by applicable law or agreed to in writing, software
+         distributed under the License is distributed on an "AS IS" BASIS,
+         WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+         See the License for the specific language governing permissions and
+         limitations under the License.
+-->
+<xs:schema version="2.0" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:element name="carAudioConfiguration" type="CarAudioConfigurationType" minOccurs="1" maxOccurs="1" />
+    <xs:complexType name="CarAudioConfigurationType">
+        <xs:attribute name="version" type="xs:string" use="required" />
+        <xs:sequence>
+            <xs:element name="mirroringDevices" type="MirroringDevicesType" minOccurs="0" />
+            <xs:element name="deviceConfigurations" type="DeviceConfigurationsType" minOccurs="0" />
+            <xs:element name="oemContexts" type="OemContextsType" />
+            <xs:element name="activationVolumeConfigs" type="ActivationVolumeConfigsType" minOccurs="0" />
+            <xs:element name="zones" type="ZonesType" />
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="ZonesType">
+        <xs:element name="zone" type="ZoneType" minOccurs="1" maxOccurs="unbounded" />
+    </xs:complexType>
+    <xs:complexType name="ActivationVolumeConfigsType">
+        <xs:element name="activationVolumeConfig" type="ActivationVolumeConfigType" maxOccurs="unbounded" />
+    </xs:complexType>
+    <xs:complexType name="OemContextsType">
+        <xs:element name="oemContext" type="OemContextType" minOccurs="1" maxOccurs="unbounded" />
+    </xs:complexType>
+    <xs:complexType name="DeviceConfigurationsType">
+        <xs:element name="deviceConfiguration" type="DeviceConfigurationType" minOccurs="0" maxOccurs="unbounded" />
+    </xs:complexType>
+    <xs:complexType name="ZoneType">
+        <xs:attribute name="name" type="xs:string" />
+        <xs:attribute name="audioZoneId" type="xs:string" use="required" />
+        <xs:attribute name="isPrimary" type="xs:boolean" />
+        <xs:attribute name="occupantZoneId" type="xs:string" />
+        <xs:element name="inputDevices" type="InputDevicesType" />
+        <xs:element name="zoneConfigs" type="ZoneConfigsType" />
+    </xs:complexType>
+    <xs:complexType name="ZoneConfigsType">
+        <xs:element name="zoneConfig" type="ZoneConfigType"/>
+    </xs:complexType>
+    <xs:complexType name="ZoneConfigType">
+        <xs:attribute name="name" type="xs:string" />
+        <xs:attribute name="isDefault" type="xs:boolean" />
+        <xs:element name="volumeGroups" type="VolumeGroupsType" />
+        <xs:element name="applyFadeConfigs" type="ApplyFadeConfigsType" />
+    </xs:complexType>
+    <xs:complexType name="ApplyFadeConfigsType">
+        <xs:element name="fadeConfig" type="ApplyFadeConfigType" minOccurs="0" maxOccurs="unbounded" />
+    </xs:complexType>
+    <xs:complexType name="ApplyFadeConfigType">
+        <xs:attribute name="name" type="xs:string" />
+        <xs:attribute name="isDefault" type="xs:boolean" />
+        <xs:element name="audioAttributes" type="AudioAttributeUsagesType" minOccurs="0" maxOccurs="unbounded" />
+    </xs:complexType>
+    <xs:complexType name="AudioAttributeUsagesType">
+        <xs:element name="usage" type="UsageType" maxOccurs="unbounded" />
+    </xs:complexType>
+    <xs:complexType name="VolumeGroupsType">
+        <xs:element name="group"  type="VolumeGroupType" minOccurs="1" maxOccurs="unbounded" />
+    </xs:complexType>
+    <xs:complexType name="VolumeGroupType">
+        <xs:attribute name="name" type="xs:string" />
+        <xs:attribute name="activationConfig" type="xs:string" />
+        <xs:element name="device" type="DeviceRoutesType" minOccurts="1" maxOccurs="unbounded" />
+    </xs:complexType>
+    <xs:complexType name="DeviceRoutesType" >
+        <xs:attribute name="address" type="xs:string" />
+        <xs:attribute name="type" type="OutDeviceType" />
+        <xs:element name="context" type="ContextNameType" mixOccurs="1" maxOccurs="unbounded" />
+    </xs:complexType>
+    <xs:complexType name="ContextNameType">
+        <xs:attribute name="context" type="xs:string"/>
+    </xs:complexType>
+    <xs:complexType name="OemContextType">
+        <xs:attribute name="name" type="xs:string" />
+        <xs:attribute name="id" type="xs:string" />
+        <xs:element name="audioAttributes" type="AudioAttributesUsagesType" minOccurs="1" maxOccurs="1" />
+    </xs:complexType>
+    <xs:complexType name="AudioAttributesUsagesType" >
+        <xs:choice minOccurs="0" maxOccurs="unbounded" >
+            <xs:element name="audioAttribute" type="AttributesType" />
+            <xs:element name="usage" type="UsageType" />
+        </xs:choice>
+    </xs:complexType>
+    <xs:complexType name="AttributesType">
+        <xs:attribute name="contentType" type="contentTypeEnum" />
+        <xs:attribute name="usage" type="usageEnumType" />
+        <xs:attribute name="tags" type="xs:string" />
+    </xs:complexType>
+    <xs:complexType name="DeviceConfigurationType">
+        <xs:attribute name="name" type="xs:string" />
+        <xs:attribute name="value" type="xs:string" />
+    </xs:complexType>
+    <xs:complexType name="ContentType" >
+        <xs:attribute name="value" type="contentTypeEnum" use="required" />
+    </xs:complexType>
+    <xs:complexType name="UsageType">
+        <xs:attribute name="value" type="usageEnumType" use="required" />
+    </xs:complexType>
+    <xs:simpleType name="contentTypeEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="AUDIO_CONTENT_TYPE_UNKNOWN"/>
+            <xs:enumeration value="AUDIO_CONTENT_TYPE_SPEECH"/>
+            <xs:enumeration value="AUDIO_CONTENT_TYPE_MUSIC"/>
+            <xs:enumeration value="AUDIO_CONTENT_TYPE_MOVIE"/>
+            <xs:enumeration value="AUDIO_CONTENT_TYPE_SONIFICATION"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="usageEnumType">
+      <xs:restriction base="xs:string">
+          <xs:enumeration value="AUDIO_USAGE_UNKNOWN"/>
+          <xs:enumeration value="AUDIO_USAGE_MEDIA"/>
+          <xs:enumeration value="AUDIO_USAGE_VOICE_COMMUNICATION"/>
+          <xs:enumeration value="AUDIO_USAGE_VOICE_COMMUNICATION_SIGNALLING"/>
+          <xs:enumeration value="AUDIO_USAGE_ALARM"/>
+          <xs:enumeration value="AUDIO_USAGE_NOTIFICATION"/>
+          <xs:enumeration value="AUDIO_USAGE_NOTIFICATION_TELEPHONY_RINGTONE"/>
+          <!-- Note: the following 3 values were deprecated in Android T (13) SDK -->
+          <xs:enumeration value="AUDIO_USAGE_NOTIFICATION_COMMUNICATION_REQUEST"/>
+          <xs:enumeration value="AUDIO_USAGE_NOTIFICATION_COMMUNICATION_INSTANT"/>
+          <xs:enumeration value="AUDIO_USAGE_NOTIFICATION_COMMUNICATION_DELAYED"/>
+          <xs:enumeration value="AUDIO_USAGE_NOTIFICATION_EVENT"/>
+          <xs:enumeration value="AUDIO_USAGE_ASSISTANCE_ACCESSIBILITY"/>
+          <xs:enumeration value="AUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE"/>
+          <xs:enumeration value="AUDIO_USAGE_ASSISTANCE_SONIFICATION"/>
+          <xs:enumeration value="AUDIO_USAGE_GAME"/>
+          <xs:enumeration value="AUDIO_USAGE_VIRTUAL_SOURCE"/>
+          <xs:enumeration value="AUDIO_USAGE_ASSISTANT"/>
+          <xs:enumeration value="AUDIO_USAGE_CALL_ASSISTANT"/>
+          <xs:enumeration value="AUDIO_USAGE_EMERGENCY" />
+          <xs:enumeration value="AUDIO_USAGE_SAFETY" />
+          <xs:enumeration value="AUDIO_USAGE_VEHICLE_STATUS" />
+          <xs:enumeration value="AUDIO_USAGE_ANNOUNCEMENT" />
+      </xs:restriction>
+    </xs:simpleType>
+    <xs:complexType name="ActivationVolumeConfigType">
+        <xs:attribute name="name" type="xs:string" />
+        <xs:element name="activationVolumeConfigEntry" type="ActivationVolumeConfigEntryType" maxOccurs="unbounded" />
+    </xs:complexType>
+    <xs:complexType name="ActivationVolumeConfigEntryType">
+          <xs:attribute name="maxActivationVolumePercentage" type="xs:string" />
+          <xs:attribute name="minActivationVolumePercentage" type="xs:string" />
+          <xs:attribute name="invocationType" type="ActivationType" />
+    </xs:complexType>
+    <xs:simpleType name="ActivationType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="onBoot"/>
+            <xs:enumeration value="onSourceChanged"/>
+            <xs:enumeration value="onPlaybackChanged"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="OutDeviceType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="AUDIO_DEVICE_OUT_SPEAKER"/>
+            <xs:enumeration value="AUDIO_DEVICE_OUT_WIRED_HEADSET"/>
+            <xs:enumeration value="AUDIO_DEVICE_OUT_WIRED_HEADPHONE"/>
+            <xs:enumeration value="AUDIO_DEVICE_OUT_BLUETOOTH_A2DP"/>
+            <xs:enumeration value="AUDIO_DEVICE_OUT_BLUETOOTH_A2DP_HEADPHONES"/>
+            <xs:enumeration value="AUDIO_DEVICE_OUT_BLUETOOTH_A2DP_SPEAKER"/>
+            <xs:enumeration value="AUDIO_DEVICE_OUT_HDMI"/>
+            <xs:enumeration value="AUDIO_DEVICE_OUT_HDMI_EARC"/>
+            <xs:enumeration value="AUDIO_DEVICE_OUT_AUX_DIGITAL"/>
+            <xs:enumeration value="AUDIO_DEVICE_OUT_USB_ACCESSORY"/>
+            <xs:enumeration value="AUDIO_DEVICE_OUT_USB_DEVICE"/>
+            <xs:enumeration value="AUDIO_DEVICE_OUT_LINE"/>
+            <xs:enumeration value="AUDIO_DEVICE_OUT_HDMI_ARC"/>
+            <xs:enumeration value="AUDIO_DEVICE_OUT_AUX_LINE"/>
+            <xs:enumeration value="AUDIO_DEVICE_OUT_SPEAKER_SAFE"/>
+            <xs:enumeration value="AUDIO_DEVICE_OUT_BUS"/>
+            <xs:enumeration value="AUDIO_DEVICE_OUT_USB_HEADSET"/>
+            <xs:enumeration value="AUDIO_DEVICE_OUT_BLE_HEADSET"/>
+            <xs:enumeration value="AUDIO_DEVICE_OUT_BLE_SPEAKER"/>
+            <xs:enumeration value="AUDIO_DEVICE_OUT_BLE_BROADCAST"/>
+            <xs:enumeration value="AUDIO_DEVICE_OUT_DEFAULT"/>
+            <!-- Added to support legacy files -->
+            <xs:enumeration value="TYPE_BUILTIN_SPEAKER"/>
+            <xs:enumeration value="TYPE_WIRED_HEADSET"/>
+            <xs:enumeration value="TYPE_WIRED_HEADPHONES"/>
+            <xs:enumeration value="TYPE_BLUETOOTH_A2DP"/>
+            <xs:enumeration value="TYPE_HDMI"/>
+            <xs:enumeration value="TYPE_USB_ACCESSORY"/>
+            <xs:enumeration value="TYPE_USB_DEVICE"/>
+            <xs:enumeration value="TYPE_USB_HEADSET"/>
+            <xs:enumeration value="TYPE_AUX_LINE"/>
+            <xs:enumeration value="TYPE_BUS"/>
+            <xs:enumeration value="TYPE_BLE_HEADSET"/>
+            <xs:enumeration value="TYPE_BLE_SPEAKER"/>
+            <xs:enumeration value="TYPE_BLE_BROADCAST"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:complexType name="MirroringDevicesType">
+        <xs:element name="mirroringDevice" type="MirroringDevice" maxOccurs="unbounded" />
+    </xs:complexType>
+    <xs:complexType name="MirroringDevice">
+        <xs:attribute name="address" type="xs:string" />
+    </xs:complexType>
+    <xs:complexType name="InputDevicesType">
+        <xs:element name="inputDevice" type="InputDeviceType" maxOccurs="unbounded" />
+    </xs:complexType>
+    <xs:complexType name="InputDeviceType">
+        <xs:attribute name="address" type="xs:string" />
+        <xs:attribute name="type" type="InDeviceType" />
+    </xs:complexType>
+    <xs:simpleType name="InDeviceType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="AUDIO_DEVICE_IN_COMMUNICATION"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_AMBIENT"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_BUILTIN_MIC"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_BLUETOOTH_SCO_HEADSET"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_WIRED_HEADSET"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_AUX_DIGITAL"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_HDMI"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_VOICE_CALL"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_TELEPHONY_RX"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_BACK_MIC"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_REMOTE_SUBMIX"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_ANLG_DOCK_HEADSET"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_DGTL_DOCK_HEADSET"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_USB_ACCESSORY"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_USB_DEVICE"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_FM_TUNER"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_TV_TUNER"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_LINE"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_SPDIF"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_BLUETOOTH_A2DP"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_LOOPBACK"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_IP"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_BUS"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_PROXY"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_USB_HEADSET"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_BLUETOOTH_BLE"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_HDMI_ARC"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_ECHO_REFERENCE"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_DEFAULT"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_STUB"/>
+        </xs:restriction>
+    </xs:simpleType>
+</xs:schema>

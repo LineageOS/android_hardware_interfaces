@@ -18,12 +18,19 @@ package android.hardware.contexthub;
 
 import android.hardware.contexthub.ContextHubInfo;
 import android.hardware.contexthub.ContextHubMessage;
+import android.hardware.contexthub.EndpointId;
+import android.hardware.contexthub.EndpointInfo;
 import android.hardware.contexthub.HostEndpointInfo;
+import android.hardware.contexthub.HubInfo;
 import android.hardware.contexthub.IContextHubCallback;
+import android.hardware.contexthub.IEndpointCallback;
+import android.hardware.contexthub.Message;
 import android.hardware.contexthub.MessageDeliveryStatus;
 import android.hardware.contexthub.NanSessionStateUpdate;
 import android.hardware.contexthub.NanoappBinary;
 import android.hardware.contexthub.NanoappInfo;
+import android.hardware.contexthub.Reason;
+import android.hardware.contexthub.Service;
 import android.hardware.contexthub.Setting;
 
 @VintfStability
@@ -221,7 +228,7 @@ interface IContextHub {
     void onNanSessionStateChanged(in NanSessionStateUpdate update);
 
     /**
-     * Puts the context hub in and out of test mode. Test mode is a clean state
+     * Puts the Context Hub in and out of test mode. Test mode is a clean state
      * where tests can be executed in the same environment. If enable is true,
      * this will enable test mode by unloading all nanoapps. If enable is false,
      * this will disable test mode and reverse the actions of enabling test mode
@@ -231,7 +238,7 @@ interface IContextHub {
      * @TestApi or development tools. This should not be used in a production
      * environment.
      *
-     * @param enable If true, put the context hub in test mode. If false, disable
+     * @param enable If true, put the Context Hub in test mode. If false, disable
      *               test mode.
      */
     void setTestMode(in boolean enable);
@@ -256,4 +263,133 @@ interface IContextHub {
      * value EX_SERVICE_SPECIFIC.
      */
     const int EX_CONTEXT_HUB_UNSPECIFIED = -1;
+
+    /** Lists all the hubs, including the Context Hub and generic hubs. */
+    List<HubInfo> getHubs();
+
+    /** Lists all the endpoints, including the Context Hub nanoapps and generic endpoints. */
+    List<EndpointInfo> getEndpoints();
+
+    /**
+     * Publishes an endpoint from the calling side (e.g. Android). Endpoints must be registered
+     * prior to starting a session.
+     */
+    void registerEndpoint(in EndpointInfo endpoint);
+
+    /**
+     * Teardown an endpoint from the calling side (e.g. Android). This endpoint must have already
+     * been published via registerEndpoint().
+     */
+    void unregisterEndpoint(in EndpointInfo endpoint);
+
+    /**
+     * Attaches a callback interface to receive events targeted at endpoints registered by the
+     * caller.
+     */
+    void registerEndpointCallback(in IEndpointCallback callback);
+
+    /**
+     * Request a range of session IDs for the caller to use when initiating sessions. This may be
+     * called more than once, but typical usage is to request a large enough range to accommodate
+     * the maximum expected number of concurrent sessions, but not overly large as to limit other
+     * clients.
+     *
+     * @param size The number of sessionId reserved for host-initiated sessions. This number should
+     *         be less than or equal to 1024.
+     *
+     * @return An array with two elements representing the smallest and largest possible session id
+     *         available for host.
+     *
+     * @throws EX_ILLEGAL_ARGUMENT if the size is invalid.
+     * @throws EX_SERVICE_SPECIFIC if the id range requested cannot be allocated.
+     */
+    int[] requestSessionIdRange(int size);
+
+    /**
+     * Request to open a session for communication between an endpoint previously registered by the
+     * caller and a target endpoint found in getEndpoints(), optionally scoped to a service
+     * published by the target endpoint.
+     *
+     * Upon returning from this function, the session is in pending state, and the final result will
+     * be given by an asynchronous call to onEndpointSessionOpenComplete() on success, or
+     * onCloseEndpointSession() on failure.
+     *
+     * @param sessionId Caller-allocated session identifier, which must be unique across all active
+     *         sessions, and must fall in a range allocated via requestSessionIdRange().
+     * @param destination The EndpointId representing the destination side of the session.
+     * @param initiator The EndpointId representing the initiating side of the session, which
+     *         must've already been published through registerEndpoint().
+     * @param serviceDescriptor Descriptor for the service specification for scoping this session
+     *         (nullable). Null indicates a fully custom marshalling scheme. The value should match
+     *         a published descriptor for both destination and initiator.
+     *
+     * @throws EX_ILLEGAL_ARGUMENT if any of the arguments are invalid, or the combination of the
+     *         arguments is invalid.
+     * @throws EX_SERVICE_SPECIFIC on other errors
+     *         - EX_CONTEXT_HUB_UNSPECIFIED if the request failed for other reasons.
+     */
+    void openEndpointSession(int sessionId, in EndpointId destination, in EndpointId initiator,
+            in @nullable String serviceDescriptor);
+
+    /**
+     * Send a message from one endpoint to another on the (currently open) session.
+     *
+     * @param sessionId The integer representing the communication session, previously set in
+     *         openEndpointSession() or onEndpointSessionOpenRequest().
+     * @param msg The Message object representing a message to endpoint from the endpoint on host.
+     *
+     * @throws EX_ILLEGAL_ARGUMENT if any of the arguments are invalid, or the combination of the
+     *         arguments is invalid.
+     * @throws EX_SERVICE_SPECIFIC on other errors
+     *         - EX_CONTEXT_HUB_UNSPECIFIED if the request failed for other reasons.
+     */
+    void sendMessageToEndpoint(int sessionId, in Message msg);
+
+    /**
+     * Sends a message delivery status to the endpoint in response to receiving a Message with flag
+     * FLAG_REQUIRES_DELIVERY_STATUS. Each message with the flag should have a MessageDeliveryStatus
+     * response. This method sends the message delivery status back to the remote endpoint for a
+     * session.
+     *
+     * @param sessionId The integer representing the communication session, previously set in
+     *         openEndpointSession() or onEndpointSessionOpenRequest().
+     * @param msgStatus The MessageDeliveryStatus object representing the delivery status for a
+     *         specific message (identified by the sequenceNumber) within the session.
+     *
+     * @throws EX_UNSUPPORTED_OPERATION if ContextHubInfo.supportsReliableMessages is false for
+     *          the hub involved in this session.
+     */
+    void sendMessageDeliveryStatusToEndpoint(int sessionId, in MessageDeliveryStatus msgStatus);
+
+    /**
+     * Closes a session previously opened by openEndpointSession() or requested via
+     * onEndpointSessionOpenRequest(). Processing of session closure must be ordered/synchronized
+     * with message delivery, such that if this session was open, any messages previously passed to
+     * sendMessageToEndpoint() that are still in-flight must still be delivered before the session
+     * is closed. Any in-flight messages to the endpoint that requested to close the session will
+     * not be delivered.
+     *
+     * @param sessionId The integer representing the communication session, previously set in
+     *         openEndpointSession() or onEndpointSessionOpenRequest().
+     * @param reason The reason for this close endpoint session request.
+     *
+     * @throws EX_ILLEGAL_ARGUMENT if any of the arguments are invalid, or the combination of the
+     *         arguments is invalid.
+     * @throws EX_SERVICE_SPECIFIC on other errors
+     *         - EX_CONTEXT_HUB_UNSPECIFIED if the request failed for other reasons.
+     */
+    void closeEndpointSession(int sessionId, in Reason reason);
+
+    /**
+     * Notifies the HAL that the session requested by onEndpointSessionOpenRequest is ready to use.
+     *
+     * @param sessionId The integer representing the communication session, previously set in
+     *         onEndpointSessionOpenRequest(). This id is assigned by the HAL.
+     *
+     * @throws EX_ILLEGAL_ARGUMENT if any of the arguments are invalid, or the combination of the
+     *         arguments is invalid.
+     * @throws EX_SERVICE_SPECIFIC on other errors
+     *         - EX_CONTEXT_HUB_UNSPECIFIED if the request failed for other reasons.
+     */
+    void endpointSessionOpenComplete(int sessionId);
 }

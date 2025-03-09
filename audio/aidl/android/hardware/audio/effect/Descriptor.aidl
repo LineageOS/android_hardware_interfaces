@@ -70,6 +70,10 @@ parcelable Descriptor {
      */
     const String EFFECT_TYPE_UUID_EQUALIZER = "0bed4300-ddd6-11db-8f34-0002a5d5c51b";
     /**
+     * UUID for Audio eraser effect type.
+     */
+    const String EFFECT_TYPE_UUID_ERASER = "fa81a9ac-588b-11ed-9b6a-0242ac120002";
+    /**
      * UUID for Haptic Generator type.
      */
     const String EFFECT_TYPE_UUID_HAPTIC_GENERATOR = "1411e6d6-aecd-4021-a1cf-a6aceb0d71e5";

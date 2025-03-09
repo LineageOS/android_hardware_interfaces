@@ -20,29 +20,36 @@ package android.hardware.radio.network;
 @VintfStability
 @JavaDerive(toString=true)
 parcelable Cdma2000RegistrationInfo {
+    /** @deprecated Legacy CDMA is unsupported. */
     const int PRL_INDICATOR_NOT_REGISTERED = -1;
+    /** @deprecated Legacy CDMA is unsupported. */
     const int PRL_INDICATOR_NOT_IN_PRL = 0;
+    /** @deprecated Legacy CDMA is unsupported. */
     const int PRL_INDICATOR_IN_PRL = 1;
     /**
      * Concurrent services support indicator. if registered on a CDMA system.
      * false - Concurrent services not supported,
      * true - Concurrent services supported
+     * @deprecated Legacy CDMA is unsupported.
      */
     boolean cssSupported;
     /**
      * TSB-58 Roaming Indicator if registered on a CDMA or EVDO system or -1 if not.
      * Valid values are 0-255.
+     * @deprecated Legacy CDMA is unsupported.
      */
     int roamingIndicator;
     /**
      * Indicates whether the current system is in the PRL if registered on a CDMA or EVDO system
      * or -1 if not. 0=not in the PRL, 1=in the PRL.
      * Values are PRL_INDICATOR_
+     * @deprecated Legacy CDMA is unsupported.
      */
     int systemIsInPrl;
     /**
      * Default Roaming Indicator from the PRL if registered on a CDMA or EVDO system or -1 if not.
      * Valid values are 0-255.
+     * @deprecated Legacy CDMA is unsupported.
      */
     int defaultRoamingIndicator;
 }

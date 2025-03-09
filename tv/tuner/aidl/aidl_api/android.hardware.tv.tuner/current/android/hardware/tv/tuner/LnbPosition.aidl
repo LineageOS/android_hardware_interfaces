@@ -35,7 +35,7 @@ package android.hardware.tv.tuner;
 /* @hide */
 @Backing(type="int") @VintfStability
 enum LnbPosition {
-  UNDEFINED = 0,
-  POSITION_A = 1,
-  POSITION_B = 2,
+  UNDEFINED,
+  POSITION_A,
+  POSITION_B,
 }

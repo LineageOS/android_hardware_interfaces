@@ -213,4 +213,41 @@ parcelable RttResult {
      * that no vendor data is provided.
      */
     @nullable OuiKeyedData[] vendorData;
+    /**
+     * Whether ranging frame protection is enabled.
+     */
+    boolean isRangingFrameProtectionEnabled;
+    /**
+     * Whether Secure HE-LTF is enabled.
+     */
+    boolean isSecureLtfEnabled;
+    /**
+     * Base Authentication and Key Management (AKM) protocol used for PASN. Represented as
+     * at bitmap of |Akm|.
+     */
+    long baseAkm;
+    /**
+     * Pairwise cipher suite used for the PTKSA (Pairwise Transient Key Security Association).
+     * Represented as a bitmap of |CipherSuite|.
+     */
+    long cipherSuite;
+    /**
+     * Secure HE-LTF protocol version used.
+     */
+    int secureHeLtfProtocolVersion;
+    /**
+     * When an AP receives a large volume of initial PASN Authentication frames, it can use the
+     * comeback after field in the PASN Parameters element to indicate a deferral time and
+     * optionally provide a comeback cookie which is an opaque sequence of octets. This field is
+     * set to 0 to indicate that the subsequent ranging request can be retried with the
+     * |pasnComebackCookie|.
+     */
+    long pasnComebackAfterMillis;
+    /**
+     * Comeback cookie is an opaque sequence of octects sent by the AP when PASN authentication
+     * needs to be deferred. The same cookie needs to be passed in |RttSecureConfig| when the
+     * station has to range with the AP after |RttResult.pasnComebackAfterMillis|. Maximum size of
+     * cookie is 255 bytes. Refer IEEE Std 802.11az‐2022, section 9.4.2.303 PASN Parameters element.
+     */
+    @nullable byte[] pasnComebackCookie;
 }

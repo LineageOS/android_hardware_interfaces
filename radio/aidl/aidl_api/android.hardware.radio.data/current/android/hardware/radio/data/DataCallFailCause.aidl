@@ -33,7 +33,7 @@
 
 package android.hardware.radio.data;
 /* @hide */
-@Backing(type="int") @JavaDerive(toString=true) @VintfStability
+@Backing(type="int") @JavaDerive(toString=true) @SuppressWarnings(value={"redundant-name"}) @VintfStability
 enum DataCallFailCause {
   NONE = 0,
   OPERATOR_BARRED = 0x08,
@@ -169,6 +169,9 @@ enum DataCallFailCause {
   MAX_PPP_INACTIVITY_TIMER_EXPIRED = 0x7FE,
   IPV6_ADDRESS_TRANSFER_FAILED = 0x7FF,
   TRAT_SWAP_FAILED = 0x800,
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   EHRPD_TO_HRPD_FALLBACK = 0x801,
   MIP_CONFIG_FAILURE = 0x802,
   PDN_INACTIVITY_TIMER_EXPIRED = 0x803,
@@ -192,11 +195,29 @@ enum DataCallFailCause {
   NON_IP_NOT_SUPPORTED = 0x815,
   PDN_NON_IP_CALL_THROTTLED = 0x816,
   PDN_NON_IP_CALL_DISALLOWED = 0x817,
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   CDMA_LOCK = 0x818,
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   CDMA_INTERCEPT = 0x819,
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   CDMA_REORDER = 0x81A,
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   CDMA_RELEASE_DUE_TO_SO_REJECTION = 0x81B,
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   CDMA_INCOMING_CALL = 0x81C,
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   CDMA_ALERT_STOP = 0x81D,
   CHANNEL_ACQUISITION_FAILURE = 0x81E,
   MAX_ACCESS_PROBE = 0x81F,
@@ -204,8 +225,14 @@ enum DataCallFailCause {
   NO_RESPONSE_FROM_BASE_STATION = 0x821,
   REJECTED_BY_BASE_STATION = 0x822,
   CONCURRENT_SERVICES_INCOMPATIBLE = 0x823,
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   NO_CDMA_SERVICE = 0x824,
   RUIM_NOT_PRESENT = 0x825,
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   CDMA_RETRY_ORDER = 0x826,
   ACCESS_BLOCK = 0x827,
   ACCESS_BLOCK_ALL = 0x828,
@@ -324,12 +351,33 @@ enum DataCallFailCause {
   LOWER_LAYER_REGISTRATION_FAILURE = 0x895,
   DATA_PLAN_EXPIRED = 0x896,
   UMTS_HANDOVER_TO_IWLAN = 0x897,
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   EVDO_CONNECTION_DENY_BY_GENERAL_OR_NETWORK_BUSY = 0x898,
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   EVDO_CONNECTION_DENY_BY_BILLING_OR_AUTHENTICATION_FAILURE = 0x899,
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   EVDO_HDR_CHANGED = 0x89A,
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   EVDO_HDR_EXITED = 0x89B,
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   EVDO_HDR_NO_SESSION = 0x89C,
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   EVDO_USING_GPS_FIX_INSTEAD_OF_HDR_CALL = 0x89D,
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   EVDO_HDR_CONNECTION_SETUP_TIMEOUT = 0x89E,
   FAILED_TO_ACQUIRE_COLOCATED_HDR = 0x89F,
   OTASP_COMMIT_IN_PROGRESS = 0x8A0,

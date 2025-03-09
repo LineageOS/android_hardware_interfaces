@@ -24,7 +24,7 @@ import android.hardware.radio.ims.media.CodecType;
 @JavaDerive(toString=true)
 parcelable CodecParams {
     /** Negotiated codec type */
-    CodecType codecType;
+    CodecType codecType = CodecType.INVALID;
     /**
      * Static or dynamic payload type number negotiated through the SDP for
      * the incoming RTP packets. This value shall be matched with the PT value

@@ -42,6 +42,7 @@ using aidl::android::hardware::audio::effect::Descriptor;
 using aidl::android::hardware::audio::effect::Flags;
 using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::IFactory;
+using aidl::android::hardware::audio::effect::kDestroyAnyStateSupportedVersion;
 using aidl::android::hardware::audio::effect::Parameter;
 using aidl::android::hardware::audio::effect::State;
 using aidl::android::media::audio::common::AudioDeviceDescription;
@@ -316,28 +317,39 @@ TEST_P(AudioEffectTest, CloseProcessingStateEffects) {
     ASSERT_NO_FATAL_FAILURE(destroy(mFactory, mEffect));
 }
 
-// Expect EX_ILLEGAL_STATE if the effect instance is not in a proper state to be destroyed.
+// Expect EX_ILLEGAL_STATE if the effect instance is not in a proper state to be destroyed before
+// `kDestroyAnyStateSupportedVersion`.
+// For any version after `kDestroyAnyStateSupportedVersion`, expect `destroy` to always success.
 TEST_P(AudioEffectTest, DestroyOpenEffects) {
     ASSERT_NO_FATAL_FAILURE(create(mFactory, mEffect, mDescriptor));
     ASSERT_NO_FATAL_FAILURE(open(mEffect));
-    ASSERT_NO_FATAL_FAILURE(destroy(mFactory, mEffect, EX_ILLEGAL_STATE));
-
-    // cleanup
-    ASSERT_NO_FATAL_FAILURE(close(mEffect));
-    ASSERT_NO_FATAL_FAILURE(destroy(mFactory, mEffect));
+    if (mVersion < kDestroyAnyStateSupportedVersion) {
+        ASSERT_NO_FATAL_FAILURE(destroy(mFactory, mEffect, EX_ILLEGAL_STATE));
+        // cleanup
+        ASSERT_NO_FATAL_FAILURE(close(mEffect));
+        ASSERT_NO_FATAL_FAILURE(destroy(mFactory, mEffect));
+    } else {
+        ASSERT_NO_FATAL_FAILURE(destroy(mFactory, mEffect));
+    }
 }
 
-// Expect EX_ILLEGAL_STATE if the effect instance is not in a proper state to be destroyed.
+// Expect EX_ILLEGAL_STATE if the effect instance is not in a proper state to be destroyed before
+// `kDestroyAnyStateSupportedVersion`.
+// For any version after `kDestroyAnyStateSupportedVersion`, expect `destroy` to always success.
 TEST_P(AudioEffectTest, DestroyProcessingEffects) {
     ASSERT_NO_FATAL_FAILURE(create(mFactory, mEffect, mDescriptor));
     ASSERT_NO_FATAL_FAILURE(open(mEffect));
     ASSERT_NO_FATAL_FAILURE(command(mEffect, CommandId::START));
-    ASSERT_NO_FATAL_FAILURE(destroy(mFactory, mEffect, EX_ILLEGAL_STATE));
 
-    // cleanup
-    ASSERT_NO_FATAL_FAILURE(command(mEffect, CommandId::STOP));
-    ASSERT_NO_FATAL_FAILURE(close(mEffect));
-    ASSERT_NO_FATAL_FAILURE(destroy(mFactory, mEffect));
+    if (mVersion < kDestroyAnyStateSupportedVersion) {
+        ASSERT_NO_FATAL_FAILURE(destroy(mFactory, mEffect, EX_ILLEGAL_STATE));
+        // cleanup
+        ASSERT_NO_FATAL_FAILURE(command(mEffect, CommandId::STOP));
+        ASSERT_NO_FATAL_FAILURE(close(mEffect));
+        ASSERT_NO_FATAL_FAILURE(destroy(mFactory, mEffect));
+    } else {
+        ASSERT_NO_FATAL_FAILURE(destroy(mFactory, mEffect));
+    }
 }
 
 TEST_P(AudioEffectTest, NormalSequenceStates) {

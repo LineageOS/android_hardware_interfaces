@@ -40,4 +40,5 @@ parcelable NetworkParams {
   String passphrase;
   boolean isMetered;
   byte[] vendorElements;
+  boolean isClientIsolationEnabled;
 }

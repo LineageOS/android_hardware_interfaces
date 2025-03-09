@@ -43,7 +43,7 @@ void useSocketDomain(int domain);
  * \param ifname Interface to check
  * \return true if it exists, false otherwise
  */
-bool exists(std::string ifname);
+bool exists(std::string_view ifname);
 
 /**
  * Checks if network interface is up.
@@ -51,7 +51,7 @@ bool exists(std::string ifname);
  * \param ifname Interface to check
  * \return true/false if the check succeeded, nullopt otherwise
  */
-std::optional<bool> isUp(std::string ifname);
+std::optional<bool> isUp(std::string_view ifname);
 
 /**
  * Interface condition to wait for.
@@ -101,7 +101,7 @@ std::optional<std::string> waitFor(std::set<std::string> ifnames, WaitCondition 
  * \param ifname Interface to bring up
  * \return true in case of success, false otherwise
  */
-bool up(std::string ifname);
+bool up(std::string_view ifname);
 
 /**
  * Brings network interface down.
@@ -109,7 +109,39 @@ bool up(std::string ifname);
  * \param ifname Interface to bring down
  * \return true in case of success, false otherwise
  */
-bool down(std::string ifname);
+bool down(std::string_view ifname);
+
+/**
+ * Retrieves all IPv4 addresses of a given interface.
+ *
+ * \param ifname Interface to query
+ * \return list of IPv4 addresses of this interface
+ */
+std::set<std::string> getAllAddr4(std::string_view ifname);
+
+/**
+ * Set IPv4 address on a given interface.
+ *
+ * This function will overwrite any other existing IPv4 addresses.
+ *
+ * \param ifname Interface to modify
+ * \param addr IPv4 address to set
+ * \return true in case of success, false otherwise
+ */
+bool setAddr4(std::string_view ifname, std::string_view addr,
+              std::optional<uint8_t> prefixlen = std::nullopt);
+
+/**
+ * Add new IPv4 address to a given interface.
+ *
+ * Please note this doesn't remove existing IPv4 addresses.
+ *
+ * \param ifname Interface to modify
+ * \param addr IPv4 address to add
+ * \param prefixlen IPv4 netmask length
+ * \return true in case of success, false otherwise
+ */
+bool addAddr4(std::string_view ifname, std::string_view addr, uint8_t prefixlen = 24);
 
 /**
  * Adds virtual link.
@@ -118,7 +150,7 @@ bool down(std::string ifname);
  * \param type the type of the new device
  * \return true in case of success, false otherwise
  */
-bool add(std::string dev, std::string type);
+bool add(std::string_view dev, std::string_view type);
 
 /**
  * Deletes virtual link.
@@ -126,7 +158,7 @@ bool add(std::string dev, std::string type);
  * \param dev the name of the device to remove
  * \return true in case of success, false otherwise
  */
-bool del(std::string dev);
+bool del(std::string_view dev);
 
 /**
  * Fetches interface's hardware address.
@@ -134,7 +166,7 @@ bool del(std::string dev);
  * \param ifname Interface name
  * \return Hardware address (MAC address) or nullopt if the lookup failed
  */
-std::optional<hwaddr_t> getHwAddr(const std::string& ifname);
+std::optional<hwaddr_t> getHwAddr(std::string_view ifname);
 
 /**
  * Changes interface's hardware address.
@@ -142,7 +174,7 @@ std::optional<hwaddr_t> getHwAddr(const std::string& ifname);
  * \param ifname Interface name
  * \param hwaddr New hardware address to set
  */
-bool setHwAddr(const std::string& ifname, hwaddr_t hwaddr);
+bool setHwAddr(std::string_view ifname, hwaddr_t hwaddr);
 
 }  // namespace android::netdevice
 

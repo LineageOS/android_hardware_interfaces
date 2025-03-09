@@ -27,6 +27,7 @@ package android.hardware.radio.config;
 
 import android.hardware.radio.config.IRadioConfigIndication;
 import android.hardware.radio.config.IRadioConfigResponse;
+import android.hardware.radio.config.SimType;
 import android.hardware.radio.config.SlotPortMapping;
 
 /** @hide */
@@ -208,4 +209,39 @@ oneway interface IRadioConfig {
      * This is available when android.hardware.telephony is defined.
      */
     void getSimultaneousCallingSupport(in int serial);
+
+    /**
+     * Get the sim type information.
+     *
+     * Response provides the current active sim type and supported sim types associated with each
+     * active physical slot ids.
+     *
+     * @param serial Serial number of request.
+     *
+     * Response callback is IRadioConfigResponse.getSimTypeInfoResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
+     */
+    void getSimTypeInfo(in int serial);
+
+    /**
+     * Set the sim type associated with the physical slot id and activate if the sim type is
+     * currently inactive.
+     *
+     * Example: There are 2 active physical slot ids and 3 physical sims(2 pSIM and 1 eSIM). First
+     * physical slot id is always linked pSIM and 2nd physical slot id supports either pSIM/eSIM one
+     * at a time. In order to activate eSIM on 2nd physical slot id, caller should pass
+     * corresponding sim type.
+     *
+     * simTypes[0] = pSIM
+     * simTypes[1] = eSIM
+     *
+     * @param serial Serial number of request.
+     * @param simTypes SimType to be activated on each logical slot
+     *
+     * Response callback is IRadioConfigResponse.setSimTypeResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
+     */
+    void setSimType(in int serial, in SimType[] simTypes);
 }

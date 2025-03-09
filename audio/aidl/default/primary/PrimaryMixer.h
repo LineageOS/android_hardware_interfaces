@@ -16,20 +16,14 @@
 
 #pragma once
 
-#include <map>
-#include <memory>
-#include <mutex>
-#include <vector>
-
-#include <android-base/thread_annotations.h>
-#include <android/binder_auto_utils.h>
-
 #include "alsa/Mixer.h"
 
 namespace aidl::android::hardware::audio::core::primary {
 
 class PrimaryMixer : public alsa::Mixer {
   public:
+    static constexpr int kInvalidAlsaCard = -1;
+    static constexpr int kInvalidAlsaDevice = -1;
     static constexpr int kAlsaCard = 0;
     static constexpr int kAlsaDevice = 0;
 

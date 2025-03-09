@@ -113,7 +113,6 @@ class BassBoostEffectHelper : public EffectHelper {
         }
     }
 
-    static constexpr int kSamplingFrequency = 44100;
     static constexpr int kDurationMilliSec = 720;
     static constexpr int kInputSize = kSamplingFrequency * kDurationMilliSec / 1000;
     long mInputFrameCount, mOutputFrameCount;
@@ -188,18 +187,6 @@ class BassBoostDataTest : public ::testing::TestWithParam<BassBoostDataTestParam
         }
     }
 
-    // Generate multitone input between -1 to +1 using testFrequencies
-    void generateMultiTone(const std::vector<int>& testFrequencies, std::vector<float>& input) {
-        for (auto i = 0; i < kInputSize; i++) {
-            input[i] = 0;
-
-            for (size_t j = 0; j < testFrequencies.size(); j++) {
-                input[i] += sin(2 * M_PI * testFrequencies[j] * i / kSamplingFrequency);
-            }
-            input[i] /= testFrequencies.size();
-        }
-    }
-
     // Use FFT transform to convert the buffer to frequency domain
     // Compute its magnitude at binOffsets
     std::vector<float> calculateMagnitude(const std::vector<float>& buffer,
@@ -252,7 +239,8 @@ TEST_P(BassBoostDataTest, IncreasingStrength) {
 
     roundToFreqCenteredToFftBin(testFrequencies, binOffsets);
 
-    generateMultiTone(testFrequencies, input);
+    // Generate multitone input
+    generateSineWave(testFrequencies, input);
 
     inputMag = calculateMagnitude(input, binOffsets);
 

@@ -25,4 +25,27 @@ enum SessionMode {
      * and can be safely scheduled to prefer power efficiency.
      */
     POWER_EFFICIENCY,
+
+    /**
+     * This mode indicates that the threads associated with this hint session
+     * are part of the graphics pipeline, implying that they are on a critical path
+     * which will be called of higher priority in terms of CPU resources and scheduling.
+     */
+    GRAPHICS_PIPELINE,
+
+    /**
+     * This mode indicates that the session does not intend to report CPU timing
+     * information, and that it instead will rely entirely on information from
+     * SurfaceFlinger. This mode is only supported for sessions that have
+     * GRAPHICS_PIPELINE enabled.
+     */
+    AUTO_CPU,
+
+    /**
+     * This mode indicates that the session does not intend to report GPU timing
+     * information, and that it instead will rely entirely on information from
+     * SurfaceFlinger. This mode is only supported for sessions that have
+     * GRAPHICS_PIPELINE enabled.
+     */
+    AUTO_GPU,
 }

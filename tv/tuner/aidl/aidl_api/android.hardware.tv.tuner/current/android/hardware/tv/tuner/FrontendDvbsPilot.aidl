@@ -35,8 +35,8 @@ package android.hardware.tv.tuner;
 /* @hide */
 @Backing(type="int") @VintfStability
 enum FrontendDvbsPilot {
-  UNDEFINED = 0,
-  ON = 1,
-  OFF = 2,
-  AUTO = 3,
+  UNDEFINED,
+  ON,
+  OFF,
+  AUTO,
 }

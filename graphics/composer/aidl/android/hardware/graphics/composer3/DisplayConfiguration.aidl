@@ -15,6 +15,8 @@
  */
 
 package android.hardware.graphics.composer3;
+
+import android.hardware.graphics.composer3.OutputType;
 import android.hardware.graphics.composer3.VrrConfig;
 
 @VintfStability
@@ -67,4 +69,9 @@ parcelable DisplayConfiguration {
      * Non-VRR modes should set this to null.
      */
     @nullable VrrConfig vrrConfig;
+
+    /**
+     * The HDR output format available.
+     */
+    OutputType hdrOutputType;
 }

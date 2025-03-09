@@ -16,6 +16,7 @@
 
 #define EGMOCK_VERBOSE 1
 
+#include <aidl/android/hardware/broadcastradio/Alert.h>
 #include <aidl/android/hardware/broadcastradio/BnAnnouncementListener.h>
 #include <aidl/android/hardware/broadcastradio/BnTunerCallback.h>
 #include <aidl/android/hardware/broadcastradio/ConfigFlag.h>
@@ -76,12 +77,13 @@ const ConfigFlag kConfigFlagValues[] = {
 
 constexpr int32_t kAidlVersion1 = 1;
 constexpr int32_t kAidlVersion2 = 2;
+constexpr int32_t kAidlVersion3 = 3;
 
 bool isValidAmFmFreq(int64_t freq, int aidlVersion) {
     ProgramIdentifier id = bcutils::makeIdentifier(IdentifierType::AMFM_FREQUENCY_KHZ, freq);
     if (aidlVersion == kAidlVersion1) {
         return bcutils::isValid(id);
-    } else if (aidlVersion == kAidlVersion2) {
+    } else if (aidlVersion >= kAidlVersion2) {
         return bcutils::isValidV2(id);
     }
     LOG(ERROR) << "Unknown AIDL version " << aidlVersion;
@@ -103,6 +105,41 @@ bool supportsFM(const AmFmRegionConfig& config) {
         }
     }
     return false;
+}
+
+void validateMetadata(const ProgramInfo& info, int32_t aidlVersion) {
+    for (const auto& metadataItem : info.metadata) {
+        bool validMetadata = false;
+        if (aidlVersion == kAidlVersion1) {
+            validMetadata = bcutils::isValidMetadata(metadataItem);
+        } else {
+            validMetadata = bcutils::isValidMetadataV2(metadataItem);
+        }
+        EXPECT_TRUE(validMetadata) << "Invalid metadata " << metadataItem.toString().c_str();
+    }
+}
+
+void validateAlert(const ProgramInfo& info, int32_t aidlVersion) {
+    if (aidlVersion < kAidlVersion3 || !info.emergencyAlert.has_value()) {
+        return;
+    }
+    Alert alert = info.emergencyAlert.value();
+    ASSERT_FALSE(alert.infoArray.empty());
+    for (const auto& alertInfo : alert.infoArray) {
+        ASSERT_FALSE(alertInfo.categoryArray.empty());
+        if (alertInfo.areas.empty()) {
+            continue;
+        }
+        for (const auto& area : alertInfo.areas) {
+            if (area.polygons.empty()) {
+                continue;
+            }
+            for (const auto& polygon : area.polygons) {
+                ASSERT_GE(polygon.coordinates.size(), 4);
+                EXPECT_EQ(polygon.coordinates.front(), polygon.coordinates.back());
+            }
+        }
+    }
 }
 
 }  // namespace
@@ -250,15 +287,9 @@ ScopedAStatus TunerCallbackImpl::onCurrentProgramInfoChanged(const ProgramInfo& 
         }
     }
 
-    for (const auto& metadataItem : info.metadata) {
-        bool validMetadata = false;
-        if (mCallbackAidlVersion == kAidlVersion1) {
-            validMetadata = bcutils::isValidMetadata(metadataItem);
-        } else {
-            validMetadata = bcutils::isValidMetadataV2(metadataItem);
-        }
-        EXPECT_TRUE(validMetadata) << "Invalid metadata " << metadataItem.toString().c_str();
-    }
+    validateMetadata(info, mCallbackAidlVersion);
+
+    validateAlert(info, mCallbackAidlVersion);
 
     {
         std::lock_guard<std::mutex> lk(mLock);
@@ -349,7 +380,7 @@ void BroadcastRadioHalTest::SetUp() {
     // get AIDL HAL version
     ASSERT_TRUE(mModule->getInterfaceVersion(&mAidlVersion).isOk());
     EXPECT_GE(mAidlVersion, kAidlVersion1);
-    EXPECT_LE(mAidlVersion, kAidlVersion2);
+    EXPECT_LE(mAidlVersion, kAidlVersion3);
 
     // set callback
     mCallback = SharedRefBase::make<TunerCallbackImpl>(mAidlVersion);
@@ -1122,12 +1153,22 @@ TEST_P(BroadcastRadioHalTest, SetConfigFlags) {
  * Verifies that:
  * - startProgramListUpdates either succeeds or returns NOT_SUPPORTED;
  * - the complete list is fetched within kProgramListScanTimeoutMs;
- * - stopProgramListUpdates does not crash.
+ * - stopProgramListUpdates does not crash;
+ * - metadata of program info in the program list is valid;
+ * - alert message is valid if it exists in the program list.
  */
 TEST_P(BroadcastRadioHalTest, GetProgramListFromEmptyFilter) {
     LOG(DEBUG) << "GetProgramListFromEmptyFilter Test";
 
-    getProgramList();
+    std::optional<bcutils::ProgramInfoSet> completeList = getProgramList();
+
+    if (!completeList || mAidlVersion < kAidlVersion3) {
+        return;
+    }
+    for (const auto& program : *completeList) {
+        validateMetadata(program, mAidlVersion);
+        validateAlert(program, mAidlVersion);
+    }
 }
 
 /**

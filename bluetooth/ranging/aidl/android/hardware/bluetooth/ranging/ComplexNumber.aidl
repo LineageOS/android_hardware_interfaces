@@ -16,6 +16,9 @@
 
 package android.hardware.bluetooth.ranging;
 
+/**
+ * @deprecated use PctIQSample instead for V2 and above.
+ */
 @VintfStability
 parcelable ComplexNumber {
     double real;

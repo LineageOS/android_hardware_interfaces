@@ -38,7 +38,7 @@ parcelable RouteSelectionDescriptor {
     /**
      * Valid values are IP, IPV6, IPV4V6, and UNKNOWN.
      */
-    PdpProtocolType sessionType;
+    PdpProtocolType sessionType = PdpProtocolType.IP;
     /**
      * Session and service continuity mode as defined in 3GPP TS 23.501.
      * Valid values are SSC_MODE_

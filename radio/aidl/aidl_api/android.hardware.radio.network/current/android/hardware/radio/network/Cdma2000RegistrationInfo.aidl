@@ -35,11 +35,32 @@ package android.hardware.radio.network;
 /* @hide */
 @JavaDerive(toString=true) @VintfStability
 parcelable Cdma2000RegistrationInfo {
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   boolean cssSupported;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   int roamingIndicator;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   int systemIsInPrl;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   int defaultRoamingIndicator;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int PRL_INDICATOR_NOT_REGISTERED = (-1) /* -1 */;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int PRL_INDICATOR_NOT_IN_PRL = 0;
+  /**
+   * @deprecated Legacy CDMA is unsupported.
+   */
   const int PRL_INDICATOR_IN_PRL = 1;
 }

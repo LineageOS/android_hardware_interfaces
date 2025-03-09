@@ -21,21 +21,23 @@ package android.hardware.radio.network;
 @JavaDerive(toString=true)
 parcelable WcdmaSignalStrength {
     /**
-     * Valid values are (0-31, 99) as defined in TS 27.007 8.5; INT_MAX means unreported.
+     * Valid values are (0-31, 99) as defined in TS 27.007 8.5; RadioConst:VALUE_UNAVAILABLE means
+     * unreported.
      */
     int signalStrength;
     /**
-     * Bit error rate (0-7, 99) as defined in TS 27.007 8.5; INT_MAX means invalid/unreported.
+     * Bit error rate (0-7, 99) as defined in TS 27.007 8.5; RadioConst:VALUE_UNAVAILABLE means
+     * invalid/unreported.
      */
     int bitErrorRate;
     /**
      * CPICH RSCP as defined in TS 25.215 5.1.1. Valid values are (0-96, 255) as defined in
-     * TS 27.007 8.69. INT_MAX denotes that the value is invalid/unreported.
+     * TS 27.007 8.69. RadioConst:VALUE_UNAVAILABLE denotes that the value is invalid/unreported.
      */
     int rscp;
     /**
      * Ec/No value as defined in TS 25.215 5.1.5. Valid values are (0-49, 255) as defined in
-     * TS 27.007 8.69. INT_MAX denotes that the value is invalid/unreported.
+     * TS 27.007 8.69. RadioConst:VALUE_UNAVAILABLE denotes that the value is invalid/unreported.
      */
     int ecno;
 }

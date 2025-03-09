@@ -690,4 +690,10 @@ bool VtsComposerClient::destroyAllLayers(ComposerClientWriter* writer) {
     mDisplayResources.clear();
     return true;
 }
+
+std::pair<ScopedAStatus, int32_t> VtsComposerClient::getMaxLayerPictureProfiles(int64_t display) {
+    int32_t outMaxProfiles = 0;
+    return {mComposerClient->getMaxLayerPictureProfiles(display, &outMaxProfiles), outMaxProfiles};
+}
+
 }  // namespace aidl::android::hardware::graphics::composer3::vts

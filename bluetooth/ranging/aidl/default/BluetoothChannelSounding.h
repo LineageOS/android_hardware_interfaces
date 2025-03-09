@@ -47,6 +47,8 @@ class BluetoothChannelSounding : public BnBluetoothChannelSounding {
       const std::shared_ptr<IBluetoothChannelSoundingSessionCallback>&
           in_callback,
       std::shared_ptr<IBluetoothChannelSoundingSession>* _aidl_return) override;
+  ndk::ScopedAStatus getSupportedCsSecurityLevels(
+      std::vector<CsSecurityLevel>* _aidl_return) override;
 };
 
 }  // namespace aidl::android::hardware::bluetooth::ranging::impl

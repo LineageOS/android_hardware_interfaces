@@ -134,6 +134,8 @@ class WifiNanIface : public BnWifiNanIface {
     ndk::ScopedAStatus suspendRequestInternal(char16_t in_cmdId, int8_t sessionId);
     ndk::ScopedAStatus resumeRequestInternal(char16_t in_cmdId, int8_t sessionId);
 
+    int32_t getMinCallbackVersion();
+
     // Overridden in the gTest suite.
     virtual std::set<std::shared_ptr<IWifiNanIfaceEventCallback>> getEventCallbacks();
 

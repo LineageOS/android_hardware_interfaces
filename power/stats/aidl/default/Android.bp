@@ -25,7 +25,7 @@ cc_binary {
     name: "android.hardware.power.stats-service.example",
     relative_install_path: "hw",
     init_rc: [":android.hardware.power.stats.rc"],
-    vintf_fragments: [":android.hardware.power.stats.xml"],
+    vintf_fragments: ["power.stats-default.xml"],
     vendor: true,
     shared_libs: [
         "libbase",

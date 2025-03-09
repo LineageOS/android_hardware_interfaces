@@ -23,8 +23,15 @@ use android_hardware_automotive_audiocontrol::aidl::android::hardware::automotiv
     IModuleChangeCallback::IModuleChangeCallback,
     MutingInfo::MutingInfo,
     Reasons::Reasons,
+    AudioDeviceConfiguration::AudioDeviceConfiguration,
+    AudioZone::AudioZone
 };
-use android_hardware_audio_common::aidl::android::hardware::audio::common::PlaybackTrackMetadata::PlaybackTrackMetadata;
+use android_hardware_audio_common::aidl::android::hardware::audio::common::{
+    PlaybackTrackMetadata::PlaybackTrackMetadata,
+};
+use android_media_audio_common_types::aidl::android::media::audio::common::{
+    AudioPort::AudioPort,
+};
 use binder::{Interface, Result as BinderResult, StatusCode, Strong};
 
 /// This struct is defined to implement IAudioControl AIDL interface.
@@ -80,5 +87,17 @@ impl IAudioControl for DefaultAudioControlHal {
 
     fn clearModuleChangeCallback(&self) -> BinderResult<()> {
         Err(StatusCode::UNKNOWN_ERROR.into())
+    }
+
+    fn getAudioDeviceConfiguration(&self) -> std::result::Result<AudioDeviceConfiguration, binder::Status> {
+        Err(binder::StatusCode::UNKNOWN_ERROR.into())
+    }
+
+    fn getOutputMirroringDevices(&self) -> std::result::Result<std::vec::Vec<AudioPort>, binder::Status> {
+        Err(binder::StatusCode::UNKNOWN_ERROR.into())
+    }
+
+    fn getCarAudioZones(&self) -> std::result::Result<std::vec::Vec<AudioZone>, binder::Status> {
+        Err(binder::StatusCode::UNKNOWN_ERROR.into())
     }
 }

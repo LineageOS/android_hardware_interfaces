@@ -97,9 +97,6 @@ rust_binary {
         "libkmr_hal_nonsecure",
         "libkmr_ta_nonsecure",
     ],
-    required: [
-        "android.hardware.hardware_keystore.xml",
-    ],
     vintf_fragment_modules: [
         "android.hardware.security.keymint-service.xml",
         "android.hardware.security.sharedsecret-service.xml",
@@ -107,11 +104,44 @@ rust_binary {
     ],
 }
 
+// The following target declares the latest version of KeyMint.
 prebuilt_etc {
     name: "android.hardware.hardware_keystore.xml",
     sub_dir: "permissions",
     vendor: true,
     src: "android.hardware.hardware_keystore.xml",
+}
+
+// The following targets (and underlying XML files) declare specific
+// versions of KeyMint.  Vendors should use the version that matches the
+// version of the KeyMint HAL that the device implements.
+
+prebuilt_etc {
+    name: "android.hardware.hardware_keystore_V1.xml",
+    sub_dir: "permissions",
+    vendor: true,
+    src: "android.hardware.hardware_keystore_V1.xml",
+}
+
+prebuilt_etc {
+    name: "android.hardware.hardware_keystore_V2.xml",
+    sub_dir: "permissions",
+    vendor: true,
+    src: "android.hardware.hardware_keystore_V2.xml",
+}
+
+prebuilt_etc {
+    name: "android.hardware.hardware_keystore_V3.xml",
+    sub_dir: "permissions",
+    vendor: true,
+    src: "android.hardware.hardware_keystore_V3.xml",
+}
+
+prebuilt_etc {
+    name: "android.hardware.hardware_keystore_V4.xml",
+    sub_dir: "permissions",
+    vendor: true,
+    src: "android.hardware.hardware_keystore_V4.xml",
 }
 
 rust_library {

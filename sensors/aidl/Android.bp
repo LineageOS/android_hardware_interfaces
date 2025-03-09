@@ -43,6 +43,6 @@ aidl_interface {
         },
 
     ],
-    frozen: true,
+    frozen: false,
 
 }

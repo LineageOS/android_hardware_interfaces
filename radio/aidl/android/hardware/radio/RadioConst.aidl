@@ -20,6 +20,9 @@ package android.hardware.radio;
 @VintfStability
 @JavaDerive(toString=true)
 parcelable RadioConst {
+    const int VALUE_UNAVAILABLE = 0x7FFFFFFF;
+    const long VALUE_UNAVAILABLE_LONG = 0x7FFFFFFFFFFFFFFF;
+    const byte VALUE_UNAVAILABLE_BYTE = 0xFFu8;
     const int MAX_RILDS = 3;
     const int MAX_UUID_LENGTH = 64;
     const int CARD_MAX_APPS = 8;

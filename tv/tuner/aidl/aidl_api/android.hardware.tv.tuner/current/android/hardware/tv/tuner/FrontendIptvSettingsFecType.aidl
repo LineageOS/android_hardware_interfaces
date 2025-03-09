@@ -36,7 +36,7 @@ package android.hardware.tv.tuner;
 @Backing(type="int") @VintfStability
 enum FrontendIptvSettingsFecType {
   UNDEFINED = 0,
-  COLUMN = 1,
-  ROW = 2,
-  COLUMN_ROW = 4,
+  COLUMN = (1 << 0) /* 1 */,
+  ROW = (1 << 1) /* 2 */,
+  COLUMN_ROW = (1 << 2) /* 4 */,
 }

@@ -32,6 +32,10 @@ using aidl::android::media::audio::common::MicrophoneInfo;
 
 namespace aidl::android::hardware::audio::core {
 
+using deprecated::InnerStreamWrapper;
+using deprecated::StreamCommonInterfaceEx;
+using deprecated::StreamSwitcher;
+
 StreamRemoteSubmix::StreamRemoteSubmix(StreamContext* context, const Metadata& metadata,
                                        const AudioDeviceAddress& deviceAddress)
     : StreamCommonImpl(context, metadata),

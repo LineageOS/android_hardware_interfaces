@@ -17,7 +17,7 @@
 #pragma once
 
 #ifndef LOG_TAG
-#warn "ComposerCommandBuffer.h included without LOG_TAG"
+#warning "ComposerCommandBuffer.h included without LOG_TAG"
 #endif
 
 //#define LOG_NDEBUG 0
@@ -63,16 +63,17 @@ class CommandWriterBase : public V2_3::CommandWriterBase {
 
         beginCommand(IComposerClient::Command::SET_LAYER_GENERIC_METADATA,
                      static_cast<uint16_t>(commandSize));
-        write(key.size());
-        writeBlob(key.size(), reinterpret_cast<const unsigned char*>(key.c_str()));
+        write(static_cast<uint32_t>(key.size()));
+        writeBlob(static_cast<uint32_t>(key.size()),
+                  reinterpret_cast<const unsigned char*>(key.c_str()));
         write(mandatory);
-        write(value.size());
-        writeBlob(value.size(), value.data());
+        write(static_cast<uint32_t>(value.size()));
+        writeBlob(static_cast<uint32_t>(value.size()), value.data());
         endCommand();
     }
 
   protected:
-    uint32_t sizeToElements(uint32_t size) { return (size + 3) / 4; }
+    uint32_t sizeToElements(size_t size) { return static_cast<uint32_t>((size + 3) / 4); }
 };
 
 // This class helps parse a command queue.  Note that all sizes/lengths are in

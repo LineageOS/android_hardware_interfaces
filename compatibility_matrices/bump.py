@@ -58,7 +58,6 @@ class Bump(object):
         self.bump_kernel_configs()
         self.copy_matrix()
         self.edit_android_bp()
-        self.edit_android_mk()
         self.bump_libvintf()
 
     def bump_kernel_configs(self):
@@ -125,28 +124,6 @@ class Bump(object):
                   lines.append(line)
 
         with open(android_bp, "w") as f:
-            f.write("".join(lines))
-
-
-    # This Android.mk file may be deprecated soon and the functionality is
-    # replaced by the soong phony module system_compatibility_matrix.xml.
-    def edit_android_mk(self):
-        android_mk = self.interfaces_dir / "compatibility_matrices/Android.mk"
-        lines = []
-        with open(android_mk) as f:
-            if self.next_module_name in f.read():
-                return
-            f.seek(0)
-            for line in f:
-              if f"    {self.device_module_name} \\\n" in line:
-                  lines.append(f"    {self.current_module_name} \\\n")
-
-              if self.current_module_name in line:
-                  lines.append(f"    {self.next_module_name} \\\n")
-              else:
-                  lines.append(line)
-
-        with open(android_mk, "w") as f:
             f.write("".join(lines))
 
     def bump_libvintf(self):

@@ -35,6 +35,7 @@ package android.hardware.radio.network;
 /* @hide */
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum Domain {
+  INVALID = 0,
   CS = (1 << 0) /* 1 */,
   PS = (1 << 1) /* 2 */,
 }

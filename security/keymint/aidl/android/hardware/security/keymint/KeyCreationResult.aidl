@@ -125,14 +125,25 @@ parcelable KeyCreationResult {
      * straightforward translation of the KeyMint tag/value parameter lists to ASN.1.
      *
      * KeyDescription ::= SEQUENCE {
-     *     attestationVersion         INTEGER, # Value 300
-     *     attestationSecurityLevel   SecurityLevel, # See below
-     *     keyMintVersion             INTEGER, # Value 300
-     *     keymintSecurityLevel       SecurityLevel, # See below
-     *     attestationChallenge       OCTET_STRING, # Tag::ATTESTATION_CHALLENGE from attestParams
-     *     uniqueId                   OCTET_STRING, # Empty unless key has Tag::INCLUDE_UNIQUE_ID
-     *     softwareEnforced           AuthorizationList, # See below
-     *     hardwareEnforced           AuthorizationList, # See below
+     *     -- attestationVersion must be 400.
+     *     attestationVersion         INTEGER,
+     *     -- attestationSecurityLevel is the SecurityLevel of the location where the attested
+     *     -- key is stored. Must match keymintSecurityLevel.
+     *     attestationSecurityLevel   SecurityLevel,
+     *     -- keyMintVersion must be 400.
+     *     keyMintVersion             INTEGER,
+     *     -- keyMintSecurityLevel is the SecurityLevel of the IKeyMintDevice. Must match
+     *     -- attestationSecurityLevel.
+     *     keyMintSecurityLevel       SecurityLevel,
+     *     -- attestationChallenge contains Tag::ATTESTATION_CHALLENGE from attestParams.
+     *     attestationChallenge       OCTET_STRING,
+     *     -- uniqueId is empty unless the key has Tag::INCLUDE_UNIQUE_ID.
+     *     uniqueId                   OCTET_STRING,
+     *     -- softwareEnforced contains the authorization tags enforced by the Android system.
+     *     softwareEnforced           AuthorizationList,
+     *     -- hardwareEnforced contains the authorization tags enforced by a secure environment
+     *     -- (TEE or StrongBox).
+     *     hardwareEnforced           AuthorizationList,
      * }
      *
      * SecurityLevel ::= ENUMERATED {
@@ -142,12 +153,15 @@ parcelable KeyCreationResult {
      * }
      *
      * RootOfTrust ::= SEQUENCE {
+     *     -- verifiedBootKey must contain a SHA-256 digest of the public key embedded in the
+     *     -- "vbmeta" partition if the device's bootloader is locked, or 32 bytes of zeroes if the
+     *     -- device's bootloader is unlocked.
      *     verifiedBootKey            OCTET_STRING,
      *     deviceLocked               BOOLEAN,
      *     verifiedBootState          VerifiedBootState,
-     *     # verifiedBootHash must contain 32-byte value that represents the state of all binaries
-     *     # or other components validated by verified boot.  Updating any verified binary or
-     *     # component must cause this value to change.
+     *     -- verifiedBootHash must contain a SHA-256 digest of all binaries and components
+     *     -- validated by Verified Boot. Updating any verified binary or component must cause this
+     *     -- value to change.
      *     verifiedBootHash           OCTET_STRING,
      * }
      *
@@ -156,6 +170,17 @@ parcelable KeyCreationResult {
      *     SelfSigned                 (1),
      *     Unverified                 (2),
      *     Failed                     (3),
+     * }
+     *
+     * -- Modules contains version information for APEX modules.
+     * -- Note that the Modules information is DER-encoded before being hashed, which requires a
+     * -- specific ordering (lexicographic by encoded value) for the constituent Module entries.
+     * -- This ensures that the ordering of Module entries is predictable and that the resulting
+     * -- SHA-256 hash value is identical for the same set of modules.
+     * Modules ::= SET OF Module
+     * Module ::= SEQUENCE {
+     *     packageName                OCTET_STRING,
+     *     version                    INTEGER, -- As determined at boot time
      * }
      *
      * -- Note that the AuthorizationList SEQUENCE is also used in IKeyMintDevice::importWrappedKey
@@ -170,11 +195,11 @@ parcelable KeyCreationResult {
      *     purpose                    [1] EXPLICIT SET OF INTEGER OPTIONAL,
      *     algorithm                  [2] EXPLICIT INTEGER OPTIONAL,
      *     keySize                    [3] EXPLICIT INTEGER OPTIONAL,
-     *     blockMode                  [4] EXPLICIT SET OF INTEGER OPTIONAL, -- symmetric only
+     *     blockMode                  [4] EXPLICIT SET OF INTEGER OPTIONAL, -- Symmetric keys only
      *     digest                     [5] EXPLICIT SET OF INTEGER OPTIONAL,
      *     padding                    [6] EXPLICIT SET OF INTEGER OPTIONAL,
-     *     callerNonce                [7] EXPLICIT NULL OPTIONAL, -- symmetric only
-     *     minMacLength               [8] EXPLICIT INTEGER OPTIONAL, -- symmetric only
+     *     callerNonce                [7] EXPLICIT NULL OPTIONAL, -- Symmetric keys only
+     *     minMacLength               [8] EXPLICIT INTEGER OPTIONAL, -- Symmetric keys only
      *     ecCurve                    [10] EXPLICIT INTEGER OPTIONAL,
      *     rsaPublicExponent          [200] EXPLICIT INTEGER OPTIONAL,
      *     mgfDigest                  [203] EXPLICIT SET OF INTEGER OPTIONAL,
@@ -184,7 +209,7 @@ parcelable KeyCreationResult {
      *     originationExpireDateTime  [401] EXPLICIT INTEGER OPTIONAL,
      *     usageExpireDateTime        [402] EXPLICIT INTEGER OPTIONAL,
      *     usageCountLimit            [405] EXPLICIT INTEGER OPTIONAL,
-     *     userSecureId               [502] EXPLICIT INTEGER OPTIONAL, -- only used on import
+     *     userSecureId               [502] EXPLICIT INTEGER OPTIONAL, -- Only used on key import
      *     noAuthRequired             [503] EXPLICIT NULL OPTIONAL,
      *     userAuthType               [504] EXPLICIT INTEGER OPTIONAL,
      *     authTimeout                [505] EXPLICIT INTEGER OPTIONAL,
@@ -210,6 +235,8 @@ parcelable KeyCreationResult {
      *     bootPatchLevel             [719] EXPLICIT INTEGER OPTIONAL,
      *     deviceUniqueAttestation    [720] EXPLICIT NULL OPTIONAL,
      *     attestationIdSecondImei    [723] EXPLICIT OCTET_STRING OPTIONAL,
+     *     -- moduleHash contains a SHA-256 hash of DER-encoded `Modules`
+     *     moduleHash                 [724] EXPLICIT OCTET_STRING OPTIONAL,
      * }
      */
     Certificate[] certificateChain;

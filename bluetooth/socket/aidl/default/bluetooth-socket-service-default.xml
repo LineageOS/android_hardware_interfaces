@@ -1,0 +1,7 @@
+<manifest version="1.0" type="device">
+    <hal format="aidl">
+        <name>android.hardware.bluetooth.socket</name>
+        <version>1</version>
+        <fqname>IBluetoothSocket/default</fqname>
+    </hal>
+</manifest>

@@ -21,16 +21,28 @@ package android.hardware.radio.voice;
 @Backing(type="int")
 @JavaDerive(toString=true)
 enum CdmaOtaProvisionStatus {
+    /** @deprecated Legacy CDMA is unsupported. */
     SPL_UNLOCKED,
+    /** @deprecated Legacy CDMA is unsupported. */
     SPC_RETRIES_EXCEEDED,
+    /** @deprecated Legacy CDMA is unsupported. */
     A_KEY_EXCHANGED,
+    /** @deprecated Legacy CDMA is unsupported. */
     SSD_UPDATED,
+    /** @deprecated Legacy CDMA is unsupported. */
     NAM_DOWNLOADED,
+    /** @deprecated Legacy CDMA is unsupported. */
     MDN_DOWNLOADED,
+    /** @deprecated Legacy CDMA is unsupported. */
     IMSI_DOWNLOADED,
+    /** @deprecated Legacy CDMA is unsupported. */
     PRL_DOWNLOADED,
+    /** @deprecated Legacy CDMA is unsupported. */
     COMMITTED,
+    /** @deprecated Legacy CDMA is unsupported. */
     OTAPA_STARTED,
+    /** @deprecated Legacy CDMA is unsupported. */
     OTAPA_STOPPED,
+    /** @deprecated Legacy CDMA is unsupported. */
     OTAPA_ABORTED,
 }

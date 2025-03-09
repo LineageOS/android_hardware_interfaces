@@ -159,6 +159,8 @@ class WifiChip : public BnWifiChip {
     binder_status_t dump(int fd, const char** args, uint32_t numArgs) override;
     ndk::ScopedAStatus setMloMode(const ChipMloMode in_mode) override;
     ndk::ScopedAStatus setVoipMode(const VoipMode in_mode) override;
+    ndk::ScopedAStatus createApOrBridgedApIfaceWithParams(
+            const ApIfaceParams& in_params, std::shared_ptr<IWifiApIface>* _aidl_return) override;
 
   private:
     void invalidateAndRemoveAllIfaces();
@@ -178,12 +180,15 @@ class WifiChip : public BnWifiChip {
     std::pair<IWifiChip::ChipDebugInfo, ndk::ScopedAStatus> requestChipDebugInfoInternal();
     std::pair<std::vector<uint8_t>, ndk::ScopedAStatus> requestDriverDebugDumpInternal();
     std::pair<std::vector<uint8_t>, ndk::ScopedAStatus> requestFirmwareDebugDumpInternal();
-    std::shared_ptr<WifiApIface> newWifiApIface(std::string& ifname);
+    std::shared_ptr<WifiApIface> newWifiApIface(std::string& ifname, bool usesMlo);
     ndk::ScopedAStatus createVirtualApInterface(const std::string& apVirtIf);
     std::pair<std::shared_ptr<IWifiApIface>, ndk::ScopedAStatus> createApIfaceInternal();
-    std::pair<std::shared_ptr<IWifiApIface>, ndk::ScopedAStatus> createBridgedApIfaceInternal();
+    std::pair<std::shared_ptr<IWifiApIface>, ndk::ScopedAStatus> createBridgedApIfaceInternal(
+            bool usesMlo);
     std::pair<std::shared_ptr<IWifiApIface>, ndk::ScopedAStatus> createApOrBridgedApIfaceInternal(
             IfaceConcurrencyType ifaceType, const std::vector<common::OuiKeyedData>& vendorData);
+    std::pair<std::shared_ptr<IWifiApIface>, ndk::ScopedAStatus>
+    createApOrBridgedApIfaceWithParamsInternal(const ApIfaceParams& params);
     std::pair<std::vector<std::string>, ndk::ScopedAStatus> getApIfaceNamesInternal();
     std::pair<std::shared_ptr<IWifiApIface>, ndk::ScopedAStatus> getApIfaceInternal(
             const std::string& ifname);
@@ -258,7 +263,7 @@ class WifiChip : public BnWifiChip {
     std::string getFirstActiveWlanIfaceName();
     std::string allocateApOrStaIfaceName(IfaceType type, uint32_t start_idx);
     std::string allocateApIfaceName();
-    std::vector<std::string> allocateBridgedApInstanceNames();
+    std::vector<std::string> allocateBridgedApInstanceNames(bool usesMlo);
     std::string allocateStaIfaceName();
     bool writeRingbufferFilesInternal();
     std::string getWlanIfaceNameWithType(IfaceType type, unsigned idx);

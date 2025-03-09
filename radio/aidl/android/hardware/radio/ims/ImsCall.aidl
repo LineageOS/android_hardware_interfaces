@@ -50,16 +50,16 @@ parcelable ImsCall {
     int index;
 
     /** The type of the call */
-    CallType callType;
+    CallType callType = CallType.NORMAL;
 
     /** The access network where the call is in progress */
-    AccessNetwork accessNetwork;
+    AccessNetwork accessNetwork = AccessNetwork.UNKNOWN;
 
     /** The state of the call */
-    CallState callState;
+    CallState callState = CallState.ACTIVE;
 
     /** The direction of the call */
-    Direction direction;
+    Direction direction = Direction.INCOMING;
 
     /** True if the call is put on HOLD by the other party */
     boolean isHeldByRemote;

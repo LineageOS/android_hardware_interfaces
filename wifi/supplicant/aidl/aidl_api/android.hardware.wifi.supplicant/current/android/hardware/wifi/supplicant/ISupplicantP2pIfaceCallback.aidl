@@ -80,4 +80,7 @@ interface ISupplicantP2pIfaceCallback {
   oneway void onDeviceFoundWithParams(in android.hardware.wifi.supplicant.P2pDeviceFoundEventParams deviceFoundEventParams);
   oneway void onGoNegotiationRequestWithParams(in android.hardware.wifi.supplicant.P2pGoNegotiationReqEventParams params);
   oneway void onInvitationReceivedWithParams(in android.hardware.wifi.supplicant.P2pInvitationEventParams params);
+  oneway void onUsdBasedServiceDiscoveryResult(in android.hardware.wifi.supplicant.P2pUsdBasedServiceDiscoveryResultParams params);
+  oneway void onUsdBasedServiceDiscoveryTerminated(in int sessionId, in android.hardware.wifi.supplicant.UsdTerminateReasonCode reasonCode);
+  oneway void onUsdBasedServiceAdvertisementTerminated(in int sessionId, in android.hardware.wifi.supplicant.UsdTerminateReasonCode reasonCode);
 }

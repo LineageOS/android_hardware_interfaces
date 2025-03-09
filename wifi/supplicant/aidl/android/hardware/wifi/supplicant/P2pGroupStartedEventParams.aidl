@@ -70,4 +70,10 @@ parcelable P2pGroupStartedEventParams {
      * that no vendor data is provided.
      */
     @nullable OuiKeyedData[] vendorData;
+
+    /**
+     * Authentication key management protocol used to secure the group.
+     * This is a bitmask of |KeyMgmtMask| values.
+     */
+    int keyMgmtMask;
 }

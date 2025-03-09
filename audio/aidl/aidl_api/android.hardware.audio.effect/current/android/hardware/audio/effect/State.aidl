@@ -37,4 +37,5 @@ enum State {
   INIT,
   IDLE,
   PROCESSING,
+  DRAINING,
 }

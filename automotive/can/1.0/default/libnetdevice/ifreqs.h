@@ -52,6 +52,6 @@ bool send(unsigned long request, struct ifreq& ifr);
  * \param ifname Interface to initialize request with
  * \return Interface request with ifr_name field set to ifname
  */
-struct ifreq fromName(const std::string& ifname);
+struct ifreq fromName(std::string_view ifname);
 
 }  // namespace android::netdevice::ifreqs

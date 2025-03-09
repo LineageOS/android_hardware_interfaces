@@ -35,7 +35,7 @@ package android.hardware.graphics.composer3;
 @VintfStability
 parcelable LutProperties {
   android.hardware.graphics.composer3.LutProperties.Dimension dimension;
-  long size;
+  int size;
   android.hardware.graphics.composer3.LutProperties.SamplingKey[] samplingKeys;
   @VintfStability
   enum Dimension {
@@ -46,5 +46,6 @@ parcelable LutProperties {
   enum SamplingKey {
     RGB,
     MAX_RGB,
+    CIE_Y,
   }
 }

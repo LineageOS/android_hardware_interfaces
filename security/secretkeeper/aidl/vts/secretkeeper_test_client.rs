@@ -16,6 +16,7 @@
 
 use android_hardware_security_secretkeeper::aidl::android::hardware::security::secretkeeper::ISecretkeeper::ISecretkeeper;
 use android_hardware_security_secretkeeper::aidl::android::hardware::security::secretkeeper::SecretId::SecretId;
+use android_hardware_security_secretkeeper::aidl::android::hardware::security::secretkeeper::PublicKey::PublicKey;
 use authgraph_vts_test as ag_vts;
 use authgraph_boringssl as boring;
 use authgraph_core::key;
@@ -70,20 +71,32 @@ const SECRET_EXAMPLE: Secret = Secret([
     0x06, 0xAC, 0x36, 0x8B, 0x3C, 0x95, 0x50, 0x16, 0x67, 0x71, 0x65, 0x26, 0xEB, 0xD0, 0xC3, 0x98,
 ]);
 
-// Android expects the public key of Secretkeeper instance to be present in the Linux device tree.
+// Android expects the public key of Secretkeeper instance to be available either
+// a) by being present in the Linux device tree (prior to version 2 of the secretkeeper HAL), or
+// b) via the `getSecretKeeperIdentity` operation from v2 onwards.
 // This allows clients to (cryptographically) verify that they are indeed talking to the real
 // secretkeeper.
 // Note that this is the identity of the `default` instance (and not `nonsecure`)!
-fn get_secretkeeper_identity() -> Option<CoseKey> {
-    let path = Path::new(SECRETKEEPER_KEY_HOST_DT);
-    if path.exists() {
-        let key = fs::read(path).unwrap();
-        let mut key = CoseKey::from_slice(&key).unwrap();
-        key.canonicalize(CborOrdering::Lexicographic);
-        Some(key)
+fn get_secretkeeper_identity(instance: &str) -> Option<CoseKey> {
+    let sk = get_connection(instance);
+    let key_material = if sk.getInterfaceVersion().expect("Error getting sk interface version") >= 2 {
+        let PublicKey { keyMaterial } = sk.getSecretkeeperIdentity().expect("Error calling getSecretkeeperIdentity");
+        Some(keyMaterial)
     } else {
-        None
-    }
+        let path = Path::new(SECRETKEEPER_KEY_HOST_DT);
+        if path.exists() {
+            let key_material = fs::read(path).unwrap();
+            Some(key_material)
+        } else {
+            None
+        }
+    };
+
+    key_material.map(|km| {
+        let mut cose_key = CoseKey::from_slice(&km).expect("Error deserializing CoseKey from key material");
+        cose_key.canonicalize(CborOrdering::Lexicographic);
+        cose_key
+    })
 }
 
 fn get_instances() -> Vec<(String, String)> {
@@ -760,12 +773,12 @@ fn secret_management_policy_gate(instance: String) {
 }
 
 // This test checks that the identity of Secretkeeper (in context of AuthGraph key exchange) is
-// same as the one advertized in Linux device tree. This is only expected from `default` instance.
+// same as the one either a) advertized in Linux device tree or b) retrieved from SK itself
+// from (HAL v2 onwards). This is only expected from `default` instance.
 #[rdroidtest(get_instances())]
-#[ignore_if(|p| p != "default")]
 fn secretkeeper_check_identity(instance: String) {
-    let sk_key = get_secretkeeper_identity()
-        .expect("Failed to extract identity of default instance from device tree");
+    let sk_key = get_secretkeeper_identity(&instance)
+        .expect("Failed to extract identity of default instance");
     // Create a session with this expected identity. This succeeds only if the identity used by
     // Secretkeeper is sk_key.
     let _ = SkClient::with_expected_sk_identity(&instance, sk_key).unwrap();

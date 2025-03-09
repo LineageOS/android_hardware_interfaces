@@ -35,9 +35,9 @@ package android.hardware.tv.tuner;
 /* @hide */
 @Backing(type="int") @VintfStability
 enum AudioPreselectionRenderingIndicationType {
-  NOT_INDICATED = 0,
-  STEREO = 1,
-  TWO_DIMENSIONAL = 2,
-  THREE_DIMENSIONAL = 3,
-  HEADPHONE = 4,
+  NOT_INDICATED,
+  STEREO,
+  TWO_DIMENSIONAL,
+  THREE_DIMENSIONAL,
+  HEADPHONE,
 }

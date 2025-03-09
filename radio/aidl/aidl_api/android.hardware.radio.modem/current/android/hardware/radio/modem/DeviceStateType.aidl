@@ -33,7 +33,7 @@
 
 package android.hardware.radio.modem;
 /* @hide */
-@Backing(type="int") @JavaDerive(toString=true) @VintfStability
+@Backing(type="int") @JavaDerive(toString=true) @SuppressWarnings(value={"redundant-name"}) @VintfStability
 enum DeviceStateType {
   POWER_SAVE_MODE,
   CHARGING_STATE,

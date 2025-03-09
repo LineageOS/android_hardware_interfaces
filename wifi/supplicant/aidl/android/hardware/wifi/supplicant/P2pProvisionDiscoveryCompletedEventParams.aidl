@@ -33,7 +33,11 @@ parcelable P2pProvisionDiscoveryCompletedEventParams {
     boolean isRequest;
     /** Status of the provision discovery */
     P2pProvDiscStatusCode status;
-    /** Mask of |WpsConfigMethods| indicating the supported methods */
+    /**
+     * Wi-Fi Protected Setup provisioning method. If using Wi-Fi Protected Setup,
+     * then must be set to a non-|WpsProvisionMethod.NONE| provisioning method,
+     * otherwise set to |WpsProvisionMethod.NONE|.
+     */
     int configMethods;
     /** 8-digit pin generated */
     String generatedPin;
@@ -50,4 +54,17 @@ parcelable P2pProvisionDiscoveryCompletedEventParams {
      * that no vendor data is provided.
      */
     @nullable OuiKeyedData[] vendorData;
+    /**
+     * Wi-Fi Direct pairing bootstrapping method. If using P2P pairing protocol,
+     * then must be set one of the |P2pPairingBootstrappingMethodMask|, otherwise
+     * set to zero.
+     */
+    int pairingBootstrappingMethod;
+    /**
+     * Password for pairing setup, if |bootstrappingMethod| uses one of the
+     * |P2pPairingBootstrappingMethodMask| methods other than
+     * P2pPairingBootstrappingMethodMask.BOOTSTRAPPING_OPPORTUNISTIC,
+     * null otherwise.
+     */
+    @nullable String password;
 }

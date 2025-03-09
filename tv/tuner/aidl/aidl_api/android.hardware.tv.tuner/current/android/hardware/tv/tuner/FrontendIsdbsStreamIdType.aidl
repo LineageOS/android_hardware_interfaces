@@ -35,7 +35,7 @@ package android.hardware.tv.tuner;
 /* @hide */
 @Backing(type="int") @VintfStability
 enum FrontendIsdbsStreamIdType {
-  STREAM_ID = 0,
-  RELATIVE_STREAM_NUMBER = 1,
-  UNDEFINED = 2,
+  STREAM_ID,
+  RELATIVE_STREAM_NUMBER,
+  UNDEFINED,
 }

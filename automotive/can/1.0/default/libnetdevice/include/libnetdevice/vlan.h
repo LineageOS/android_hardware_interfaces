@@ -20,6 +20,6 @@
 
 namespace android::netdevice::vlan {
 
-bool add(const std::string& eth, const std::string& vlan, uint16_t id);
+bool add(std::string_view eth, std::string_view vlan, uint16_t id);
 
 }  // namespace android::netdevice::vlan

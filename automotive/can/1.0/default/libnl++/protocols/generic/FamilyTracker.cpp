@@ -18,6 +18,9 @@
 
 #include <android-base/logging.h>
 
+// should be in linux/genetlink.h
+#define GENL_START_ALLOC (NLMSG_MIN_TYPE + 3)
+
 namespace android::nl::generic {
 
 bool FamilyTracker::track(const Buffer<nlmsghdr>& buffer) {

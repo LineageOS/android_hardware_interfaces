@@ -35,8 +35,8 @@ package android.hardware.radio.network;
 /* @hide */
 @JavaDerive(toString=true) @VintfStability
 parcelable SecurityAlgorithmUpdate {
-  android.hardware.radio.network.ConnectionEvent connectionEvent;
-  android.hardware.radio.network.SecurityAlgorithm encryption;
-  android.hardware.radio.network.SecurityAlgorithm integrity;
+  android.hardware.radio.network.ConnectionEvent connectionEvent = android.hardware.radio.network.ConnectionEvent.CS_SIGNALLING_GSM;
+  android.hardware.radio.network.SecurityAlgorithm encryption = android.hardware.radio.network.SecurityAlgorithm.A50;
+  android.hardware.radio.network.SecurityAlgorithm integrity = android.hardware.radio.network.SecurityAlgorithm.A50;
   boolean isUnprotectedEmergency;
 }
