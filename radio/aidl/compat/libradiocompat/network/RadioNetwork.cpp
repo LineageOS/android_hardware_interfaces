@@ -41,7 +41,7 @@ ScopedAStatus RadioNetwork::getAllowedNetworkTypesBitmap(int32_t serial) {
     if (mHal1_6) {
         mHal1_6->getAllowedNetworkTypesBitmap(serial);
     } else {
-        mHal1_5->getPreferredNetworkType(serial);
+        mHal1_5->getPreferredNetworkTypeBitmap(serial);
     }
     return ok();
 }
@@ -166,7 +166,7 @@ ScopedAStatus RadioNetwork::setAllowedNetworkTypesBitmap(int32_t serial, int32_t
     if (mHal1_6) {
         mHal1_6->setAllowedNetworkTypesBitmap(serial, raf);
     } else {
-        mHal1_5->setPreferredNetworkType(serial, getNetworkTypeFromRaf(raf));
+        mHal1_5->setPreferredNetworkTypeBitmap(serial, raf);
     }
     return ok();
 }
