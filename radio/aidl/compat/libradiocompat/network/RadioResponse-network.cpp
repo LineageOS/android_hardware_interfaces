@@ -55,9 +55,10 @@ Return<void> RadioResponse::getPreferredNetworkTypeResponse(const V1_0::RadioRes
 }
 
 Return<void> RadioResponse::getPreferredNetworkTypeBitmapResponse(
-        const V1_0::RadioResponseInfo& info, hidl_bitfield<V1_4::RadioAccessFamily>) {
+        const V1_0::RadioResponseInfo& info,
+        hidl_bitfield<V1_4::RadioAccessFamily> networkTypeBitmap) {
     LOG_CALL << info.serial;
-    LOG(ERROR) << "IRadio HAL 1.4 not supported";
+    networkCb()->getAllowedNetworkTypesBitmapResponse(toAidl(info), networkTypeBitmap);
     return {};
 }
 
@@ -290,7 +291,7 @@ Return<void> RadioResponse::setPreferredNetworkTypeResponse(const V1_0::RadioRes
 Return<void> RadioResponse::setPreferredNetworkTypeBitmapResponse(
         const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    LOG(ERROR) << "IRadio HAL 1.4 not supported";
+    networkCb()->setAllowedNetworkTypesBitmapResponse(toAidl(info));
     return {};
 }
 
