@@ -506,7 +506,9 @@ TEST_P(WifiStaIfaceAidlTest, TwtSessionSetup) {
     twtRequest.maxWakeDurationUs = twt_capabilities.maxWakeDurationUs;
     twtRequest.minWakeIntervalUs = twt_capabilities.minWakeIntervalUs;
     twtRequest.maxWakeIntervalUs = twt_capabilities.maxWakeIntervalUs;
-    EXPECT_TRUE(wifi_sta_iface_->twtSessionSetup(1, twtRequest).isOk());
+
+    status = wifi_sta_iface_->twtSessionSetup(1, twtRequest);
+    EXPECT_TRUE(status.isOk() || checkStatusCode(&status, WifiStatusCode::ERROR_NOT_SUPPORTED));
 }
 
 /**
@@ -520,9 +522,10 @@ TEST_P(WifiStaIfaceAidlTest, TwtSessionGetStats) {
         GTEST_SKIP() << "TWT is not supported";
     }
 
+    auto status = wifi_sta_iface_->twtSessionGetStats(1, 10);
     // Expecting a IWifiStaIfaceEventCallback.onTwtFailure() with INVALID_PARAMS
-    // as the error code.
-    EXPECT_TRUE(wifi_sta_iface_->twtSessionGetStats(1, 10).isOk());
+    // as the error code, or that the call returns WifiStatusCode::ERROR_INVALID_ARGS.
+    EXPECT_TRUE(status.isOk() || checkStatusCode(&status, WifiStatusCode::ERROR_INVALID_ARGS));
 }
 
 /**
@@ -536,9 +539,10 @@ TEST_P(WifiStaIfaceAidlTest, TwtSessionTeardown) {
         GTEST_SKIP() << "TWT is not supported";
     }
 
+    auto status = wifi_sta_iface_->twtSessionTeardown(1, 10);
     // Expecting a IWifiStaIfaceEventCallback.onTwtFailure() with INVALID_PARAMS
-    // as the error code.
-    EXPECT_TRUE(wifi_sta_iface_->twtSessionTeardown(1, 10).isOk());
+    // as the error code, or that the call returns WifiStatusCode::ERROR_INVALID_ARGS.
+    EXPECT_TRUE(status.isOk() || checkStatusCode(&status, WifiStatusCode::ERROR_INVALID_ARGS));
 }
 
 /**
@@ -564,8 +568,8 @@ TEST_P(WifiStaIfaceAidlTest, TwtSessionUpdate) {
         GTEST_SKIP() << "TwtSessionUpdate is not supported";
     }
     // Expecting a IWifiStaIfaceEventCallback.onTwtFailure() with INVALID_PARAMS
-    // as the error code.
-    EXPECT_TRUE(status.isOk());
+    // as the error code, or that the call returns WifiStatusCode::ERROR_INVALID_ARGS.
+    EXPECT_TRUE(status.isOk() || checkStatusCode(&status, WifiStatusCode::ERROR_INVALID_ARGS));
 }
 
 /**
@@ -584,8 +588,8 @@ TEST_P(WifiStaIfaceAidlTest, TwtSessionSuspend) {
         GTEST_SKIP() << "TwtSessionSuspend is not supported";
     }
     // Expecting a IWifiStaIfaceEventCallback.onTwtFailure() with INVALID_PARAMS
-    // as the error code.
-    EXPECT_TRUE(status.isOk());
+    // as the error code, or that the call returns WifiStatusCode::ERROR_INVALID_ARGS.
+    EXPECT_TRUE(status.isOk() || checkStatusCode(&status, WifiStatusCode::ERROR_INVALID_ARGS));
 }
 
 /**
@@ -604,8 +608,8 @@ TEST_P(WifiStaIfaceAidlTest, TwtSessionResume) {
         GTEST_SKIP() << "TwtSessionResume is not supported";
     }
     // Expecting a IWifiStaIfaceEventCallback.onTwtFailure() with INVALID_PARAMS
-    // as the error code.
-    EXPECT_TRUE(status.isOk());
+    // as the error code, or that the call returns WifiStatusCode::ERROR_INVALID_ARGS.
+    EXPECT_TRUE(status.isOk() || checkStatusCode(&status, WifiStatusCode::ERROR_INVALID_ARGS));
 }
 
 /*
