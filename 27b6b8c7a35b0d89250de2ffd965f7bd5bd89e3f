@@ -46,6 +46,30 @@
       },
       "revId": "27b6b8c7a35b0d89250de2ffd965f7bd5bd89e3f",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "16b077b0_e8709e65",
+        "filename": "radio/aidl/compat/libradiocompat/network/RadioResponse-network.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 10067
+      },
+      "writtenOn": "2025-03-18T15:09:15Z",
+      "side": 0,
+      "message": "ah also the point of this change was to unbreak 1.5 because they used 1.0 method that was too old to even recognize NR",
+      "parentUuid": "b5653fa1_d243b8c5",
+      "range": {
+        "startLine": 60,
+        "startChar": 19,
+        "endLine": 60,
+        "endChar": 47
+      },
+      "revId": "27b6b8c7a35b0d89250de2ffd965f7bd5bd89e3f",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
