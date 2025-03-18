@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "581f3a35_f5f9af5d",
+        "filename": "radio/aidl/compat/libradiocompat/network/RadioResponse-network.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 4550
+      },
+      "writtenOn": "2025-03-18T14:50:08Z",
+      "side": 0,
+      "message": "There are a few other instances of this in the wrapper, shouldn\u0027t you be fixing all of them?",
+      "range": {
+        "startLine": 60,
+        "startChar": 19,
+        "endLine": 60,
+        "endChar": 47
+      },
+      "revId": "27b6b8c7a35b0d89250de2ffd965f7bd5bd89e3f",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
