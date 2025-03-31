@@ -26,13 +26,14 @@ class RadioCompatBase {
   protected:
     std::shared_ptr<DriverContext> mContext;
 
+    sp<V1_4::IRadio> mHal1_4;
     sp<V1_5::IRadio> mHal1_5;
     sp<V1_6::IRadio> mHal1_6;
 
     std::shared_ptr<CallbackManager> mCallbackManager;
 
   public:
-    RadioCompatBase(std::shared_ptr<DriverContext> context, sp<V1_5::IRadio> hidlHal,
+    RadioCompatBase(std::shared_ptr<DriverContext> context, sp<V1_4::IRadio> hidlHal,
                     std::shared_ptr<CallbackManager> cbMgr);
 };
 
