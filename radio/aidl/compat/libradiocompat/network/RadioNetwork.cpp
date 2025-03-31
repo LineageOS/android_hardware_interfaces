@@ -40,33 +40,51 @@ ScopedAStatus RadioNetwork::getAllowedNetworkTypesBitmap(int32_t serial) {
     LOG_CALL << serial;
     if (mHal1_6) {
         mHal1_6->getAllowedNetworkTypesBitmap(serial);
-    } else {
+    } else if (mHal1_5) {
         mHal1_5->getPreferredNetworkTypeBitmap(serial);
+    } else {
+        mHal1_4->getPreferredNetworkTypeBitmap(serial);
     }
     return ok();
 }
 
 ScopedAStatus RadioNetwork::getAvailableBandModes(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->getAvailableBandModes(serial);
+    if (mHal1_5) {
+        mHal1_5->getAvailableBandModes(serial);
+    } else {
+        mHal1_4->getAvailableBandModes(serial);
+    }
     return ok();
 }
 
 ScopedAStatus RadioNetwork::getAvailableNetworks(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->getAvailableNetworks(serial);
+    if (mHal1_5) {
+        mHal1_5->getAvailableNetworks(serial);
+    } else {
+        mHal1_4->getAvailableNetworks(serial);
+    }
     return ok();
 }
 
 ScopedAStatus RadioNetwork::getBarringInfo(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->getBarringInfo(serial);
+    if (mHal1_5) {
+        mHal1_5->getBarringInfo(serial);
+    } else {
+        mHal1_4->getBarringInfo(serial);
+    }
     return ok();
 }
 
 ScopedAStatus RadioNetwork::getCdmaRoamingPreference(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->getCdmaRoamingPreference(serial);
+    if (mHal1_5) {
+        mHal1_5->getCdmaRoamingPreference(serial);
+    } else {
+        mHal1_4->getCdmaRoamingPreference(serial);
+    }
     return ok();
 }
 
@@ -74,8 +92,10 @@ ScopedAStatus RadioNetwork::getCellInfoList(int32_t serial) {
     LOG_CALL << serial;
     if (mHal1_6) {
         mHal1_6->getCellInfoList_1_6(serial);
-    } else {
+    } else if (mHal1_5) {
         mHal1_5->getCellInfoList(serial);
+    } else {
+        mHal1_4->getCellInfoList(serial);
     }
     return ok();
 }
@@ -84,27 +104,41 @@ ScopedAStatus RadioNetwork::getDataRegistrationState(int32_t serial) {
     LOG_CALL << serial;
     if (mHal1_6) {
         mHal1_6->getDataRegistrationState_1_6(serial);
-    } else {
+    } else if (mHal1_5) {
         mHal1_5->getDataRegistrationState_1_5(serial);
+    } else {
+        mHal1_4->getDataRegistrationState_1_4(serial);
     }
     return ok();
 }
 
 ScopedAStatus RadioNetwork::getImsRegistrationState(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->getImsRegistrationState(serial);
+    if (mHal1_5) {
+        mHal1_5->getImsRegistrationState(serial);
+    } else {
+        mHal1_4->getImsRegistrationState(serial);
+    }
     return ok();
 }
 
 ScopedAStatus RadioNetwork::getNetworkSelectionMode(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->getNetworkSelectionMode(serial);
+    if (mHal1_5) {
+        mHal1_5->getNetworkSelectionMode(serial);
+    } else {
+        mHal1_4->getNetworkSelectionMode(serial);
+    }
     return ok();
 }
 
 ScopedAStatus RadioNetwork::getOperator(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->getOperator(serial);
+    if (mHal1_5) {
+        mHal1_5->getOperator(serial);
+    } else {
+        mHal1_4->getOperator(serial);
+    }
     return ok();
 }
 
@@ -112,8 +146,10 @@ ScopedAStatus RadioNetwork::getSignalStrength(int32_t serial) {
     LOG_CALL << serial;
     if (mHal1_6) {
         mHal1_6->getSignalStrength_1_6(serial);
-    } else {
+    } else if (mHal1_5) {
         mHal1_5->getSignalStrength_1_4(serial);
+    } else {
+        mHal1_4->getSignalStrength_1_4(serial);
     }
     return ok();
 }
@@ -130,7 +166,11 @@ ScopedAStatus RadioNetwork::getSystemSelectionChannels(int32_t serial) {
 
 ScopedAStatus RadioNetwork::getVoiceRadioTechnology(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->getVoiceRadioTechnology(serial);
+    if (mHal1_5) {
+        mHal1_5->getVoiceRadioTechnology(serial);
+    } else {
+        mHal1_4->getVoiceRadioTechnology(serial);
+    }
     return ok();
 }
 
@@ -138,8 +178,10 @@ ScopedAStatus RadioNetwork::getVoiceRegistrationState(int32_t serial) {
     LOG_CALL << serial;
     if (mHal1_6) {
         mHal1_6->getVoiceRegistrationState_1_6(serial);
-    } else {
+    } else if (mHal1_5) {
         mHal1_5->getVoiceRegistrationState_1_5(serial);
+    } else {
+        mHal1_4->getVoiceRegistrationState_1_4(serial);
     }
     return ok();
 }
@@ -156,7 +198,11 @@ ScopedAStatus RadioNetwork::isNrDualConnectivityEnabled(int32_t serial) {
 
 ScopedAStatus RadioNetwork::responseAcknowledgement() {
     LOG_CALL;
-    mHal1_5->responseAcknowledgement();
+    if (mHal1_5) {
+        mHal1_5->responseAcknowledgement();
+    } else {
+        mHal1_4->responseAcknowledgement();
+    }
     return ok();
 }
 
@@ -165,40 +211,62 @@ ScopedAStatus RadioNetwork::setAllowedNetworkTypesBitmap(int32_t serial, int32_t
     const auto raf = toHidlBitfield<V1_4::RadioAccessFamily>(ntype);
     if (mHal1_6) {
         mHal1_6->setAllowedNetworkTypesBitmap(serial, raf);
-    } else {
+    } else if (mHal1_5) {
         mHal1_5->setPreferredNetworkTypeBitmap(serial, raf);
+    } else {
+        mHal1_4->setPreferredNetworkTypeBitmap(serial, raf);
     }
     return ok();
 }
 
 ScopedAStatus RadioNetwork::setBandMode(int32_t serial, aidl::RadioBandMode mode) {
     LOG_CALL << serial;
-    mHal1_5->setBandMode(serial, V1_0::RadioBandMode(mode));
+    if (mHal1_5) {
+        mHal1_5->setBandMode(serial, V1_0::RadioBandMode(mode));
+    } else {
+        mHal1_4->setBandMode(serial, V1_0::RadioBandMode(mode));
+    }
     return ok();
 }
 
 ScopedAStatus RadioNetwork::setBarringPassword(int32_t serial, const std::string& facility,
                                                const std::string& oldPw, const std::string& newPw) {
     LOG_CALL << serial;
-    mHal1_5->setBarringPassword(serial, facility, oldPw, newPw);
+    if (mHal1_5) {
+        mHal1_5->setBarringPassword(serial, facility, oldPw, newPw);
+    } else {
+        mHal1_4->setBarringPassword(serial, facility, oldPw, newPw);
+    }
     return ok();
 }
 
 ScopedAStatus RadioNetwork::setCdmaRoamingPreference(int32_t serial, aidl::CdmaRoamingType type) {
     LOG_CALL << serial;
-    mHal1_5->setCdmaRoamingPreference(serial, V1_0::CdmaRoamingType(type));
+    if (mHal1_5) {
+        mHal1_5->setCdmaRoamingPreference(serial, V1_0::CdmaRoamingType(type));
+    } else {
+        mHal1_4->setCdmaRoamingPreference(serial, V1_0::CdmaRoamingType(type));
+    }
     return ok();
 }
 
 ScopedAStatus RadioNetwork::setCellInfoListRate(int32_t serial, int32_t rate) {
     LOG_CALL << serial;
-    mHal1_5->setCellInfoListRate(serial, rate);
+    if (mHal1_5) {
+        mHal1_5->setCellInfoListRate(serial, rate);
+    } else {
+        mHal1_4->setCellInfoListRate(serial, rate);
+    }
     return ok();
 }
 
 ScopedAStatus RadioNetwork::setIndicationFilter(int32_t serial, int32_t indFilter) {
     LOG_CALL << serial;
-    mHal1_5->setIndicationFilter_1_5(serial, toHidlBitfield<V1_5::IndicationFilter>(indFilter));
+    if (mHal1_5) {
+        mHal1_5->setIndicationFilter_1_5(serial, toHidlBitfield<V1_5::IndicationFilter>(indFilter));
+    } else {
+        mHal1_4->setIndicationFilter_1_4(serial, toHidlBitfield<V1_5::IndicationFilter>(indFilter));
+    }
     return ok();
 }
 
@@ -207,28 +275,46 @@ ScopedAStatus RadioNetwork::setLinkCapacityReportingCriteria(  //
         const std::vector<int32_t>& thrDownlinkKbps, const std::vector<int32_t>& thrUplinkKbps,
         AccessNetwork accessNetwork) {
     LOG_CALL << serial;
-    mHal1_5->setLinkCapacityReportingCriteria_1_5(  //
-            serial, hysteresisMs, hysteresisDlKbps, hysteresisUlKbps, thrDownlinkKbps,
-            thrUplinkKbps, V1_5::AccessNetwork(accessNetwork));
+    if (mHal1_5) {
+        mHal1_5->setLinkCapacityReportingCriteria_1_5(  //
+                serial, hysteresisMs, hysteresisDlKbps, hysteresisUlKbps, thrDownlinkKbps,
+                thrUplinkKbps, V1_5::AccessNetwork(accessNetwork));
+    } else {
+        mHal1_4->setLinkCapacityReportingCriteria_1_5(  //
+                serial, hysteresisMs, hysteresisDlKbps, hysteresisUlKbps, thrDownlinkKbps,
+                thrUplinkKbps, V1_5::AccessNetwork(accessNetwork));
+    }
     return ok();
 }
 
 ScopedAStatus RadioNetwork::setLocationUpdates(int32_t serial, bool enable) {
     LOG_CALL << serial;
-    mHal1_5->setLocationUpdates(serial, enable);
+    if (mHal1_5) {
+        mHal1_5->setLocationUpdates(serial, enable);
+    } else {
+        mHal1_4->setLocationUpdates(serial, enable);
+    }
     return ok();
 }
 
 ScopedAStatus RadioNetwork::setNetworkSelectionModeAutomatic(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->setNetworkSelectionModeAutomatic(serial);
+    if (mHal1_5) {
+        mHal1_5->setNetworkSelectionModeAutomatic(serial);
+    } else {
+        mHal1_4->setNetworkSelectionModeAutomatic(serial);
+    }
     return ok();
 }
 
 ScopedAStatus RadioNetwork::setNetworkSelectionModeManual(  //
         int32_t serial, const std::string& opNumeric, AccessNetwork ran) {
     LOG_CALL << serial;
-    mHal1_5->setNetworkSelectionModeManual_1_5(serial, opNumeric, toRadioAccessNetworks(ran));
+    if (mHal1_5) {
+        mHal1_5->setNetworkSelectionModeManual_1_5(serial, opNumeric, toRadioAccessNetworks(ran));
+    } else {
+        mHal1_4->setNetworkSelectionModeManual_1_4(serial, opNumeric, toRadioAccessNetworks(ran));
+    }
     return ok();
 }
 
@@ -266,39 +352,64 @@ ScopedAStatus RadioNetwork::setSignalStrengthReportingCriteria(
         respond()->setSignalStrengthReportingCriteriaResponse(notSupported(serial));
         return ok();
     }
-    mHal1_5->setSignalStrengthReportingCriteria_1_5(serial, toHidl(infos[0]),
-                                                    V1_5::AccessNetwork(infos[0].ran));
+    if (mHal1_5) {
+        mHal1_5->setSignalStrengthReportingCriteria_1_5(serial, toHidl(infos[0]),
+                                                        V1_5::AccessNetwork(infos[0].ran));
+    } else {
+        mHal1_4->setSignalStrengthReportingCriteria_1_4(serial, toHidl(infos[0]),
+                                                        V1_5::AccessNetwork(infos[0].ran));
+    }
     return ok();
 }
 
 ScopedAStatus RadioNetwork::setSuppServiceNotifications(int32_t serial, bool enable) {
     LOG_CALL << serial;
-    mHal1_5->setSuppServiceNotifications(serial, enable);
+    if (mHal1_5) {
+        mHal1_5->setSuppServiceNotifications(serial, enable);
+    } else {
+        mHal1_4->setSuppServiceNotifications(serial, enable);
+    }
     return ok();
 }
 
 ScopedAStatus RadioNetwork::setSystemSelectionChannels(  //
         int32_t serial, bool specifyCh, const std::vector<aidl::RadioAccessSpecifier>& specifiers) {
     LOG_CALL << serial;
-    mHal1_5->setSystemSelectionChannels_1_5(serial, specifyCh, toHidl(specifiers));
+    if (mHal1_5) {
+        mHal1_5->setSystemSelectionChannels_1_5(serial, specifyCh, toHidl(specifiers));
+    } else {
+        mHal1_4->setSystemSelectionChannels_1_4(serial, specifyCh, toHidl(specifiers));
+    }
     return ok();
 }
 
 ScopedAStatus RadioNetwork::startNetworkScan(int32_t serial, const aidl::NetworkScanRequest& req) {
     LOG_CALL << serial;
-    mHal1_5->startNetworkScan_1_5(serial, toHidl(req));
+    if (mHal1_5) {
+        mHal1_5->startNetworkScan_1_5(serial, toHidl(req));
+    } else {
+        mHal1_4->startNetworkScan_1_4(serial, toHidl(req));
+    }
     return ok();
 }
 
 ScopedAStatus RadioNetwork::stopNetworkScan(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->stopNetworkScan(serial);
+    if (mHal1_5) {
+        mHal1_5->stopNetworkScan(serial);
+    } else {
+        mHal1_4->stopNetworkScan(serial);
+    }
     return ok();
 }
 
 ScopedAStatus RadioNetwork::supplyNetworkDepersonalization(int32_t ser, const std::string& nPin) {
     LOG_CALL << ser;
-    mHal1_5->supplyNetworkDepersonalization(ser, nPin);
+    if (mHal1_5) {
+        mHal1_5->supplyNetworkDepersonalization(ser, nPin);
+    } else {
+        mHal1_4->supplyNetworkDepersonalization(ser, nPin);
+    }
     return ok();
 }
 

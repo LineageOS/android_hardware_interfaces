@@ -20,11 +20,12 @@
 
 namespace android::hardware::radio::compat {
 
-RadioCompatBase::RadioCompatBase(std::shared_ptr<DriverContext> context, sp<V1_5::IRadio> hidlHal,
-                                 std::shared_ptr<CallbackManager> cbMgr)
+RadioCompatBase::RadioCompatBase(std::shared_ptr<DriverContext> context, sp<V1_4::IRadio> hidlHal1_4,
+                                 sp<V1_5::IRadio> hidlHal1_5, std::shared_ptr<CallbackManager> cbMgr)
     : mContext(context),
-      mHal1_5(hidlHal),
-      mHal1_6(V1_6::IRadio::castFrom(hidlHal)),
+      mHal1_4(hidlHal1_4),
+      mHal1_5(hidlHal1_5),
+      mHal1_6(V1_6::IRadio::castFrom(hidlHal1_5)),
       mCallbackManager(cbMgr) {}
 
 }  // namespace android::hardware::radio::compat
