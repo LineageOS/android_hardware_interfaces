@@ -51,7 +51,7 @@ static void publishRadioHal(std::shared_ptr<compat::DriverContext> ctx, sp<V1_5:
 }
 
 static void publishRadio(std::string slot) {
-    auto radioHidl = V1_5::IRadio::getService(slot);
+    auto radioHidl = V1_4::IRadio::getService(slot);
     CHECK(radioHidl) << "HIDL IRadio not present in VINTF";
 
     hidl_utils::linkDeathToDeath(radioHidl);

@@ -58,7 +58,7 @@ ScopedAStatus RadioData::cancelHandover(int32_t serial, int32_t callId) {
 ScopedAStatus RadioData::deactivateDataCall(int32_t serial, int32_t cid,
                                             aidl::DataRequestReason reason) {
     LOG_CALL << serial;
-    mHal1_5->deactivateDataCall_1_2(serial, cid, V1_2::DataRequestReason(reason));
+    mHal1_4->deactivateDataCall_1_2(serial, cid, V1_2::DataRequestReason(reason));
     return ok();
 }
 
@@ -67,7 +67,7 @@ ScopedAStatus RadioData::getDataCallList(int32_t serial) {
     if (mHal1_6) {
         mHal1_6->getDataCallList_1_6(serial);
     } else {
-        mHal1_5->getDataCallList(serial);
+        mHal1_4->getDataCallList(serial);
     }
     return ok();
 }
@@ -94,20 +94,24 @@ ScopedAStatus RadioData::releasePduSessionId(int32_t serial, int32_t id) {
 
 ScopedAStatus RadioData::responseAcknowledgement() {
     LOG_CALL;
-    mHal1_5->responseAcknowledgement();
+    mHal1_4->responseAcknowledgement();
     return ok();
 }
 
 ScopedAStatus RadioData::setDataAllowed(int32_t serial, bool allow) {
     LOG_CALL << serial;
-    mHal1_5->setDataAllowed(serial, allow);
+    mHal1_4->setDataAllowed(serial, allow);
     return ok();
 }
 
 ScopedAStatus RadioData::setDataProfile(int32_t serial,
                                         const std::vector<aidl::DataProfileInfo>& profiles) {
     LOG_CALL << serial;
-    mHal1_5->setDataProfile_1_5(serial, toHidl(profiles));
+    if (mHal1_5) {
+        mHal1_5->setDataProfile_1_5(serial, toHidl(profiles));
+    } else {
+        mHal1_4->setDataProfile_1_4(serial, toHidl(profiles));
+    }
     return ok();
 }
 
@@ -125,7 +129,11 @@ ScopedAStatus RadioData::setDataThrottling(int32_t serial, aidl::DataThrottlingA
 ScopedAStatus RadioData::setInitialAttachApn(int32_t serial,
                                              const std::optional<aidl::DataProfileInfo>& info) {
     LOG_CALL << serial;
-    mHal1_5->setInitialAttachApn_1_5(serial, toHidl(info.value()));
+    if (mHal1_5) {
+        mHal1_5->setInitialAttachApn_1_5(serial, toHidl(info.value()));
+    } else {
+        mHal1_4->setInitialAttachApn_1_4(serial, toHidl(info.value()));
+    }
     return ok();
 }
 
@@ -152,9 +160,13 @@ ScopedAStatus RadioData::setupDataCall(int32_t serial, aidlCommon::AccessNetwork
                 toHidl<V1_6::OptionalTrafficDescriptor>(dataProfileInfo.trafficDescriptor),
                 matchAllRuleAllowed);
         mContext->addDataProfile(dataProfileInfo);
-    } else {
+    } else if (mHal1_5) {
         mHal1_5->setupDataCall_1_5(
                 serial, V1_5::AccessNetwork(accessNetwork), toHidl(dataProfileInfo), roamingAllowed,
+                V1_2::DataRequestReason(reason), toHidl(addresses), toHidl(dnses));
+    } else {
+        mHal1_4->setupDataCall_1_4(
+                serial, V1_4::AccessNetwork(accessNetwork), toHidl(dataProfileInfo), roamingAllowed,
                 V1_2::DataRequestReason(reason), toHidl(addresses), toHidl(dnses));
     }
     return ok();
@@ -172,13 +184,13 @@ ScopedAStatus RadioData::startHandover(int32_t serial, int32_t callId) {
 
 ScopedAStatus RadioData::startKeepalive(int32_t serial, const aidl::KeepaliveRequest& keepalive) {
     LOG_CALL << serial;
-    mHal1_5->startKeepalive(serial, toHidl(keepalive));
+    mHal1_4->startKeepalive(serial, toHidl(keepalive));
     return ok();
 }
 
 ScopedAStatus RadioData::stopKeepalive(int32_t serial, int32_t sessionHandle) {
     LOG_CALL << serial;
-    mHal1_5->stopKeepalive(serial, sessionHandle);
+    mHal1_4->stopKeepalive(serial, sessionHandle);
     return ok();
 }
 
