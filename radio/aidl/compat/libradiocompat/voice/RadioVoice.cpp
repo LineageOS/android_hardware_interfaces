@@ -36,25 +36,25 @@ std::shared_ptr<aidl::IRadioVoiceResponse> RadioVoice::respond() {
 
 ScopedAStatus RadioVoice::acceptCall(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->acceptCall(serial);
+    mHal1_4->acceptCall(serial);
     return ok();
 }
 
 ScopedAStatus RadioVoice::cancelPendingUssd(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->cancelPendingUssd(serial);
+    mHal1_4->cancelPendingUssd(serial);
     return ok();
 }
 
 ScopedAStatus RadioVoice::conference(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->conference(serial);
+    mHal1_4->conference(serial);
     return ok();
 }
 
 ScopedAStatus RadioVoice::dial(int32_t serial, const aidl::Dial& dialInfo) {
     LOG_CALL << serial;
-    mHal1_5->dial(serial, toHidl(dialInfo));
+    mHal1_4->dial(serial, toHidl(dialInfo));
     return ok();
 }
 
@@ -68,7 +68,7 @@ ScopedAStatus RadioVoice::emergencyDial(  //
                 serial, toHidl(info), toHidlBitfield<V1_4::EmergencyServiceCategory>(categories),
                 toHidl(urns), V1_4::EmergencyCallRouting(routing), knownUserIntentEmerg, isTesting);
     } else {
-        mHal1_5->emergencyDial(  //
+        mHal1_4->emergencyDial(  //
                 serial, toHidl(info), toHidlBitfield<V1_4::EmergencyServiceCategory>(categories),
                 toHidl(urns), V1_4::EmergencyCallRouting(routing), knownUserIntentEmerg, isTesting);
     }
@@ -77,38 +77,38 @@ ScopedAStatus RadioVoice::emergencyDial(  //
 
 ScopedAStatus RadioVoice::exitEmergencyCallbackMode(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->exitEmergencyCallbackMode(serial);
+    mHal1_4->exitEmergencyCallbackMode(serial);
     return ok();
 }
 
 ScopedAStatus RadioVoice::explicitCallTransfer(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->explicitCallTransfer(serial);
+    mHal1_4->explicitCallTransfer(serial);
     return ok();
 }
 
 ScopedAStatus RadioVoice::getCallForwardStatus(int32_t serial,
                                                const aidl::CallForwardInfo& callInfo) {
     LOG_CALL << serial;
-    mHal1_5->getCallForwardStatus(serial, toHidl(callInfo));
+    mHal1_4->getCallForwardStatus(serial, toHidl(callInfo));
     return ok();
 }
 
 ScopedAStatus RadioVoice::getCallWaiting(int32_t serial, int32_t serviceClass) {
     LOG_CALL << serial;
-    mHal1_5->getCallWaiting(serial, serviceClass);
+    mHal1_4->getCallWaiting(serial, serviceClass);
     return ok();
 }
 
 ScopedAStatus RadioVoice::getClip(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->getClip(serial);
+    mHal1_4->getClip(serial);
     return ok();
 }
 
 ScopedAStatus RadioVoice::getClir(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->getClir(serial);
+    mHal1_4->getClir(serial);
     return ok();
 }
 
@@ -117,56 +117,56 @@ ScopedAStatus RadioVoice::getCurrentCalls(int32_t serial) {
     if (mHal1_6) {
         mHal1_6->getCurrentCalls_1_6(serial);
     } else {
-        mHal1_5->getCurrentCalls(serial);
+        mHal1_4->getCurrentCalls(serial);
     }
     return ok();
 }
 
 ScopedAStatus RadioVoice::getLastCallFailCause(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->getLastCallFailCause(serial);
+    mHal1_4->getLastCallFailCause(serial);
     return ok();
 }
 
 ScopedAStatus RadioVoice::getMute(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->getMute(serial);
+    mHal1_4->getMute(serial);
     return ok();
 }
 
 ScopedAStatus RadioVoice::getPreferredVoicePrivacy(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->getPreferredVoicePrivacy(serial);
+    mHal1_4->getPreferredVoicePrivacy(serial);
     return ok();
 }
 
 ScopedAStatus RadioVoice::getTtyMode(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->getTTYMode(serial);
+    mHal1_4->getTTYMode(serial);
     return ok();
 }
 
 ScopedAStatus RadioVoice::handleStkCallSetupRequestFromSim(int32_t serial, bool accept) {
     LOG_CALL << serial;
-    mHal1_5->handleStkCallSetupRequestFromSim(serial, accept);
+    mHal1_4->handleStkCallSetupRequestFromSim(serial, accept);
     return ok();
 }
 
 ScopedAStatus RadioVoice::hangup(int32_t serial, int32_t gsmIndex) {
     LOG_CALL << serial;
-    mHal1_5->hangup(serial, gsmIndex);
+    mHal1_4->hangup(serial, gsmIndex);
     return ok();
 }
 
 ScopedAStatus RadioVoice::hangupForegroundResumeBackground(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->hangupForegroundResumeBackground(serial);
+    mHal1_4->hangupForegroundResumeBackground(serial);
     return ok();
 }
 
 ScopedAStatus RadioVoice::hangupWaitingOrBackground(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->hangupWaitingOrBackground(serial);
+    mHal1_4->hangupWaitingOrBackground(serial);
     return ok();
 }
 
@@ -178,74 +178,74 @@ ScopedAStatus RadioVoice::isVoNrEnabled(int32_t serial) {
 
 ScopedAStatus RadioVoice::rejectCall(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->rejectCall(serial);
+    mHal1_4->rejectCall(serial);
     return ok();
 }
 
 ScopedAStatus RadioVoice::responseAcknowledgement() {
     LOG_CALL;
-    mHal1_5->responseAcknowledgement();
+    mHal1_4->responseAcknowledgement();
     return ok();
 }
 
 ScopedAStatus RadioVoice::sendBurstDtmf(int32_t serial, const std::string& dtmf, int32_t on,
                                         int32_t off) {
     LOG_CALL << serial;
-    mHal1_5->sendBurstDtmf(serial, dtmf, on, off);
+    mHal1_4->sendBurstDtmf(serial, dtmf, on, off);
     return ok();
 }
 
 ScopedAStatus RadioVoice::sendCdmaFeatureCode(int32_t serial, const std::string& featureCode) {
     LOG_CALL << serial;
-    mHal1_5->sendCDMAFeatureCode(serial, featureCode);
+    mHal1_4->sendCDMAFeatureCode(serial, featureCode);
     return ok();
 }
 
 ScopedAStatus RadioVoice::sendDtmf(int32_t serial, const std::string& s) {
     LOG_CALL << serial;
-    mHal1_5->sendDtmf(serial, s);
+    mHal1_4->sendDtmf(serial, s);
     return ok();
 }
 
 ScopedAStatus RadioVoice::sendUssd(int32_t serial, const std::string& ussd) {
     LOG_CALL << serial << ' ' << ussd;
-    mHal1_5->sendUssd(serial, ussd);
+    mHal1_4->sendUssd(serial, ussd);
     return ok();
 }
 
 ScopedAStatus RadioVoice::separateConnection(int32_t serial, int32_t gsmIndex) {
     LOG_CALL << serial;
-    mHal1_5->separateConnection(serial, gsmIndex);
+    mHal1_4->separateConnection(serial, gsmIndex);
     return ok();
 }
 
 ScopedAStatus RadioVoice::setCallForward(int32_t serial, const aidl::CallForwardInfo& callInfo) {
     LOG_CALL << serial;
-    mHal1_5->setCallForward(serial, toHidl(callInfo));
+    mHal1_4->setCallForward(serial, toHidl(callInfo));
     return ok();
 }
 
 ScopedAStatus RadioVoice::setCallWaiting(int32_t serial, bool enable, int32_t serviceClass) {
     LOG_CALL << serial;
-    mHal1_5->setCallWaiting(serial, enable, serviceClass);
+    mHal1_4->setCallWaiting(serial, enable, serviceClass);
     return ok();
 }
 
 ScopedAStatus RadioVoice::setClir(int32_t serial, int32_t status) {
     LOG_CALL << serial;
-    mHal1_5->setClir(serial, status);
+    mHal1_4->setClir(serial, status);
     return ok();
 }
 
 ScopedAStatus RadioVoice::setMute(int32_t serial, bool enable) {
     LOG_CALL << serial;
-    mHal1_5->setMute(serial, enable);
+    mHal1_4->setMute(serial, enable);
     return ok();
 }
 
 ScopedAStatus RadioVoice::setPreferredVoicePrivacy(int32_t serial, bool enable) {
     LOG_CALL << serial;
-    mHal1_5->setPreferredVoicePrivacy(serial, enable);
+    mHal1_4->setPreferredVoicePrivacy(serial, enable);
     return ok();
 }
 
@@ -259,7 +259,7 @@ ScopedAStatus RadioVoice::setResponseFunctions(
 
 ScopedAStatus RadioVoice::setTtyMode(int32_t serial, aidl::TtyMode mode) {
     LOG_CALL << serial;
-    mHal1_5->setTTYMode(serial, V1_0::TtyMode(mode));
+    mHal1_4->setTTYMode(serial, V1_0::TtyMode(mode));
     return ok();
 }
 
@@ -272,19 +272,19 @@ ndk::ScopedAStatus RadioVoice::setVoNrEnabled(int32_t serial, [[maybe_unused]] b
 
 ScopedAStatus RadioVoice::startDtmf(int32_t serial, const std::string& s) {
     LOG_CALL << serial;
-    mHal1_5->startDtmf(serial, s);
+    mHal1_4->startDtmf(serial, s);
     return ok();
 }
 
 ScopedAStatus RadioVoice::stopDtmf(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->stopDtmf(serial);
+    mHal1_4->stopDtmf(serial);
     return ok();
 }
 
 ScopedAStatus RadioVoice::switchWaitingOrHoldingAndActive(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->switchWaitingOrHoldingAndActive(serial);
+    mHal1_4->switchWaitingOrHoldingAndActive(serial);
     return ok();
 }
 
