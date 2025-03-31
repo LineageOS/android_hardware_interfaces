@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7f330221_d9ac432d",
+        "filename": "radio/aidl/compat/libradiocompat/network/RadioNetwork.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 223,
+      "author": {
+        "id": 11883
+      },
+      "writtenOn": "2025-03-31T21:47:39Z",
+      "side": 1,
+      "message": "Probably V1_4 here and other places.\nJust ensure the fields are compatible",
+      "revId": "1a7ce758c3b9074585203b9a201e0ad3bf8ad813",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
