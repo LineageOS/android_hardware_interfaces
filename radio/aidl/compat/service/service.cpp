@@ -51,20 +51,21 @@ static void publishRadioHal(std::shared_ptr<compat::DriverContext> ctx, sp<V1_5:
 }
 
 static void publishRadio(std::string slot) {
-    auto radioHidl = V1_5::IRadio::getService(slot);
-    CHECK(radioHidl) << "HIDL IRadio not present in VINTF";
+    auto radioHidl14 = V1_5::IRadio::getService(slot);
+    auto radioHidl15 = V1_5::IRadio::getService(slot);
+    CHECK(radioHidl14 && radioHidl15) << "HIDL IRadio not present in VINTF";
 
     hidl_utils::linkDeathToDeath(radioHidl);
 
     auto context = std::make_shared<compat::DriverContext>();
     auto callbackMgr = std::make_shared<compat::CallbackManager>(context, radioHidl);
 
-    publishRadioHal<compat::RadioData>(context, radioHidl, callbackMgr, slot);
-    publishRadioHal<compat::RadioMessaging>(context, radioHidl, callbackMgr, slot);
-    publishRadioHal<compat::RadioModem>(context, radioHidl, callbackMgr, slot);
-    publishRadioHal<compat::RadioNetwork>(context, radioHidl, callbackMgr, slot);
-    publishRadioHal<compat::RadioSim>(context, radioHidl, callbackMgr, slot);
-    publishRadioHal<compat::RadioVoice>(context, radioHidl, callbackMgr, slot);
+    publishRadioHal<compat::RadioData>(context, radioHidl14, radioHidl15, callbackMgr, slot);
+    publishRadioHal<compat::RadioMessaging>(context, radioHidl14, radioHidl15, callbackMgr, slot);
+    publishRadioHal<compat::RadioModem>(context, radioHidl14, radioHidl15, callbackMgr, slot);
+    publishRadioHal<compat::RadioNetwork>(context, radioHidl14, radioHidl15, callbackMgr, slot);
+    publishRadioHal<compat::RadioSim>(context, radioHidl14, radioHidl15, callbackMgr, slot);
+    publishRadioHal<compat::RadioVoice>(context, radioHidl14, radioHidl15, callbackMgr, slot);
 }
 
 static void publishRadioConfig() {

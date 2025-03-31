@@ -33,19 +33,31 @@ std::shared_ptr<aidl::IRadioModemResponse> RadioModem::respond() {
 
 ScopedAStatus RadioModem::enableModem(int32_t serial, bool on) {
     LOG_CALL << serial;
-    mHal1_5->enableModem(serial, on);
+    if (mHal1_5) {
+        mHal1_5->enableModem(serial, on);
+    } else {
+        mHal1_4->enableModem(serial, on);
+    }
     return ok();
 }
 
 ScopedAStatus RadioModem::getBasebandVersion(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->getBasebandVersion(serial);
+    if (mHal1_5) {
+        mHal1_5->getBasebandVersion(serial);
+    } else {
+        mHal1_4->getBasebandVersion(serial);
+    }
     return ok();
 }
 
 ScopedAStatus RadioModem::getDeviceIdentity(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->getDeviceIdentity(serial);
+    if (mHal1_5) {
+        mHal1_5->getDeviceIdentity(serial);
+    } else {
+        mHal1_4->getDeviceIdentity(serial);
+    }
     return ok();
 }
 
@@ -58,73 +70,121 @@ ScopedAStatus RadioModem::getImei(int32_t serial) {
 
 ScopedAStatus RadioModem::getHardwareConfig(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->getHardwareConfig(serial);
+    if (mHal1_5) {
+        mHal1_5->getHardwareConfig(serial);
+    } else {
+        mHal1_4->getHardwareConfig(serial);
+    }
     return ok();
 }
 
 ScopedAStatus RadioModem::getModemActivityInfo(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->getModemActivityInfo(serial);
+    if (mHal1_5) {
+        mHal1_5->getModemActivityInfo(serial);
+    } else {
+        mHal1_4->getModemActivityInfo(serial);
+    }
     return ok();
 }
 
 ScopedAStatus RadioModem::getModemStackStatus(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->getModemStackStatus(serial);
+    if (mHal1_5) {
+        mHal1_5->getModemStackStatus(serial);
+    } else {
+        mHal1_4->getModemStackStatus(serial);
+    }
     return ok();
 }
 
 ScopedAStatus RadioModem::getRadioCapability(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->getRadioCapability(serial);
+    if (mHal1_5) {
+        mHal1_5->getRadioCapability(serial);
+    } else {
+        mHal1_4->getRadioCapability(serial);
+    }
     return ok();
 }
 
 ScopedAStatus RadioModem::nvReadItem(int32_t serial, aidl::NvItem itemId) {
     LOG_CALL << serial;
-    mHal1_5->nvReadItem(serial, V1_0::NvItem(itemId));
+    if (mHal1_5) {
+        mHal1_5->nvReadItem(serial, V1_0::NvItem(itemId));
+    } else {
+        mHal1_4->nvReadItem(serial, V1_0::NvItem(itemId));
+    }
     return ok();
 }
 
 ScopedAStatus RadioModem::nvResetConfig(int32_t serial, aidl::ResetNvType resetType) {
     LOG_CALL << serial;
-    mHal1_5->nvResetConfig(serial, V1_0::ResetNvType(resetType));
+    if (mHal1_5) {
+        mHal1_5->nvResetConfig(serial, V1_0::ResetNvType(resetType));
+    } else {
+        mHal1_4->nvResetConfig(serial, V1_0::ResetNvType(resetType));
+    }
     return ok();
 }
 
 ScopedAStatus RadioModem::nvWriteCdmaPrl(int32_t serial, const std::vector<uint8_t>& prl) {
     LOG_CALL << serial;
-    mHal1_5->nvWriteCdmaPrl(serial, prl);
+    if (mHal1_5) {
+        mHal1_5->nvWriteCdmaPrl(serial, prl);
+    } else {
+        mHal1_4->nvWriteCdmaPrl(serial, prl);
+    }
     return ok();
 }
 
 ScopedAStatus RadioModem::nvWriteItem(int32_t serial, const aidl::NvWriteItem& item) {
     LOG_CALL << serial;
-    mHal1_5->nvWriteItem(serial, toHidl(item));
+    if (mHal1_5) {
+        mHal1_5->nvWriteItem(serial, toHidl(item));
+    } else {
+        mHal1_4->nvWriteItem(serial, toHidl(item));
+    }
     return ok();
 }
 
 ScopedAStatus RadioModem::requestShutdown(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->requestShutdown(serial);
+    if (mHal1_5) {
+        mHal1_5->requestShutdown(serial);
+    } else {
+        mHal1_4->requestShutdown(serial);
+    }
     return ok();
 }
 
 ScopedAStatus RadioModem::responseAcknowledgement() {
     LOG_CALL;
-    mHal1_5->responseAcknowledgement();
+    if (mHal1_5) {
+        mHal1_5->responseAcknowledgement();
+    } else {
+        mHal1_4->responseAcknowledgement();
+    }
     return ok();
 }
 
 ScopedAStatus RadioModem::sendDeviceState(int32_t serial, aidl::DeviceStateType type, bool state) {
     LOG_CALL << serial;
-    mHal1_5->sendDeviceState(serial, V1_0::DeviceStateType(type), state);
+    if (mHal1_5) {
+        mHal1_5->sendDeviceState(serial, V1_0::DeviceStateType(type), state);
+    } else {
+        mHal1_4->sendDeviceState(serial, V1_0::DeviceStateType(type), state);
+    }
     return ok();
 }
 
 ScopedAStatus RadioModem::setRadioCapability(int32_t serial, const aidl::RadioCapability& rc) {
     LOG_CALL << serial;
-    mHal1_5->setRadioCapability(serial, toHidl(rc));
+    if (mHal1_5) {
+        mHal1_5->setRadioCapability(serial, toHidl(rc));
+    } else {
+        mHal1_4->setRadioCapability(serial, toHidl(rc));
+    }
     return ok();
 }
 
@@ -133,8 +193,10 @@ ScopedAStatus RadioModem::setRadioPower(int32_t serial, bool powerOn, bool forEm
     LOG_CALL << serial;
     if (mHal1_6) {
         mHal1_6->setRadioPower_1_6(serial, powerOn, forEmergencyCall, preferredForEmergencyCall);
-    } else {
+    } else if (mHal1_5) {
         mHal1_5->setRadioPower_1_5(serial, powerOn, forEmergencyCall, preferredForEmergencyCall);
+    } else {
+        mHal1_4->setRadioPower_1_4(serial, powerOn, forEmergencyCall, preferredForEmergencyCall);
     }
     return ok();
 }
