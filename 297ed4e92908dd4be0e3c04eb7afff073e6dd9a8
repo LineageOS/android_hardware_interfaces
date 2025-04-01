@@ -16,6 +16,23 @@
       "message": "I don\u0027t know if 1.4 devices/have NGRAN (5G standalone), but the wrapper doesn\u0027t support the 1.4 specifics for that usecase.\n\n1.5 was the first one with proper wiring for that (that the aidl wrapper uses)\n\nIt should still mostly work, aside that I guess.",
       "revId": "297ed4e92908dd4be0e3c04eb7afff073e6dd9a8",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "699c10bf_9530c774",
+        "filename": "compatibility_matrices/compatibility_matrix.6.xml",
+        "patchSetId": 5
+      },
+      "lineNbr": 453,
+      "author": {
+        "id": 25732
+      },
+      "writtenOn": "2025-04-01T12:56:23Z",
+      "side": 1,
+      "message": "I\u0027d move this to a separate change",
+      "revId": "297ed4e92908dd4be0e3c04eb7afff073e6dd9a8",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
