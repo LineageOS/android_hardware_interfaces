@@ -125,10 +125,9 @@ ScopedAStatus RadioSim::iccCloseLogicalChannel(int32_t serial, int32_t channelId
 }
 
 ScopedAStatus RadioSim::iccCloseLogicalChannelWithSessionInfo(int32_t serial,
-                                                        const aidl::SessionInfo& /*SessionInfo*/) {
+                                                        const aidl::SessionInfo& sessionInfo) {
     LOG_CALL << serial;
-    LOG(ERROR) << " iccCloseLogicalChannelWithSessionInfo is unsupported by HIDL HALs";
-    respond()->iccCloseLogicalChannelWithSessionInfoResponse(notSupported(serial));
+    mHal1_5->iccCloseLogicalChannel(serial, sessionInfo.sessionId);
     return ok();
 }
 
