@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8b65193b_b81e7633",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 11883
+      },
+      "writtenOn": "2025-05-03T17:34:25Z",
+      "side": 1,
+      "message": "Matches reference-libril (they actually check for sessionId \u003d\u003d 0 and fail, but who cares)",
+      "revId": "6582109547c9ee58c4534f970a2acb3fb81217a7",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
