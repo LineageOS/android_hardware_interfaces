@@ -22,7 +22,7 @@
 #include <fmq/MessageQueue.h>
 #include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
-#include <include/convert.h>
+#include "../convert.h"
 #include <chrono>
 #include <condition_variable>
 #include <list>
