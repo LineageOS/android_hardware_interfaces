@@ -51,9 +51,10 @@ Return<void> RadioResponse::getBasebandVersionResponse(const V1_0::RadioResponse
 
 Return<void> RadioResponse::getDeviceIdentityResponse(  //
         const V1_0::RadioResponseInfo& info, const hidl_string& imei, const hidl_string& imeisv,
-        const hidl_string& esn, const hidl_string& meid) {
+        const hidl_string& /*esn*/, const hidl_string& /*meid*/) {
     LOG_CALL << info.serial;
-    modemCb()->getDeviceIdentityResponse(toAidl(info), imei, imeisv, esn, meid);
+    aidl::ImeiInfo imeiInfo(aidl::ImeiInfo::ImeiType::PRIMARY, imei, imeisv);
+    modemCb()->getImeiResponse(toAidl(info), imeiInfo);
     return {};
 }
 
