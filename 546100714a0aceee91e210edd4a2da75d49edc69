@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b4bdf2e7_d0dc9053",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 16185
+      },
+      "writtenOn": "2025-07-31T00:03:02Z",
+      "side": 1,
+      "message": "still necessary on all Tegra devices using nvaudio, wow which many boot on 23",
+      "revId": "546100714a0aceee91e210edd4a2da75d49edc69",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
