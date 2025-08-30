@@ -1,4 +1,22 @@
 {
-  "comments": [],
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a615bde5_609224db",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 20370
+      },
+      "writtenOn": "2025-08-30T06:33:53Z",
+      "side": 1,
+      "message": "This commit breaks the build for rhodep (kernel-5.4):\n```\nerror: hardware/interfaces/compatibility_matrices/Android.bp:95:1: \"framework_compatibility_matrix.6.xml\" depends on undefined module \"kernel_config_s_4.14\".\n```",
+      "revId": "2ac433bbcf5bbf3bc32e2f8c72df60468b0a6b9b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ],
   "submitRequirementResults": []
 }
