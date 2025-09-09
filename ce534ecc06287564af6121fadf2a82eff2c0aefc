@@ -16,6 +16,24 @@
       "message": "try https://review.lineageos.org/c/LineageOS/android_device_xiaomi_sdm660-common/+/360110",
       "revId": "ce534ecc06287564af6121fadf2a82eff2c0aefc",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "31e3fdb8_1f8824e6",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 29415
+      },
+      "writtenOn": "2025-09-09T16:08:21Z",
+      "side": 1,
+      "message": "Doesn\u0027t seem like modern devices can do that:\nhttps://android.googlesource.com/platform/system/libvintf/+/953f20649b86fd17d52e1d24122497d1d54b0b7c\n\nError: Device manifest with target-level 8 must not explicitly set kernel level in the manifest file. The kernel level is currently explicitly set to 202404",
+      "parentUuid": "351dce4f_6db36985",
+      "revId": "ce534ecc06287564af6121fadf2a82eff2c0aefc",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
