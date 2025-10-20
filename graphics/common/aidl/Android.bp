@@ -75,6 +75,10 @@ aidl_interface {
             version: "6",
             imports: ["android.hardware.common-V2"],
         },
+        {
+            version: "7",
+            imports: ["android.hardware.common-V2"],
+        },
 
     ],
 }

@@ -64,14 +64,14 @@ cc_defaults {
 aidl_interface_defaults {
     name: "android.hardware.graphics.common-latest",
     imports: [
-        "android.hardware.graphics.common-V6",
+        "android.hardware.graphics.common-V7",
     ],
 }
 
 rust_defaults {
     name: "android.hardware.graphics.common-latest-rust",
     rustlibs: [
-        "android.hardware.graphics.common-V6-rust",
+        "android.hardware.graphics.common-V7-rust",
     ],
 }
 
@@ -80,7 +80,7 @@ cc_defaults {
     target: {
         linux: {
             static_libs: [
-                "android.hardware.graphics.common-V6-ndk",
+                "android.hardware.graphics.common-V7-ndk",
             ],
         },
     },
@@ -91,7 +91,7 @@ cc_defaults {
     target: {
         linux: {
             shared_libs: [
-                "android.hardware.graphics.common-V6-ndk",
+                "android.hardware.graphics.common-V7-ndk",
             ],
         },
     },
