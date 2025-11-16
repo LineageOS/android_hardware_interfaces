@@ -80,6 +80,11 @@ cc_defaults {
         "libaudio_system_headers",
         "libhardware_headers",
     ],
+
+    cflags: select(soong_config_variable("android_hardware_audio", "skip_speaker_layout_channel_mask_field"), {
+        true: ["-include common/all-versions/SkipSpeakerLayoutChannelMaskField.h"],
+        default: [],
+    }),
 }
 
 cc_library_shared {
