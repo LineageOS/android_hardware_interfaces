@@ -1,0 +1,5 @@
+#pragma once
+
+#if defined(__ANDROID_VENDOR__) && !defined(SKIP_SPEAKER_LAYOUT_CHANNEL_MASK_FIELD)
+#define SKIP_SPEAKER_LAYOUT_CHANNEL_MASK_FIELD
+#endif
