@@ -76,6 +76,12 @@ ScopedAStatus RadioIms::updateImsCallStatus(
     LOG(ERROR) << " updateImsCallStatus is unsupported by HIDL HALs";
     return ok();
 }
+ScopedAStatus RadioIms::updateAllowedServices(
+        int32_t serial, const std::vector<aidl::ImsService>& /*imsServices*/) {
+    LOG_CALL << serial;
+    LOG(ERROR) << " updateAllowedServices is unsupported by HIDL HALs";
+    return ok();
+}
 
 ScopedAStatus RadioIms::setResponseFunctions(
         const std::shared_ptr<aidl::IRadioImsResponse>& response,

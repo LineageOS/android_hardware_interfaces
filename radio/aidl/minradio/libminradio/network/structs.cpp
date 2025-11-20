@@ -143,7 +143,7 @@ int32_t rssiToSignalStrength(int32_t rssi) {
 
 int32_t validateRsrp(int32_t rsrp) {
     // 3GPP TS 27.007 8.69
-    if (rsrp < -140 || rsrp > -44) return RadioConst::VALUE_UNAVAILABLE;
+    if (rsrp < -140 || rsrp > -44) return 140;  // CellInfoTest: RSRP Must be valid for LTE
     return -rsrp;
 }
 

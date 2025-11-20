@@ -31,11 +31,7 @@ using V2_1SensorInfo = ::android::hardware::sensors::V2_1::SensorInfo;
 using V2_1Event = ::android::hardware::sensors::V2_1::Event;
 using V2_1SensorType = ::android::hardware::sensors::V2_1::SensorType;
 
-namespace aidl {
-namespace android {
-namespace hardware {
-namespace sensors {
-namespace implementation {
+namespace aidl::android::hardware::sensors::implementation {
 
 AidlSensorInfo convertSensorInfo(const V2_1SensorInfo& sensorInfo) {
     AidlSensorInfo aidlSensorInfo;
@@ -120,6 +116,7 @@ void convertToHidlEvent(const AidlEvent& aidlEvent, V2_1Event* hidlEvent) {
         case AidlSensorType::HEART_BEAT:
         case AidlSensorType::LOW_LATENCY_OFFBODY_DETECT:
         case AidlSensorType::HINGE_ANGLE:
+        case AidlSensorType::MOISTURE_INTRUSION:
             hidlEvent->u.scalar = aidlEvent.payload.get<Event::EventPayload::scalar>();
             break;
         case AidlSensorType::STEP_COUNTER:
@@ -195,6 +192,39 @@ void convertToHidlEvent(const AidlEvent& aidlEvent, V2_1Event* hidlEvent) {
             *(reinterpret_cast<int32_t*>(&hidlEvent->u.data[6])) = ht.discontinuityCount;
             break;
         }
+        case AidlSensorType::ACCELEROMETER_LIMITED_AXES:
+        case AidlSensorType::GYROSCOPE_LIMITED_AXES: {
+            const auto& limitedAxesImu =
+                    aidlEvent.payload.get<Event::EventPayload::limitedAxesImu>();
+            hidlEvent->u.data[0] = limitedAxesImu.x;
+            hidlEvent->u.data[1] = limitedAxesImu.y;
+            hidlEvent->u.data[2] = limitedAxesImu.z;
+            hidlEvent->u.data[3] = limitedAxesImu.xSupported;
+            hidlEvent->u.data[4] = limitedAxesImu.ySupported;
+            hidlEvent->u.data[5] = limitedAxesImu.zSupported;
+            break;
+        }
+        case AidlSensorType::ACCELEROMETER_LIMITED_AXES_UNCALIBRATED:
+        case AidlSensorType::GYROSCOPE_LIMITED_AXES_UNCALIBRATED: {
+            const auto& limitedAxesImuUncal =
+                    aidlEvent.payload.get<Event::EventPayload::limitedAxesImuUncal>();
+            hidlEvent->u.data[0] = limitedAxesImuUncal.x;
+            hidlEvent->u.data[1] = limitedAxesImuUncal.y;
+            hidlEvent->u.data[2] = limitedAxesImuUncal.z;
+            hidlEvent->u.data[3] = limitedAxesImuUncal.xBias;
+            hidlEvent->u.data[4] = limitedAxesImuUncal.yBias;
+            hidlEvent->u.data[5] = limitedAxesImuUncal.zBias;
+            hidlEvent->u.data[6] = limitedAxesImuUncal.xSupported;
+            hidlEvent->u.data[7] = limitedAxesImuUncal.ySupported;
+            hidlEvent->u.data[8] = limitedAxesImuUncal.zSupported;
+            break;
+        }
+        case AidlSensorType::HEADING: {
+            const auto& heading = aidlEvent.payload.get<Event::EventPayload::heading>();
+            hidlEvent->u.data[0] = heading.heading;
+            hidlEvent->u.data[1] = heading.accuracy;
+            break;
+        }
         default: {
             CHECK_GE((int32_t)aidlEvent.sensorType, (int32_t)SensorType::DEVICE_PRIVATE_BASE);
             std::copy(std::begin(aidlEvent.payload.get<AidlEvent::EventPayload::data>().values),
@@ -210,19 +240,19 @@ void convertToAidlEvent(const V2_1Event& hidlEvent, AidlEvent* aidlEvent) {
     aidlEvent->timestamp = hidlEvent.timestamp;
     aidlEvent->sensorHandle = hidlEvent.sensorHandle;
     aidlEvent->sensorType = (AidlSensorType)hidlEvent.sensorType;
-    switch (hidlEvent.sensorType) {
-        case V2_1SensorType::META_DATA: {
+    switch (aidlEvent->sensorType) {
+        case AidlSensorType::META_DATA: {
             AidlEvent::EventPayload::MetaData meta;
             meta.what = (Event::EventPayload::MetaData::MetaDataEventType)hidlEvent.u.meta.what;
             aidlEvent->payload.set<Event::EventPayload::meta>(meta);
             break;
         }
-        case V2_1SensorType::ACCELEROMETER:
-        case V2_1SensorType::MAGNETIC_FIELD:
-        case V2_1SensorType::ORIENTATION:
-        case V2_1SensorType::GYROSCOPE:
-        case V2_1SensorType::GRAVITY:
-        case V2_1SensorType::LINEAR_ACCELERATION: {
+        case AidlSensorType::ACCELEROMETER:
+        case AidlSensorType::MAGNETIC_FIELD:
+        case AidlSensorType::ORIENTATION:
+        case AidlSensorType::GYROSCOPE:
+        case AidlSensorType::GRAVITY:
+        case AidlSensorType::LINEAR_ACCELERATION: {
             AidlEvent::EventPayload::Vec3 vec3;
             vec3.x = hidlEvent.u.vec3.x;
             vec3.y = hidlEvent.u.vec3.y;
@@ -231,7 +261,7 @@ void convertToAidlEvent(const V2_1Event& hidlEvent, AidlEvent* aidlEvent) {
             aidlEvent->payload.set<Event::EventPayload::vec3>(vec3);
             break;
         }
-        case V2_1SensorType::GAME_ROTATION_VECTOR: {
+        case AidlSensorType::GAME_ROTATION_VECTOR: {
             AidlEvent::EventPayload::Vec4 vec4;
             vec4.x = hidlEvent.u.vec4.x;
             vec4.y = hidlEvent.u.vec4.y;
@@ -240,17 +270,17 @@ void convertToAidlEvent(const V2_1Event& hidlEvent, AidlEvent* aidlEvent) {
             aidlEvent->payload.set<Event::EventPayload::vec4>(vec4);
             break;
         }
-        case V2_1SensorType::ROTATION_VECTOR:
-        case V2_1SensorType::GEOMAGNETIC_ROTATION_VECTOR: {
+        case AidlSensorType::ROTATION_VECTOR:
+        case AidlSensorType::GEOMAGNETIC_ROTATION_VECTOR: {
             AidlEvent::EventPayload::Data data;
             std::copy(hidlEvent.u.data.data(), hidlEvent.u.data.data() + 5,
                       std::begin(data.values));
             aidlEvent->payload.set<Event::EventPayload::data>(data);
             break;
         }
-        case V2_1SensorType::MAGNETIC_FIELD_UNCALIBRATED:
-        case V2_1SensorType::GYROSCOPE_UNCALIBRATED:
-        case V2_1SensorType::ACCELEROMETER_UNCALIBRATED: {
+        case AidlSensorType::MAGNETIC_FIELD_UNCALIBRATED:
+        case AidlSensorType::GYROSCOPE_UNCALIBRATED:
+        case AidlSensorType::ACCELEROMETER_UNCALIBRATED: {
             AidlEvent::EventPayload::Uncal uncal;
             uncal.x = hidlEvent.u.uncal.x;
             uncal.y = hidlEvent.u.uncal.y;
@@ -261,37 +291,38 @@ void convertToAidlEvent(const V2_1Event& hidlEvent, AidlEvent* aidlEvent) {
             aidlEvent->payload.set<Event::EventPayload::uncal>(uncal);
             break;
         }
-        case V2_1SensorType::DEVICE_ORIENTATION:
-        case V2_1SensorType::LIGHT:
-        case V2_1SensorType::PRESSURE:
-        case V2_1SensorType::PROXIMITY:
-        case V2_1SensorType::RELATIVE_HUMIDITY:
-        case V2_1SensorType::AMBIENT_TEMPERATURE:
-        case V2_1SensorType::SIGNIFICANT_MOTION:
-        case V2_1SensorType::STEP_DETECTOR:
-        case V2_1SensorType::TILT_DETECTOR:
-        case V2_1SensorType::WAKE_GESTURE:
-        case V2_1SensorType::GLANCE_GESTURE:
-        case V2_1SensorType::PICK_UP_GESTURE:
-        case V2_1SensorType::WRIST_TILT_GESTURE:
-        case V2_1SensorType::STATIONARY_DETECT:
-        case V2_1SensorType::MOTION_DETECT:
-        case V2_1SensorType::HEART_BEAT:
-        case V2_1SensorType::LOW_LATENCY_OFFBODY_DETECT:
-        case V2_1SensorType::HINGE_ANGLE:
+        case AidlSensorType::DEVICE_ORIENTATION:
+        case AidlSensorType::LIGHT:
+        case AidlSensorType::PRESSURE:
+        case AidlSensorType::PROXIMITY:
+        case AidlSensorType::RELATIVE_HUMIDITY:
+        case AidlSensorType::AMBIENT_TEMPERATURE:
+        case AidlSensorType::SIGNIFICANT_MOTION:
+        case AidlSensorType::STEP_DETECTOR:
+        case AidlSensorType::TILT_DETECTOR:
+        case AidlSensorType::WAKE_GESTURE:
+        case AidlSensorType::GLANCE_GESTURE:
+        case AidlSensorType::PICK_UP_GESTURE:
+        case AidlSensorType::WRIST_TILT_GESTURE:
+        case AidlSensorType::STATIONARY_DETECT:
+        case AidlSensorType::MOTION_DETECT:
+        case AidlSensorType::HEART_BEAT:
+        case AidlSensorType::LOW_LATENCY_OFFBODY_DETECT:
+        case AidlSensorType::HINGE_ANGLE:
+        case AidlSensorType::MOISTURE_INTRUSION:
             aidlEvent->payload.set<Event::EventPayload::scalar>(hidlEvent.u.scalar);
             break;
-        case V2_1SensorType::STEP_COUNTER:
+        case AidlSensorType::STEP_COUNTER:
             aidlEvent->payload.set<Event::EventPayload::stepCount>(hidlEvent.u.stepCount);
             break;
-        case V2_1SensorType::HEART_RATE: {
+        case AidlSensorType::HEART_RATE: {
             AidlEvent::EventPayload::HeartRate heartRate;
             heartRate.bpm = hidlEvent.u.heartRate.bpm;
             heartRate.status = (SensorStatus)hidlEvent.u.heartRate.status;
             aidlEvent->payload.set<Event::EventPayload::heartRate>(heartRate);
             break;
         }
-        case V2_1SensorType::POSE_6DOF: {
+        case AidlSensorType::POSE_6DOF: {
             AidlEvent::EventPayload::Pose6Dof pose6Dof;
             std::copy(hidlEvent.u.pose6DOF.data(),
                       hidlEvent.u.pose6DOF.data() + hidlEvent.u.pose6DOF.size(),
@@ -299,7 +330,7 @@ void convertToAidlEvent(const V2_1Event& hidlEvent, AidlEvent* aidlEvent) {
             aidlEvent->payload.set<Event::EventPayload::pose6DOF>(pose6Dof);
             break;
         }
-        case V2_1SensorType::DYNAMIC_SENSOR_META: {
+        case AidlSensorType::DYNAMIC_SENSOR_META: {
             DynamicSensorInfo dynamicSensorInfo;
             dynamicSensorInfo.connected = hidlEvent.u.dynamic.connected;
             dynamicSensorInfo.sensorHandle = hidlEvent.u.dynamic.sensorHandle;
@@ -309,7 +340,7 @@ void convertToAidlEvent(const V2_1Event& hidlEvent, AidlEvent* aidlEvent) {
             aidlEvent->payload.set<Event::EventPayload::dynamic>(dynamicSensorInfo);
             break;
         }
-        case V2_1SensorType::ADDITIONAL_INFO: {
+        case AidlSensorType::ADDITIONAL_INFO: {
             AdditionalInfo additionalInfo;
             additionalInfo.type = (AdditionalInfo::AdditionalInfoType)hidlEvent.u.additional.type;
             additionalInfo.serial = hidlEvent.u.additional.serial;
@@ -324,40 +355,67 @@ void convertToAidlEvent(const V2_1Event& hidlEvent, AidlEvent* aidlEvent) {
             aidlEvent->payload.set<Event::EventPayload::additional>(additionalInfo);
             break;
         }
+        case AidlSensorType::HEAD_TRACKER: {
+            Event::EventPayload::HeadTracker headTracker;
+            headTracker.rx = hidlEvent.u.data[0];
+            headTracker.ry = hidlEvent.u.data[1];
+            headTracker.rz = hidlEvent.u.data[2];
+            headTracker.vx = hidlEvent.u.data[3];
+            headTracker.vy = hidlEvent.u.data[4];
+            headTracker.vz = hidlEvent.u.data[5];
+
+            // IMPORTANT: Because we want to preserve the data range of discontinuityCount,
+            // we assume the data can be interpreted as an int32_t directly (e.g. the underlying
+            // HIDL HAL must be using memcpy or equivalent to store this value).
+            headTracker.discontinuityCount =
+                    *(reinterpret_cast<const int32_t*>(&hidlEvent.u.data[6]));
+
+            aidlEvent->payload.set<Event::EventPayload::Tag::headTracker>(headTracker);
+            break;
+        }
+        case AidlSensorType::ACCELEROMETER_LIMITED_AXES:
+        case AidlSensorType::GYROSCOPE_LIMITED_AXES: {
+            Event::EventPayload::LimitedAxesImu limitedAxesImu;
+            limitedAxesImu.x = hidlEvent.u.data[0];
+            limitedAxesImu.y = hidlEvent.u.data[1];
+            limitedAxesImu.z = hidlEvent.u.data[2];
+            limitedAxesImu.xSupported = hidlEvent.u.data[3];
+            limitedAxesImu.ySupported = hidlEvent.u.data[4];
+            limitedAxesImu.zSupported = hidlEvent.u.data[5];
+            aidlEvent->payload.set<Event::EventPayload::limitedAxesImu>(limitedAxesImu);
+            break;
+        }
+        case AidlSensorType::ACCELEROMETER_LIMITED_AXES_UNCALIBRATED:
+        case AidlSensorType::GYROSCOPE_LIMITED_AXES_UNCALIBRATED: {
+            Event::EventPayload::LimitedAxesImuUncal limitedAxesImuUncal;
+            limitedAxesImuUncal.x = hidlEvent.u.data[0];
+            limitedAxesImuUncal.y = hidlEvent.u.data[1];
+            limitedAxesImuUncal.z = hidlEvent.u.data[2];
+            limitedAxesImuUncal.xBias = hidlEvent.u.data[3];
+            limitedAxesImuUncal.yBias = hidlEvent.u.data[4];
+            limitedAxesImuUncal.zBias = hidlEvent.u.data[5];
+            limitedAxesImuUncal.xSupported = hidlEvent.u.data[6];
+            limitedAxesImuUncal.ySupported = hidlEvent.u.data[7];
+            limitedAxesImuUncal.zSupported = hidlEvent.u.data[8];
+            aidlEvent->payload.set<Event::EventPayload::limitedAxesImuUncal>(limitedAxesImuUncal);
+            break;
+        }
+        case AidlSensorType::HEADING: {
+            Event::EventPayload::Heading heading;
+            heading.heading = hidlEvent.u.data[0];
+            heading.accuracy = hidlEvent.u.data[1];
+            aidlEvent->payload.set<Event::EventPayload::heading>(heading);
+            break;
+        }
         default: {
-            if (static_cast<int32_t>(hidlEvent.sensorType) ==
-                static_cast<int32_t>(AidlSensorType::HEAD_TRACKER)) {
-                Event::EventPayload::HeadTracker headTracker;
-                headTracker.rx = hidlEvent.u.data[0];
-                headTracker.ry = hidlEvent.u.data[1];
-                headTracker.rz = hidlEvent.u.data[2];
-                headTracker.vx = hidlEvent.u.data[3];
-                headTracker.vy = hidlEvent.u.data[4];
-                headTracker.vz = hidlEvent.u.data[5];
-
-                // IMPORTANT: Because we want to preserve the data range of discontinuityCount,
-                // we assume the data can be interpreted as an int32_t directly (e.g. the underlying
-                // HIDL HAL must be using memcpy or equivalent to store this value).
-                headTracker.discontinuityCount =
-                        *(reinterpret_cast<const int32_t*>(&hidlEvent.u.data[6]));
-
-                aidlEvent->payload.set<Event::EventPayload::Tag::headTracker>(headTracker);
-            } else {
-                CHECK_GE((int32_t)hidlEvent.sensorType,
-                         (int32_t)V2_1SensorType::DEVICE_PRIVATE_BASE);
-                AidlEvent::EventPayload::Data data;
-                std::copy(hidlEvent.u.data.data(),
-                          hidlEvent.u.data.data() + hidlEvent.u.data.size(),
-                          std::begin(data.values));
-                aidlEvent->payload.set<Event::EventPayload::data>(data);
-            }
+            CHECK_GE((int32_t)hidlEvent.sensorType, (int32_t)V2_1SensorType::DEVICE_PRIVATE_BASE);
+            AidlEvent::EventPayload::Data data;
+            std::copy(hidlEvent.u.data.data(), hidlEvent.u.data.data() + hidlEvent.u.data.size(),
+                      std::begin(data.values));
+            aidlEvent->payload.set<Event::EventPayload::data>(data);
             break;
         }
     }
 }
 
-}  // namespace implementation
-}  // namespace sensors
-}  // namespace hardware
-}  // namespace android
-}  // namespace aidl
+}  // namespace aidl::android::hardware::sensors::implementation

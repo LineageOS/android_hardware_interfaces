@@ -50,4 +50,7 @@ interface IRadioDataResponse {
   oneway void startHandoverResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void startKeepaliveResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.data.KeepaliveStatus status);
   oneway void stopKeepaliveResponse(in android.hardware.radio.RadioResponseInfo info);
+  oneway void setUserDataEnabledResponse(in android.hardware.radio.RadioResponseInfo info);
+  oneway void setUserDataRoamingEnabledResponse(in android.hardware.radio.RadioResponseInfo info);
+  oneway void notifyImsDataNetworkResponse(in android.hardware.radio.RadioResponseInfo info);
 }

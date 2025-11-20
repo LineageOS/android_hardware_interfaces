@@ -23,14 +23,11 @@
 #include PATH(android/hardware/audio/effect/FILE_VERSION/IEffectsFactory.h)
 // clang-format on
 
+#include <android-base/stringify.h>
 #include <gtest/gtest.h>
 #include <hidl/ServiceManagement.h>
 
 #include "utility/ValidateXml.h"
-
-// Stringify the argument.
-#define QUOTE(x) #x
-#define STRINGIFY(x) QUOTE(x)
 
 TEST(CheckConfig, audioEffectsConfigurationValidation) {
     RecordProperty("description",

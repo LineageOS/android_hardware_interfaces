@@ -96,6 +96,10 @@ class ContextHubEndpointAidl : public testing::TestWithParam<std::string> {
         mEndpointCb = sp<TestEndpointCallback>::make();
     }
 
+    void TearDown() override {
+        if (mHubInterface) mHubInterface->unregister();
+    }
+
     Status registerHub(int64_t id, sp<IEndpointCommunication>* hubInterface) {
         HubInfo info;
         info.hubId = id;
@@ -108,7 +112,7 @@ class ContextHubEndpointAidl : public testing::TestWithParam<std::string> {
             status.transactionError() == android::UNKNOWN_TRANSACTION) {
             return false;
         }
-        EXPECT_TRUE(status.isOk());
+        EXPECT_EQ(status.exceptionCode(), Status::EX_NONE);
         EXPECT_NE(mHubInterface, nullptr);
         if (!mHubInterface) {
             return false;
@@ -494,14 +498,25 @@ TEST_P(ContextHubTransactionTest, TestHostConnection) {
     hostEndpointInfo.type = HostEndpointInfo::Type::NATIVE;
     hostEndpointInfo.hostEndpointId = kHostEndpointId;
 
-    ASSERT_TRUE(mContextHub->onHostEndpointConnected(hostEndpointInfo).isOk());
-    ASSERT_TRUE(mContextHub->onHostEndpointDisconnected(kHostEndpointId).isOk());
+    Status status = mContextHub->onHostEndpointConnected(hostEndpointInfo);
+    if (status.exceptionCode() == Status::EX_UNSUPPORTED_OPERATION ||
+        status.transactionError() == android::UNKNOWN_TRANSACTION) {
+        GTEST_SKIP() << "Not supported -> old API; or not implemented";
+    } else {
+        ASSERT_TRUE(status.isOk());
+        ASSERT_TRUE(mContextHub->onHostEndpointDisconnected(kHostEndpointId).isOk());
+    }
 }
 
 TEST_P(ContextHubTransactionTest, TestInvalidHostConnection) {
     constexpr char16_t kHostEndpointId = 1;
-
-    ASSERT_TRUE(mContextHub->onHostEndpointDisconnected(kHostEndpointId).isOk());
+    Status status = mContextHub->onHostEndpointDisconnected(kHostEndpointId);
+    if (status.exceptionCode() == Status::EX_UNSUPPORTED_OPERATION ||
+        status.transactionError() == android::UNKNOWN_TRANSACTION) {
+        GTEST_SKIP() << "Not supported -> old API; or not implemented";
+    } else {
+      ASSERT_TRUE(status.isOk());
+    }
 }
 
 TEST_P(ContextHubTransactionTest, TestNanSessionStateChange) {
@@ -607,12 +622,12 @@ TEST_P(ContextHubEndpointAidlWithTestMode, RegisterHub) {
 
     sp<IEndpointCommunication> hub3;
     status = registerHub(kDefaultHubId + 1, &hub3);
-    ASSERT_FALSE(status.isOk());
     EXPECT_EQ(status.exceptionCode(), Status::EX_ILLEGAL_STATE);
 
     hub2->unregister();
     status = registerHub(kDefaultHubId + 1, &hub3);
     EXPECT_TRUE(status.isOk());
+    hub3->unregister();
 }
 
 TEST_P(ContextHubEndpointAidlWithTestMode, RegisterEndpoint) {
@@ -622,18 +637,29 @@ TEST_P(ContextHubEndpointAidlWithTestMode, RegisterEndpoint) {
 
     EndpointInfo endpointInfo;
     endpointInfo.id.id = 1;
-    endpointInfo.id.hubId = 0xCAFECAFECAFECAFE;
+    endpointInfo.id.hubId = kDefaultHubId;
     endpointInfo.type = EndpointInfo::EndpointType::NATIVE;
     endpointInfo.name = String16("Test host endpoint 1");
     endpointInfo.version = 42;
 
     Status status = mHubInterface->registerEndpoint(endpointInfo);
-    if (status.exceptionCode() == Status::EX_UNSUPPORTED_OPERATION ||
-        status.transactionError() == android::UNKNOWN_TRANSACTION) {
+    EXPECT_EQ(status.exceptionCode(), Status::EX_NONE);
+}
+
+TEST_P(ContextHubEndpointAidlWithTestMode, RegisterEndpointForDifferentHub) {
+    if (!registerDefaultHub()) {
         GTEST_SKIP() << "Not supported -> old API; or not implemented";
-    } else {
-        EXPECT_TRUE(status.isOk());
     }
+
+    EndpointInfo endpointInfo;
+    endpointInfo.id.id = 1;
+    endpointInfo.id.hubId = kDefaultHubId + 1;
+    endpointInfo.type = EndpointInfo::EndpointType::NATIVE;
+    endpointInfo.name = String16("Test host endpoint 1");
+    endpointInfo.version = 42;
+
+    Status status = mHubInterface->registerEndpoint(endpointInfo);
+    EXPECT_NE(status.exceptionCode(), Status::EX_NONE);
 }
 
 TEST_P(ContextHubEndpointAidlWithTestMode, RegisterEndpointSameNameFailure) {
@@ -643,26 +669,20 @@ TEST_P(ContextHubEndpointAidlWithTestMode, RegisterEndpointSameNameFailure) {
 
     EndpointInfo endpointInfo;
     endpointInfo.id.id = 2;
-    endpointInfo.id.hubId = 0xCAFECAFECAFECAFE;
+    endpointInfo.id.hubId = kDefaultHubId;
     endpointInfo.type = EndpointInfo::EndpointType::NATIVE;
     endpointInfo.name = String16("Test host endpoint 2");
     endpointInfo.version = 42;
 
     EndpointInfo endpointInfo2;
     endpointInfo2.id.id = 3;
-    endpointInfo2.id.hubId = 0xCAFECAFECAFECAFE;
+    endpointInfo2.id.hubId = kDefaultHubId;
     endpointInfo2.type = EndpointInfo::EndpointType::NATIVE;
     endpointInfo2.name = String16("Test host endpoint 2");
     endpointInfo2.version = 42;
 
     Status status = mHubInterface->registerEndpoint(endpointInfo);
-    if (status.exceptionCode() == Status::EX_UNSUPPORTED_OPERATION ||
-        status.transactionError() == android::UNKNOWN_TRANSACTION) {
-        GTEST_SKIP() << "Not supported -> old API; or not implemented";
-    } else {
-        EXPECT_TRUE(status.isOk());
-    }
-
+    ASSERT_EQ(status.exceptionCode(), Status::EX_NONE);
     EXPECT_FALSE(mHubInterface->registerEndpoint(endpointInfo2).isOk());
 }
 
@@ -673,26 +693,20 @@ TEST_P(ContextHubEndpointAidlWithTestMode, RegisterEndpointSameIdFailure) {
 
     EndpointInfo endpointInfo;
     endpointInfo.id.id = 4;
-    endpointInfo.id.hubId = 0xCAFECAFECAFECAFE;
+    endpointInfo.id.hubId = kDefaultHubId;
     endpointInfo.type = EndpointInfo::EndpointType::NATIVE;
     endpointInfo.name = String16("Test host endpoint 4");
     endpointInfo.version = 42;
 
     EndpointInfo endpointInfo2;
     endpointInfo2.id.id = 4;
-    endpointInfo2.id.hubId = 0xCAFECAFECAFECAFE;
+    endpointInfo2.id.hubId = kDefaultHubId;
     endpointInfo2.type = EndpointInfo::EndpointType::NATIVE;
     endpointInfo2.name = String16("Test host endpoint - same ID test");
     endpointInfo2.version = 42;
 
     Status status = mHubInterface->registerEndpoint(endpointInfo);
-    if (status.exceptionCode() == Status::EX_UNSUPPORTED_OPERATION ||
-        status.transactionError() == android::UNKNOWN_TRANSACTION) {
-        GTEST_SKIP() << "Not supported -> old API; or not implemented";
-    } else {
-        EXPECT_TRUE(status.isOk());
-    }
-
+    ASSERT_EQ(status.exceptionCode(), Status::EX_NONE);
     EXPECT_FALSE(mHubInterface->registerEndpoint(endpointInfo2).isOk());
 }
 
@@ -703,20 +717,15 @@ TEST_P(ContextHubEndpointAidlWithTestMode, UnregisterEndpoint) {
 
     EndpointInfo endpointInfo;
     endpointInfo.id.id = 6;
-    endpointInfo.id.hubId = 0xCAFECAFECAFECAFE;
+    endpointInfo.id.hubId = kDefaultHubId;
     endpointInfo.type = EndpointInfo::EndpointType::NATIVE;
     endpointInfo.name = String16("Test host endpoint 6");
     endpointInfo.version = 42;
 
     Status status = mHubInterface->registerEndpoint(endpointInfo);
-    if (status.exceptionCode() == Status::EX_UNSUPPORTED_OPERATION ||
-        status.transactionError() == android::UNKNOWN_TRANSACTION) {
-        GTEST_SKIP() << "Not supported -> old API; or not implemented";
-    } else {
-        EXPECT_TRUE(status.isOk());
-    }
-
-    EXPECT_TRUE(mHubInterface->unregisterEndpoint(endpointInfo).isOk());
+    ASSERT_EQ(status.exceptionCode(), Status::EX_NONE);
+    status = mHubInterface->unregisterEndpoint(endpointInfo);
+    EXPECT_EQ(status.exceptionCode(), Status::EX_NONE);
 }
 
 TEST_P(ContextHubEndpointAidlWithTestMode, UnregisterEndpointNonexistent) {
@@ -726,18 +735,12 @@ TEST_P(ContextHubEndpointAidlWithTestMode, UnregisterEndpointNonexistent) {
 
     EndpointInfo endpointInfo;
     endpointInfo.id.id = 100;
-    endpointInfo.id.hubId = 0xCAFECAFECAFECAFE;
+    endpointInfo.id.hubId = kDefaultHubId;
     endpointInfo.type = EndpointInfo::EndpointType::NATIVE;
     endpointInfo.name = String16("Test host endpoint 100");
     endpointInfo.version = 42;
 
-    Status status = mHubInterface->unregisterEndpoint(endpointInfo);
-    if (status.exceptionCode() == Status::EX_UNSUPPORTED_OPERATION ||
-        status.transactionError() == android::UNKNOWN_TRANSACTION) {
-        GTEST_SKIP() << "Not supported -> old API; or not implemented";
-    } else {
-        EXPECT_FALSE(status.isOk());
-    }
+    EXPECT_FALSE(mHubInterface->unregisterEndpoint(endpointInfo).isOk());
 }
 
 TEST_P(ContextHubEndpointAidlWithTestMode, OpenEndpointSessionInvalidRange) {
@@ -748,11 +751,12 @@ TEST_P(ContextHubEndpointAidlWithTestMode, OpenEndpointSessionInvalidRange) {
     // Register the endpoint
     EndpointInfo initiatorEndpoint;
     initiatorEndpoint.id.id = 7;
-    initiatorEndpoint.id.hubId = 0xCAFECAFECAFECAFE;
+    initiatorEndpoint.id.hubId = kDefaultHubId;
     initiatorEndpoint.type = EndpointInfo::EndpointType::NATIVE;
     initiatorEndpoint.name = String16("Test host endpoint 7");
     initiatorEndpoint.version = 42;
-    EXPECT_TRUE(mHubInterface->registerEndpoint(initiatorEndpoint).isOk());
+    Status status = mHubInterface->registerEndpoint(initiatorEndpoint);
+    ASSERT_EQ(status.exceptionCode(), Status::EX_NONE);
 
     // Find the destination, if it exists
     std::vector<EndpointInfo> endpoints;
@@ -773,7 +777,8 @@ TEST_P(ContextHubEndpointAidlWithTestMode, OpenEndpointSessionInvalidRange) {
     // Request the range
     constexpr int32_t requestedRange = 100;
     std::array<int32_t, 2> range;
-    ASSERT_TRUE(mHubInterface->requestSessionIdRange(requestedRange, &range).isOk());
+    status = mHubInterface->requestSessionIdRange(requestedRange, &range);
+    ASSERT_EQ(status.exceptionCode(), Status::EX_NONE);
     EXPECT_EQ(range.size(), 2);
     EXPECT_GE(range[1] - range[0] + 1, requestedRange);
 
@@ -795,11 +800,12 @@ TEST_P(ContextHubEndpointAidlWithTestMode, OpenEndpointSessionAndSendMessageEcho
     // Register the endpoint
     EndpointInfo initiatorEndpoint;
     initiatorEndpoint.id.id = 8;
-    initiatorEndpoint.id.hubId = 0xCAFECAFECAFECAFE;
+    initiatorEndpoint.id.hubId = kDefaultHubId;
     initiatorEndpoint.type = EndpointInfo::EndpointType::NATIVE;
     initiatorEndpoint.name = String16("Test host endpoint 7");
     initiatorEndpoint.version = 42;
-    EXPECT_TRUE(mHubInterface->registerEndpoint(initiatorEndpoint).isOk());
+    Status status = mHubInterface->registerEndpoint(initiatorEndpoint);
+    ASSERT_EQ(status.exceptionCode(), Status::EX_NONE);
 
     // Find the destination, if it exists
     std::vector<EndpointInfo> endpoints;
@@ -820,18 +826,18 @@ TEST_P(ContextHubEndpointAidlWithTestMode, OpenEndpointSessionAndSendMessageEcho
     // Request the range
     constexpr int32_t requestedRange = 100;
     std::array<int32_t, 2> range;
-    ASSERT_TRUE(mHubInterface->requestSessionIdRange(requestedRange, &range).isOk());
+    status = mHubInterface->requestSessionIdRange(requestedRange, &range);
+    ASSERT_EQ(status.exceptionCode(), Status::EX_NONE);
     EXPECT_EQ(range.size(), 2);
     EXPECT_GE(range[1] - range[0] + 1, requestedRange);
 
     // Open the session
     mEndpointCb->resetWasOnEndpointSessionOpenCompleteCalled();
     int32_t sessionId = range[0];
-    ASSERT_TRUE(mHubInterface
-                        ->openEndpointSession(sessionId, destinationEndpoint->id,
-                                              initiatorEndpoint.id,
-                                              /* in_serviceDescriptor= */ kEchoServiceName)
-                        .isOk());
+    status = mHubInterface->openEndpointSession(sessionId, destinationEndpoint->id,
+                                                initiatorEndpoint.id,
+                                                /* in_serviceDescriptor= */ kEchoServiceName);
+    ASSERT_EQ(status.exceptionCode(), Status::EX_NONE);
     mEndpointCb->getCondVar().wait(lock);
     EXPECT_TRUE(mEndpointCb->wasOnEndpointSessionOpenCompleteCalled());
 
@@ -840,7 +846,8 @@ TEST_P(ContextHubEndpointAidlWithTestMode, OpenEndpointSessionAndSendMessageEcho
     message.flags = 0;
     message.sequenceNumber = 0;
     message.content.push_back(42);
-    ASSERT_TRUE(mHubInterface->sendMessageToEndpoint(sessionId, message).isOk());
+    status = mHubInterface->sendMessageToEndpoint(sessionId, message);
+    ASSERT_EQ(status.exceptionCode(), Status::EX_NONE);
 
     // Check for echo
     mEndpointCb->getCondVar().wait(lock);

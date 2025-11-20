@@ -37,7 +37,7 @@ ScopedAStatus RadioConfig::getSimSlotsStatus(int32_t serial) {
             .atr = "",
             .eid = "eUICC-simslot1",
             .portInfo = {{
-                    .iccId = "12345678901234567890",
+                    .iccId = "9868308146200231837",
                     .logicalSlotId = 0,
                     .portActive = true,
             }},

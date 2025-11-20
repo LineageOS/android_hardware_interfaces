@@ -45,6 +45,10 @@ class RadioIms : public RadioCompatBase, public aidl::android::hardware::radio::
     ::ndk::ScopedAStatus updateImsCallStatus(
             int32_t serial,
             const std::vector<::aidl::android::hardware::radio::ims::ImsCall>& imsCalls) override;
+    ::ndk::ScopedAStatus updateAllowedServices(
+            int32_t serial,
+            const std::vector<::aidl::android::hardware::radio::ims::ImsService>& imsServices)
+            override;
 
     ::ndk::ScopedAStatus setResponseFunctions(
             const std::shared_ptr<::aidl::android::hardware::radio::ims::IRadioImsResponse>&

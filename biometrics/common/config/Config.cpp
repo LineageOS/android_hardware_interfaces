@@ -79,7 +79,7 @@ ConfigValue Config::parseIntVec(const std::string& value) {
 }
 
 void Config::init() {
-    LOG(INFO) << "calling init()";
+    LOG(INFO) << getSubTag() << "calling init()";
     int len = 0;
     Config::Data* pd = getConfigData(&len);
     for (int i = 0; i < len; i++) {
@@ -96,7 +96,7 @@ bool Config::setParam(const std::string& name, const std::string& value) {
         LOG(FATAL) << "ERROR: setParam unknown config name " << name;
         return false;
     }
-    LOG(INFO) << "setParam name=" << name << "=" << value;
+    LOG(INFO) << getSubTag() << "setParam name=" << name << "=" << value;
 
     it->second.value = (this->*(it->second.parser))(value);
 
@@ -132,7 +132,7 @@ ConfigValue Config::getDefault(const std::string& name) {
 }
 
 bool Config::setInternal(const std::string& name, const ConfigValue& val) {
-    LOG(INFO) << "Config::set " << name << " to " << toString(val);
+    LOG(INFO) << getSubTag() << "Config::set " << name << " to " << toString(val);
     bool res = false;
     auto& data = mMap[name];
 

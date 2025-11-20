@@ -311,6 +311,7 @@ bool EffectConfig::findUuid(const std::pair<std::string, struct EffectLibraries>
     V("downmix", Downmix)                                  \
     V("dynamics_processing", DynamicsProcessing)           \
     V("equalizer", Equalizer)                              \
+    V("eraser", Eraser)                                    \
     V("extensioneffect", Extension)                        \
     V("haptic_generator", HapticGenerator)                 \
     V("loudness_enhancer", LoudnessEnhancer)               \

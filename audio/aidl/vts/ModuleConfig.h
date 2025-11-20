@@ -75,12 +75,20 @@ class ModuleConfig {
     std::vector<aidl::android::media::audio::common::AudioPort> getPrimaryMixPorts(
             bool connectedOnly /*Permanently attached and connected external devices*/,
             bool singlePort) const;
+    std::vector<aidl::android::media::audio::common::AudioPort> getMmapMixPorts(
+            bool isInput,
+            bool connectedOnly /*Permanently attached and connected external devices*/,
+            bool singlePort) const;
     std::vector<aidl::android::media::audio::common::AudioPort> getMmapOutMixPorts(
             bool connectedOnly /*Permanently attached and connected external devices*/,
-            bool singlePort) const;
+            bool singlePort) const {
+        return getMmapMixPorts(false /*isInput*/, connectedOnly, singlePort);
+    }
     std::vector<aidl::android::media::audio::common::AudioPort> getMmapInMixPorts(
             bool connectedOnly /*Permanently attached and connected external devices*/,
-            bool singlePort) const;
+            bool singlePort) const {
+        return getMmapMixPorts(true /*isInput*/, connectedOnly, singlePort);
+    }
     std::vector<aidl::android::media::audio::common::AudioPort> getRemoteSubmixPorts(
             bool isInput, bool singlePort) const;
 
@@ -118,26 +126,26 @@ class ModuleConfig {
     }
     std::vector<aidl::android::media::audio::common::AudioPortConfig> getPortConfigsForMixPorts()
             const {
-        auto inputs =
-                generateAudioMixPortConfigs(getInputMixPorts(false /*connectedOnly*/), true, false);
+        auto inputs = generateAudioMixPortConfigs(getInputMixPorts(false /*connectedOnly*/),
+                                                  true /*isInput*/, false /*singleProfile*/);
         auto outputs = generateAudioMixPortConfigs(getOutputMixPorts(false /*connectedOnly*/),
-                                                   false, false);
+                                                   false /*isInput*/, false /*singleProfile*/);
         inputs.insert(inputs.end(), outputs.begin(), outputs.end());
         return inputs;
     }
     std::vector<aidl::android::media::audio::common::AudioPortConfig> getPortConfigsForMixPorts(
             bool isInput) const {
         return generateAudioMixPortConfigs(getMixPorts(isInput, false /*connectedOnly*/), isInput,
-                                           false);
+                                           false /*singleProfile*/);
     }
     std::vector<aidl::android::media::audio::common::AudioPortConfig> getPortConfigsForMixPorts(
             bool isInput, const aidl::android::media::audio::common::AudioPort& port) const {
-        return generateAudioMixPortConfigs({port}, isInput, false);
+        return generateAudioMixPortConfigs({port}, isInput, false /*singleProfile*/);
     }
     std::optional<aidl::android::media::audio::common::AudioPortConfig> getSingleConfigForMixPort(
             bool isInput) const {
         const auto config = generateAudioMixPortConfigs(
-                getMixPorts(isInput, false /*connectedOnly*/), isInput, true);
+                getMixPorts(isInput, false /*connectedOnly*/), isInput, true /*singleProfile*/);
         if (!config.empty()) {
             return *config.begin();
         }
@@ -145,7 +153,7 @@ class ModuleConfig {
     }
     std::optional<aidl::android::media::audio::common::AudioPortConfig> getSingleConfigForMixPort(
             bool isInput, const aidl::android::media::audio::common::AudioPort& port) const {
-        const auto config = generateAudioMixPortConfigs({port}, isInput, true);
+        const auto config = generateAudioMixPortConfigs({port}, isInput, true /*singleProfile*/);
         if (!config.empty()) {
             return *config.begin();
         }

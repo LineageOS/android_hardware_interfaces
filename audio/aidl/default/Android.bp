@@ -367,3 +367,13 @@ prebuilt_etc {
     sub_dir: "vintf",
     installable: false,
 }
+
+prebuilt_etc {
+    name: "audio_effects_config.xml",
+    src: "audio_effects_config.xml",
+    vendor: true,
+    enabled: select(soong_config_variable("hardware_interfaces_audio", "use_default_audio_effects_config"), {
+        true: true,
+        default: false,
+    }),
+}

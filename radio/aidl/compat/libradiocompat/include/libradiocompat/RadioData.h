@@ -62,6 +62,13 @@ class RadioData : public RadioCompatBase, public aidl::android::hardware::radio:
             int32_t serial,
             const ::aidl::android::hardware::radio::data::KeepaliveRequest& keepalive) override;
     ::ndk::ScopedAStatus stopKeepalive(int32_t serial, int32_t sessionHandle) override;
+    ::ndk::ScopedAStatus setUserDataEnabled(int32_t serial, bool enabled) override;
+    ::ndk::ScopedAStatus setUserDataRoamingEnabled(int32_t serial, bool enabled) override;
+    ::ndk::ScopedAStatus notifyImsDataNetwork(
+            int32_t serial, ::aidl::android::hardware::radio::AccessNetwork accessNetwork,
+            ::aidl::android::hardware::radio::data::DataNetworkState dataNetworkState,
+            ::aidl::android::hardware::radio::data::TransportType physicalTransportType,
+            int32_t physicalNetworkModemId) override;
 
   protected:
     std::shared_ptr<::aidl::android::hardware::radio::data::IRadioDataResponse> respond();

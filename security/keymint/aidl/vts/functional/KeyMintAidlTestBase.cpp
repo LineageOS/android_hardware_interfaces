@@ -155,6 +155,11 @@ void check_crl_distribution_points_extension_not_present(X509* certificate) {
 }
 
 void check_attestation_version(uint32_t attestation_version, int32_t aidl_version) {
+    if (get_vendor_api_level() > AVendorSupport_getVendorApiLevelOf(36)) {
+        EXPECT_EQ(attestation_version, (aidl_version * 100));
+        return;
+    }
+
     // Version numbers in attestation extensions should be a multiple of 100.
     EXPECT_EQ(attestation_version % 100, 0);
 
@@ -730,7 +735,9 @@ ErrorCode KeyMintAidlTestBase::UpdateAad(const string& input) {
                                              {} /* verificationToken */));
 }
 
-ErrorCode KeyMintAidlTestBase::Update(const string& input, string* output) {
+ErrorCode KeyMintAidlTestBase::Update(const string& input, string* output,
+                                      std::optional<HardwareAuthToken> hat,
+                                      std::optional<secureclock::TimeStampToken> time_token) {
     SCOPED_TRACE("Update");
 
     Status result;
@@ -740,7 +747,7 @@ ErrorCode KeyMintAidlTestBase::Update(const string& input, string* output) {
     if (!op_) return ErrorCode::UNEXPECTED_NULL_POINTER;
 
     std::vector<uint8_t> o_put;
-    result = op_->update(vector<uint8_t>(input.begin(), input.end()), {}, {}, &o_put);
+    result = op_->update(vector<uint8_t>(input.begin(), input.end()), hat, time_token, &o_put);
 
     if (result.isOk()) {
         output->append(o_put.begin(), o_put.end());
@@ -1859,6 +1866,19 @@ int get_vendor_api_level() {
         return product_api_level;
     }
     return std::min(product_api_level, vendor_api_level);
+}
+
+int get_first_vendor_api_level() {
+    // `ro.board.first_api_level` is only populated for GRF chipsets.
+    int first_vendor_api_level = ::android::base::GetIntProperty("ro.board.first_api_level", -1);
+    if (first_vendor_api_level != -1) {
+        return first_vendor_api_level;
+    }
+
+    // `ro.product.first_api_level` is always populated.
+    first_vendor_api_level = ::android::base::GetIntProperty("ro.product.first_api_level", -1);
+    EXPECT_NE(first_vendor_api_level, -1) << "Could not find ro.product.first_api_level";
+    return AVendorSupport_getVendorApiLevelOf(first_vendor_api_level);
 }
 
 bool is_gsi_image() {

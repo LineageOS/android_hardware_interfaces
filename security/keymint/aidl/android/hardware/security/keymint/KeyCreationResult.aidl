@@ -110,13 +110,15 @@ parcelable KeyCreationResult {
      * o It must contain the notBefore and notAfter date-times specified in
      *   Tag::CERTIFICATE_NOT_BEFORE and Tag::CERTIFICATE_NOT_AFTER, respectively.
      *
-     * o It must contain a Key Usage extension with:
+     * o It must contain a Key Usage extension with the following bits set:
      *
-     *    - the digitalSignature bit set iff the attested key has KeyPurpose::SIGN,
-     *    - the dataEncipherment bit set iff the attested key has KeyPurpose::DECRYPT,
-     *    - the keyEncipherment bit set iff the attested key has KeyPurpose::WRAP_KEY,
-     *    - the keyAgreement bit set iff the attested key has KeyPurpose::AGREE_KEY, and
-     *    - the keyCertSignBit set iff the attested key has KeyPurpose::ATTEST_KEY.
+     *    - digitalSignature: if the attested key has KeyPurpose::SIGN
+     *         - this bit may also be set for a key with KeyPurpose::VERIFY
+     *    - dataEncipherment: if the attested key has KeyPurpose::DECRYPT or KeyPurpose::ENCRYPT
+     *    - keyEncipherment: if the attested key has KeyPurpose::WRAP_KEY, KeyPurpose::DECRYPT,
+     *      or KeyPurpose::ENCRYPT
+     *    - keyAgreement: iff the attested key has KeyPurpose::AGREE_KEY
+     *    - keyCertSignBit: iff the attested key has KeyPurpose::ATTEST_KEY
      *
      * In the attestation cases (1 and 2 above), the first certificate must contain a
      * KeyDescription attestation extension with OID 1.3.6.1.4.1.11129.2.1.17.

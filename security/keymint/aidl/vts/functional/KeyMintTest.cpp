@@ -4601,6 +4601,34 @@ TEST_P(ImportKeyTest, AesSuccess) {
 }
 
 /*
+ * ImportKeyTest.AesKeyMaterialEncrypted
+ *
+ * Verifies that the keyblob for an imported AES key does not have visible plaintext key material.
+ */
+TEST_P(ImportKeyTest, AesKeyMaterialEncrypted) {
+    string key = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    for (int i = 0; i < 32; i++) {
+        key[i] = static_cast<char>(random() % 256);
+    }
+    ASSERT_EQ(ErrorCode::OK, ImportKey(AuthorizationSetBuilder()
+                                               .Authorization(TAG_NO_AUTH_REQUIRED)
+                                               .AesEncryptionKey(key.size() * 8)
+                                               .EcbMode()
+                                               .Padding(PaddingMode::PKCS7),
+                                       KeyFormat::RAW, key));
+    CheckCryptoParam(TAG_ALGORITHM, Algorithm::AES);
+    CheckCryptoParam(TAG_KEY_SIZE, 256U);
+    CheckOrigin();
+
+    // The keyblob should not contain the plaintext key material.
+    string keyblob(key_blob_.begin(), key_blob_.end());
+    ASSERT_EQ(keyblob.find(key), string::npos)
+            << "keyblob data " << bin2hex(key_blob_) << " contains the raw key material "
+            << bin2hex(std::vector<uint8_t>(key.begin(), key.end()));
+}
+
+/*
  * ImportKeyTest.AesFailure
  *
  * Verifies that importing an invalid AES key fails.
@@ -8196,6 +8224,18 @@ TEST_P(GetHardwareInfoTest, GetHardwareInfo) {
     KeyMintHardwareInfo info2;
     ASSERT_TRUE(keyMint().getHardwareInfo(&info2).isOk());
     EXPECT_EQ(info, info2);
+}
+
+TEST_P(GetHardwareInfoTest, GetHardwareInfoNonEmptyNames) {
+    KeyMintHardwareInfo info;
+    ASSERT_TRUE(keyMint().getHardwareInfo(&info).isOk());
+    int vendor_api_level = get_vendor_api_level();
+    if (vendor_api_level <= 202504) {
+        GTEST_SKIP() << "Applies only to vendor API level > 202504, but this device is: "
+                     << vendor_api_level;
+    }
+    EXPECT_NE(info.keyMintName, "");
+    EXPECT_NE(info.keyMintAuthorName, "");
 }
 
 INSTANTIATE_KEYMINT_AIDL_TEST(GetHardwareInfoTest);

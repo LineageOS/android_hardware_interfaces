@@ -40,12 +40,13 @@ StreamRemoteSubmix::StreamRemoteSubmix(StreamContext* context, const Metadata& m
                                        const AudioDeviceAddress& deviceAddress)
     : StreamCommonImpl(context, metadata),
       mDeviceAddress(deviceAddress),
-      mIsInput(isInput(metadata)) {
-    mStreamConfig.frameSize = context->getFrameSize();
-    mStreamConfig.format = context->getFormat();
-    mStreamConfig.channelLayout = context->getChannelLayout();
-    mStreamConfig.sampleRate = context->getSampleRate();
-}
+      mIsInput(isInput(metadata)),
+      mStreamConfig{.sampleRate = context->getSampleRate(),
+                    .format = context->getFormat(),
+                    .channelLayout = context->getChannelLayout(),
+                    .frameSize = context->getFrameSize(),
+                    .frameCount = context->getBufferSizeInFrames()},
+      mReadAttemptSleepUs(getDurationInUsForFrameCount(r_submix::kReadAttemptSleepFrames)) {}
 
 StreamRemoteSubmix::~StreamRemoteSubmix() {
     cleanupWorker();
@@ -137,29 +138,40 @@ void StreamRemoteSubmix::shutdown() {
 
 ::android::status_t StreamRemoteSubmix::transfer(void* buffer, size_t frameCount,
                                                  size_t* actualFrameCount, int32_t* latencyMs) {
-    *latencyMs = getDelayInUsForFrameCount(getStreamPipeSizeInFrames()) / 1000;
+    *latencyMs = getDurationInUsForFrameCount(getStreamPipeSizeInFrames()) / 1000;
     LOG(VERBOSE) << __func__ << ": Latency " << *latencyMs << "ms";
     mCurrentRoute->exitStandby(mIsInput);
-    ::android::status_t status = mIsInput ? inRead(buffer, frameCount, actualFrameCount)
-                                          : outWrite(buffer, frameCount, actualFrameCount);
-    if ((status != ::android::OK && mIsInput) ||
-        ((status != ::android::OK && status != ::android::DEAD_OBJECT) && !mIsInput)) {
-        return status;
+    ::android::status_t status = ::android::OK;
+    if (!mSkipNextTransfer) {
+        status = mIsInput ? inRead(buffer, frameCount, actualFrameCount)
+                          : outWrite(buffer, frameCount, actualFrameCount);
+        if ((status != ::android::OK && mIsInput) ||
+            ((status != ::android::OK && status != ::android::DEAD_OBJECT) && !mIsInput)) {
+            return status;
+        }
+    } else {
+        LOG(VERBOSE) << __func__ << ": Skipping transfer";
+        if (mIsInput) memset(buffer, 0, mStreamConfig.frameSize * frameCount);
+        *actualFrameCount = frameCount;
     }
     mFramesSinceStart += *actualFrameCount;
-    if (!mIsInput && status != ::android::DEAD_OBJECT) return ::android::OK;
+    if (mSkipNextTransfer || (!mIsInput && status != ::android::DEAD_OBJECT)) {
+        mSkipNextTransfer = false;
+        return ::android::OK;
+    }
     // Input streams always need to block, output streams need to block when there is no sink.
     // When the sink exists, more sophisticated blocking algorithm is implemented by MonoPipe.
-    const long bufferDurationUs =
-            (*actualFrameCount) * MICROS_PER_SECOND / mContext.getSampleRate();
+    const long bufferDurationUs = getDurationInUsForFrameCount(*actualFrameCount);
     const auto totalDurationUs = (::android::uptimeNanos() - mStartTimeNs) / NANOS_PER_MICROSECOND;
-    const long totalOffsetUs =
-            mFramesSinceStart * MICROS_PER_SECOND / mContext.getSampleRate() - totalDurationUs;
+    const long totalOffsetUs = getDurationInUsForFrameCount(mFramesSinceStart) - totalDurationUs;
     LOG(VERBOSE) << __func__ << ": totalOffsetUs " << totalOffsetUs;
     if (totalOffsetUs > 0) {
-        const long sleepTimeUs = std::min(totalOffsetUs, bufferDurationUs);
+        const long sleepTimeUs = std::max(0L, std::min(totalOffsetUs, bufferDurationUs));
         LOG(VERBOSE) << __func__ << ": sleeping for " << sleepTimeUs << " us";
         usleep(sleepTimeUs);
+    } else if (totalOffsetUs <= -(bufferDurationUs / 2)) {
+        LOG(VERBOSE) << __func__ << ": skipping next transfer";
+        mSkipNextTransfer = true;
     }
     return ::android::OK;
 }
@@ -182,7 +194,7 @@ void StreamRemoteSubmix::shutdown() {
     return ::android::OK;
 }
 
-long StreamRemoteSubmix::getDelayInUsForFrameCount(size_t frameCount) {
+long StreamRemoteSubmix::getDurationInUsForFrameCount(size_t frameCount) const {
     return frameCount * MICROS_PER_SECOND / mStreamConfig.sampleRate;
 }
 
@@ -269,6 +281,13 @@ size_t StreamRemoteSubmix::getStreamPipeSizeInFrames() {
 
 ::android::status_t StreamRemoteSubmix::inRead(void* buffer, size_t frameCount,
                                                size_t* actualFrameCount) {
+    // Try to wait as long as possible for the audio duration, but leave some time for the call to
+    // 'transfer' to complete. 'mReadAttemptSleepUs' is a good constant for this purpose because it
+    // is by definition "strictly inferior" to the typical buffer duration.
+    const long durationUs =
+            std::max(0L, getDurationInUsForFrameCount(frameCount) - mReadAttemptSleepUs * 2);
+    const int64_t deadlineTimeNs = ::android::uptimeNanos() + durationUs * NANOS_PER_MICROSECOND;
+
     // in any case, it is emulated that data for the entire buffer was available
     memset(buffer, 0, mStreamConfig.frameSize * frameCount);
     *actualFrameCount = frameCount;
@@ -300,12 +319,6 @@ size_t StreamRemoteSubmix::getStreamPipeSizeInFrames() {
     char* buff = (char*)buffer;
     size_t actuallyRead = 0;
     long remainingFrames = frameCount;
-    // Try to wait as long as possible for the audio duration, but leave some time for the call to
-    // 'transfer' to complete. 'kReadAttemptSleepUs' is a good constant for this purpose because it
-    // is by definition "strictly inferior" to the typical buffer duration.
-    const long durationUs =
-            std::max(0L, getDelayInUsForFrameCount(frameCount) - kReadAttemptSleepUs);
-    const int64_t deadlineTimeNs = ::android::uptimeNanos() + durationUs * NANOS_PER_MICROSECOND;
     while (remainingFrames > 0) {
         ssize_t framesRead = source->read(buff, remainingFrames);
         LOG(VERBOSE) << __func__ << ": frames read " << framesRead;
@@ -319,12 +332,12 @@ size_t StreamRemoteSubmix::getStreamPipeSizeInFrames() {
         if (::android::uptimeNanos() >= deadlineTimeNs) break;
         if (framesRead <= 0) {
             LOG(VERBOSE) << __func__ << ": read returned " << framesRead
-                         << ", read failure, sleeping for " << kReadAttemptSleepUs << " us";
-            usleep(kReadAttemptSleepUs);
+                         << ", read failure, sleeping for " << mReadAttemptSleepUs << " us";
+            usleep(mReadAttemptSleepUs);
         }
     }
     if (actuallyRead < frameCount) {
-        if (++mReadFailureCount < kMaxReadFailureAttempts) {
+        if (++mReadFailureCount < r_submix::kMaxReadFailureAttempts) {
             LOG(WARNING) << __func__ << ": read " << actuallyRead << " vs. requested " << frameCount
                          << " (not all errors will be logged)";
         }

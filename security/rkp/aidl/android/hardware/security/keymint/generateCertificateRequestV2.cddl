@@ -114,6 +114,7 @@ DiceChainEntryPayload = {                    ; CWT [RFC8392]
 }
 
 ConfigurationDescriptor = {                  ; Configuration Descriptor
+    ; NOTE: Component name is required as of Vendor Software Requirements 202504
     ? -70002 : tstr,                         ; Component name
     ? -70003 : int / tstr,                   ; Component version
     ? -70004 : null,                         ; Resettable

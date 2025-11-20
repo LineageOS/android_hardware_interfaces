@@ -623,11 +623,21 @@ ndk::ScopedAStatus Module::updateStreamsConnectedState(const AudioPatch& oldPatc
 }
 
 binder_status_t Module::dump(int fd, const char** args, uint32_t numArgs) {
+    if (::aidl::android::hardware::audio::common::hasArgument(
+                args, numArgs,
+                ::aidl::android::hardware::audio::common::kDumpFromAudioServerArgument)) {
+        std::ostringstream s;
+        s << mType;
+        // Not needed in the case of a dedicated module dump.
+        dprintf(fd, "\n[Module %s] ", s.str().c_str());
+    }
+    dprintf(fd, "Stream dumps:\n");
     for (const auto& portConfig : getConfig().portConfigs) {
         if (portConfig.ext.getTag() == AudioPortExt::Tag::mix) {
             getStreams().dump(portConfig.id, fd, args, numArgs);
         }
     }
+    dprintf(fd, "\n");
     return STATUS_OK;
 }
 

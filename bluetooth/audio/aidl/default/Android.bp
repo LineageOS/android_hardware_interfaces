@@ -12,6 +12,7 @@ cc_library_shared {
     vendor: true,
     vintf_fragments: ["bluetooth_audio.xml"],
     defaults: [
+        "aconfig_lib_cc_static_link.defaults",
         "latest_android_hardware_bluetooth_audio_ndk_shared",
     ],
     srcs: [
@@ -38,6 +39,10 @@ cc_library_shared {
         "libfmq",
         "liblog",
         "libbluetooth_audio_session_aidl",
+        "server_configurable_flags",
+    ],
+    static_libs: [
+        "btaudiohal_flags_c_lib",
     ],
 }
 

@@ -268,9 +268,7 @@ class ComposerClientReader {
         LOG_ALWAYS_FATAL_IF(mDisplay && displayLuts.display != *mDisplay);
         auto& data = mReturnData[displayLuts.display];
         for (auto& [layerId, luts] : displayLuts.layerLuts) {
-            if (luts.pfd.get() >= 0) {
-                data.layerLuts.push_back({layerId, std::move(luts)});
-            }
+            data.layerLuts.push_back({layerId, std::move(luts)});
         }
     }
 

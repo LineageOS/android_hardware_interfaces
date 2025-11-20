@@ -33,9 +33,13 @@ aidl_interface {
             enabled: false,
         },
         java: {
-            enabled: false,
+            enabled: true,
             sdk_version: "module_current",
             min_sdk_version: "35",
+            apex_available: [
+                "//apex_available:platform",
+                "com.android.nfcservices",
+            ],
         },
         ndk: {
             enabled: true,

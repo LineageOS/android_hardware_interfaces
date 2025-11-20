@@ -255,7 +255,7 @@ public final class AnnotationsForVehicleProperty {
         Map.entry(VehicleProperty.REAR_FOG_LIGHTS_STATE, Set.of("access", "change_mode", "data_enum", "require_supported_values_list", "version")),
         Map.entry(VehicleProperty.REAR_FOG_LIGHTS_SWITCH, Set.of("access", "change_mode", "data_enum", "require_supported_values_list", "version")),
         Map.entry(VehicleProperty.EV_CHARGE_CURRENT_DRAW_LIMIT, Set.of("access", "change_mode", "unit", "version")),
-        Map.entry(VehicleProperty.EV_CHARGE_PERCENT_LIMIT, Set.of("access", "change_mode", "legacy_supported_values_in_config", "require_supported_values_list", "version")),
+        Map.entry(VehicleProperty.EV_CHARGE_PERCENT_LIMIT, Set.of("access", "change_mode", "legacy_supported_values_in_config", "version")),
         Map.entry(VehicleProperty.EV_CHARGE_STATE, Set.of("access", "change_mode", "data_enum", "require_supported_values_list", "version")),
         Map.entry(VehicleProperty.EV_CHARGE_SWITCH, Set.of("access", "change_mode", "version")),
         Map.entry(VehicleProperty.EV_CHARGE_TIME_REMAINING, Set.of("access", "change_mode", "unit", "version")),

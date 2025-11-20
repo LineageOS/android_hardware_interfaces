@@ -223,6 +223,8 @@ parcelable AdditionalInfo {
 
         /**
          * Custom information
+         *
+         * Custom information must only contain float data. It may have variable size.
          */
         AINFO_CUSTOM_START = 0x10000000,
 

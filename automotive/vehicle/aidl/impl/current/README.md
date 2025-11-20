@@ -1,8 +1,8 @@
-# AIDL VHAL libraries and reference implementation.
+# AIDL VHAL V4 libraries and reference implementation.
 ---
 
-This directory stores the libraries useful for implementing vendor AIDL VHAL.
-This directory also stores a reference fake implementation for AIDL VHAL.
+This directory stores the libraries useful for implementing vendor AIDL VHAL V4.
+This directory also stores a reference fake implementation for AIDL VHAL V4.
 
 ## default_config
 
@@ -23,6 +23,25 @@ vehicle.
 ## grpc
 
 Stores code for GRPC based VHAL implementation.
+
+The GRPC based VHAL implementation delegates most of the VHAL logic to a VHAL
+proxy server running remotely. For example, the server may run in a separate
+Android (maybe not AAOS) VM or a non-Android machine running in the same
+ethernet.
+
+This is used in AAOS cuttlefish, where the VHAL proxy server is running on the
+host machine with AAOS running in a VM.
+
+The GRPC VHAL uses `DefaultVehicleHal`, but with a special
+`IVehicleHardware` implementation: `GRPCVehicleHardware`. The
+`GRPCVehicleHardware` is a thin proxy layer that forwards all requests to a
+GRPC server (`GRPCVehicleProxyServer`).
+
+The supported communication channels between GRPC VHAL and the GRPC Vehicle
+proxy server are Ethernet or Vsock.
+
+Note that VHAL must be ready early on during the boot so the communciation
+channel setup step must happen very early before VHAL registers itself.
 
 ## hardware
 
@@ -46,7 +65,7 @@ implementations (including reference VHAL). Vendor VHAL implementation could
 use this library, along with their own implementation for `IVehicleHardware`
 interface.
 
-Also defines a binary `android.hardware.automotive.vehicle@V3-default-service`
+Also defines a binary `android.hardware.automotive.vehicle@V4-default-service`
 which is the reference VHAL implementation. It implements `IVehicle.aidl`
 interface. It uses `DefaultVehicleHal`, along with `FakeVehicleHardware`
 (in fake_impl). It simulates the vehicle bus interaction by using an

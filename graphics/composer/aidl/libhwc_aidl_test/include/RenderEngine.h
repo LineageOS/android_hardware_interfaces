@@ -23,7 +23,7 @@
 #include <ui/PixelFormat.h>
 #include <ui/Rect.h>
 #include <ui/Region.h>
-#include "Readback.h"
+#include "TestLayer.h"
 
 namespace aidl::android::hardware::graphics::composer3::libhwc_aidl_test {
 

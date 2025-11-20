@@ -22,6 +22,7 @@ import android.hardware.radio.ims.IRadioImsIndication;
 import android.hardware.radio.ims.IRadioImsResponse;
 import android.hardware.radio.ims.ImsCall;
 import android.hardware.radio.ims.ImsRegistration;
+import android.hardware.radio.ims.ImsService;
 import android.hardware.radio.ims.ImsStreamDirection;
 import android.hardware.radio.ims.ImsStreamType;
 import android.hardware.radio.ims.ImsTrafficType;
@@ -166,4 +167,17 @@ oneway interface IRadioIms {
      * This is available when android.hardware.telephony.ims is defined.
      */
     void updateImsCallStatus(int serial, in ImsCall[] imsCalls);
+
+    /**
+     * Update allowed IMS services to the modem. The modem can use the information for 3GPP
+     * specifications and carriers' requirements e.g. system determination.
+     *
+     * @param serial Serial number of request.
+     * @param imsServices The list of allowed services
+     *
+     * Response function is IRadioImsResponse.updateAllowedServicesResponse()
+     *
+     * This is available when android.hardware.telephony.ims is defined.
+     */
+    void updateAllowedServices(in int serial, in ImsService[] imsServices);
 }

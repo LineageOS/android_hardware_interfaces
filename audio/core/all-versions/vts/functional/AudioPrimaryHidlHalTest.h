@@ -36,6 +36,7 @@
 
 #include <android-base/expected.h>
 #include <android-base/logging.h>
+#include <android-base/stringify.h>
 #include <system/audio_config.h>
 
 // clang-format off
@@ -185,10 +186,6 @@ class HidlTest : public ::testing::Test {
 //////////////////////////////////////////////////////////////////////////////
 ////////////////////////// Audio policy configuration ////////////////////////
 //////////////////////////////////////////////////////////////////////////////
-
-// Stringify the argument.
-#define QUOTE(x) #x
-#define STRINGIFY(x) QUOTE(x)
 
 static constexpr char kConfigFileName[] = "audio_policy_configuration.xml";
 

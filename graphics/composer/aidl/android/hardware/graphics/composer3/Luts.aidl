@@ -40,16 +40,21 @@ parcelable Luts {
      * For data precision, 32-bit float is used to specify a Lut by both the HWC and
      * the platform.
      *
-     * Assuming that we have a 3D array `ORIGINAL[WIDTH, HEIGHT, DEPTH]`, we would turn it into
-     * `FLAT[WIDTH * HEIGHT * DEPTH]` by
+     * For 1D LUTs:
+     * -   Values should also be normalized for fixed-point pixel formats.
+     * -   Floating-point pixel formats and extended-range buffers are currently unsupported.
      *
-     * `FLAT[z + DEPTH * (y + HEIGHT * x)] = ORIGINAL[x, y, z]`
-     *
-     * Note that 1D Lut(s) should be gain curve ones and 3D Lut(s) should be pure color lookup
-     * ones. For 3D Luts buffer,the values of the lut buffer should be normalized, ranging from 0.0
-     * to 1.0, inclusively and the data is organized in the order of R, G, B channels.
-     * For 1D Luts, the lut's values should be also normalized for fixed point pixel formats,
-     * and we now ignore floating point pixel formats + extended range buffers.
+     * For 3D LUT buffers:
+     * -   Values must be normalized to the range [0.0, 1.0], inclusive. 1.0 is the maximum panel luminance.
+     * -   If N is the size of each dimension, the data is arranged in RGB order:
+     *     R(0, 0, 0), R(0, 0, 1), ..., R(0, 0, N - 1),
+     *     R(0, 1, 0), ..., R(0, 1, N - 1), ..., R(0, N - 1, N - 1),
+     *     R(1, 0, 0), ..., R(1, 0, N - 1), ..., R(1, N - 1, N - 1), ..., R(N - 1, N - 1, N - 1),
+     *     G(0, 0, 0), ..., G(N - 1, N - 1, N - 1),
+     *     B(0, 0, 0), ..., B(N - 1, N - 1, N - 1)
+     * -   When a GPU shader samples 3D Lut data, it's accessed in a flat, one-dimensional arrangement.
+     *     Assuming that we have a 3D array ORIGINAL[N][N][N],
+     *     then ORIGINAL[x][y][z] is mapped to FLAT[z + N * (y + N * x)].
      */
     @nullable ParcelFileDescriptor pfd;
 

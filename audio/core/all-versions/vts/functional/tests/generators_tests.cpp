@@ -19,6 +19,7 @@
 #include <vector>
 
 #include <android-base/macros.h>
+#include <android-base/stringify.h>
 #include <gtest/gtest.h>
 #define LOG_TAG "Generators_Test"
 #include <log/log.h>
@@ -39,10 +40,6 @@ namespace xsd {
 using namespace ::android::audio::policy::configuration::CPP_VERSION;
 }
 #endif
-
-// Stringify the argument.
-#define QUOTE(x) #x
-#define STRINGIFY(x) QUOTE(x)
 
 struct PolicyConfigManager {
     static PolicyConfigManager& getInstance() {

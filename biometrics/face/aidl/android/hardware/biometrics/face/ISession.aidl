@@ -450,7 +450,7 @@ interface ISession {
      * HardwareAuthToken is valid. See ISession#generateChallenge. If any of the above checks fail,
      * the framework must be notified using ISessionCallback#onError with Error::UNABLE_TO_PROCESS.
      *
-     * During enrollment, the HAL may notify the framework via ISessionCallback#onAcquired with
+     * During enrollment, the HAL may notify the framework via ISessionCallback#onEnrollmentFrame with
      * messages that may be used to guide the user. This callback can be invoked multiple times if
      * necessary. Similarly, the framework may be notified of enrollment progress changes via
      * ISessionCallback#onEnrollmentProgress. Once the framework is notified that there are 0
@@ -466,7 +466,7 @@ interface ISession {
      *   - ISessionCallback#onEnrollmentProgress(enrollmentId, remaining=0)
      *
      * Other applicable callbacks:
-     *   - ISessionCallback#onAcquired
+     *   - ISessionCallback#onEnrollmentFrame
      *
      * @param FaceEnrollOptions See {@link FaceEnrollOptions} for more detail.
      * @return ICancellationSignal An object that can be used by the framework to cancel this

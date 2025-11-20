@@ -183,7 +183,7 @@ TEST_F(FakeFingerprintEngineTest, AuthenticatorIdInvalidate) {
 
 TEST_F(FakeFingerprintEngineTest, Enroll) {
     Fingerprint::cfg().setopt<OptIntVec>("enrollments", {});
-    Fingerprint::cfg().set<std::string>("next_enrollment", "4:0,0:true");
+    Fingerprint::cfg().set<std::string>("next_enrollment", "4:0-[1],0:true");
     keymaster::HardwareAuthToken hat{.mac = {2, 4}};
     mEngine.notifyFingerdown();
     mEngine.enrollImpl(mCallback.get(), hat, mCancel.get_future());
@@ -238,7 +238,7 @@ TEST_F(FakeFingerprintEngineTest, EnrollAcquired) {
     ASSERT_EQ(1, Fingerprint::cfg().getopt<OptIntVec>("enrollments").size());
     ASSERT_EQ(4, Fingerprint::cfg().getopt<OptIntVec>("enrollments")[0].value());
     ASSERT_EQ(4, mCallback->mLastEnrolled);
-    ASSERT_EQ(prevCnt + 3, mCallback->mLastAcquiredCount);
+    ASSERT_EQ(prevCnt + 2, mCallback->mLastAcquiredCount);
     ASSERT_EQ(7, mCallback->mLastAcquiredInfo);
     ASSERT_EQ(13, mCallback->mLastAcquiredVendorCode);
 }
@@ -252,7 +252,7 @@ TEST_F(FakeFingerprintEngineTest, Authenticate) {
     mEngine.fingerDownAction();
     ASSERT_FALSE(mCallback->mAuthenticateFailed);
     ASSERT_EQ(2, mCallback->mLastAuthenticated);
-    ASSERT_EQ(1, mCallback->mLastAcquiredInfo);
+    ASSERT_EQ(-1, mCallback->mLastAcquiredInfo);
     ASSERT_EQ(mEngine.getWorkMode(), FakeFingerprintEngine::WorkMode::kIdle);
 }
 
@@ -344,7 +344,7 @@ TEST_F(FakeFingerprintEngineTest, InteractionDetect) {
     Fingerprint::cfg().set<bool>("detect_interaction", true);
     Fingerprint::cfg().setopt<OptIntVec>("enrollments", {1, 2});
     Fingerprint::cfg().set<std::int32_t>("enrollment_hit", 2);
-    Fingerprint::cfg().set<std::string>("operation_detect_interaction_acquired", "");
+    Fingerprint::cfg().set<std::string>("operation_detect_interaction_acquired", "1");
     mEngine.notifyFingerdown();
     mEngine.detectInteractionImpl(mCallback.get(), mCancel.get_future());
     ASSERT_EQ(mEngine.getWorkMode(), FakeFingerprintEngine::WorkMode::kDetectInteract);
@@ -465,7 +465,7 @@ TEST_F(FakeFingerprintEngineTest, parseEnrollmentCaptureOk) {
     ecV = Util::parseEnrollmentCapture("100,200,300");
     ASSERT_EQ(6, ecV.size());
     std::vector<std::vector<int32_t>> expE{{100}, {200}, {300}};
-    std::vector<int32_t> defC{1};
+    std::vector<int32_t> defC{0};
     for (int i = 0; i < ecV.size(); i += 2) {
         ASSERT_EQ(expE[i / 2], ecV[i]);
         ASSERT_EQ(defC, ecV[i + 1]);
@@ -483,7 +483,7 @@ TEST_F(FakeFingerprintEngineTest, parseEnrollmentCaptureOk) {
         ASSERT_EQ(expC, ecV[i + 1]);
     }
     ecV = Util::parseEnrollmentCapture("100-[5,6,7], 200, 300-[9,10]");
-    std::vector<std::vector<int32_t>> expC1{{5, 6, 7}, {1}, {9, 10}};
+    std::vector<std::vector<int32_t>> expC1{{5, 6, 7}, {0}, {9, 10}};
     ASSERT_EQ(6, ecV.size());
     for (int i = 0; i < ecV.size(); i += 2) {
         ASSERT_EQ(expE[i / 2], ecV[i]);

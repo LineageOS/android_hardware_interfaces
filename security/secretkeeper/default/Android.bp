@@ -37,8 +37,8 @@ rust_library {
         "libbinder_rs",
         "libcoset",
         "liblog_rust",
-        "libsecretkeeper_core_nostd",
-        "libsecretkeeper_comm_nostd",
+        "libsecretkeeper_core",
+        "libsecretkeeper_comm",
     ],
 }
 

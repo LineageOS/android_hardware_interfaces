@@ -1099,10 +1099,13 @@ int ExternalCameraDeviceSession::configureV4l2StreamLocked(const SupportedV4L2Fo
     uint32_t bufferSize = fmt.fmt.pix.sizeimage;
     ALOGI("%s: V4L2 buffer size is %d", __FUNCTION__, bufferSize);
     uint32_t expectedMaxBufferSize = kMaxBytesPerPixel * fmt.fmt.pix.width * fmt.fmt.pix.height;
-    if ((bufferSize == 0) || (bufferSize > expectedMaxBufferSize)) {
-        ALOGE("%s: V4L2 buffer size: %u looks invalid. Expected maximum size: %u", __FUNCTION__,
-              bufferSize, expectedMaxBufferSize);
+    if (bufferSize == 0) {
+        ALOGE("%s: Invalid V4L2 buffer size = 0", __FUNCTION__);
         return -EINVAL;
+    } else if (bufferSize > expectedMaxBufferSize) {
+        ALOGW("%s: V4L2 buffer size: %u, larger than maximum size: %u, clamping to %u",
+              __FUNCTION__, bufferSize, expectedMaxBufferSize, expectedMaxBufferSize);
+        bufferSize = expectedMaxBufferSize;
     }
     mMaxV4L2BufferSize = bufferSize;
 

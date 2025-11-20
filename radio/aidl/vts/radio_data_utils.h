@@ -74,6 +74,13 @@ class RadioDataResponse : public BnRadioDataResponse {
                                                       const KeepaliveStatus& status) override;
 
     virtual ndk::ScopedAStatus stopKeepaliveResponse(const RadioResponseInfo& info) override;
+
+    virtual ndk::ScopedAStatus setUserDataEnabledResponse(const RadioResponseInfo& info) override;
+
+    virtual ndk::ScopedAStatus setUserDataRoamingEnabledResponse(
+            const RadioResponseInfo& info) override;
+
+    virtual ndk::ScopedAStatus notifyImsDataNetworkResponse(const RadioResponseInfo& info) override;
 };
 
 /* Callback class for radio data indication */

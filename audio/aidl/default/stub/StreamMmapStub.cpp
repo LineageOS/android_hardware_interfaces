@@ -118,13 +118,17 @@ DriverMmapStubImpl::DriverMmapStubImpl(const StreamContext& context)
     return ::android::OK;
 }
 
-::android::status_t DriverMmapStubImpl::transfer(void*, size_t, size_t*, int32_t*) {
+::android::status_t DriverMmapStubImpl::transfer(void*, size_t frameCount, size_t*, int32_t*) {
     // Do not call into DriverStubImpl::transfer
     if (!mIsInitialized) {
         LOG(FATAL) << __func__ << ": must not happen for an uninitialized driver";
     }
     if (mIsStandby) {
         LOG(FATAL) << __func__ << ": must not happen while in standby";
+    }
+    if (frameCount != 0) {
+        LOG(ERROR) << __func__ << ": burst value size must be 0 for MMAP";
+        return ::android::BAD_VALUE;
     }
     RETURN_STATUS_IF_ERROR(startWorkerIfNeeded());
     mDspWorker.resume();
@@ -194,7 +198,7 @@ void DriverMmapStubImpl::shutdown() {
         std::lock_guard l(mState.lock);
         *position = mState.mmapPos;
     }
-    const size_t latencyFrames = mBufferSizeFrames / 2;
+    const size_t latencyFrames = mBufferSizeFrames / 4;
     if (position->frames != StreamDescriptor::Position::UNKNOWN) {
         position->frames += latencyFrames;
     }
@@ -268,8 +272,8 @@ ndk::ScopedAStatus StreamMmapStub::createMmapBuffer(MmapBufferDescriptor* desc) 
     }
     desc->sharedMemory.fd = mSharedMemoryFd.dup();
     desc->sharedMemory.size = bufferSizeBytes;
-    desc->burstSizeFrames = bufferSizeFrames / 2;
-    desc->flags = 0;
+    desc->burstSizeFrames = bufferSizeFrames / 4;
+    desc->flags = 1 << MmapBufferDescriptor::FLAG_INDEX_APPLICATION_SHAREABLE;
     LOG(DEBUG) << __func__ << ": " << desc->toString();
     return ndk::ScopedAStatus::ok();
 }

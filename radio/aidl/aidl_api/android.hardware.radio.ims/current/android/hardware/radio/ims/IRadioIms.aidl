@@ -43,4 +43,5 @@ interface IRadioIms {
   oneway void setResponseFunctions(in android.hardware.radio.ims.IRadioImsResponse radioImsResponse, in android.hardware.radio.ims.IRadioImsIndication radioImsIndication);
   oneway void sendAnbrQuery(int serial, android.hardware.radio.ims.ImsStreamType mediaType, android.hardware.radio.ims.ImsStreamDirection direction, int bitsPerSecond);
   oneway void updateImsCallStatus(int serial, in android.hardware.radio.ims.ImsCall[] imsCalls);
+  oneway void updateAllowedServices(in int serial, in android.hardware.radio.ims.ImsService[] imsServices);
 }

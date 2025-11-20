@@ -98,7 +98,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     INFO_VIN = 0x0100 + 0x10000000 + 0x01000000
             + 0x00100000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:STRING
@@ -109,7 +109,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     INFO_MAKE = 0x0101 + 0x10000000 + 0x01000000
             + 0x00100000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:STRING
@@ -120,7 +120,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     INFO_MODEL = 0x0102 + 0x10000000 + 0x01000000
             + 0x00100000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:STRING
@@ -130,7 +130,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit.YEAR
-     * @version 2
+     * @version 1
      */
     INFO_MODEL_YEAR = 0x0103 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -145,7 +145,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit.MILLILITER
-     * @version 2
+     * @version 1
      */
     INFO_FUEL_CAPACITY = 0x0104 + 0x10000000 + 0x01000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT
@@ -165,7 +165,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
      * @data_enum FuelType
-     * @version 2
+     * @version 1
      */
     INFO_FUEL_TYPE = 0x0105 + 0x10000000 + 0x01000000
             + 0x00410000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
@@ -181,7 +181,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit.WATT_HOUR
-     * @version 2
+     * @version 1
      */
     INFO_EV_BATTERY_CAPACITY = 0x0106 + 0x10000000 + 0x01000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT
@@ -194,7 +194,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @data_enum EvConnectorType
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     INFO_EV_CONNECTOR_TYPE = 0x0107 + 0x10000000 + 0x01000000
             + 0x00410000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
@@ -209,7 +209,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @data_enum PortLocationType
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     INFO_FUEL_DOOR_LOCATION = 0x0108 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -224,7 +224,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
      * @data_enum PortLocationType
-     * @version 2
+     * @version 1
      */
     INFO_EV_PORT_LOCATION = 0x0109 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -235,7 +235,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @data_enum VehicleAreaSeat
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     INFO_DRIVER_SEAT = 0x010A + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -254,7 +254,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit.MILLIMETER
-     * @version 2
+     * @version 1
      */
     INFO_EXTERIOR_DIMENSIONS = 0x010B + 0x10000000 + 0x01000000
             + 0x00410000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
@@ -273,7 +273,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
      * @data_enum PortLocationType
-     * @version 2
+     * @version 1
      */
     INFO_MULTI_EV_PORT_LOCATIONS = 0x010C + 0x10000000 + 0x01000000
             + 0x00410000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
@@ -322,7 +322,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit.KILOMETER
-     * @version 2
+     * @version 1
      */
     PERF_ODOMETER = 0x0204 + 0x10000000 + 0x01000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT
@@ -338,7 +338,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit.METER_PER_SEC
-     * @version 2
+     * @version 1
      */
     PERF_VEHICLE_SPEED = 0x0207 + 0x10000000 + 0x01000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT
@@ -351,7 +351,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit.METER_PER_SEC
-     * @version 2
+     * @version 1
      */
     PERF_VEHICLE_SPEED_DISPLAY = 0x0208 + 0x10000000 + 0x01000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT
@@ -367,7 +367,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit.DEGREES
-     * @version 2
+     * @version 1
      */
     PERF_STEERING_ANGLE = 0x0209 + 0x10000000 + 0x01000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT
@@ -383,7 +383,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit.DEGREES
-     * @version 2
+     * @version 1
      */
     PERF_REAR_STEERING_ANGLE = 0x0210 + 0x10000000 + 0x01000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT
@@ -425,7 +425,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit.CELSIUS
-     * @version 2
+     * @version 1
      */
     ENGINE_COOLANT_TEMP = 0x0301 + 0x10000000 + 0x01000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT
@@ -443,7 +443,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ
      * @data_enum VehicleOilLevel
      * @require_supported_values_list
-     * @version 2
+     * @version 1
      */
     ENGINE_OIL_LEVEL = 0x0303 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -453,7 +453,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit.CELSIUS
-     * @version 2
+     * @version 1
      */
     ENGINE_OIL_TEMP = 0x0304 + 0x10000000 + 0x01000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT
@@ -463,22 +463,23 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit.RPM
-     * @version 2
+     * @version 1
      */
     ENGINE_RPM = 0x0305 + 0x10000000 + 0x01000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT
     /**
      * Reports wheel ticks
      *
-     * The first element in the vector is a reset count.  A reset indicates
-     * previous tick counts are not comparable with this and future ones.  Some
-     * sort of discontinuity in tick counting has occurred.
+     * The first element in the vector is a reset count. A reset indicates previous tick counts are
+     * not comparable with this and future ones - some sort of discontinuity in tick counting has
+     * occurred. Conversely, tick measurements must be comparable if their corresponding reset count
+     * is the same. This value must be a monotonically increasing value where each time a reset
+     * happens, the value increases by 1.
      *
-     * The next four elements represent ticks for individual wheels in the
-     * following order: front left, front right, rear right, rear left.  All
-     * tick counts are cumulative.  Tick counts increment when the vehicle
-     * moves forward, and decrement when vehicles moves in reverse.  The ticks
-     * should be reset to 0 when the vehicle is started by the user.
+     * The next four elements represent ticks for individual wheels in the following order: front
+     * left, front right, rear right, rear left. All tick counts are cumulative. Tick counts
+     * increment when the vehicle moves forward, and decrement when vehicles moves in reverse.
+     * The ticks should be reset to 0 when the vehicle is started by the user.
      *
      *  int64Values[0] = reset count
      *  int64Values[1] = front left ticks
@@ -486,8 +487,8 @@ enum VehicleProperty {
      *  int64Values[3] = rear right ticks
      *  int64Values[4] = rear left ticks
      *
-     * configArray is used to indicate the micrometers-per-wheel-tick value and
-     * which wheels are supported.  configArray is set as follows:
+     * configArray is used to indicate the micrometers-per-wheel-tick value and which wheels are
+     * supported. configArray is set as follows:
      *
      *  configArray[0], bits [0:3] = supported wheels. Uses enum Wheel. For example, if all wheels
      *    are supported, then configArray[0] = VehicleAreaWheel::LEFT_FRONT
@@ -498,13 +499,13 @@ enum VehicleProperty {
      *  configArray[3] = micrometers per rear right wheel tick
      *  configArray[4] = micrometers per rear left wheel tick
      *
-     * NOTE:  If a wheel is not supported, its value shall always be set to 0.
+     * NOTE: If a wheel is not supported, its value shall always be set to 0.
      *
      * VehiclePropValue.timestamp must be correctly filled in.
      *
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     WHEEL_TICK = 0x0306 + 0x10000000 + 0x01000000
             + 0x00510000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT64_VEC
@@ -521,7 +522,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit.MILLILITER
-     * @version 2
+     * @version 1
      */
     FUEL_LEVEL = 0x0307 + 0x10000000 + 0x01000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT
@@ -539,7 +540,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     FUEL_DOOR_OPEN = 0x0308 + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
@@ -553,7 +554,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit.WATT_HOUR
-     * @version 2
+     * @version 1
      */
     EV_BATTERY_LEVEL = 0x0309 + 0x10000000 + 0x01000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT
@@ -585,7 +586,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     EV_CHARGE_PORT_OPEN = 0x030A + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
@@ -597,7 +598,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     EV_CHARGE_PORT_CONNECTED = 0x030B + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
@@ -610,7 +611,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit.MILLIWATTS
-     * @version 2
+     * @version 1
      */
     EV_BATTERY_INSTANTANEOUS_CHARGE_RATE = 0x030C + 0x10000000 + 0x01000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT
@@ -629,7 +630,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit.METER
-     * @version 2
+     * @version 1
      */
     RANGE_REMAINING = 0x0308 + 0x10000000 + 0x01000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT
@@ -690,7 +691,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
      * @unit VehicleUnit.KILOPASCAL
-     * @version 2
+     * @version 1
      */
     TIRE_PRESSURE = 0x0309 + 0x10000000 + 0x07000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:WHEEL,VehiclePropertyType:FLOAT
@@ -706,7 +707,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit.KILOPASCAL
-     * @version 2
+     * @version 1
      */
     CRITICALLY_LOW_TIRE_PRESSURE = 0x030A + 0x10000000 + 0x07000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:WHEEL,VehiclePropertyType:FLOAT
@@ -899,7 +900,7 @@ enum VehicleProperty {
      * @data_enum VehicleGear
      * @require_supported_values_list
      * @legacy_supported_values_in_config
-     * @version 2
+     * @version 1
      */
     GEAR_SELECTION = 0x0400 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -934,7 +935,7 @@ enum VehicleProperty {
      * @data_enum VehicleGear
      * @require_supported_values_list
      * @legacy_supported_values_in_config
-     * @version 2
+     * @version 1
      */
     CURRENT_GEAR = 0x0401 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -946,7 +947,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     PARKING_BRAKE_ON = 0x0402 + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
@@ -964,7 +965,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     PARKING_BRAKE_AUTO_APPLY = 0x0403 + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
@@ -1019,7 +1020,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     FUEL_LEVEL_LOW = 0x0405 + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
@@ -1032,7 +1033,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     NIGHT_MODE = 0x0407 + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
@@ -1047,7 +1048,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
      * @data_enum VehicleTurnSignal
-     * @version 2
+     * @version 1
      */
     TURN_SIGNAL_STATE = 0x0408 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -1065,7 +1066,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ
      * @data_enum VehicleIgnitionState
      * @require_supported_values_list
-     * @version 2
+     * @version 1
      */
     IGNITION_STATE = 0x0409 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -1078,7 +1079,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     ABS_ACTIVE = 0x040A + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
@@ -1091,7 +1092,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     TRACTION_CONTROL_ACTIVE = 0x040B + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
@@ -1312,7 +1313,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     HVAC_FAN_SPEED = 0x0500 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1333,7 +1334,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @data_enum VehicleHvacFanDirection
-     * @version 2
+     * @version 1
      */
     HVAC_FAN_DIRECTION = 0x0501 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1343,7 +1344,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit.CELSIUS
-     * @version 2
+     * @version 1
      */
     HVAC_TEMPERATURE_CURRENT = 0x0502 + 0x10000000 + 0x05000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:FLOAT
@@ -1419,7 +1420,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit.CELSIUS
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     HVAC_TEMPERATURE_SET = 0x0503 + 0x10000000 + 0x05000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:FLOAT
@@ -1432,7 +1433,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     HVAC_DEFROSTER = 0x0504 + 0x10000000 + 0x03000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:WINDOW,VehiclePropertyType:BOOLEAN
@@ -1445,7 +1446,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     HVAC_AC_ON = 0x0505 + 0x10000000 + 0x05000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:BOOLEAN
@@ -1463,7 +1464,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     HVAC_MAX_AC_ON = 0x0506 + 0x10000000 + 0x05000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:BOOLEAN
@@ -1487,7 +1488,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     HVAC_MAX_DEFROST_ON = 0x0507 + 0x10000000 + 0x05000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:BOOLEAN
@@ -1505,7 +1506,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     HVAC_RECIRC_ON = 0x0508 + 0x10000000 + 0x05000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:BOOLEAN
@@ -1545,7 +1546,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     HVAC_DUAL_ON = 0x0509 + 0x10000000 + 0x05000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:BOOLEAN
@@ -1568,7 +1569,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     HVAC_AUTO_ON = 0x050A + 0x10000000 + 0x05000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:BOOLEAN
@@ -1603,7 +1604,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     HVAC_SEAT_TEMPERATURE = 0x050B + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1639,7 +1640,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     HVAC_SIDE_MIRROR_HEAT = 0x050C + 0x10000000 + 0x04000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:MIRROR,VehiclePropertyType:INT32
@@ -1674,7 +1675,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     HVAC_STEERING_WHEEL_HEAT = 0x050D + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -1712,7 +1713,7 @@ enum VehicleProperty {
      * @data_enum VehicleUnit
      * @require_supported_values_list
      * @legacy_supported_values_in_config
-     * @version 2
+     * @version 1
      */
     HVAC_TEMPERATURE_DISPLAY_UNITS = 0x050E + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -1721,7 +1722,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     HVAC_ACTUAL_FAN_SPEED_RPM = 0x050F + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1768,7 +1769,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     HVAC_POWER_ON = 0x0510 + 0x10000000 + 0x05000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:BOOLEAN
@@ -1792,7 +1793,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ
      * @data_enum VehicleHvacFanDirection
      * @data_enum_bit_flags
-     * @version 2
+     * @version 1
      */
     HVAC_FAN_DIRECTION_AVAILABLE = 0x0511 + 0x10000000 + 0x05000000
             + 0x00410000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32_VEC
@@ -1809,7 +1810,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     HVAC_AUTO_RECIRC_ON = 0x0512 + 0x10000000 + 0x05000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:BOOLEAN
@@ -1848,7 +1849,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     HVAC_SEAT_VENTILATION = 0x0513 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1861,7 +1862,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     HVAC_ELECTRIC_DEFROSTER_ON = 0x0514 + 0x10000000 + 0x03000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:WINDOW,VehiclePropertyType:BOOLEAN
@@ -1917,7 +1918,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
-     * @version 2
+     * @version 1
      */
     HVAC_TEMPERATURE_VALUE_SUGGESTION = 0x0515 + 0x10000000 + 0x01000000
             + 0x00610000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT_VEC
@@ -1953,7 +1954,7 @@ enum VehicleProperty {
      * @data_enum VehicleUnit
      * @require_supported_values_list
      * @legacy_supported_values_in_config
-     * @version 2
+     * @version 1
      */
     DISTANCE_DISPLAY_UNITS = 0x0600 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -1988,7 +1989,7 @@ enum VehicleProperty {
      * @data_enum VehicleUnit
      * @require_supported_values_list
      * @legacy_supported_values_in_config
-     * @version 2
+     * @version 1
      */
     FUEL_VOLUME_DISPLAY_UNITS = 0x0601 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -2024,7 +2025,7 @@ enum VehicleProperty {
      * @data_enum VehicleUnit
      * @require_supported_values_list
      * @legacy_supported_values_in_config
-     * @version 2
+     * @version 1
      */
     TIRE_PRESSURE_DISPLAY_UNITS = 0x0602 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -2060,7 +2061,7 @@ enum VehicleProperty {
      * @data_enum VehicleUnit
      * @require_supported_values_list
      * @legacy_supported_values_in_config
-     * @version 2
+     * @version 1
      */
     EV_BATTERY_DISPLAY_UNITS = 0x0603 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -2077,7 +2078,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     FUEL_CONSUMPTION_UNITS_DISTANCE_OVER_VOLUME = 0x0604 + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
@@ -2112,7 +2113,7 @@ enum VehicleProperty {
      * @data_enum VehicleUnit
      * @require_supported_values_list
      * @legacy_supported_values_in_config
-     * @version 2
+     * @version 1
      */
     VEHICLE_SPEED_DISPLAY_UNITS = 0x0605 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -2157,7 +2158,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit.MILLI_SECS
-     * @version 2
+     * @version 1
      */
     EXTERNAL_CAR_TIME = 0x0608 + 0x10000000 // VehiclePropertyGroup:SYSTEM
             + 0x01000000 // VehicleArea:GLOBAL
@@ -2187,7 +2188,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.WRITE
      * @unit VehicleUnit.MILLI_SECS
-     * @version 2
+     * @version 1
      */
     ANDROID_EPOCH_TIME = 0x0606 + 0x10000000 + 0x01000000
             + 0x00500000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT64
@@ -2202,7 +2203,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
-     * @version 2
+     * @version 1
      */
     STORAGE_ENCRYPTION_BINDING_SEED = 0x0607 + 0x10000000 + 0x01000000
             + 0x00700000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BYTES
@@ -2217,7 +2218,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit.CELSIUS
-     * @version 2
+     * @version 1
      */
     ENV_OUTSIDE_TEMPERATURE = 0x0703 + 0x10000000 + 0x01000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT
@@ -2242,7 +2243,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     AP_POWER_STATE_REQ = 0x0A00 + 0x10000000 + 0x01000000
             + 0x00410000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
@@ -2257,7 +2258,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
-     * @version 2
+     * @version 1
      */
     AP_POWER_STATE_REPORT = 0x0A01 + 0x10000000 + 0x01000000
             + 0x00410000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
@@ -2272,7 +2273,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     AP_POWER_BOOTUP_REASON = 0x0A02 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -2300,7 +2301,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     DISPLAY_BRIGHTNESS = 0x0A03 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -2390,7 +2391,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     HW_KEY_INPUT = 0x0A10 + 0x10000000 + 0x01000000
             + 0x00410000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
@@ -2470,7 +2471,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @data_enum RotaryInputType
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     HW_ROTARY_INPUT = 0x0A20 + 0x10000000 + 0x01000000
             + 0x00410000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
@@ -2494,7 +2495,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @data_enum CustomInputType
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     HW_CUSTOM_INPUT = 0X0A30 + 0x10000000 + 0x01000000
             + 0x00410000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
@@ -2551,7 +2552,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     DOOR_POS = 0x0B00 + 0x10000000 + 0x06000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:DOOR,VehiclePropertyType:INT32
@@ -2588,7 +2589,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     DOOR_MOVE = 0x0B01 + 0x10000000 + 0x06000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:DOOR,VehiclePropertyType:INT32
@@ -2603,7 +2604,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     DOOR_LOCK = 0x0B02 + 0x10000000 + 0x06000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:DOOR,VehiclePropertyType:BOOLEAN
@@ -2661,7 +2662,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     MIRROR_Z_POS = 0x0B40 + 0x10000000 + 0x04000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:MIRROR,VehiclePropertyType:INT32
@@ -2699,7 +2700,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     MIRROR_Z_MOVE = 0x0B41 + 0x10000000 + 0x04000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:MIRROR,VehiclePropertyType:INT32
@@ -2740,7 +2741,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     MIRROR_Y_POS = 0x0B42 + 0x10000000 + 0x04000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:MIRROR,VehiclePropertyType:INT32
@@ -2777,7 +2778,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     MIRROR_Y_MOVE = 0x0B43 + 0x10000000 + 0x04000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:MIRROR,VehiclePropertyType:INT32
@@ -2792,7 +2793,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     MIRROR_LOCK = 0x0B44 + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
@@ -2807,7 +2808,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     MIRROR_FOLD = 0x0B45 + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
@@ -2875,7 +2876,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.WRITE
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     SEAT_MEMORY_SELECT = 0x0B80 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -2901,7 +2902,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.WRITE
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     SEAT_MEMORY_SET = 0x0B81 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -2919,7 +2920,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     SEAT_BELT_BUCKLED = 0x0B82 + 0x10000000 + 0x05000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:BOOLEAN
@@ -2957,7 +2958,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     SEAT_BELT_HEIGHT_POS = 0x0B83 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -2997,7 +2998,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     SEAT_BELT_HEIGHT_MOVE = 0x0B84 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -3034,7 +3035,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     SEAT_FORE_AFT_POS = 0x0B85 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -3073,7 +3074,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     SEAT_FORE_AFT_MOVE = 0x0B86 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -3114,7 +3115,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     SEAT_BACKREST_ANGLE_1_POS = 0x0B87 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -3153,7 +3154,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     SEAT_BACKREST_ANGLE_1_MOVE = 0x0B88 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -3196,7 +3197,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     SEAT_BACKREST_ANGLE_2_POS = 0x0B89 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -3235,7 +3236,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     SEAT_BACKREST_ANGLE_2_MOVE = 0x0B8A + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -3271,7 +3272,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     SEAT_HEIGHT_POS = 0x0B8B + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -3308,7 +3309,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     SEAT_HEIGHT_MOVE = 0x0B8C + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -3348,7 +3349,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     SEAT_DEPTH_POS = 0x0B8D + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -3386,7 +3387,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     SEAT_DEPTH_MOVE = 0x0B8E + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -3425,7 +3426,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     SEAT_TILT_POS = 0x0B8F + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -3464,7 +3465,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     SEAT_TILT_MOVE = 0x0B90 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -3501,7 +3502,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     SEAT_LUMBAR_FORE_AFT_POS = 0x0B91 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -3541,7 +3542,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     SEAT_LUMBAR_FORE_AFT_MOVE = 0x0B92 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -3578,7 +3579,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     SEAT_LUMBAR_SIDE_SUPPORT_POS = 0x0B93 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -3618,7 +3619,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     SEAT_LUMBAR_SIDE_SUPPORT_MOVE = 0x0B94 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -3639,7 +3640,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     SEAT_HEADREST_HEIGHT_POS = 0x0B95 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -3719,7 +3720,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     SEAT_HEADREST_HEIGHT_MOVE = 0x0B96 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -3754,7 +3755,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     SEAT_HEADREST_ANGLE_POS = 0x0B97 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -3764,8 +3765,8 @@ enum VehicleProperty {
      * The maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined. All integers
      * between minInt32Value and maxInt32Value must be supported.
      *
-     * The minInt32Value represents the maximum movement speed of the seat's headrest while moving
-     * into a shallow position.
+     * The minInt32Value represents the maximum movement speed of the seat's headrest while
+     * reclining.
      *
      * The maxInt32Value represents the maximum movement speed of the seat's headrest while moving
      * into an upright/forward position.
@@ -3794,7 +3795,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     SEAT_HEADREST_ANGLE_MOVE = 0x0B98 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -3829,7 +3830,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     SEAT_HEADREST_FORE_AFT_POS = 0x0B99 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -3869,7 +3870,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     SEAT_HEADREST_FORE_AFT_MOVE = 0x0B9A + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -4221,7 +4222,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ
      * @data_enum VehicleSeatOccupancyState
      * @require_supported_values_list
-     * @version 2
+     * @version 1
      */
     SEAT_OCCUPANCY = 0x0BB0 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -4250,9 +4251,9 @@ enum VehicleProperty {
      *  parameter will work with negative values as follows:
      *    Max = sunroof completely open
      *    0 = sunroof closed.
-     *    Min = sunroof vent completely open
+     *    Min = sunroof vent completely vented
      *
-     *    Note that in this mode, 0 indicates the window is closed.
+     *    Note that in all modes, 0 indicates the window is closed.
      *
      * If {@code HasSupportedValueInfo} for a specific area ID is not {@code null}:
      * {@code HasSupportedValueInfo#hasMinSupportedValue} and
@@ -4270,7 +4271,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     WINDOW_POS = 0x0BC0 + 0x10000000 + 0x03000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:WINDOW,VehiclePropertyType:INT32
@@ -4324,7 +4325,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @require_min_max_supported_value
-     * @version 2
+     * @version 1
      */
     WINDOW_MOVE = 0x0BC1 + 0x10000000 + 0x03000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:WINDOW,VehiclePropertyType:INT32
@@ -4339,7 +4340,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     WINDOW_LOCK = 0x0BC4 + 0x10000000 + 0x03000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:WINDOW,VehiclePropertyType:BOOLEAN
@@ -4706,7 +4707,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
-     * @version 2
+     * @version 1
      */
     VEHICLE_MAP_SERVICE = 0x0C00 + 0x10000000 + 0x01000000
             + 0x00e00000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:MIXED
@@ -4947,7 +4948,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     OBD2_LIVE_FRAME = 0x0D00 + 0x10000000 + 0x01000000
             + 0x00e00000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:MIXED
@@ -4974,7 +4975,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     OBD2_FREEZE_FRAME = 0x0D01 + 0x10000000 + 0x01000000
             + 0x00e00000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:MIXED
@@ -4992,7 +4993,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     OBD2_FREEZE_FRAME_INFO = 0x0D02 + 0x10000000 + 0x01000000
             + 0x00e00000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:MIXED
@@ -5015,7 +5016,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.WRITE
-     * @version 2
+     * @version 1
      */
     OBD2_FREEZE_FRAME_CLEAR = 0x0D03 + 0x10000000 + 0x01000000
             + 0x00e00000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:MIXED
@@ -5035,7 +5036,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightState
      * @require_supported_values_list
-     * @version 2
+     * @version 1
      */
     HEADLIGHTS_STATE = 0x0E00 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -5055,7 +5056,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightState
      * @require_supported_values_list
-     * @version 2
+     * @version 1
      */
     HIGH_BEAM_LIGHTS_STATE = 0x0E01 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -5091,7 +5092,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightState
      * @require_supported_values_list
-     * @version 2
+     * @version 1
      */
     FOG_LIGHTS_STATE = 0x0E02 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -5111,7 +5112,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightState
      * @require_supported_values_list
-     * @version 2
+     * @version 1
      */
     HAZARD_LIGHTS_STATE = 0x0E03 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -5135,7 +5136,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightSwitch
      * @require_supported_values_list
-     * @version 2
+     * @version 1
      */
     HEADLIGHTS_SWITCH = 0x0E10 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -5159,7 +5160,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightSwitch
      * @require_supported_values_list
-     * @version 2
+     * @version 1
      */
     HIGH_BEAM_LIGHTS_SWITCH = 0x0E11 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -5199,7 +5200,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightSwitch
      * @require_supported_values_list
-     * @version 2
+     * @version 1
      */
     FOG_LIGHTS_SWITCH = 0x0E12 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -5223,7 +5224,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightSwitch
      * @require_supported_values_list
-     * @version 2
+     * @version 1
      */
     HAZARD_LIGHTS_SWITCH = 0x0E13 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -5243,7 +5244,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightState
      * @require_supported_values_list
-     * @version 2
+     * @version 1
      */
     CABIN_LIGHTS_STATE = 0x0F01 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -5270,7 +5271,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightSwitch
      * @require_supported_values_list
-     * @version 2
+     * @version 1
      */
     CABIN_LIGHTS_SWITCH = 0x0F02 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -5290,7 +5291,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightState
      * @require_supported_values_list
-     * @version 2
+     * @version 1
      */
     READING_LIGHTS_STATE = 0x0F03 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -5317,7 +5318,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightSwitch
      * @require_supported_values_list
-     * @version 2
+     * @version 1
      */
     READING_LIGHTS_SWITCH = 0x0F04 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -5404,7 +5405,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     SUPPORT_CUSTOMIZE_VENDOR_PERMISSION = 0x0F05 + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
@@ -5421,7 +5422,7 @@ enum VehicleProperty {
      * ex) "com.android.car.user.CarUserNoticeService,storage_monitoring"
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     DISABLED_OPTIONAL_FEATURES = 0x0F06 + 0x10000000 + 0x01000000
             + 0x00100000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:STRING
@@ -5472,7 +5473,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
-     * @version 2
+     * @version 1
      */
     INITIAL_USER_INFO = 0x0F07 + 0x10000000 + 0x01000000
             + 0x00e00000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:MIXED
@@ -5639,7 +5640,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
-     * @version 2
+     * @version 1
      */
     SWITCH_USER = 0x0F08 + 0x10000000 + 0x01000000
             + 0x00e00000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:MIXED
@@ -5686,7 +5687,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
-     * @version 2
+     * @version 1
      */
     CREATE_USER = 0x0F09 + 0x10000000 + 0x01000000
             + 0x00e00000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:MIXED
@@ -5722,7 +5723,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.WRITE
-     * @version 2
+     * @version 1
      */
     REMOVE_USER = 0x0F0A + 0x10000000 + 0x01000000
             + 0x00e00000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:MIXED
@@ -5798,7 +5799,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
-     * @version 2
+     * @version 1
      */
     USER_IDENTIFICATION_ASSOCIATION = 0x0F0B + 0x10000000 + 0x01000000
             + 0x00e00000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:MIXED
@@ -5818,7 +5819,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     EVS_SERVICE_REQUEST = 0x0F10 + 0x10000000 + 0x01000000
             + 0x00410000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
@@ -5836,7 +5837,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     POWER_POLICY_REQ = 0x0F21 + 0x10000000 + 0x01000000
             + 0x00100000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:STRING
@@ -5856,7 +5857,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     POWER_POLICY_GROUP_REQ = 0x0F22 + 0x10000000 + 0x01000000
             + 0x00100000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:STRING
@@ -5869,7 +5870,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
-     * @version 2
+     * @version 1
      */
     CURRENT_POWER_POLICY = 0x0F23 + 0x10000000 + 0x01000000
             + 0x00100000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:STRING
@@ -5881,7 +5882,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.WRITE
-     * @version 2
+     * @version 1
      */
     WATCHDOG_ALIVE = 0x0F31 + 0x10000000 + 0x01000000
             + 0x00500000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT64
@@ -5893,7 +5894,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.WRITE
-     * @version 2
+     * @version 1
      */
     WATCHDOG_TERMINATED_PROCESS = 0x0F32 + 0x10000000 + 0x01000000
             + 0x00e00000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:MIXED
@@ -5909,7 +5910,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     VHAL_HEARTBEAT = 0x0F33 + 0x10000000 + 0x01000000
             + 0x00500000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT64
@@ -5923,7 +5924,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     CLUSTER_SWITCH_UI = 0x0F34 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -5948,7 +5949,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     CLUSTER_DISPLAY_STATE = 0x0F35 + 0x10000000 + 0x01000000
             + 0x00410000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
@@ -5984,7 +5985,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.WRITE
-     * @version 2
+     * @version 1
      */
     CLUSTER_REPORT_STATE = 0x0F36 + 0x10000000 + 0x01000000
             + 0x00e00000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:MIXED
@@ -5999,7 +6000,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.WRITE
-     * @version 2
+     * @version 1
      */
     CLUSTER_REQUEST_DISPLAY = 0x0F37 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -6010,7 +6011,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.WRITE
-     * @version 2
+     * @version 1
      */
     CLUSTER_NAVIGATION_STATE = 0x0F38 + 0x10000000 + 0x01000000
             + 0x00700000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BYTES
@@ -6032,7 +6033,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ
      * @data_enum ElectronicTollCollectionCardType
      * @require_supported_values_list
-     * @version 2
+     * @version 1
      */
     ELECTRONIC_TOLL_COLLECTION_CARD_TYPE = 0x0F39 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -6055,7 +6056,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ
      * @data_enum ElectronicTollCollectionCardStatus
      * @require_supported_values_list
-     * @version 2
+     * @version 1
      */
     ELECTRONIC_TOLL_COLLECTION_CARD_STATUS = 0x0F3A + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -6077,7 +6078,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightState
      * @require_supported_values_list
-     * @version 2
+     * @version 1
      */
     FRONT_FOG_LIGHTS_STATE = 0x0F3B + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -6104,7 +6105,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightSwitch
      * @require_supported_values_list
-     * @version 2
+     * @version 1
      */
     FRONT_FOG_LIGHTS_SWITCH = 0x0F3C + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -6127,7 +6128,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightState
      * @require_supported_values_list
-     * @version 2
+     * @version 1
      */
     REAR_FOG_LIGHTS_STATE = 0x0F3D + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -6154,7 +6155,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightSwitch
      * @require_supported_values_list
-     * @version 2
+     * @version 1
      */
     REAR_FOG_LIGHTS_SWITCH = 0x0F3E + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -6184,7 +6185,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit.AMPERE
-     * @version 2
+     * @version 1
      */
     EV_CHARGE_CURRENT_DRAW_LIMIT = 0x0F3F + 0x10000000 + 0x01000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT
@@ -6194,17 +6195,20 @@ enum VehicleProperty {
      *
      * Returns a float value from 0 to 100.
      *
-     * configArray is used to specify the valid values at boot time.
+     * configArray is optional. If not empty, it is used to specify the valid values at boot time.
      *   For example, if the vehicle supports the following charge percent limit values:
      *     [20, 40, 60, 80, 100]
-     *   then the configArray should be {20, 40, 60, 80, 100}
+     *   then the configArray should be {20, 40, 60, 80, 100}.
+     *
      * If the configArray is empty then all values from 0 to 100 must be valid.
      *
-     * If {@code HasSupportedValueInfo} for the global area ID (0) is not {@code null},
-     * {@code HasSupportedValueInfo#hasSupportedValuesList} must be {@code true}.
+     * If {@code HasSupportedValueInfo} for the global area ID (0) is not {@code null} and
+     * if {@code HasSupportedValueInfo#hasSupportedValuesList} is {@code true},
      * {@code SupportedValuesListResult#supportedValuesList} specifies the
      * valid maximum charge percent threshold options at the current moment.
-     * At boot, configArray content must match the supported values list.
+     * If {@code HasSupportedValueInfo#hasSupportedValuesList} is {@code false}, all values from
+     * 0 to 100 must be valid.
+     * At boot, if not empty, configArray content must match the supported values list.
      *
      * If the valid values may change dynamically,
      * {@code HasSupportedValueInfo#hasSupportedValuesList} must be {@code true} and
@@ -6216,9 +6220,8 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
-     * @require_supported_values_list
      * @legacy_supported_values_in_config
-     * @version 2
+     * @version 1
      */
     EV_CHARGE_PERCENT_LIMIT = 0x0F40 + 0x10000000 + 0x01000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT
@@ -6243,7 +6246,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ
      * @data_enum EvChargeState
      * @require_supported_values_list
-     * @version 2
+     * @version 1
      */
     EV_CHARGE_STATE = 0x0F41 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -6260,7 +6263,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     EV_CHARGE_SWITCH = 0x0F42 + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
@@ -6273,7 +6276,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit.SECS
-     * @version 2
+     * @version 1
      */
     EV_CHARGE_TIME_REMAINING = 0x0F43 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -6298,7 +6301,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ
      * @data_enum EvRegenerativeBrakingState
      * @require_supported_values_list
-     * @version 2
+     * @version 1
      */
     EV_REGENERATIVE_BRAKING_STATE = 0x0F44 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -6319,7 +6322,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ
      * @data_enum TrailerState
      * @require_supported_values_list
-     * @version 2
+     * @version 1
      */
     TRAILER_PRESENT = 0x0F45 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -6342,7 +6345,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 1
      */
     VEHICLE_CURB_WEIGHT = 0x0F46 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32

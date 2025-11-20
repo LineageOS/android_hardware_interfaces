@@ -173,7 +173,9 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
     ErrorCode Begin(KeyPurpose purpose, const AuthorizationSet& in_params);
 
     ErrorCode UpdateAad(const string& input);
-    ErrorCode Update(const string& input, string* output);
+    ErrorCode Update(const string& input, string* output) { return Update(input, output, {}, {}); }
+    ErrorCode Update(const string& input, string* output, std::optional<HardwareAuthToken> hat,
+                     std::optional<secureclock::TimeStampToken> time_token);
 
     ErrorCode Finish(const string& message, const string& signature, string* output,
                      std::optional<HardwareAuthToken> hat = std::nullopt,
@@ -408,6 +410,9 @@ void add_tag_from_prop(AuthorizationSetBuilder* tags, TypedTag<TagType::BYTES, t
 
 // Return the vendor API level for this device.
 int get_vendor_api_level();
+
+// Return the vendor API level when the device shipped.
+int get_first_vendor_api_level();
 
 // Indicate whether the test is running on a GSI image.
 bool is_gsi_image();

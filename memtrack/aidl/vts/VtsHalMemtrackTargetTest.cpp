@@ -31,6 +31,13 @@ using android::vintf::KernelVersion;
 using android::vintf::RuntimeInfo;
 using android::vintf::VintfObject;
 
+constexpr char kMemtrackDefaultMsg[] = "memtrack default implementation";
+
+static inline bool isMemtrackDefaultImpl(const ndk::ScopedAStatus& status) {
+    return !status.isOk() && status.getExceptionCode() == EX_UNSUPPORTED_OPERATION &&
+           strcmp(status.getMessage(), kMemtrackDefaultMsg) == 0;
+}
+
 class MemtrackAidlTest : public testing::TestWithParam<std::string> {
   public:
     virtual void SetUp() override {
@@ -52,6 +59,11 @@ TEST_P(MemtrackAidlTest, GetMemoryInvalidPid) {
 
         auto status = memtrack_->getMemory(pid, type, &records);
 
+        if (isMemtrackDefaultImpl(status)) {
+            ASSERT_TRUE(true);
+            return;
+        }
+
         EXPECT_EQ(status.getExceptionCode(), EX_ILLEGAL_ARGUMENT);
     }
 }
@@ -63,7 +75,12 @@ TEST_P(MemtrackAidlTest, GetMemoryInvalidType) {
 
     auto status = memtrack_->getMemory(pid, type, &records);
 
-    EXPECT_EQ(status.getExceptionCode(), EX_UNSUPPORTED_OPERATION);
+    if (isMemtrackDefaultImpl(status)) {
+        ASSERT_TRUE(true);
+        return;
+    }
+
+    EXPECT_EQ(status.getExceptionCode(), EX_ILLEGAL_ARGUMENT);
 }
 
 TEST_P(MemtrackAidlTest, GetMemory) {
@@ -72,6 +89,11 @@ TEST_P(MemtrackAidlTest, GetMemory) {
         std::vector<MemtrackRecord> records;
 
         auto status = memtrack_->getMemory(pid, type, &records);
+
+        if (isMemtrackDefaultImpl(status)) {
+            ASSERT_TRUE(true);
+            return;
+        }
 
         EXPECT_TRUE(status.isOk());
     }

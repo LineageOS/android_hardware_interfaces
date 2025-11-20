@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <cstdint>
+#include <vector>
 #define STREAM_TO_UINT8(u8, p) \
   {                            \
     (u8) = (uint8_t)(*(p));    \
@@ -34,8 +36,6 @@
 
 #define LOG_TAG "BTAudioAseConfigAidl"
 
-#include "BluetoothLeAudioAseConfigurationSettingProvider.h"
-
 #include <aidl/android/hardware/bluetooth/audio/AudioConfiguration.h>
 #include <aidl/android/hardware/bluetooth/audio/AudioContext.h>
 #include <aidl/android/hardware/bluetooth/audio/BluetoothAudioStatus.h>
@@ -49,6 +49,8 @@
 
 #include <optional>
 
+#include "BluetoothAudioType.h"
+#include "BluetoothLeAudioAseConfigurationSettingProvider.h"
 #include "flatbuffers/idl.h"
 #include "flatbuffers/util.h"
 
@@ -67,184 +69,6 @@ std::map<std::string,
 
 std::vector<std::pair<std::string, LeAudioAseConfigurationSetting>>
     ase_configuration_settings_;
-
-constexpr uint8_t kIsoDataPathHci = 0x00;
-constexpr uint8_t kIsoDataPathPlatformDefault = 0x01;
-constexpr uint8_t kIsoDataPathDisabled = 0xFF;
-
-constexpr uint8_t kLeAudioDirectionSink = 0x01;
-constexpr uint8_t kLeAudioDirectionSource = 0x02;
-constexpr uint8_t kLeAudioDirectionBoth =
-    kLeAudioDirectionSink | kLeAudioDirectionSource;
-
-/* Sampling Frequencies */
-constexpr uint8_t kLeAudioSamplingFreq8000Hz = 0x01;
-constexpr uint8_t kLeAudioSamplingFreq11025Hz = 0x02;
-constexpr uint8_t kLeAudioSamplingFreq16000Hz = 0x03;
-constexpr uint8_t kLeAudioSamplingFreq22050Hz = 0x04;
-constexpr uint8_t kLeAudioSamplingFreq24000Hz = 0x05;
-constexpr uint8_t kLeAudioSamplingFreq32000Hz = 0x06;
-constexpr uint8_t kLeAudioSamplingFreq44100Hz = 0x07;
-constexpr uint8_t kLeAudioSamplingFreq48000Hz = 0x08;
-constexpr uint8_t kLeAudioSamplingFreq88200Hz = 0x09;
-constexpr uint8_t kLeAudioSamplingFreq96000Hz = 0x0A;
-constexpr uint8_t kLeAudioSamplingFreq176400Hz = 0x0B;
-constexpr uint8_t kLeAudioSamplingFreq192000Hz = 0x0C;
-constexpr uint8_t kLeAudioSamplingFreq384000Hz = 0x0D;
-
-/* Frame Durations */
-constexpr uint8_t kLeAudioCodecFrameDur7500us = 0x00;
-constexpr uint8_t kLeAudioCodecFrameDur10000us = 0x01;
-constexpr uint8_t kLeAudioCodecFrameDur20000us = 0x02;
-
-/* Audio Allocations */
-constexpr uint32_t kLeAudioLocationMonoAudio = 0x00000000;
-constexpr uint32_t kLeAudioLocationFrontLeft = 0x00000001;
-constexpr uint32_t kLeAudioLocationFrontRight = 0x00000002;
-constexpr uint32_t kLeAudioLocationFrontCenter = 0x00000004;
-constexpr uint32_t kLeAudioLocationLowFreqEffects1 = 0x00000008;
-constexpr uint32_t kLeAudioLocationBackLeft = 0x00000010;
-constexpr uint32_t kLeAudioLocationBackRight = 0x00000020;
-constexpr uint32_t kLeAudioLocationFrontLeftOfCenter = 0x00000040;
-constexpr uint32_t kLeAudioLocationFrontRightOfCenter = 0x00000080;
-constexpr uint32_t kLeAudioLocationBackCenter = 0x00000100;
-constexpr uint32_t kLeAudioLocationLowFreqEffects2 = 0x00000200;
-constexpr uint32_t kLeAudioLocationSideLeft = 0x00000400;
-constexpr uint32_t kLeAudioLocationSideRight = 0x00000800;
-constexpr uint32_t kLeAudioLocationTopFrontLeft = 0x00001000;
-constexpr uint32_t kLeAudioLocationTopFrontRight = 0x00002000;
-constexpr uint32_t kLeAudioLocationTopFrontCenter = 0x00004000;
-constexpr uint32_t kLeAudioLocationTopCenter = 0x00008000;
-constexpr uint32_t kLeAudioLocationTopBackLeft = 0x00010000;
-constexpr uint32_t kLeAudioLocationTopBackRight = 0x00020000;
-constexpr uint32_t kLeAudioLocationTopSideLeft = 0x00040000;
-constexpr uint32_t kLeAudioLocationTopSideRight = 0x00080000;
-constexpr uint32_t kLeAudioLocationTopBackCenter = 0x00100000;
-constexpr uint32_t kLeAudioLocationBottomFrontCenter = 0x00200000;
-constexpr uint32_t kLeAudioLocationBottomFrontLeft = 0x00400000;
-constexpr uint32_t kLeAudioLocationBottomFrontRight = 0x00800000;
-constexpr uint32_t kLeAudioLocationFrontLeftWide = 0x01000000;
-constexpr uint32_t kLeAudioLocationFrontRightWide = 0x02000000;
-constexpr uint32_t kLeAudioLocationLeftSurround = 0x04000000;
-constexpr uint32_t kLeAudioLocationRightSurround = 0x08000000;
-
-constexpr uint32_t kLeAudioLocationAnyLeft =
-    kLeAudioLocationFrontLeft | kLeAudioLocationBackLeft |
-    kLeAudioLocationFrontLeftOfCenter | kLeAudioLocationSideLeft |
-    kLeAudioLocationTopFrontLeft | kLeAudioLocationTopBackLeft |
-    kLeAudioLocationTopSideLeft | kLeAudioLocationBottomFrontLeft |
-    kLeAudioLocationFrontLeftWide | kLeAudioLocationLeftSurround;
-
-constexpr uint32_t kLeAudioLocationAnyRight =
-    kLeAudioLocationFrontRight | kLeAudioLocationBackRight |
-    kLeAudioLocationFrontRightOfCenter | kLeAudioLocationSideRight |
-    kLeAudioLocationTopFrontRight | kLeAudioLocationTopBackRight |
-    kLeAudioLocationTopSideRight | kLeAudioLocationBottomFrontRight |
-    kLeAudioLocationFrontRightWide | kLeAudioLocationRightSurround;
-
-constexpr uint32_t kLeAudioLocationStereo =
-    kLeAudioLocationFrontLeft | kLeAudioLocationFrontRight;
-
-/* Octets Per Frame */
-constexpr uint16_t kLeAudioCodecFrameLen30 = 30;
-constexpr uint16_t kLeAudioCodecFrameLen40 = 40;
-constexpr uint16_t kLeAudioCodecFrameLen60 = 60;
-constexpr uint16_t kLeAudioCodecFrameLen80 = 80;
-constexpr uint16_t kLeAudioCodecFrameLen100 = 100;
-constexpr uint16_t kLeAudioCodecFrameLen120 = 120;
-
-/* Helper map for matching various sampling frequency notations */
-const std::map<uint8_t, CodecSpecificConfigurationLtv::SamplingFrequency>
-    sampling_freq_map = {
-        {kLeAudioSamplingFreq8000Hz,
-         CodecSpecificConfigurationLtv::SamplingFrequency::HZ8000},
-        {kLeAudioSamplingFreq16000Hz,
-         CodecSpecificConfigurationLtv::SamplingFrequency::HZ16000},
-        {kLeAudioSamplingFreq24000Hz,
-         CodecSpecificConfigurationLtv::SamplingFrequency::HZ24000},
-        {kLeAudioSamplingFreq32000Hz,
-         CodecSpecificConfigurationLtv::SamplingFrequency::HZ32000},
-        {kLeAudioSamplingFreq44100Hz,
-         CodecSpecificConfigurationLtv::SamplingFrequency::HZ44100},
-        {kLeAudioSamplingFreq48000Hz,
-         CodecSpecificConfigurationLtv::SamplingFrequency::HZ48000}};
-
-/* Helper map for matching various frame durations notations */
-const std::map<uint8_t, CodecSpecificConfigurationLtv::FrameDuration>
-    frame_duration_map = {
-        {kLeAudioCodecFrameDur7500us,
-         CodecSpecificConfigurationLtv::FrameDuration::US7500},
-        {kLeAudioCodecFrameDur10000us,
-         CodecSpecificConfigurationLtv::FrameDuration::US10000},
-        {kLeAudioCodecFrameDur20000us,
-         CodecSpecificConfigurationLtv::FrameDuration::US20000}};
-
-/* Helper map for matching various audio channel allocation notations */
-std::map<uint32_t, uint32_t> audio_channel_allocation_map = {
-    {kLeAudioLocationMonoAudio,
-     CodecSpecificConfigurationLtv::AudioChannelAllocation::MONO},
-    {kLeAudioLocationFrontLeft,
-     CodecSpecificConfigurationLtv::AudioChannelAllocation::FRONT_LEFT},
-    {kLeAudioLocationFrontRight,
-     CodecSpecificConfigurationLtv::AudioChannelAllocation::FRONT_RIGHT},
-    {kLeAudioLocationFrontCenter,
-     CodecSpecificConfigurationLtv::AudioChannelAllocation::FRONT_CENTER},
-    {kLeAudioLocationLowFreqEffects1,
-     CodecSpecificConfigurationLtv::AudioChannelAllocation::
-         LOW_FREQUENCY_EFFECTS_1},
-    {kLeAudioLocationBackLeft,
-     CodecSpecificConfigurationLtv::AudioChannelAllocation::BACK_LEFT},
-    {kLeAudioLocationBackRight,
-     CodecSpecificConfigurationLtv::AudioChannelAllocation::BACK_RIGHT},
-    {kLeAudioLocationFrontLeftOfCenter,
-     CodecSpecificConfigurationLtv::AudioChannelAllocation::
-         FRONT_LEFT_OF_CENTER},
-    {kLeAudioLocationFrontRightOfCenter,
-     CodecSpecificConfigurationLtv::AudioChannelAllocation::
-         FRONT_RIGHT_OF_CENTER},
-    {kLeAudioLocationBackCenter,
-     CodecSpecificConfigurationLtv::AudioChannelAllocation::BACK_CENTER},
-    {kLeAudioLocationLowFreqEffects2,
-     CodecSpecificConfigurationLtv::AudioChannelAllocation::
-         LOW_FREQUENCY_EFFECTS_2},
-    {kLeAudioLocationSideLeft,
-     CodecSpecificConfigurationLtv::AudioChannelAllocation::SIDE_LEFT},
-    {kLeAudioLocationSideRight,
-     CodecSpecificConfigurationLtv::AudioChannelAllocation::SIDE_RIGHT},
-    {kLeAudioLocationTopFrontLeft,
-     CodecSpecificConfigurationLtv::AudioChannelAllocation::TOP_FRONT_LEFT},
-    {kLeAudioLocationTopFrontRight,
-     CodecSpecificConfigurationLtv::AudioChannelAllocation::TOP_FRONT_RIGHT},
-    {kLeAudioLocationTopFrontCenter,
-     CodecSpecificConfigurationLtv::AudioChannelAllocation::TOP_FRONT_CENTER},
-    {kLeAudioLocationTopCenter,
-     CodecSpecificConfigurationLtv::AudioChannelAllocation::TOP_CENTER},
-    {kLeAudioLocationTopBackLeft,
-     CodecSpecificConfigurationLtv::AudioChannelAllocation::TOP_BACK_LEFT},
-    {kLeAudioLocationTopBackRight,
-     CodecSpecificConfigurationLtv::AudioChannelAllocation::TOP_BACK_RIGHT},
-    {kLeAudioLocationTopSideLeft,
-     CodecSpecificConfigurationLtv::AudioChannelAllocation::TOP_SIDE_LEFT},
-    {kLeAudioLocationTopSideRight,
-     CodecSpecificConfigurationLtv::AudioChannelAllocation::TOP_SIDE_RIGHT},
-    {kLeAudioLocationTopBackCenter,
-     CodecSpecificConfigurationLtv::AudioChannelAllocation::TOP_BACK_CENTER},
-    {kLeAudioLocationBottomFrontCenter,
-     CodecSpecificConfigurationLtv::AudioChannelAllocation::
-         BOTTOM_FRONT_CENTER},
-    {kLeAudioLocationBottomFrontLeft,
-     CodecSpecificConfigurationLtv::AudioChannelAllocation::BOTTOM_FRONT_LEFT},
-    {kLeAudioLocationBottomFrontRight,
-     CodecSpecificConfigurationLtv::AudioChannelAllocation::BOTTOM_FRONT_RIGHT},
-    {kLeAudioLocationFrontLeftWide,
-     CodecSpecificConfigurationLtv::AudioChannelAllocation::FRONT_LEFT_WIDE},
-    {kLeAudioLocationFrontRightWide,
-     CodecSpecificConfigurationLtv::AudioChannelAllocation::FRONT_RIGHT_WIDE},
-    {kLeAudioLocationLeftSurround,
-     CodecSpecificConfigurationLtv::AudioChannelAllocation::LEFT_SURROUND},
-    {kLeAudioLocationRightSurround,
-     CodecSpecificConfigurationLtv::AudioChannelAllocation::RIGHT_SURROUND},
-};
 
 // Set configuration and scenario files with fallback default
 static const std::vector<
@@ -444,13 +268,17 @@ void AudioSetConfigurationProviderJson::populateAseQosConfiguration(
   std::optional<CodecSpecificConfigurationLtv::OctetsPerCodecFrame> octet =
       std::nullopt;
 
-  // Hack to put back allocation
+  // Put back allocation
   CodecSpecificConfigurationLtv::AudioChannelAllocation allocation =
       CodecSpecificConfigurationLtv::AudioChannelAllocation();
   if (ase_channel_cnt == 1) {
-    allocation.bitmask |=
-        CodecSpecificConfigurationLtv::AudioChannelAllocation::FRONT_CENTER;
-
+    if (ase.codecId.value().getTag() == CodecId::vendor) {
+      allocation.bitmask =
+          CodecSpecificConfigurationLtv::AudioChannelAllocation::FRONT_LEFT;
+    } else {
+      allocation.bitmask |=
+          CodecSpecificConfigurationLtv::AudioChannelAllocation::FRONT_CENTER;
+    }
   } else {
     allocation.bitmask |=
         CodecSpecificConfigurationLtv::AudioChannelAllocation::FRONT_LEFT |
@@ -478,7 +306,13 @@ void AudioSetConfigurationProviderJson::populateAseQosConfiguration(
 
   // Populate maxSdu
   if (octet.has_value()) {
-    qos.maxSdu = ase_channel_cnt * octet.value().value * frameBlockValue;
+    // Vendor logic: maxSdu = octet.value().value to allow set directly.
+    if (ase.codecId.has_value() &&
+        ase.codecId.value().getTag() == CodecId::vendor) {
+      qos.maxSdu = octet.value().value * frameBlockValue;
+    } else {
+      qos.maxSdu = ase_channel_cnt * octet.value().value * frameBlockValue;
+    }
   }
   // Populate sduIntervalUs
   if (frameDuration.has_value()) {
@@ -499,25 +333,89 @@ void AudioSetConfigurationProviderJson::populateAseQosConfiguration(
   qos.retransmissionNum = qos_cfg->retransmission_number();
 }
 
-// Parse into AseDirectionConfiguration
-AseDirectionConfiguration
-AudioSetConfigurationProviderJson::SetConfigurationFromFlatSubconfig(
-    const le_audio::AudioSetSubConfiguration* flat_subconfig,
-    const le_audio::QosConfiguration* qos_cfg, CodecLocation location,
-    ConfigurationFlags& configurationFlags) {
-  AseDirectionConfiguration direction_conf;
+void populateVendorCodecConfiguration(LeAudioAseConfiguration& ase) {
+  if (ase.codecId.has_value() &&
+      ase.codecId.value().getTag() == CodecId::vendor) {
+    // Only populate for vendor codec.
+    std::vector<uint8_t> codec_config;
+    for (auto ltv : ase.codecConfiguration) {
+      if (ltv.getTag() == CodecSpecificConfigurationLtv::samplingFrequency) {
+        auto p = sampling_rate_ltv_to_codec_cfg_map.find(
+            ltv.get<CodecSpecificConfigurationLtv::samplingFrequency>());
+        if (p != sampling_rate_ltv_to_codec_cfg_map.end()) {
+          codec_config.push_back(kCodecConfigOpcode);
+          codec_config.push_back(kSamplingFrequencySubOpcode);
+          codec_config.push_back(p->second);
+        }
+      } else if (ltv.getTag() == CodecSpecificConfigurationLtv::frameDuration) {
+        auto p = frame_duration_ltv_to_codec_cfg_map.find(
+            ltv.get<CodecSpecificConfigurationLtv::frameDuration>());
+        if (p != frame_duration_ltv_to_codec_cfg_map.end()) {
+          codec_config.push_back(kCodecConfigOpcode);
+          codec_config.push_back(kFrameDurationSubOpcode);
+          codec_config.push_back(p->second);
+        }
+      } else if (ltv.getTag() ==
+                 CodecSpecificConfigurationLtv::audioChannelAllocation) {
+        auto allocation =
+            ltv.get<CodecSpecificConfigurationLtv::audioChannelAllocation>();
+        codec_config.push_back(kAudioChannelAllocationOpcode);
+        codec_config.push_back(kAudioChannelAllocationSubOpcode);
+        for (int b = 0; b < 4; ++b) {
+          codec_config.push_back((allocation.bitmask >> (b * 8)) & 0xff);
+        }
+      } else if (ltv.getTag() ==
+                 CodecSpecificConfigurationLtv::octetsPerCodecFrame) {
+        auto octet =
+            ltv.get<CodecSpecificConfigurationLtv::octetsPerCodecFrame>();
+        codec_config.push_back(kOctetsPerCodecFrameOpcode);
+        codec_config.push_back(kOctetsPerCodecFrameSubOpcode);
+        for (int b = 0; b < 2; ++b) {
+          codec_config.push_back((octet.value >> (b * 8)) & 0xff);
+        }
+      } else if (ltv.getTag() ==
+                 CodecSpecificConfigurationLtv::codecFrameBlocksPerSDU) {
+        auto frame_block =
+            ltv.get<CodecSpecificConfigurationLtv::codecFrameBlocksPerSDU>();
+        codec_config.push_back(kCodecConfigOpcode);
+        codec_config.push_back(kFrameBlocksPerSDUSubOpcode);
+        codec_config.push_back(frame_block.value);
+      }
+    }
+    ase.vendorCodecConfiguration = codec_config;
+  }
+}
 
-  LeAudioAseConfiguration ase;
-  LeAudioAseQosConfiguration qos;
+bool isOpusHiResCodec(const LeAudioAseConfiguration& ase) {
+  if (ase.codecId.has_value() &&
+      ase.codecId.value().getTag() == CodecId::vendor) {
+    auto cid = ase.codecId.value().get<CodecId::vendor>();
+    if (cid == opus_codec) {
+      // Based on the sampling freq
+      for (auto ltv : ase.codecConfiguration) {
+        if (ltv.getTag() == CodecSpecificConfigurationLtv::samplingFrequency) {
+          if (ltv.get<CodecSpecificConfigurationLtv::samplingFrequency>() ==
+              CodecSpecificConfigurationLtv::SamplingFrequency::HZ96000) {
+            return true;
+          }
+        }
+      }
+    }
+  }
+  return false;
+}
+
+LeAudioDataPathConfiguration populateDatapath(
+    const CodecLocation& location, const LeAudioAseConfiguration& ase) {
   LeAudioDataPathConfiguration path;
-
-  // Translate into LeAudioAseConfiguration
-  populateAseConfiguration(ase, flat_subconfig, qos_cfg, configurationFlags);
-
-  // Translate into LeAudioAseQosConfiguration
-  populateAseQosConfiguration(qos, qos_cfg, ase,
-                              flat_subconfig->ase_channel_cnt());
-
+  // Move codecId to iso data path
+  path.isoDataPathConfiguration.codecId = ase.codecId.value();
+  // Specific vendor datapath logic
+  if (isOpusHiResCodec(ase)) {
+    path.isoDataPathConfiguration.isTransparent = true;
+    path.dataPathId = kIsoDataPathHciLinkFeedback;
+    return path;
+  }
   // Translate location to data path id
   switch (location) {
     case CodecLocation::ADSP:
@@ -533,12 +431,34 @@ AudioSetConfigurationProviderJson::SetConfigurationFromFlatSubconfig(
       path.dataPathId = kIsoDataPathPlatformDefault;
       break;
   }
-  // Move codecId to iso data path
-  path.isoDataPathConfiguration.codecId = ase.codecId.value();
+  return path;
+}
+
+// Parse into AseDirectionConfiguration
+AseDirectionConfiguration
+AudioSetConfigurationProviderJson::SetConfigurationFromFlatSubconfig(
+    const le_audio::AudioSetSubConfiguration* flat_subconfig,
+    const le_audio::QosConfiguration* qos_cfg, CodecLocation location,
+    ConfigurationFlags& configurationFlags) {
+  AseDirectionConfiguration direction_conf;
+
+  LeAudioAseConfiguration ase;
+  LeAudioAseQosConfiguration qos;
+
+  // Translate into LeAudioAseConfiguration
+  populateAseConfiguration(ase, flat_subconfig, qos_cfg, configurationFlags);
+
+  // Translate into LeAudioAseQosConfiguration
+  populateAseQosConfiguration(qos, qos_cfg, ase,
+                              flat_subconfig->ase_channel_cnt());
+
+  // Populate vendorCodecConfiguration using the correct LTV
+  populateVendorCodecConfiguration(ase);
 
   direction_conf.aseConfiguration = ase;
   direction_conf.qosConfiguration = qos;
-  direction_conf.dataPathConfiguration = path;
+  // Populate the correct datapath.
+  direction_conf.dataPathConfiguration = populateDatapath(location, ase);
 
   return direction_conf;
 }
@@ -559,15 +479,28 @@ void AudioSetConfigurationProviderJson::processSubconfig(
   if (ase_cnt == 2) directionAseConfiguration.push_back(config);
 }
 
-// Comparing if 2 AseDirectionConfiguration is equal.
-// Configuration are copied in, so we can remove some fields for comparison
-// without affecting the result.
-bool isAseConfigurationEqual(AseDirectionConfiguration cfg_a,
-                             AseDirectionConfiguration cfg_b) {
-  // Remove unneeded fields when comparing.
-  cfg_a.aseConfiguration.metadata = std::nullopt;
-  cfg_b.aseConfiguration.metadata = std::nullopt;
-  return cfg_a == cfg_b;
+// Comparing if 2 AseDirectionConfiguration is asymmetrical.
+bool isAseConfigurationAsymmetrical(AseDirectionConfiguration cfg_a,
+                                    AseDirectionConfiguration cfg_b) {
+  // Comparing samplingFrequency of these 2 config.
+  std::optional<CodecSpecificConfigurationLtv> cfg_a_fr = std::nullopt;
+  std::optional<CodecSpecificConfigurationLtv> cfg_b_fr = std::nullopt;
+  for (auto ltv : cfg_a.aseConfiguration.codecConfiguration) {
+    if (ltv.getTag() == CodecSpecificConfigurationLtv::samplingFrequency) {
+      cfg_a_fr = ltv.get<CodecSpecificConfigurationLtv::samplingFrequency>();
+      break;
+    }
+  }
+  for (auto ltv : cfg_b.aseConfiguration.codecConfiguration) {
+    if (ltv.getTag() == CodecSpecificConfigurationLtv::samplingFrequency) {
+      cfg_b_fr = ltv.get<CodecSpecificConfigurationLtv::samplingFrequency>();
+      break;
+    }
+  }
+  if (cfg_a_fr.has_value() && cfg_b_fr.has_value()) {
+    return cfg_a_fr.value() != cfg_b_fr.value();
+  }
+  return false;
 }
 
 void AudioSetConfigurationProviderJson::PopulateAseConfigurationFromFlat(
@@ -649,26 +582,21 @@ void AudioSetConfigurationProviderJson::PopulateAseConfigurationFromFlat(
     // After putting all subconfig, check if it's an asymmetric configuration
     // and populate information for ConfigurationFlags
     if (!sinkAseConfiguration.empty() && !sourceAseConfiguration.empty()) {
-      if (sinkAseConfiguration.size() == sourceAseConfiguration.size()) {
-        for (int i = 0; i < sinkAseConfiguration.size(); ++i) {
-          if (sinkAseConfiguration[i].has_value() !=
-              sourceAseConfiguration[i].has_value()) {
-            // Different configuration: one is not empty and other is.
+      for (int i = 0; i < sinkAseConfiguration.size(); ++i) {
+        // Only check for comparable source and sink configuration.
+        if (sourceAseConfiguration.size() <= i) break;
+        if (sinkAseConfiguration[i].has_value() &&
+            sourceAseConfiguration[i].has_value()) {
+          // Has both direction, comparing inner fields:
+          if (isAseConfigurationAsymmetrical(
+                  sinkAseConfiguration[i].value(),
+                  sourceAseConfiguration[i].value())) {
             configurationFlags.bitmask |=
                 ConfigurationFlags::ALLOW_ASYMMETRIC_CONFIGURATIONS;
-          } else if (sinkAseConfiguration[i].has_value()) {
-            // Both is not empty, comparing inner fields:
-            if (!isAseConfigurationEqual(sinkAseConfiguration[i].value(),
-                                         sourceAseConfiguration[i].value())) {
-              configurationFlags.bitmask |=
-                  ConfigurationFlags::ALLOW_ASYMMETRIC_CONFIGURATIONS;
-            }
+            // Already detect asymmetrical config.
+            break;
           }
         }
-      } else {
-        // Different number of ASE, is a different configuration.
-        configurationFlags.bitmask |=
-            ConfigurationFlags::ALLOW_ASYMMETRIC_CONFIGURATIONS;
       }
     }
   } else {

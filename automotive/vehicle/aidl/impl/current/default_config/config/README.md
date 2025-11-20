@@ -14,7 +14,7 @@ actual JSON file and will be ignored by the parser)
 ```
 {
     // (number) The version for the JSON schema.
-    "apiVersion": 1,
+    "apiVersion": 2,
     // (non-empty array of objects) The property configuration list.
     //
     // Each object is a configuration for one property.
@@ -75,6 +75,23 @@ actual JSON file and will be ignored by the parser)
                     "minFloatValue": 1,
                     // (optional number/string) The maximum float value.
                     "maxFloatValue": 10,
+                    // (optional boolean since Android 15) Whether variable
+                    // update rate is supported for continuous property.
+                    "supportVariableUpdateRate": true,
+                    // (optional since Android 15) If specified, then this
+                    // [propId, areaId] supports the getSupportedValuesLists
+                    // and getMinMaxSupportedValue API.
+                    "hasSupportedValueInfo": {
+                        // (optional boolean) Whether this [propId, areaId]
+                        // specifies supported values list. Default to false.
+                        "hasSupportedValuesList": true,
+                        // (optional boolean) Whether this [propId, areaId]
+                        // specifies min supported value. Default to false.
+                        "hasMinSupportedValue": true,
+                        // (optional boolean) Whether this [propId, areaId]
+                        // specifies max supported value. Default to false.
+                        "hasMaxSupportedValue": true
+                    },
                     // (optional object) The default value for this area.
                     // Uses the same format as the "defaultValue" field for
                     // property object. If specified, this overwrite the global
@@ -91,6 +108,78 @@ actual JSON file and will be ignored by the parser)
      ]
 }
 ```
+
+## API Version
+
+The JSON file contains an `apiVersion` field which specified the schema version.
+This field is useful for the JSON parser to decide how to parse the file. A
+new-version parser is always capable of parsing an older version config file,
+but not the other way around. For example, the latest VHAL config version
+supported by the config parser used in the reference VHAL is V2, but a V1 config
+file is still accepted.
+
+New fields may be supported by each Android release (see the comment in the
+schema). The parser used in the reference VHAL ignores all unknown fields, so
+specifying unsupported fields will not cause error, but will be ignored.
+
+A new api version usually introduces a backward-incompatible schema change.
+Supporting a new field typically does not require a new api version.
+
+### Version 1
+
+This is the base config version introduced at Android 13.
+
+### Version 2
+
+This is introduced at Android 16.
+
+#### Default areaId config at property level
+
+In this version, we allow per-areaId config to be specified at the per-property
+level to be the default config for all areaIds. For example, for the following
+config:
+
+```
+{
+    "apiVersion": 2,
+    "properties": [
+        {
+            "property": "VehicleProperty::SEAT_BELT_BUCKLED",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_LEFT",
+                    "defaultValue": {
+                        "int32Values": [
+                            1
+                        ]
+                    }
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER"
+                }
+            ]
+        }
+     ]
+}
+```
+
+This means that all areaIds for SEAT_BELT_BUCKLED has the default value 0,
+except for SEAT_1_LEFT, which has the default value 1.
+
 
 ## JSON Number-type Field Values
 

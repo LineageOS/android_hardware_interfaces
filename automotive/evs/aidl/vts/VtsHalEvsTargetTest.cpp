@@ -1736,6 +1736,13 @@ TEST_P(EvsAidlTest, CameraUseStreamConfigToDisplay) {
 
     // Test each reported camera
     for (auto&& cam : mCameraInfo) {
+        bool isLogicalCam = false;
+        auto devices = getPhysicalCameraIds(cam.id, isLogicalCam);
+        if (mIsHwModule && isLogicalCam) {
+            LOG(INFO) << "Skip a logical device, " << cam.id << " for HW target.";
+            continue;
+        }
+
         // Request exclusive access to the EVS display
         std::shared_ptr<IEvsDisplay> pDisplay;
         ASSERT_TRUE(mEnumerator->openDisplay(targetDisplayId, &pDisplay).isOk());

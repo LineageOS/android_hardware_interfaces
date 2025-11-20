@@ -70,10 +70,14 @@ interface IGatekeeper {
      * or password, with the private key used only for enrolling authentication
      * factor data.
      *
-     * If there was already a password enrolled, current password handle must be
-     * passed in currentPasswordHandle, and current password must be passed in
-     * currentPassword. Valid currentPassword must verify() against
-     * currentPasswordHandle.
+     * If an already-enrolled password handle is included in currentPasswordHandle (a "trusted
+     * re-enroll"), then currentPassword must also be included, and must verify() against
+     * currentPasswordHandle.  On success, the response must re-use the same secure user ID as
+     * in the previous enrollment.
+     *
+     * If currentPasswordHandle and currentHandle are empty, then the desiredPassword
+     * should be enrolled (an "untrusted re-enroll"), even if there is an existing enrollment
+     * for the user.  A fresh secure user ID must be returned in the response.
      *
      * Service status return:
      *
@@ -110,6 +114,10 @@ interface IGatekeeper {
      *
      * Implementations of this module may retain the result of this call
      * to attest to the recency of authentication.
+     *
+     * Verification of a correct providedPassword and enrolledPasswordHandle
+     * should succeed even after factory reset, provided that deleteAllUsers()
+     * has not been invoked, to support factory reset protection.
      *
      * On success, returns verification token in response.data, which shall be
      * usable to attest password verification to other trusted services.

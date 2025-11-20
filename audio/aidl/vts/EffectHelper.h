@@ -88,7 +88,7 @@ static constexpr float kMaxAudioSampleValue = 1;
 static constexpr int kNPointFFT = 16384;
 static constexpr int kSamplingFrequency = 44100;
 static constexpr int kDefaultChannelLayout = AudioChannelLayout::LAYOUT_STEREO;
-static constexpr float kLn10Div20 = -0.11512925f;  // -ln(10)/20
+static constexpr float kLn10Div20 = 0.11512925f;  // ln(10)/20
 
 class EffectHelper {
   public:
@@ -594,6 +594,10 @@ class EffectHelper {
         for (size_t i = 0; i < inputSize; i++) {
             input[i] = sin(2 * M_PI * inputFrequency * i / samplingFrequency);
         }
+    }
+
+    constexpr float dBToAmplitude(float dB, float fullScaleDb) {
+        return std::exp((dB - fullScaleDb) * kLn10Div20);
     }
 
     constexpr float dBToAmplitude(float dB) { return std::exp(dB * kLn10Div20); }

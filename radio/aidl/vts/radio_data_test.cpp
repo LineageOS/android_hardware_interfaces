@@ -640,3 +640,242 @@ TEST_P(RadioDataTest, setDataAllowed) {
         EXPECT_EQ(RadioError::NONE, radioRsp_data->rspInfo.error);
     }
 }
+
+/*
+ * Test IRadioData.setUserDataEnabled() for the response returned.
+ */
+TEST_P(RadioDataTest, setUserDataEnabled) {
+    int32_t aidl_version;
+    ndk::ScopedAStatus aidl_status = radio_data->getInterfaceVersion(&aidl_version);
+    ASSERT_OK(aidl_status);
+    if (aidl_version < 5) {
+        ALOGI("Skipped the test since"
+              " setUserDataEnabled is not supported on version < 5");
+        GTEST_SKIP();
+    }
+    if (!deviceSupportsFeature(FEATURE_TELEPHONY_DATA)) {
+        GTEST_SKIP() << "Skipping setUserDataEnabled "
+                        "due to undefined FEATURE_TELEPHONY_DATA";
+    }
+
+    serial = GetRandomSerialNumber();
+    bool enabled = false;
+
+    radio_data->setUserDataEnabled(serial, enabled);
+
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_data->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_data->rspInfo.serial);
+
+    if (cardStatus.cardState == CardStatus::STATE_ABSENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_data->rspInfo.error,
+                                     {RadioError::SIM_ABSENT, RadioError::RADIO_NOT_AVAILABLE,
+                                      RadioError::REQUEST_NOT_SUPPORTED}));
+    } else if (cardStatus.cardState == CardStatus::STATE_PRESENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_data->rspInfo.error,
+                                     {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
+                                      RadioError::REQUEST_NOT_SUPPORTED}));
+    }
+
+    // Test setUserDataEnabled(false) should not block setupDataCall
+    serial = GetRandomSerialNumber();
+
+    AccessNetwork accessNetwork = AccessNetwork::EUTRAN;
+
+    DataProfileInfo dataProfileInfo;
+    memset(&dataProfileInfo, 0, sizeof(dataProfileInfo));
+    dataProfileInfo.profileId = DataProfileInfo::ID_DEFAULT;
+    dataProfileInfo.apn = std::string("internet");
+    dataProfileInfo.protocol = PdpProtocolType::IP;
+    dataProfileInfo.roamingProtocol = PdpProtocolType::IP;
+    dataProfileInfo.authType = ApnAuthType::NO_PAP_NO_CHAP;
+    dataProfileInfo.user = std::string("username");
+    dataProfileInfo.password = std::string("password");
+    dataProfileInfo.type = DataProfileInfo::TYPE_3GPP;
+    dataProfileInfo.maxConnsTime = 300;
+    dataProfileInfo.maxConns = 20;
+    dataProfileInfo.waitTime = 0;
+    dataProfileInfo.enabled = true;
+    dataProfileInfo.supportedApnTypesBitmap =
+            static_cast<int32_t>(ApnTypes::IMS) | static_cast<int32_t>(ApnTypes::IA);
+    dataProfileInfo.bearerBitmap = static_cast<int32_t>(RadioAccessFamily::GPRS) |
+                                   static_cast<int32_t>(RadioAccessFamily::EDGE) |
+                                   static_cast<int32_t>(RadioAccessFamily::UMTS) |
+                                   static_cast<int32_t>(RadioAccessFamily::HSDPA) |
+                                   static_cast<int32_t>(RadioAccessFamily::HSUPA) |
+                                   static_cast<int32_t>(RadioAccessFamily::HSPA) |
+                                   static_cast<int32_t>(RadioAccessFamily::LTE) |
+                                   static_cast<int32_t>(RadioAccessFamily::HSPAP) |
+                                   static_cast<int32_t>(RadioAccessFamily::IWLAN);
+    dataProfileInfo.mtuV4 = 0;
+    dataProfileInfo.mtuV6 = 0;
+    dataProfileInfo.preferred = true;
+    dataProfileInfo.persistent = false;
+
+    bool roamingAllowed = false;
+
+    std::vector<LinkAddress> addresses = {};
+    std::vector<std::string> dnses = {};
+
+    DataRequestReason reason = DataRequestReason::NORMAL;
+    SliceInfo sliceInfo;
+    bool matchAllRuleAllowed = true;
+
+    ndk::ScopedAStatus res =
+            radio_data->setupDataCall(serial, accessNetwork, dataProfileInfo, roamingAllowed,
+                                      reason, addresses, dnses, -1, sliceInfo, matchAllRuleAllowed);
+    ASSERT_OK(res);
+
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_data->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_data->rspInfo.serial);
+
+    if (cardStatus.cardState == CardStatus::STATE_ABSENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(
+                radioRsp_data->rspInfo.error,
+                {RadioError::SIM_ABSENT, RadioError::RADIO_NOT_AVAILABLE,
+                 RadioError::OP_NOT_ALLOWED_BEFORE_REG_TO_NW, RadioError::REQUEST_NOT_SUPPORTED}));
+    } else if (cardStatus.cardState == CardStatus::STATE_PRESENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(
+                radioRsp_data->rspInfo.error,
+                {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
+                 RadioError::OP_NOT_ALLOWED_BEFORE_REG_TO_NW, RadioError::REQUEST_NOT_SUPPORTED}));
+    }
+}
+
+/*
+ * Test IRadioData.setUserDataRoamingEnabled() for the response returned.
+ */
+TEST_P(RadioDataTest, setUserDataRoamingEnabled) {
+    int32_t aidl_version;
+    ndk::ScopedAStatus aidl_status = radio_data->getInterfaceVersion(&aidl_version);
+    ASSERT_OK(aidl_status);
+    if (aidl_version < 5) {
+        ALOGI("Skipped the test since"
+              " setUserDataRoamingEnabled is not supported on version < 5");
+        GTEST_SKIP();
+    }
+    if (!deviceSupportsFeature(FEATURE_TELEPHONY_DATA)) {
+        GTEST_SKIP() << "Skipping setUserDataRoamingEnabled "
+                        "due to undefined FEATURE_TELEPHONY_DATA";
+    }
+
+    serial = GetRandomSerialNumber();
+    bool enabled = false;
+
+    radio_data->setUserDataRoamingEnabled(serial, enabled);
+
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_data->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_data->rspInfo.serial);
+
+    if (cardStatus.cardState == CardStatus::STATE_ABSENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_data->rspInfo.error,
+                                     {RadioError::SIM_ABSENT, RadioError::RADIO_NOT_AVAILABLE,
+                                      RadioError::REQUEST_NOT_SUPPORTED}));
+    } else if (cardStatus.cardState == CardStatus::STATE_PRESENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_data->rspInfo.error,
+                                     {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
+                                      RadioError::REQUEST_NOT_SUPPORTED}));
+    }
+
+    // Test setUserDataRoamingEnabled(false) should not block setupDataCall
+    serial = GetRandomSerialNumber();
+
+    AccessNetwork accessNetwork = AccessNetwork::EUTRAN;
+
+    DataProfileInfo dataProfileInfo;
+    memset(&dataProfileInfo, 0, sizeof(dataProfileInfo));
+    dataProfileInfo.profileId = DataProfileInfo::ID_DEFAULT;
+    dataProfileInfo.apn = std::string("internet");
+    dataProfileInfo.protocol = PdpProtocolType::IP;
+    dataProfileInfo.roamingProtocol = PdpProtocolType::IP;
+    dataProfileInfo.authType = ApnAuthType::NO_PAP_NO_CHAP;
+    dataProfileInfo.user = std::string("username");
+    dataProfileInfo.password = std::string("password");
+    dataProfileInfo.type = DataProfileInfo::TYPE_3GPP;
+    dataProfileInfo.maxConnsTime = 300;
+    dataProfileInfo.maxConns = 20;
+    dataProfileInfo.waitTime = 0;
+    dataProfileInfo.enabled = true;
+    dataProfileInfo.supportedApnTypesBitmap =
+            static_cast<int32_t>(ApnTypes::IMS) | static_cast<int32_t>(ApnTypes::IA);
+    dataProfileInfo.bearerBitmap = static_cast<int32_t>(RadioAccessFamily::GPRS) |
+                                   static_cast<int32_t>(RadioAccessFamily::EDGE) |
+                                   static_cast<int32_t>(RadioAccessFamily::UMTS) |
+                                   static_cast<int32_t>(RadioAccessFamily::HSDPA) |
+                                   static_cast<int32_t>(RadioAccessFamily::HSUPA) |
+                                   static_cast<int32_t>(RadioAccessFamily::HSPA) |
+                                   static_cast<int32_t>(RadioAccessFamily::LTE) |
+                                   static_cast<int32_t>(RadioAccessFamily::HSPAP) |
+                                   static_cast<int32_t>(RadioAccessFamily::IWLAN);
+    dataProfileInfo.mtuV4 = 0;
+    dataProfileInfo.mtuV6 = 0;
+    dataProfileInfo.preferred = true;
+    dataProfileInfo.persistent = false;
+
+    bool roamingAllowed = true;
+
+    std::vector<LinkAddress> addresses = {};
+    std::vector<std::string> dnses = {};
+
+    DataRequestReason reason = DataRequestReason::NORMAL;
+    SliceInfo sliceInfo;
+    bool matchAllRuleAllowed = true;
+
+    ndk::ScopedAStatus res =
+            radio_data->setupDataCall(serial, accessNetwork, dataProfileInfo, roamingAllowed,
+                                      reason, addresses, dnses, -1, sliceInfo, matchAllRuleAllowed);
+    ASSERT_OK(res);
+
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_data->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_data->rspInfo.serial);
+
+    if (cardStatus.cardState == CardStatus::STATE_ABSENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(
+                radioRsp_data->rspInfo.error,
+                {RadioError::SIM_ABSENT, RadioError::RADIO_NOT_AVAILABLE,
+                 RadioError::OP_NOT_ALLOWED_BEFORE_REG_TO_NW, RadioError::REQUEST_NOT_SUPPORTED}));
+    } else if (cardStatus.cardState == CardStatus::STATE_PRESENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(
+                radioRsp_data->rspInfo.error,
+                {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
+                 RadioError::OP_NOT_ALLOWED_BEFORE_REG_TO_NW, RadioError::REQUEST_NOT_SUPPORTED}));
+    }
+}
+
+/*
+ * Test IRadioData.notifyImsDataNetwork() for the response returned.
+ */
+TEST_P(RadioDataTest, notifyImsDataNetwork) {
+    int32_t aidl_version;
+    ndk::ScopedAStatus aidl_status = radio_data->getInterfaceVersion(&aidl_version);
+    ASSERT_OK(aidl_status);
+    if (aidl_version < 5) {
+        ALOGI("Skipped the test since"
+              " notifyImsDataNetwork is not supported on version < 5");
+        GTEST_SKIP();
+    }
+    if (!deviceSupportsFeature(FEATURE_TELEPHONY_DATA)) {
+        GTEST_SKIP() << "Skipping notifyImsDataNetwork "
+                        "due to undefined FEATURE_TELEPHONY_DATA";
+    }
+
+    serial = GetRandomSerialNumber();
+    AccessNetwork accessNetwork = AccessNetwork::EUTRAN;
+    DataNetworkState dataNetworkState = DataNetworkState::CONNECTED;
+    TransportType physicalTransportType = TransportType::WWAN;
+    int physicalNetworkModemId = 0;
+
+    radio_data->notifyImsDataNetwork(serial, accessNetwork, dataNetworkState, physicalTransportType,
+                                     physicalNetworkModemId);
+
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_data->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_data->rspInfo.serial);
+
+    if (cardStatus.cardState == CardStatus::STATE_ABSENT) {
+        EXPECT_EQ(RadioError::NONE, radioRsp_data->rspInfo.error);
+    }
+}

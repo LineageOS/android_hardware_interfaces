@@ -17,6 +17,7 @@
 package android.hardware.radio.data;
 
 import android.hardware.radio.AccessNetwork;
+import android.hardware.radio.data.DataNetworkState;
 import android.hardware.radio.data.DataProfileInfo;
 import android.hardware.radio.data.DataRequestReason;
 import android.hardware.radio.data.DataThrottlingAction;
@@ -26,6 +27,7 @@ import android.hardware.radio.data.KeepaliveRequest;
 import android.hardware.radio.data.LinkAddress;
 import android.hardware.radio.data.SliceInfo;
 import android.hardware.radio.data.TrafficDescriptor;
+import android.hardware.radio.data.TransportType;
 
 /**
  * This interface is used by telephony and telecom to talk to cellular radio for data APIs.
@@ -305,4 +307,48 @@ oneway interface IRadioData {
      * This is available when android.hardware.telephony.data is defined.
      */
     void stopKeepalive(in int serial, in int sessionHandle);
+
+    /**
+     * Set the user data setting to the modem. This API is for informational purposes. The modem
+     * must not block any subsequent setup data call requests.
+     *
+     * @param serial Serial number of request.
+     * @param enabled Whether the user mobile data is enabled.
+     *
+     * Response function is IRadioDataResponse.setUserDataEnabledResponse()
+     *
+     * This is available when android.hardware.telephony.data is defined.
+     */
+    void setUserDataEnabled(in int serial, in boolean enabled);
+
+    /**
+     * Set the user data roaming setting to the modem. This API is for informational purposes. The
+     * modem must not block any subsequent setup data call requests.
+     *
+     * @param serial Serial number of request.
+     * @param enabled Whether the user mobile data roaming is enabled.
+     *
+     * Response function is IRadioDataResponse.setUserDataRoamingEnabledResponse()
+     *
+     * This is available when android.hardware.telephony.data is defined.
+     */
+    void setUserDataRoamingEnabled(in int serial, in boolean enabled);
+
+    /**
+     * Notify IMS data network to the modem.
+     *
+     * @param serial Serial number of request.
+     * @param accessNetwork The access network type.
+     * @param dataNetworkState The data network connection state.
+     * @param physicalTransportType The physical transport type of the data network.
+     * @param physicalNetworkModemId The logic modem ID while the physical transport type is WWAN.
+     *        If the physical transport type is WLAN, this modem ID will be -1.
+     *
+     * Response function is IRadioDataResponse.notifyImsDataNetworkResponse()
+     *
+     * This is available when android.hardware.telephony.data is defined.
+     */
+    void notifyImsDataNetwork(in int serial, in AccessNetwork accessNetwork,
+            in DataNetworkState dataNetworkState, in TransportType physicalTransportType,
+            in int physicalNetworkModemId);
 }

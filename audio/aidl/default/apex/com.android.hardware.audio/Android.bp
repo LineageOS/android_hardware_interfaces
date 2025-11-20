@@ -31,6 +31,7 @@ apex {
         "libdynamicsprocessingaidl",
         "libenvreverbsw",
         "libequalizersw",
+        "liberaser",
         "libextensioneffect",
         "libhapticgeneratoraidl",
         "libloudnessenhanceraidl",
@@ -47,6 +48,8 @@ apex {
         "android.hardware.audio.service-aidl.example.rc",
         "android.hardware.audio.service-aidl.xml",
         "android.hardware.bluetooth.audio.xml",
+        "audio_eraser_classifier_model",
+        "audio_eraser_separator_model",
     ],
     required: [
         "aidl_audio_set_configurations_bfbs",

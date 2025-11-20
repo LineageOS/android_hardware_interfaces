@@ -662,7 +662,7 @@ TEST_P(EvsHidlTest, CameraToDisplayRoundTrip) {
             ASSERT_GT(height, 0);
 
             android::ui::DisplayState* pState = (android::ui::DisplayState*)state.data();
-            ASSERT_NE(pState->layerStack, android::ui::INVALID_LAYER_STACK);
+            ASSERT_NE(pState->layerStack, android::ui::UNASSIGNED_LAYER_STACK);
         });
 
         bool isLogicalCam = false;

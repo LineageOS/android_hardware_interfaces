@@ -100,7 +100,7 @@ class Util {
     //
     static bool parseEnrollmentCaptureSingle(const std::string& str,
                                              std::vector<std::vector<int32_t>>& res) {
-        std::vector<int32_t> defaultAcquiredInfo = {1};
+        std::vector<int32_t> defaultAcquiredInfo = {0};
         bool aborted = true;
 
         do {

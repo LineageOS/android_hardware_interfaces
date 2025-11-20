@@ -21,17 +21,18 @@ namespace android {
 namespace hardware {
 namespace memtrack {
 
-ndk::ScopedAStatus Memtrack::getMemory(int pid, MemtrackType type,
-                                       std::vector<MemtrackRecord>* _aidl_return) {
-    if (pid < 0) {
-        return ndk::ScopedAStatus(AStatus_fromExceptionCode(EX_ILLEGAL_ARGUMENT));
-    }
-    if (type != MemtrackType::OTHER && type != MemtrackType::GL && type != MemtrackType::GRAPHICS &&
-        type != MemtrackType::MULTIMEDIA && type != MemtrackType::CAMERA) {
-        return ndk::ScopedAStatus(AStatus_fromExceptionCode(EX_UNSUPPORTED_OPERATION));
-    }
-    _aidl_return->clear();
-    return ndk::ScopedAStatus::ok();
+namespace {
+
+// LINT.IfChange
+constexpr char kMemtrackDefaultMsg[] = "memtrack default implementation";
+// LINT.ThenChange(/frameworks/native/services/memtrackproxy/MemtrackProxy.cpp)
+
+}  // namespace
+
+ndk::ScopedAStatus Memtrack::getMemory([[maybe_unused]] int pid, [[maybe_unused]] MemtrackType type,
+                                       [[maybe_unused]] std::vector<MemtrackRecord>* _aidl_return) {
+    return ndk::ScopedAStatus::fromExceptionCodeWithMessage(EX_UNSUPPORTED_OPERATION,
+                                                            kMemtrackDefaultMsg);
 }
 
 ndk::ScopedAStatus Memtrack::getGpuDeviceInfo(std::vector<DeviceInfo>* _aidl_return) {

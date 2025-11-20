@@ -42,8 +42,7 @@ parcelable SecurityAlgorithmUpdate {
      */
     SecurityAlgorithm integrity = SecurityAlgorithm.A50;
     /**
-     * Whether or not this connection event is associated with an
-     * unauthenticated / unencrypted emergency session
+     * Whether or not an emergency session is ongoing and current connection is unprotected.
      */
     boolean isUnprotectedEmergency;
 }

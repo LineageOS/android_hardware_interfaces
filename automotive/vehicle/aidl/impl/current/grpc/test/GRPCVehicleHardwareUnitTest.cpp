@@ -40,6 +40,7 @@ using ::testing::SaveArg;
 using ::testing::SetArgPointee;
 using ::testing::SizeIs;
 
+using ::grpc::Status;
 using ::grpc::testing::MockClientReader;
 
 using proto::MockVehicleServerStub;
@@ -61,6 +62,8 @@ class GRPCVehicleHardwareUnitTest : public ::testing::Test {
 
     // Access GRPCVehicleHardware private method.
     void pollValue() { mHardware->pollValue(); }
+
+    Status pollSupportedValuesChange() { return mHardware->pollSupportedValuesChange(); }
 
     void startValuePollingLoop(std::unique_ptr<proto::VehicleServer::StubInterface> stub) {
         mHardware = std::unique_ptr<GRPCVehicleHardware>(
@@ -277,13 +280,14 @@ TEST_F(GRPCVehicleHardwareUnitTest, TestPollValueIgnoreOutdatedValue) {
 TEST_F(GRPCVehicleHardwareUnitTest, TestValuePollingLoop) {
     int64_t testTimestamp = 12345;
     int32_t testPropId = 54321;
+    int32_t testAreaId = 123;
     auto stub = std::make_unique<NiceMock<MockVehicleServerStub>>();
 
     // This will be converted to a unique_ptr in StartPropertyValuesStream. The ownership is passed
     // there.
-    auto clientReader = new MockClientReader<proto::VehiclePropValues>();
-    EXPECT_CALL(*stub, StartPropertyValuesStreamRaw(_, _)).WillOnce(Return(clientReader));
-    EXPECT_CALL(*clientReader, Read(_))
+    auto valueReader = new MockClientReader<proto::VehiclePropValues>();
+    EXPECT_CALL(*stub, StartPropertyValuesStreamRaw(_, _)).WillOnce(Return(valueReader));
+    EXPECT_CALL(*valueReader, Read(_))
             .WillRepeatedly([testTimestamp, testPropId](proto::VehiclePropValues* values) {
                 // Sleep for 10ms and always return the same property event.
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -293,7 +297,22 @@ TEST_F(GRPCVehicleHardwareUnitTest, TestValuePollingLoop) {
                 value->set_prop(testPropId);
                 return true;
             });
-    EXPECT_CALL(*clientReader, Finish()).WillOnce(Return(::grpc::Status::OK));
+    EXPECT_CALL(*valueReader, Finish()).WillOnce(Return(::grpc::Status::OK));
+
+    auto supportedValuesChangeReader = new MockClientReader<proto::SupportedValuesChange>();
+    EXPECT_CALL(*stub, StartSupportedValuesChangeStreamRaw(_, _))
+            .WillOnce(Return(supportedValuesChangeReader));
+    EXPECT_CALL(*supportedValuesChangeReader, Read(_))
+            .WillRepeatedly([testPropId, testAreaId](proto::SupportedValuesChange* values) {
+                // Sleep for 10ms and always return the same SupportedValuesChange
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                values->Clear();
+                auto value = values->add_prop_id_area_ids();
+                value->set_prop_id(testPropId);
+                value->set_area_id(testAreaId);
+                return true;
+            });
+    EXPECT_CALL(*supportedValuesChangeReader, Finish()).WillOnce(Return(::grpc::Status::OK));
 
     startValuePollingLoop(std::move(stub));
 
@@ -301,6 +320,74 @@ TEST_F(GRPCVehicleHardwareUnitTest, TestValuePollingLoop) {
 
     // This must stop the loop and wait for the thread to finish.
     mHardware.reset();
+}
+
+TEST_F(GRPCVehicleHardwareUnitTest, TestPollSupportedValuesChange) {
+    int32_t testPropId = 1234;
+    int32_t testAreaId = 4321;
+
+    // This will be converted to a unique_ptr in StartPropertyValuesStream. The ownership is passed
+    // there.
+    auto clientReader = new MockClientReader<proto::SupportedValuesChange>();
+    EXPECT_CALL(*mGrpcStub, StartSupportedValuesChangeStreamRaw(_, _))
+            .WillOnce(Return(clientReader));
+    EXPECT_CALL(*clientReader, Read(_))
+            .WillOnce(
+                    [testPropId, testAreaId](proto::SupportedValuesChange* supportedValuesChange) {
+                        supportedValuesChange->Clear();
+                        auto propIdAreaId = supportedValuesChange->add_prop_id_area_ids();
+                        propIdAreaId->set_prop_id(testPropId);
+                        propIdAreaId->set_area_id(testAreaId);
+                        return true;
+                    })
+            .WillOnce(Return(false));
+    EXPECT_CALL(*clientReader, Finish()).WillOnce(Return(grpc::Status::OK));
+
+    std::vector<PropIdAreaId> updatedPropIdAreaIds;
+
+    mHardware->registerSupportedValueChangeCallback(
+            std::make_unique<GRPCVehicleHardware::SupportedValueChangeCallback>(
+                    [&updatedPropIdAreaIds](const std::vector<PropIdAreaId>& propIdAreaIds) {
+                        for (const auto& propIdAreaId : propIdAreaIds) {
+                            updatedPropIdAreaIds.push_back(propIdAreaId);
+                        }
+                    }));
+
+    auto status = pollSupportedValuesChange();
+
+    ASSERT_TRUE(status.ok()) << "Status error: " << status.error_message();
+    ASSERT_THAT(updatedPropIdAreaIds, SizeIs(1));
+    EXPECT_EQ(updatedPropIdAreaIds[0].propId, testPropId);
+    EXPECT_EQ(updatedPropIdAreaIds[0].areaId, testAreaId);
+}
+
+TEST_F(GRPCVehicleHardwareUnitTest, TestPollSupportedValuesChange_NotImplemented) {
+    int32_t testPropId = 1234;
+    int32_t testAreaId = 4321;
+    auto status = grpc::Status(grpc::StatusCode::UNIMPLEMENTED, "");
+
+    // This will be converted to a unique_ptr in StartPropertyValuesStream. The ownership is passed
+    // there.
+    auto clientReader = new MockClientReader<proto::SupportedValuesChange>();
+    EXPECT_CALL(*mGrpcStub, StartSupportedValuesChangeStreamRaw(_, _))
+            .WillOnce(Return(clientReader));
+    EXPECT_CALL(*clientReader, Read(_)).WillOnce(Return(false));
+    EXPECT_CALL(*clientReader, Finish()).WillOnce(Return(status));
+
+    std::vector<PropIdAreaId> updatedPropIdAreaIds;
+
+    mHardware->registerSupportedValueChangeCallback(
+            std::make_unique<GRPCVehicleHardware::SupportedValueChangeCallback>(
+                    [&updatedPropIdAreaIds](const std::vector<PropIdAreaId>& propIdAreaIds) {
+                        for (const auto& propIdAreaId : propIdAreaIds) {
+                            updatedPropIdAreaIds.push_back(propIdAreaId);
+                        }
+                    }));
+
+    auto gotStatus = pollSupportedValuesChange();
+
+    ASSERT_FALSE(status.ok()) << "Status must not be okay";
+    ASSERT_EQ(status.error_code(), grpc::StatusCode::UNIMPLEMENTED);
 }
 
 TEST_F(GRPCVehicleHardwareUnitTest, TestGetValues) {

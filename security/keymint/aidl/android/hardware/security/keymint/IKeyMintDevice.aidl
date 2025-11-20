@@ -977,7 +977,8 @@ interface IKeyMintDevice {
      *
      * @return error ErrorCode::MODULE_HASH_ALREADY_SET if this is not the first time
      *         setAdditionalAttestationInfo is called with Tag::MODULE_HASH, and the associated
-     *         KeyParamValue of the current call doesn't match the KeyParamValue of the first call.
+     *         KeyParameterValue of the current call doesn't match the KeyParameterValue of the
+     *         first call.
      */
     void setAdditionalAttestationInfo(in KeyParameter[] info);
 }

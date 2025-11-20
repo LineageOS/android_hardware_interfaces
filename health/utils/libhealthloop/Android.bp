@@ -24,12 +24,30 @@ package {
 bpf {
     name: "filterPowerSupplyEvents.o_non_vendor",
     srcs: ["filterPowerSupplyEvents.c"],
+    include_dirs: [
+        "system/bpf/include/defs",
+    ],
     visibility: ["//visibility:private"],
 }
 
 bpf {
     name: "filterPowerSupplyEvents.o",
     srcs: ["filterPowerSupplyEvents.c"],
+    include_dirs: [
+        "system/bpf/include/defs",
+    ],
+    // "vendor: true" because all binaries that use this BPF filter are vendor
+    // binaries.
+    vendor: true,
+}
+
+libbpf_prog {
+    name: "filterPowerSupplyEvents.bpf",
+    srcs: ["filterPowerSupplyEvents.c"],
+    header_libs: [
+        "android_bpf_defs",
+    ],
+
     // "vendor: true" because all binaries that use this BPF filter are vendor
     // binaries.
     vendor: true,

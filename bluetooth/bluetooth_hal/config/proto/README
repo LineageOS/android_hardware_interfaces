@@ -1,0 +1,27 @@
+# Bluetooth HAL Configuration Files Description
+
+This directory contains Protobuf files that define the structure of configuration files used by the Bluetooth HAL (Hardware Abstraction Layer). The actual configuration files are in JSON format and must be placed in the `/vendor/etc/bluetooth/` directory on the device.
+
+## Configuration File Location
+
+All JSON configuration files defined by these Protobuf files must be placed at the following path on the device:
+
+`/vendor/etc/bluetooth/`
+
+## Protobuf File Descriptions
+
+Below is a brief description of each Protobuf file and its corresponding JSON file:
+
+1.  **`hal_config.proto`**
+    *   **Corresponding JSON File:** `hal_config.json`
+    *   **Purpose:** This file defines the main configuration for the Bluetooth HAL. It includes settings for general HAL functionalities such as the UART serial port path, transport type priority, whether to enable fast firmware download, SAR (Specific Absorption Rate) feature settings, and whether to enable accelerated Bluetooth startup.
+
+2.  **`firmware_config.proto`**
+    *   **Corresponding JSON File:** `firmware_config.json`
+    *   **Purpose:** This file defines settings related to Bluetooth chip firmware download and initialization. It includes the path to the firmware file, chip ID, HCI commands to be executed before/after firmware download (e.g., HCI Reset, update baud rate, download Minidriver), and the delay times between executing these commands.
+
+3.  **`cs_config.proto`** (`cs` stands for Channel Sounding)
+    *   **Corresponding JSON File:** `bluetooth_channel_sounding_calibration.json`
+    *   **Purpose:** This file defines the calibration commands required for the Bluetooth Channel Sounding feature. It contains a series of HCI commands that are sent to the Bluetooth controller at specific times to complete the calibration procedure for the Channel Sounding feature.
+
+Please ensure that the corresponding JSON configuration files are correctly placed in the `/vendor/etc/bluetooth/` directory when building the system image, so that the Bluetooth HAL can read and apply these settings.

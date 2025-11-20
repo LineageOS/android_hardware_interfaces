@@ -1917,17 +1917,17 @@ void WifiChip::invalidateAndClearBridgedApAll() {
 void WifiChip::deleteApIface(const std::string& if_name) {
     if (if_name.empty()) return;
     // delete bridged interfaces if any
-    const auto iface = findUsingName(ap_ifaces_, if_name);
-    if (!iface->usesMlo()) {
-        for (auto const& it : br_ifaces_ap_instances_) {
-            if (it.first == if_name) {
+    for (auto const& it : br_ifaces_ap_instances_) {
+        if (it.first == if_name) {
+            const auto iface = findUsingName(ap_ifaces_, if_name);
+            if (iface.get() && !iface->usesMlo()) {
                 for (auto const& instance : it.second) {
                     iface_util_->removeIfaceFromBridge(if_name, instance);
                     legacy_hal_.lock()->deleteVirtualInterface(instance);
                 }
                 iface_util_->deleteBridge(if_name);
                 br_ifaces_ap_instances_.erase(if_name);
-                // ifname is bridged AP, return here.
+                // ifname is non mlo bridged AP, return here.
                 return;
             }
         }

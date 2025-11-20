@@ -165,6 +165,12 @@ ndk::ScopedAStatus ModuleBluetooth::setAudioPortConfig(const AudioPortConfig& in
     return Module::setAudioPortConfigImpl(in_requested, fillConfig, out_suggested, _aidl_return);
 }
 
+ndk::ScopedAStatus ModuleBluetooth::supportsVariableLatency(bool* _aidl_return) {
+    LOG(DEBUG) << __func__ << ": " << getType();
+    *_aidl_return = true;
+    return ndk::ScopedAStatus::ok();
+}
+
 ndk::ScopedAStatus ModuleBluetooth::checkAudioPatchEndpointsMatch(
         const std::vector<AudioPortConfig*>& sources, const std::vector<AudioPortConfig*>& sinks) {
     // Both sources and sinks must be non-empty, this is guaranteed by 'setAudioPatch'.
@@ -277,6 +283,18 @@ int32_t ModuleBluetooth::getNominalLatencyMs(const AudioPortConfig& portConfig) 
     }
     LOG(ERROR) << __func__ << ": no connection or proxy found for " << portConfig.toString();
     return Module::getNominalLatencyMs(portConfig);
+}
+
+binder_status_t ModuleBluetooth::dump(int fd, const char** args, uint32_t numArgs) {
+    if (!::aidl::android::hardware::audio::common::hasArgument(
+                args, numArgs,
+                ::aidl::android::hardware::audio::common::kDumpFromAudioServerArgument)) {
+        // Streams are dumped as part of audio flinger threads dump,
+        // no need for a separate dump since the module itself does not
+        // have anything interesting.
+        Module::dump(fd, args, numArgs);
+    }
+    return ::android::OK;
 }
 
 ndk::ScopedAStatus ModuleBluetooth::createProxy(const AudioPort& audioPort, int32_t instancePortId,

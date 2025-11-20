@@ -319,7 +319,7 @@ enum PixelFormat {
 
     /**
      * 32-bit packed format that has 2-bit A, 10-bit B, G, and R components,
-     * in that order, from the most-sigfinicant bits to the least-significant
+     * in that order, from the most-significant bits to the least-significant
      * bits.
      *
      * The component values are unsigned normalized to the range [0, 1], whose
@@ -553,4 +553,90 @@ enum PixelFormat {
      * or with IMapper::lock.
      */
     YCBCR_P210 = 0x3c,
+
+    /**
+     * 16 bit format with a single 12-bit component. The format is 16 bits
+     * unsigned integer that has 12 bits of R component in the top 12 bits
+     * of the 16-bit word with the bottom 4 bits unused.
+     *
+     * The component values are unsigned integers, whose interpretation is
+     * defined by the dataspace.
+     */
+    R_12_UINT = 0x3d,
+
+    /**
+     * 16 bit format with a single 14-bit component. The format is 16-bit
+     * unsigned integer that has 14 bits of R component in the top 14 bits
+     * of the 16-bit word with the bottom 2 bits unused.
+     *
+     * The component values are unsigned integers, whose interpretation is
+     * defined by the dataspace.
+     */
+    R_14_UINT = 0x3e,
+
+    /**
+     * 32-bit format that has 12-bit R and G components, in that order,
+     * from the lowest memory address to the highest memory address. The
+     * format is 32-bit unsigned integer that has a 12-bit R component
+     * in the top 12 bits of the word in bytes 0..1, and a 12-bit G
+     * component in the top 12 bits of the word in bytes 2..3, with the
+     * bottom 4 bits of each word unused.
+     *
+     * The component values are unsigned integers, whose interpretation is
+     * defined by the dataspace.
+     */
+    RG_1212_UINT = 0x3f,
+
+    /**
+     * 32-bit format that has 14-bit R and G components, in that order,
+     * from the lowest memory address to the highest memory address. The
+     * format is 32-bit unsigned integer that has a 14-bit R component
+     * in the top 14 bits of the word in bytes 0..1, and a 14-bit G
+     * component in the top 14 bits of the word in bytes 2..3, with the
+     * bottom 2 bits of each word unused.
+     *
+     * The component values are unsigned integers, whose interpretation is
+     * defined by the dataspace.
+     */
+    RG_1414_UINT = 0x40,
+
+    /**
+     * 64-bit format that has 12-bit R, G, B, and A components, in that order,
+     * from the lowest memory address to the highest memory address. The
+     * format is 64-bit unsigned integer that has a 12-bit R component in
+     * the top 12 bits of the word in bytes 0..1, a 12-bit G component in
+     * the top 12 bits of the word in bytes 2..3, a 12-bit B component in
+     * the top 12 bits of the word in bytes 4..5, and a 12-bit A component
+     * in the top 12 bits of the word in bytes 6..7, with the bottom 4 bits
+     * of each word unused.
+     *
+     * The component values are unsigned integers, whose interpretation is
+     * defined by the dataspace.
+     */
+    RGBA_12121212_UINT = 0x41,
+
+    /**
+     * 64-bit format that has 14-bit R, G, B, and A components, in that order,
+     * from the lowest memory address to the highest memory address. The
+     * format is 64-bit unsigned integer that has a 14-bit R component in
+     * the top 14 bits of the word in bytes 0..1, a 14-bit G component in
+     * the top 14 bits of the word in bytes 2..3, a 14-bit B component in
+     * the top 14 bits of the word in bytes 4..5, and a 14-bit A component
+     * in the top 14 bits of the word in bytes 6..7, with the bottom 2 bits
+     * of each word unused.
+     *
+     * The component values are unsigned integers, whose interpretation is
+     * defined by the dataspace.
+     */
+    RGBA_14141414_UINT = 0x42,
+
+    /**
+     * 32-bit packed format that has 2-bit A, 10-bit R, G, and B components,
+     * in that order, from the most-significant bits to the least-significant
+     * bits.
+     *
+     * The component values are unsigned normalized to the range [0, 1], whose
+     * interpretation is defined by the dataspace.
+     */
+    BGRA_1010102 = 0x43,
 }

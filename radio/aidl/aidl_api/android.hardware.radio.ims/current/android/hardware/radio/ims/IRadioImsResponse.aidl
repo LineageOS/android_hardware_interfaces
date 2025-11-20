@@ -42,4 +42,5 @@ interface IRadioImsResponse {
   oneway void triggerEpsFallbackResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void sendAnbrQueryResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void updateImsCallStatusResponse(in android.hardware.radio.RadioResponseInfo info);
+  oneway void updateAllowedServicesResponse(in android.hardware.radio.RadioResponseInfo info);
 }

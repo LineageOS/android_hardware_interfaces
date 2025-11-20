@@ -52,6 +52,13 @@ namespace aidl::android::hardware::audio::common {
 // TODO: b/275135031 - move this string to AIDL interfaces.
 static constexpr char kDumpFromAudioServerArgument[] = "dump_from_audioserver";
 
+inline bool hasArgument(const char** args, uint32_t numArgs, const char* arg) {
+    for (uint32_t i = 0; i < numArgs; ++i) {
+        if (strcmp(args[i], arg) == 0) return true;
+    }
+    return false;
+}
+
 // Some values are reserved for use by the system code only.
 // HALs must not accept or emit values outside from the provided list.
 constexpr std::array<::aidl::android::media::audio::common::AudioMode, 5> kValidAudioModes = {

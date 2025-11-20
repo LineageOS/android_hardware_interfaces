@@ -72,7 +72,7 @@ oneway interface IRadioModemIndication {
     void radioStateChanged(in RadioIndicationType type, in RadioState radioState);
 
     /**
-     * Indicates the ril connects and returns the version
+     * Indicates the ril connects to the modem.
      *
      * @param type Type of radio indication
      */

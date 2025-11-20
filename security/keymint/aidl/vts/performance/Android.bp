@@ -36,7 +36,6 @@ cc_benchmark {
     shared_libs: [
         "libbinder_ndk",
         "libcrypto",
-        "libkeymint",
         "libkeymint_support",
     ],
     static_libs: [

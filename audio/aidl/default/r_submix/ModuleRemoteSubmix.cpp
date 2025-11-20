@@ -170,7 +170,8 @@ ndk::ScopedAStatus ModuleRemoteSubmix::onMasterVolumeChanged(float __unused) {
 int32_t ModuleRemoteSubmix::getNominalLatencyMs(const AudioPortConfig&) {
     // See the note on kDefaultPipePeriodCount.
     static constexpr int32_t kMaxLatencyMs =
-            (r_submix::kDefaultPipeSizeInFrames * 1000) / r_submix::kDefaultSampleRateHz;
+            (r_submix::kDefaultPipeSizeInFrames * MILLIS_PER_SECOND) /
+            r_submix::kDefaultSampleRateHz;
     static constexpr int32_t kMinLatencyMs = kMaxLatencyMs / r_submix::kDefaultPipePeriodCount;
     return kMinLatencyMs;
 }

@@ -31,18 +31,19 @@ const std::string kWifiInstanceNameStr = std::string() + IWifi::descriptor + "/d
 const char* kWifiInstanceName = kWifiInstanceNameStr.c_str();
 
 // Initialize the driver and firmware to STA mode using the vendor HAL.
-void initializeDriverAndFirmware(const std::string& wifi_instance_name) {
+bool initializeDriverAndFirmware(const std::string& wifi_instance_name) {
     // Skip if wifi instance is not set.
     if (wifi_instance_name == "") {
-        return;
+        return false;
     }
     if (getWifi(wifi_instance_name.c_str()) != nullptr) {
         std::shared_ptr<IWifiChip> wifi_chip = getWifiChip(wifi_instance_name.c_str());
         int mode_id;
-        EXPECT_TRUE(configureChipToSupportConcurrencyType(wifi_chip, IfaceConcurrencyType::STA,
-                                                          &mode_id));
+        return configureChipToSupportConcurrencyType(wifi_chip, IfaceConcurrencyType::STA,
+                                                     &mode_id);
     } else {
         LOG(WARNING) << __func__ << ": Vendor HAL not supported";
+        return false;
     }
 }
 
@@ -117,7 +118,11 @@ bool useAidlService() {
 }
 
 void startSupplicant() {
-    initializeDriverAndFirmware(kWifiInstanceName);
+    // Retry the driver and firmware initialization if it fails the first time.
+    if (!initializeDriverAndFirmware(kWifiInstanceName)) {
+        sleep(1);
+        ASSERT_TRUE(initializeDriverAndFirmware(kWifiInstanceName));
+    }
     SupplicantManager supplicant_manager;
     ASSERT_TRUE(supplicant_manager.StartSupplicant());
     ASSERT_TRUE(supplicant_manager.IsSupplicantRunning());

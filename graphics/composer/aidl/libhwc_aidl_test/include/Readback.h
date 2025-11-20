@@ -23,8 +23,11 @@
 #include <android/hardware/graphics/composer3/ComposerClientWriter.h>
 #include <renderengine/RenderEngine.h>
 #include <ui/GraphicBuffer.h>
+#include <ui/PixelFormat.h>
 #include <memory>
 #include "ComposerClientWrapper.h"
+#include "RenderEngine.h"
+#include "TestLayer.h"
 
 using aidl::android::hardware::graphics::composer3::Luts;
 
@@ -47,69 +50,6 @@ static const Color WHITE = {1.0f, 1.0f, 1.0f, 1.0f};
 static const Color LIGHT_RED = {0.5f, 0.0f, 0.0f, 1.0f};
 static const Color LIGHT_GREEN = {0.0f, 0.5f, 0.0f, 1.0f};
 static const Color LIGHT_BLUE = {0.0f, 0.0f, 0.5f, 1.0f};
-
-class TestRenderEngine;
-
-class TestLayer {
-  public:
-    TestLayer(const std::shared_ptr<ComposerClientWrapper>& client, int64_t display,
-              ComposerClientWriter& writer)
-        : mDisplay(display) {
-        const auto& [status, layer] = client->createLayer(display, kBufferSlotCount, &writer);
-        EXPECT_TRUE(status.isOk());
-        mLayer = layer;
-    }
-
-    // ComposerClient will take care of destroying layers, no need to explicitly
-    // call destroyLayers here
-    virtual ~TestLayer() {};
-
-    virtual void write(ComposerClientWriter& writer);
-    virtual LayerSettings toRenderEngineLayerSettings();
-
-    void setDisplayFrame(Rect frame) { mDisplayFrame = frame; }
-    void setSourceCrop(FRect crop) { mSourceCrop = crop; }
-    void setZOrder(uint32_t z) { mZOrder = z; }
-    void setWhitePointNits(float whitePointNits) { mWhitePointNits = whitePointNits; }
-    void setBrightness(float brightness) { mBrightness = brightness; }
-
-    void setSurfaceDamage(std::vector<Rect> surfaceDamage) {
-        mSurfaceDamage = std::move(surfaceDamage);
-    }
-
-    void setDataspace(Dataspace dataspace) { mDataspace = dataspace; }
-
-    void setTransform(Transform transform) { mTransform = transform; }
-    void setAlpha(float alpha) { mAlpha = alpha; }
-    void setBlendMode(BlendMode blendMode) { mBlendMode = blendMode; }
-    void setLuts(Luts luts) { mLuts = std::move(luts); }
-
-    BlendMode getBlendMode() const { return mBlendMode; }
-
-    uint32_t getZOrder() const { return mZOrder; }
-
-    float getAlpha() const { return mAlpha; }
-
-    int64_t getLayer() const { return mLayer; }
-
-    float getBrightness() const { return mBrightness; }
-
-  protected:
-    int64_t mDisplay;
-    int64_t mLayer;
-    Rect mDisplayFrame = {0, 0, 0, 0};
-    float mBrightness = 1.f;
-    float mWhitePointNits = -1.f;
-    std::vector<Rect> mSurfaceDamage;
-    Transform mTransform = static_cast<Transform>(0);
-    FRect mSourceCrop = {0, 0, 0, 0};
-    static constexpr uint32_t kBufferSlotCount = 64;
-    float mAlpha = 1.0;
-    BlendMode mBlendMode = BlendMode::NONE;
-    uint32_t mZOrder = 0;
-    Dataspace mDataspace = Dataspace::UNKNOWN;
-    Luts mLuts;
-};
 
 class TestColorLayer : public TestLayer {
   public:
@@ -168,8 +108,34 @@ class TestBufferLayer : public TestLayer {
     ::android::sp<::android::GraphicBuffer> allocateBuffer();
 };
 
+struct DisplayProperties {
+    DisplayProperties(int64_t displayId, std::vector<ColorMode> testColorModes,
+                      std::unique_ptr<TestRenderEngine> testRenderEngine,
+                      ::android::renderengine::DisplaySettings clientCompositionDisplaySettings,
+                      common::PixelFormat pixelFormat, common::Dataspace dataspace)
+        : testColorModes(testColorModes),
+          pixelFormat(pixelFormat),
+          dataspace(dataspace),
+          testRenderEngine(std::move(testRenderEngine)),
+          clientCompositionDisplaySettings(std::move(clientCompositionDisplaySettings)),
+          writer(displayId),
+          reader(displayId) {}
+
+    std::vector<ColorMode> testColorModes = {};
+    common::PixelFormat pixelFormat = common::PixelFormat::UNSPECIFIED;
+    common::Dataspace dataspace = common::Dataspace::UNKNOWN;
+    std::unique_ptr<TestRenderEngine> testRenderEngine = nullptr;
+    ::android::renderengine::DisplaySettings clientCompositionDisplaySettings = {};
+    ComposerClientWriter writer;
+    ComposerClientReader reader;
+};
+
 class ReadbackHelper {
   public:
+    static DisplayProperties setupDisplayProperty(
+            const DisplayWrapper& display,
+            const std::shared_ptr<ComposerClientWrapper>& composerClient);
+
     static std::string getColorModeString(ColorMode mode);
 
     static std::string getDataspaceString(Dataspace dataspace);
@@ -177,6 +143,7 @@ class ReadbackHelper {
     static Dataspace getDataspaceForColorMode(ColorMode mode);
 
     static int32_t GetBitsPerChannel(PixelFormat pixelFormat);
+    static int32_t GetTolerance(int32_t bitsPerChannel);
     static int32_t GetAlphaBits(PixelFormat pixelFormat);
 
     static void fillBuffer(uint32_t width, uint32_t height, uint32_t stride, int32_t bytesPerPixel,
@@ -211,7 +178,7 @@ class ReadbackBuffer {
 
     void setReadbackBuffer();
 
-    void checkReadbackBuffer(const std::vector<Color>& expectedColors);
+    void checkReadbackBuffer(const std::vector<Color>& expectedColors, bool saveImage = false);
 
     ::android::sp<::android::GraphicBuffer> getBuffer();
 

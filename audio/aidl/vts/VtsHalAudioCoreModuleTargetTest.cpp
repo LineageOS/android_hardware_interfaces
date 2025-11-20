@@ -48,6 +48,7 @@
 #include <aidl/android/media/audio/common/AudioOutputFlags.h>
 #include <android-base/chrono_utils.h>
 #include <android/binder_enums.h>
+#include <audio_utils/Statistics.h>
 #include <error/expected_utils.h>
 #include <fmq/AidlMessageQueue.h>
 
@@ -215,7 +216,7 @@ AudioPort GenerateUniqueDeviceAddress(const AudioPort& port) {
                         0xfc00, 0x0123, 0x4567, 0x89ab, 0xcdef, 0, 0, ++nextId & 0xffff});
                 break;
             case Tag::alsa:
-                address = AudioDeviceAddress::make<Tag::alsa>(std::vector<int32_t>{1, ++nextId});
+                address = AudioDeviceAddress::make<Tag::alsa>(std::vector<int32_t>{127, ++nextId});
                 break;
         }
     }
@@ -862,23 +863,33 @@ class MmapSharedMemory {
 
 struct StreamEventReceiver {
     virtual ~StreamEventReceiver() = default;
-    enum class Event { None, DrainReady, Error, TransferReady };
+    enum class Event : int { None = 0, DrainReady = 1, Error = 2, TransferReady = 4 };
     virtual std::tuple<int, Event> getLastEvent() const = 0;
     virtual std::tuple<int, Event> waitForEvent(int clientEventSeq) = 0;
     static constexpr int kEventSeqInit = -1;
 };
 std::string toString(StreamEventReceiver::Event event) {
-    switch (event) {
-        case StreamEventReceiver::Event::None:
-            return "None";
-        case StreamEventReceiver::Event::DrainReady:
-            return "DrainReady";
-        case StreamEventReceiver::Event::Error:
-            return "Error";
-        case StreamEventReceiver::Event::TransferReady:
-            return "TransferReady";
+    if (event == StreamEventReceiver::Event::None) return "None";
+    std::string result;
+    for (auto e : {StreamEventReceiver::Event::DrainReady, StreamEventReceiver::Event::Error,
+                   StreamEventReceiver::Event::TransferReady}) {
+        if (static_cast<int>(event) & static_cast<int>(e)) {
+            if (!result.empty()) result.append("|");
+            switch (e) {
+                case StreamEventReceiver::Event::DrainReady:
+                    result.append("DrainReady");
+                    break;
+                case StreamEventReceiver::Event::Error:
+                    result.append("Error");
+                    break;
+                case StreamEventReceiver::Event::TransferReady:
+                    result.append("TransferReady");
+                    break;
+                default:;  // Should not happen
+            }
+        }
     }
-    return std::to_string(static_cast<int32_t>(event));
+    return result;
 }
 
 // Note: we use a reference wrapper, not a pointer, because methods of std::*list
@@ -910,17 +921,23 @@ struct Dag : public std::forward_list<DagNode<T>> {
 };
 
 // Transition to the next state happens either due to a command from the client,
-// or after an event received from the server.
-using TransitionTrigger = std::variant<StreamDescriptor::Command, StreamEventReceiver::Event>;
+// or after an event received from the server. It can also be an integer amount of
+// nanoseconds to sleep.
+using TransitionTrigger =
+        std::variant<StreamDescriptor::Command, StreamEventReceiver::Event, int64_t>;
 std::string toString(const TransitionTrigger& trigger) {
     if (std::holds_alternative<StreamDescriptor::Command>(trigger)) {
         return std::string("'")
                 .append(toString(std::get<StreamDescriptor::Command>(trigger).getTag()))
                 .append("' command");
+    } else if (std::holds_alternative<StreamEventReceiver::Event>(trigger)) {
+        return std::string("'")
+                .append(toString(std::get<StreamEventReceiver::Event>(trigger)))
+                .append("' event");
     }
-    return std::string("'")
-            .append(toString(std::get<StreamEventReceiver::Event>(trigger)))
-            .append("' event");
+    return std::string("sleep for ")
+            .append(std::to_string(std::get<int64_t>(trigger)))
+            .append(" ns");
 }
 
 struct StateSequence {
@@ -1079,6 +1096,7 @@ class StreamCommonLogic : public StreamLogic {
                    << mConfig.toString();
         return "";
     }
+    const std::vector<int64_t>& getBurstOccurrences() const { return mBurstOccurrences; }
     const std::vector<int8_t>& getData() const { return mData; }
     void fillData(int8_t filler) { std::fill(mData.begin(), mData.end(), filler); }
     void loadData(std::ifstream& is, size_t* size) {
@@ -1092,9 +1110,9 @@ class StreamCommonLogic : public StreamLogic {
             expEvent != nullptr) {
             auto [eventSeq, event] = mEventReceiver->waitForEvent(mLastEventSeq);
             mLastEventSeq = eventSeq;
-            if (event != *expEvent) {
+            if ((static_cast<int>(event) & static_cast<int>(*expEvent)) == 0) {
                 // TODO: Make available as an error so it can be displayed by GTest
-                LOG(ERROR) << __func__ << ": expected event " << toString(*expEvent) << ", got "
+                LOG(ERROR) << __func__ << ": expected event(s) " << toString(*expEvent) << ", got "
                            << toString(event);
                 return {};
             }
@@ -1102,9 +1120,15 @@ class StreamCommonLogic : public StreamLogic {
             // via 'getStatus'.
             return StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::getStatus>(
                     Void{});
+        } else if (int64_t* sleepNs = std::get_if<int64_t>(&trigger); sleepNs != nullptr) {
+            LOG(INFO) << __func__ << ": sleeping for " << *sleepNs << " ns";
+            std::this_thread::sleep_for(std::chrono::nanoseconds(*sleepNs));
+            return StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::getStatus>(
+                    Void{});
         }
         return std::get<StreamDescriptor::Command>(trigger);
     }
+    void registerBurstNow() { mBurstOccurrences.push_back(::android::uptimeNanos()); }
     bool readDataFromMQ(size_t readCount) {
         std::vector<int8_t> data(readCount);
         if (mDataMQ->read(data.data(), readCount)) {
@@ -1151,6 +1175,7 @@ class StreamCommonLogic : public StreamLogic {
     StreamContext::DataMQ* mDataMQ;
     MmapSharedMemory mMmap;
     std::vector<int8_t> mData;
+    std::vector<int64_t> mBurstOccurrences;
     StreamLogicDriver* const mDriver;
     StreamEventReceiver* const mEventReceiver;
     int mLastEventSeq = StreamEventReceiver::kEventSeqInit;
@@ -1167,7 +1192,8 @@ class StreamReaderLogic : public StreamCommonLogic {
         : StreamCommonLogic(context, driver, stream, eventReceiver),
           mMmapBurstSizeFrames(context.getMmapBurstSizeFrames()) {}
     // Should only be called after the worker has joined.
-    const std::vector<int8_t>& getData() const { return StreamCommonLogic::getData(); }
+    using StreamCommonLogic::getBurstOccurrences;
+    using StreamCommonLogic::getData;
 
   protected:
     Status cycle() override {
@@ -1181,6 +1207,11 @@ class StreamReaderLogic : public StreamCommonLogic {
         } else {
             LOG(ERROR) << __func__ << ": no next command";
             return Status::ABORT;
+        }
+        if (isMmapped() && command.getTag() == StreamDescriptor::Command::Tag::burst &&
+            command.get<StreamDescriptor::Command::Tag::burst>() > 0) {
+            // The value of a valid 'burst' command for MMap must be '0'.
+            command.get<StreamDescriptor::Command::Tag::burst>() = 0;
         }
         LOG(DEBUG) << "Writing command: " << command.toString();
         if (!getCommandMQ()->writeBlocking(&command, 1)) {
@@ -1245,6 +1276,7 @@ class StreamReaderLogic : public StreamCommonLogic {
         }  // readCount == 0
     checkAcceptedReply:
         if (acceptedReply) {
+            if (command.getTag() == StreamDescriptor::Command::Tag::burst) registerBurstNow();
             return updateMmapSharedMemoryIfNeeded(reply.state) ? Status::CONTINUE : Status::ABORT;
         }
         LOG(ERROR) << __func__ << ": unacceptable reply: " << reply.toString();
@@ -1261,7 +1293,8 @@ class StreamWriterLogic : public StreamCommonLogic {
                       StreamWorkerMethods* stream, StreamEventReceiver* eventReceiver)
         : StreamCommonLogic(context, driver, stream, eventReceiver) {}
     // Should only be called after the worker has joined.
-    const std::vector<int8_t>& getData() const { return StreamCommonLogic::getData(); }
+    using StreamCommonLogic::getBurstOccurrences;
+    using StreamCommonLogic::getData;
 
   protected:
     std::string init() override {
@@ -1325,6 +1358,11 @@ class StreamWriterLogic : public StreamCommonLogic {
             if (isMmapped() ? !writeDataToMmap() : !writeDataToMQ()) {
                 return Status::ABORT;
             }
+            if (isMmapped()) {
+                // The value of the 'burst' command for MMap must be '0'.
+                command.get<StreamDescriptor::Command::Tag::burst>() = 0;
+            }
+            registerBurstNow();
         }
         LOG(DEBUG) << "Writing command: " << command.toString();
         if (!getCommandMQ()->writeBlocking(&command, 1)) {
@@ -1460,6 +1498,9 @@ struct IOTraits {
     static constexpr bool is_input = std::is_same_v<T, IStreamIn>;
     static constexpr const char* directionStr = is_input ? "input" : "output";
     using Worker = std::conditional_t<is_input, StreamReader, StreamWriter>;
+    using IoFlags = std::conditional_t<is_input, AudioInputFlags, AudioOutputFlags>;
+    static constexpr AudioIoFlags::Tag flagTag =
+            is_input ? AudioIoFlags::Tag::input : AudioIoFlags::Tag::output;
 };
 
 template <typename Stream>
@@ -1512,6 +1553,7 @@ class WithStream : public StreamWorkerMethods {
     Stream* get() const { return mStream.get(); }
     const StreamContext* getContext() const { return mContext ? &(mContext.value()) : nullptr; }
     StreamEventReceiver* getEventReceiver() { return mStreamCallback->getEventReceiver(); }
+    int32_t getInterfaceVersion() const { return mInterfaceVersion; }
     std::shared_ptr<Stream> getSharedPointer() const { return mStream; }
     const AudioPortConfig& getPortConfig() const { return mPortConfig.get(); }
     int32_t getPortId() const { return mPortConfig.getId(); }
@@ -2173,9 +2215,7 @@ TEST_P(AudioCoreModule, SetAudioPortConfigInvalidPortAudioGain) {
 TEST_P(AudioCoreModule, TryConnectMissingDevice) {
     // Limit checks to connection types that are known to be detectable by HAL implementations.
     static const std::set<std::string> kCheckedConnectionTypes{
-            AudioDeviceDescription::CONNECTION_HDMI, AudioDeviceDescription::CONNECTION_HDMI_ARC,
-            AudioDeviceDescription::CONNECTION_HDMI_EARC, AudioDeviceDescription::CONNECTION_IP_V4,
-            AudioDeviceDescription::CONNECTION_USB};
+            AudioDeviceDescription::CONNECTION_IP_V4, AudioDeviceDescription::CONNECTION_USB};
     ASSERT_NO_FATAL_FAILURE(SetUpModuleConfig());
     std::vector<AudioPort> ports = moduleConfig->getExternalDevicePorts();
     if (ports.empty()) {
@@ -2643,14 +2683,18 @@ TEST_P(AudioCoreModule, SetVendorParameters) {
 
 // See b/262930731. In the absence of offloaded effect implementations,
 // currently we can only pass a nullptr, and the HAL module must either reject
-// it as an invalid argument, or say that offloaded effects are not supported.
+// it as an invalid/null argument, or say that offloaded effects are not supported.
 TEST_P(AudioCoreModule, AddRemoveEffectInvalidArguments) {
-    ndk::ScopedAStatus addEffectStatus = module->addDeviceEffect(-1, nullptr);
-    ndk::ScopedAStatus removeEffectStatus = module->removeDeviceEffect(-1, nullptr);
-    if (addEffectStatus.getExceptionCode() != EX_UNSUPPORTED_OPERATION) {
-        EXPECT_EQ(EX_ILLEGAL_ARGUMENT, addEffectStatus.getExceptionCode());
-        EXPECT_EQ(EX_ILLEGAL_ARGUMENT, removeEffectStatus.getExceptionCode());
-    } else if (removeEffectStatus.getExceptionCode() != EX_UNSUPPORTED_OPERATION) {
+    const binder_exception_t addException = module->addDeviceEffect(-1, nullptr).getExceptionCode();
+    const binder_exception_t removeException =
+            module->removeDeviceEffect(-1, nullptr).getExceptionCode();
+    EXPECT_EQ(addException, removeException);
+    if (addException != EX_UNSUPPORTED_OPERATION) {
+        EXPECT_TRUE(addException == EX_ILLEGAL_ARGUMENT || addException == EX_NULL_POINTER)
+                << "unexpected addException: " << addException;
+        EXPECT_TRUE(removeException == EX_ILLEGAL_ARGUMENT || removeException == EX_NULL_POINTER)
+                << "unexpected removeException: " << removeException;
+    } else if (removeException != EX_UNSUPPORTED_OPERATION) {
         GTEST_FAIL() << "addDeviceEffect and removeDeviceEffect must be either supported or "
                      << "not supported together";
     } else {
@@ -2662,8 +2706,15 @@ TEST_P(AudioCoreModule, AddRemoveEffectInvalidArguments) {
     for (const auto& config : configs) {
         WithAudioPortConfig portConfig(config);
         ASSERT_NO_FATAL_FAILURE(portConfig.SetUp(module.get()));
-        EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, module->addDeviceEffect(portConfig.getId(), nullptr));
-        EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, module->removeDeviceEffect(portConfig.getId(), nullptr));
+        const binder_exception_t addException =
+                module->addDeviceEffect(portConfig.getId(), nullptr).getExceptionCode();
+        const binder_exception_t removeException =
+                module->removeDeviceEffect(portConfig.getId(), nullptr).getExceptionCode();
+        EXPECT_EQ(addException, removeException);
+        EXPECT_TRUE(addException == EX_ILLEGAL_ARGUMENT || addException == EX_NULL_POINTER)
+                << "unexpected addException: " << addException;
+        EXPECT_TRUE(removeException == EX_ILLEGAL_ARGUMENT || removeException == EX_NULL_POINTER)
+                << "unexpected removeException: " << removeException;
     }
 }
 
@@ -3238,6 +3289,7 @@ class StreamFixture {
     Stream* getStream() const { return mStream->get(); }
     const StreamContext* getStreamContext() const { return mStream->getContext(); }
     StreamEventReceiver* getStreamEventReceiver() { return mStream->getEventReceiver(); }
+    int32_t getStreamInterfaceVersion() const { return mStream->getInterfaceVersion(); }
     std::shared_ptr<Stream> getStreamSharedPointer() const { return mStream->getSharedPointer(); }
     StreamWorkerMethods* getStreamWorkerMethods() const { return mStream.get(); }
     const std::string& skipTestReason() const { return mSkipTestReason; }
@@ -3447,9 +3499,12 @@ class StreamLogicDefaultDriver : public StreamLogicDriver {
 // Defined later together with state transition sequences.
 std::shared_ptr<StateSequence> makeBurstCommands(bool isSync, size_t burstCount = 10,
                                                  bool standbyInputWhenDone = false);
+std::shared_ptr<StateSequence> makeSyncOutBurstStandbyCommands(size_t burstCount, size_t cycleCount,
+                                                               int interCycleSleepNs);
 
 // Certain types of ports can not be used without special preconditions.
-static bool skipStreamIoTestForMixPortConfig(const AudioPortConfig& portConfig) {
+static bool skipStreamIoTestForMixPortConfig(const AudioPortConfig& portConfig,
+                                             int32_t aidlVersion) {
     return (portConfig.flags.value().getTag() == AudioIoFlags::input &&
             isAnyBitPositionFlagSet(portConfig.flags.value().template get<AudioIoFlags::input>(),
                                     {AudioInputFlags::VOIP_TX, AudioInputFlags::HW_HOTWORD,
@@ -3459,7 +3514,7 @@ static bool skipStreamIoTestForMixPortConfig(const AudioPortConfig& portConfig) 
                                      {AudioOutputFlags::VOIP_RX, AudioOutputFlags::INCALL_MUSIC}) ||
              (isBitPositionFlagSet(portConfig.flags.value().template get<AudioIoFlags::output>(),
                                    AudioOutputFlags::COMPRESS_OFFLOAD) &&
-              !getMediaFileInfoForConfig(portConfig))));
+              (aidlVersion <= kAidlVersion3 || !getMediaFileInfoForConfig(portConfig)))));
 }
 
 // Certain types of devices can not be used without special preconditions.
@@ -3509,19 +3564,31 @@ class StreamFixtureWithWorker {
         ASSERT_NO_FATAL_FAILURE(JoinWorkerAfterBurstCommands(validatePosition));
     }
 
-    void StartWorkerToSendBurstCommands(size_t burstCount = 10, bool standbyInputWhenDone = false) {
-        if (!IOTraits<Stream>::is_input) {
-            ASSERT_FALSE(standbyInputWhenDone) << "Only supported for input";
-        }
+    void StartWorkerWithStateSequence(std::shared_ptr<StateSequence> seq) {
         const StreamContext* context = mStream->getStreamContext();
         mWorkerDriver = std::make_unique<StreamLogicDefaultDriver>(
-                makeBurstCommands(mIsSync, burstCount, standbyInputWhenDone),
-                context->getFrameSizeBytes(), context->isMmapped());
+                seq, context->getFrameSizeBytes(), context->isMmapped());
         mWorker = std::make_unique<typename IOTraits<Stream>::Worker>(
                 *context, mWorkerDriver.get(), mStream->getStreamWorkerMethods(),
                 mStream->getStreamEventReceiver());
         LOG(DEBUG) << __func__ << ": starting " << IOTraits<Stream>::directionStr << " worker...";
         ASSERT_TRUE(mWorker->start());
+    }
+
+    void StartWorkerToSendBurstCommands(size_t burstCount = 10, bool standbyInputWhenDone = false) {
+        if (!IOTraits<Stream>::is_input) {
+            ASSERT_FALSE(standbyInputWhenDone) << "standbyInputWhenDone only supported for input";
+        }
+        ASSERT_NO_FATAL_FAILURE(StartWorkerWithStateSequence(
+                makeBurstCommands(mIsSync, burstCount, standbyInputWhenDone)));
+    }
+
+    void StartOutWorkerForBurstStandbyCycle(size_t burstCount, size_t cycleCount,
+                                            int interCycleSleepNs) {
+        ASSERT_FALSE(IOTraits<Stream>::is_input) << "Only supported for output";
+        ASSERT_TRUE(mIsSync) << "Only supported for synchronous I/O";
+        ASSERT_NO_FATAL_FAILURE(StartWorkerWithStateSequence(
+                makeSyncOutBurstStandbyCommands(burstCount, cycleCount, interCycleSleepNs)));
     }
 
     void JoinWorkerAfterBurstCommands(bool validatePosition = true,
@@ -3542,12 +3609,14 @@ class StreamFixtureWithWorker {
             EXPECT_FALSE(mWorkerDriver->hasHardwareRetrogradePosition());
         }
         mLastData = mWorker->getData();
+        mBurstOccurrences = mWorker->getBurstOccurrences();
         mWorker.reset();
         mWorkerDriver.reset();
     }
 
     void TeardownPatch() { mStream->TeardownPatch(); }
 
+    const std::vector<int64_t>& getBurstOccurrences() const { return mBurstOccurrences; }
     const AudioDevice& getDevice() const { return mStream->getDevice(); }
     const AudioPortConfig& getDevicePortConfig() const { return mStream->getDevicePortConfig(); }
     const std::vector<int8_t>& getLastData() const { return mLastData; }
@@ -3559,7 +3628,8 @@ class StreamFixtureWithWorker {
 
   private:
     void MaybeSetSkipTestReason() {
-        if (skipStreamIoTestForMixPortConfig(mStream->getPortConfig())) {
+        if (skipStreamIoTestForMixPortConfig(mStream->getPortConfig(),
+                                             mStream->getStreamInterfaceVersion())) {
             mSkipTestReason = "Mix port config is not supported for stream I/O tests";
         }
         if (skipStreamIoTestForStream(mStream->getStreamContext(),
@@ -3574,6 +3644,7 @@ class StreamFixtureWithWorker {
     std::unique_ptr<StreamLogicDefaultDriver> mWorkerDriver;
     std::unique_ptr<typename IOTraits<Stream>::Worker> mWorker;
     std::vector<int8_t> mLastData;
+    std::vector<int64_t> mBurstOccurrences;
 };
 
 template <typename Stream>
@@ -3730,11 +3801,40 @@ class AudioStream : public AudioCoreModule {
     }
 
     void SendInvalidCommand() {
-        const auto portConfig = moduleConfig->getSingleConfigForMixPort(IOTraits<Stream>::is_input);
-        if (!portConfig.has_value()) {
+        // Since the processing of the 'burst' command is different for MMAP and non-MMAP
+        // streams, test them separately.
+        bool hasAtLeastOnePort = false;
+        {
+            auto ports =
+                    moduleConfig->getMixPorts(IOTraits<Stream>::is_input, true /*connectedOnly*/);
+            auto portIt = std::find_if(ports.begin(), ports.end(), [&](const AudioPort& port) {
+                return !isBitPositionFlagSet(port.flags.get<IOTraits<Stream>::flagTag>(),
+                                             IOTraits<Stream>::IoFlags::MMAP_NOIRQ);
+            });
+            if (portIt != ports.end()) {
+                const auto portConfig = moduleConfig->getSingleConfigForMixPort(
+                        IOTraits<Stream>::is_input, *portIt);
+                if (portConfig.has_value()) {
+                    hasAtLeastOnePort = true;
+                    EXPECT_NO_FATAL_FAILURE(SendInvalidCommandImpl(portConfig.value()));
+                }
+            }
+        }
+        {
+            auto ports = moduleConfig->getMmapMixPorts(IOTraits<Stream>::is_input,
+                                                       true /*connectedOnly*/, true /*singlePort*/);
+            if (!ports.empty()) {
+                const auto portConfig = moduleConfig->getSingleConfigForMixPort(
+                        IOTraits<Stream>::is_input, *ports.begin());
+                if (portConfig.has_value()) {
+                    hasAtLeastOnePort = true;
+                    EXPECT_NO_FATAL_FAILURE(SendInvalidCommandImpl(portConfig.value()));
+                }
+            }
+        }
+        if (!hasAtLeastOnePort) {
             GTEST_SKIP() << "No mix port for attached devices";
         }
-        EXPECT_NO_FATAL_FAILURE(SendInvalidCommandImpl(portConfig.value()));
     }
 
     void UpdateHwAvSyncId() {
@@ -3836,7 +3936,7 @@ class AudioStream : public AudioCoreModule {
 
     // See b/262930731. In the absence of offloaded effect implementations,
     // currently we can only pass a nullptr, and the HAL module must either reject
-    // it as an invalid argument, or say that offloaded effects are not supported.
+    // it as an invalid/null argument, or say that offloaded effects are not supported.
     void AddRemoveEffectInvalidArguments() {
         constexpr bool connectedOnly = true;
         const auto ports = moduleConfig->getMixPorts(IOTraits<Stream>::is_input, connectedOnly);
@@ -3855,13 +3955,19 @@ class AudioStream : public AudioCoreModule {
             std::shared_ptr<IStreamCommon> streamCommon;
             ASSERT_IS_OK(stream.getStream()->getStreamCommon(&streamCommon));
             ASSERT_NE(nullptr, streamCommon);
-            ndk::ScopedAStatus addEffectStatus = streamCommon->addEffect(nullptr);
-            ndk::ScopedAStatus removeEffectStatus = streamCommon->removeEffect(nullptr);
-            if (addEffectStatus.getExceptionCode() != EX_UNSUPPORTED_OPERATION) {
-                EXPECT_EQ(EX_ILLEGAL_ARGUMENT, addEffectStatus.getExceptionCode());
-                EXPECT_EQ(EX_ILLEGAL_ARGUMENT, removeEffectStatus.getExceptionCode());
+            const binder_exception_t addException =
+                    streamCommon->addEffect(nullptr).getExceptionCode();
+            const binder_exception_t removeException =
+                    streamCommon->removeEffect(nullptr).getExceptionCode();
+            EXPECT_EQ(addException, removeException);
+            if (addException != EX_UNSUPPORTED_OPERATION) {
+                EXPECT_TRUE(addException == EX_ILLEGAL_ARGUMENT || addException == EX_NULL_POINTER)
+                        << "unexpected addException: " << addException;
+                EXPECT_TRUE(removeException == EX_ILLEGAL_ARGUMENT ||
+                            removeException == EX_NULL_POINTER)
+                        << "unexpected removeException: " << removeException;
                 atLeastOneSupports = true;
-            } else if (removeEffectStatus.getExceptionCode() != EX_UNSUPPORTED_OPERATION) {
+            } else if (removeException != EX_UNSUPPORTED_OPERATION) {
                 ADD_FAILURE() << "addEffect and removeEffect must be either supported or "
                               << "not supported together";
                 atLeastOneSupports = true;
@@ -4276,8 +4382,10 @@ TEST_P(AudioStreamOut, PlaybackRate) {
     EXPECT_LE(factors.minSpeed, factors.maxSpeed);
     EXPECT_LE(factors.minPitch, factors.maxPitch);
     EXPECT_LE(factors.minSpeed, 1.0f);
+    EXPECT_GE(factors.minSpeed, 0);
     EXPECT_GE(factors.maxSpeed, 1.0f);
     EXPECT_LE(factors.minPitch, 1.0f);
+    EXPECT_GE(factors.minPitch, 0);
     EXPECT_GE(factors.maxPitch, 1.0f);
     constexpr auto tsDefault = AudioPlaybackRate::TimestretchMode::DEFAULT;
     constexpr auto tsVoice = AudioPlaybackRate::TimestretchMode::VOICE;
@@ -4312,8 +4420,18 @@ TEST_P(AudioStreamOut, PlaybackRate) {
             // is "mute".
             AudioPlaybackRate{factors.maxSpeed * 2, factors.maxPitch * 2, tsDefault, fbMute},
             AudioPlaybackRate{factors.minSpeed / 2, factors.minPitch / 2, tsDefault, fbMute},
+            AudioPlaybackRate{-factors.maxSpeed, -factors.maxPitch, tsDefault, fbMute},
+            AudioPlaybackRate{-factors.minSpeed, -factors.minPitch, tsDefault, fbMute},
+            AudioPlaybackRate{std::numeric_limits<float>::infinity(),
+                              std::numeric_limits<float>::infinity(), tsDefault, fbMute},
+            AudioPlaybackRate{NAN, NAN, tsDefault, fbMute},
             AudioPlaybackRate{factors.maxSpeed * 2, factors.maxPitch * 2, tsVoice, fbMute},
             AudioPlaybackRate{factors.minSpeed / 2, factors.minPitch / 2, tsVoice, fbMute},
+            AudioPlaybackRate{-factors.maxSpeed, -factors.maxPitch, tsVoice, fbMute},
+            AudioPlaybackRate{-factors.minSpeed, -factors.minPitch, tsVoice, fbMute},
+            AudioPlaybackRate{std::numeric_limits<float>::infinity(),
+                              std::numeric_limits<float>::infinity(), tsVoice, fbMute},
+            AudioPlaybackRate{NAN, NAN, tsVoice, fbMute},
     };
     bool atLeastOneSupports = false;
     for (const auto& port : offloadMixPorts) {
@@ -4321,6 +4439,14 @@ TEST_P(AudioStreamOut, PlaybackRate) {
         ASSERT_TRUE(portConfig.has_value()) << "No profiles specified for output mix port";
         WithStream<IStreamOut> stream(portConfig.value());
         ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultLargeBufferSizeFrames));
+        if (stream.getInterfaceVersion() >= kAidlVersion3) {
+            AudioPlaybackRate playbackRate;
+            status = stream.get()->getPlaybackRateParameters(&playbackRate);
+            if (status.getExceptionCode() != EX_UNSUPPORTED_OPERATION) {
+                EXPECT_NE(playbackRate.speed, 0);
+                EXPECT_NE(playbackRate.pitch, 0);
+            }
+        }
         bool isSupported = false;
         EXPECT_NO_FATAL_FAILURE(TestAccessors<AudioPlaybackRate>(
                 stream.get(), &IStreamOut::getPlaybackRateParameters,
@@ -4453,7 +4579,7 @@ class AudioStreamIo : public AudioCoreModuleBase,
             ASSERT_TRUE(port.has_value());
             SCOPED_TRACE(port->toString());
             SCOPED_TRACE(portConfig.toString());
-            if (skipStreamIoTestForMixPortConfig(portConfig)) continue;
+            if (skipStreamIoTestForMixPortConfig(portConfig, aidlVersion)) continue;
             const bool isNonBlocking =
                     IOTraits<Stream>::is_input
                             ? false
@@ -5088,6 +5214,179 @@ static const NamedCommandSequence kDrainEarlyOffloadSeq =
                         StreamTypeFilter::OFFLOAD, makeDrainEarlyOffloadCommands(),
                         true /*validatePositionIncrease*/);
 
+// DRAINING_en ->(onDrainReady) DRAINING_en_sent ->(burst) DRAINING_en_sent
+//   ->(onTransferReady) DRAINING
+//   ->(onDrainReady)    IDLE | TRANSFERRING
+std::shared_ptr<StateSequence> makeDrainEarlyAddSecondClipOffloadCommands() {
+    using State = StreamDescriptor::State;
+    auto d = std::make_unique<StateDag>();
+    StateDag::Node lastDraining = d->makeFinalNode(State::DRAINING);
+    StateDag::Node lastIdle = d->makeFinalNode(State::IDLE);
+    StateDag::Node lastTransferring = d->makeFinalNode(State::TRANSFERRING);
+    // Wait for onTransferReady or the second onDrainReady event.
+    // Somewhat counter intuitive that onTransferReady leaves the stream in the DRAINING state
+    // (it is still draining the first clip, but at the same time accepting data for the next one).
+    StateDag::Node continueDraining = d->makeNode(
+            State::DRAINING,
+            static_cast<StreamEventReceiver::Event>(static_cast<int>(kDrainReadyEvent) |
+                                                    static_cast<int>(kTransferReadyEvent)),
+            lastDraining, lastIdle, lastTransferring);
+    StateDag::Node secondClip = d->makeNode(State::DRAINING, kBurstCommand, continueDraining);
+    // The first onDrainReady event.
+    StateDag::Node draining = d->makeNode(State::DRAINING, kDrainReadyEvent, secondClip);
+    StateDag::Node drain = d->makeNode(State::ACTIVE, kDrainOutEarlyCommand, draining);
+    StateDag::Node active = makeAsyncBurstCommands(d.get(), 10, drain);
+    StateDag::Node idle = d->makeNode(State::IDLE, kBurstCommand, active);
+    idle.children().push_back(d->makeNode(State::TRANSFERRING, kTransferReadyEvent, active));
+    d->makeNode(State::STANDBY, kStartCommand, idle);
+    return std::make_shared<StateSequenceFollower>(std::move(d));
+}
+static const NamedCommandSequence kDrainEarlyAddSecondClipOffloadSeq = std::make_tuple(
+        std::string("DrainEarlyAddSecondClip"), kAidlVersion3, "aosp.clipTransitionSupport", 0,
+        StreamTypeFilter::OFFLOAD, makeDrainEarlyAddSecondClipOffloadCommands(),
+        true /*validatePositionIncrease*/);
+
+// DRAINING_en ->(burst) TRANSFERRING | IDLE
+std::shared_ptr<StateSequence> makeDrainEarlyCancelOffloadCommands() {
+    using State = StreamDescriptor::State;
+    auto d = std::make_unique<StateDag>();
+    StateDag::Node lastIdle = d->makeFinalNode(State::IDLE);
+    StateDag::Node lastTransferring = d->makeFinalNode(State::TRANSFERRING);
+    // Cancel draining by sending the burst command before the first onDrainReady event.
+    StateDag::Node draining =
+            d->makeNode(State::DRAINING, kBurstCommand, lastIdle, lastTransferring);
+    StateDag::Node drain = d->makeNode(State::ACTIVE, kDrainOutEarlyCommand, draining);
+    StateDag::Node active = makeAsyncBurstCommands(d.get(), 10, drain);
+    StateDag::Node idle = d->makeNode(State::IDLE, kBurstCommand, active);
+    idle.children().push_back(d->makeNode(State::TRANSFERRING, kTransferReadyEvent, active));
+    d->makeNode(State::STANDBY, kStartCommand, idle);
+    return std::make_shared<StateSequenceFollower>(std::move(d));
+}
+static const NamedCommandSequence kDrainEarlyCancelOffloadSeq =
+        std::make_tuple(std::string("DrainEarlyCancel"), kAidlVersion3,
+                        "aosp.clipTransitionSupport", 0, StreamTypeFilter::OFFLOAD,
+                        makeDrainEarlyOffloadCommands(), true /*validatePositionIncrease*/);
+
+//  DRAINING_en ->(pause) DRAIN_PAUSED_en ->(start) DRAINING_en -> same as DrainEarlyOffload
+std::shared_ptr<StateSequence> makeDrainEarlyPauseBeforeNotifOffloadCommands() {
+    using State = StreamDescriptor::State;
+    auto d = std::make_unique<StateDag>();
+    StateDag::Node lastIdle = d->makeFinalNode(State::IDLE);
+    StateDag::Node lastTransferring = d->makeFinalNode(State::TRANSFERRING);
+    // The second onDrainReady event.
+    StateDag::Node continueDraining =
+            d->makeNode(State::DRAINING, kDrainReadyEvent, lastIdle, lastTransferring);
+    // Pause draining by sending the pause command before the first onDrainReady event.
+    StateDag::Node drain = d->makeNodes({std::make_pair(State::ACTIVE, kDrainOutEarlyCommand),
+                                         std::make_pair(State::DRAINING, kPauseCommand),
+                                         std::make_pair(State::DRAIN_PAUSED, kStartCommand),
+                                         // The first onDrainReady event.
+                                         std::make_pair(State::DRAINING, kDrainReadyEvent)},
+                                        continueDraining);
+    StateDag::Node active = makeAsyncBurstCommands(d.get(), 10, drain);
+    StateDag::Node idle = d->makeNode(State::IDLE, kBurstCommand, active);
+    idle.children().push_back(d->makeNode(State::TRANSFERRING, kTransferReadyEvent, active));
+    d->makeNode(State::STANDBY, kStartCommand, idle);
+    return std::make_shared<StateSequenceFollower>(std::move(d));
+}
+static const NamedCommandSequence kDrainEarlyPauseBeforeNotifOffloadSeq = std::make_tuple(
+        std::string("DrainEarlyPauseBeforeNotif"), kAidlVersion3, "aosp.clipTransitionSupport", 0,
+        StreamTypeFilter::OFFLOAD, makeDrainEarlyPauseBeforeNotifOffloadCommands(),
+        true /*validatePositionIncrease*/);
+
+// DRAINING_en ->(pause) DRAIN_PAUSED_en ->(burst) TRANSFER_PAUSED
+std::shared_ptr<StateSequence> makeDrainEarlyPauseBeforeNotifCancelOffloadCommands() {
+    using State = StreamDescriptor::State;
+    auto d = std::make_unique<StateDag>();
+    StateDag::Node drain = d->makeNodes(
+            {std::make_pair(State::ACTIVE, kDrainOutEarlyCommand),
+             std::make_pair(State::DRAINING, kPauseCommand),
+             // Pause draining by sending the pause command before the first onDrainReady event.
+             std::make_pair(State::DRAIN_PAUSED, kBurstCommand)},
+            State::TRANSFER_PAUSED);
+    StateDag::Node active = makeAsyncBurstCommands(d.get(), 10, drain);
+    StateDag::Node idle = d->makeNode(State::IDLE, kBurstCommand, active);
+    idle.children().push_back(d->makeNode(State::TRANSFERRING, kTransferReadyEvent, active));
+    d->makeNode(State::STANDBY, kStartCommand, idle);
+    return std::make_shared<StateSequenceFollower>(std::move(d));
+}
+static const NamedCommandSequence kDrainEarlyPauseBeforeNotifCancelOffloadSeq = std::make_tuple(
+        std::string("DrainEarlyPauseBeforeNotifCancel"), kAidlVersion3,
+        "aosp.clipTransitionSupport", 0, StreamTypeFilter::OFFLOAD,
+        makeDrainEarlyPauseBeforeNotifCancelOffloadCommands(), true /*validatePositionIncrease*/);
+
+// DRAINING_en ->(pause) DRAIN_PAUSED_en ->(flush) IDLE
+std::shared_ptr<StateSequence> makeDrainEarlyPauseBeforeNotifFlushOffloadCommands() {
+    using State = StreamDescriptor::State;
+    auto d = std::make_unique<StateDag>();
+    StateDag::Node drain = d->makeNodes(
+            {std::make_pair(State::ACTIVE, kDrainOutEarlyCommand),
+             std::make_pair(State::DRAINING, kPauseCommand),
+             // Cancel draining by sending the flush command before the first onDrainReady event.
+             std::make_pair(State::DRAIN_PAUSED, kFlushCommand)},
+            State::IDLE);
+    StateDag::Node active = makeAsyncBurstCommands(d.get(), 10, drain);
+    StateDag::Node idle = d->makeNode(State::IDLE, kBurstCommand, active);
+    idle.children().push_back(d->makeNode(State::TRANSFERRING, kTransferReadyEvent, active));
+    d->makeNode(State::STANDBY, kStartCommand, idle);
+    return std::make_shared<StateSequenceFollower>(std::move(d));
+}
+static const NamedCommandSequence kDrainEarlyPauseBeforeNotifFlushOffloadSeq = std::make_tuple(
+        std::string("DrainEarlyPauseBeforeNotifFlush"), kAidlVersion3, "aosp.clipTransitionSupport",
+        0, StreamTypeFilter::OFFLOAD, makeDrainEarlyPauseBeforeNotifFlushOffloadCommands(),
+        true /*validatePositionIncrease*/);
+
+// DRAINING_en ->(onDrainReady) DRAINING_en_sent ->(pause) DRAIN_PAUSED_en_sent ->(flush) IDLE
+std::shared_ptr<StateSequence> makeDrainEarlyPauseAfterNotifFlushOffloadCommands() {
+    using State = StreamDescriptor::State;
+    auto d = std::make_unique<StateDag>();
+    StateDag::Node drain = d->makeNodes(
+            {std::make_pair(State::ACTIVE, kDrainOutEarlyCommand),
+             std::make_pair(State::DRAINING, kDrainReadyEvent),
+             std::make_pair(State::DRAINING, kPauseCommand),
+             // Cancel draining by sending the flush command after the first onDrainReady event.
+             std::make_pair(State::DRAIN_PAUSED, kFlushCommand)},
+            State::IDLE);
+    StateDag::Node active = makeAsyncBurstCommands(d.get(), 10, drain);
+    StateDag::Node idle = d->makeNode(State::IDLE, kBurstCommand, active);
+    idle.children().push_back(d->makeNode(State::TRANSFERRING, kTransferReadyEvent, active));
+    d->makeNode(State::STANDBY, kStartCommand, idle);
+    return std::make_shared<StateSequenceFollower>(std::move(d));
+}
+static const NamedCommandSequence kDrainEarlyPauseAfterNotifFlushOffloadSeq = std::make_tuple(
+        std::string("DrainEarlyPauseAfterNotifFlush"), kAidlVersion3, "aosp.clipTransitionSupport",
+        0, StreamTypeFilter::OFFLOAD, makeDrainEarlyPauseAfterNotifFlushOffloadCommands(),
+        true /*validatePositionIncrease*/);
+
+// DRAINING_en ->(onDrainReady) DRAINING_en_sent ->(pause) DRAIN_PAUSED_en_sent ->(burst)
+//   DRAIN_PAUSED_en_sent ->(start) DRAINING_en_sent ->(onDrainReady) IDLE | TRANSFERRING
+std::shared_ptr<StateSequence> makeDrainEarlyPauseAfterReadyOffloadCommands() {
+    using State = StreamDescriptor::State;
+    auto d = std::make_unique<StateDag>();
+    StateDag::Node lastIdle = d->makeFinalNode(State::IDLE);
+    StateDag::Node lastTransferring = d->makeFinalNode(State::TRANSFERRING);
+    // The second onDrainReady event.
+    StateDag::Node continueDraining =
+            d->makeNode(State::DRAINING, kDrainReadyEvent, lastIdle, lastTransferring);
+    StateDag::Node drain = d->makeNodes(
+            {std::make_pair(State::ACTIVE, kDrainOutEarlyCommand),
+             std::make_pair(State::DRAINING, kDrainReadyEvent),
+             std::make_pair(State::DRAINING, kPauseCommand),
+             std::make_pair(State::DRAIN_PAUSED, kBurstCommand),
+             // Burst commands sent in the 'en_sent' sub-state must not affect the state.
+             std::make_pair(State::DRAIN_PAUSED, kStartCommand)},
+            continueDraining);
+    StateDag::Node active = makeAsyncBurstCommands(d.get(), 10, drain);
+    StateDag::Node idle = d->makeNode(State::IDLE, kBurstCommand, active);
+    idle.children().push_back(d->makeNode(State::TRANSFERRING, kTransferReadyEvent, active));
+    d->makeNode(State::STANDBY, kStartCommand, idle);
+    return std::make_shared<StateSequenceFollower>(std::move(d));
+}
+static const NamedCommandSequence kDrainEarlyPauseAfterReadyOffloadSeq = std::make_tuple(
+        std::string("DrainEarlyPauseAfterReady"), kAidlVersion3, "aosp.clipTransitionSupport", 0,
+        StreamTypeFilter::OFFLOAD, makeDrainEarlyPauseAfterReadyOffloadCommands(),
+        true /*validatePositionIncrease*/);
+
 std::shared_ptr<StateSequence> makeDrainPauseOutCommands(bool isSync) {
     using State = StreamDescriptor::State;
     auto d = std::make_unique<StateDag>();
@@ -5334,7 +5633,13 @@ INSTANTIATE_TEST_SUITE_P(
                                          kStandbyOutSyncSeq, kStandbyOutAsyncSeq, kPauseOutSyncSeq,
                                          kPauseOutAsyncSeq, kFlushOutSyncSeq, kFlushOutAsyncSeq,
                                          kDrainPauseFlushOutSyncSeq, kDrainPauseFlushOutAsyncSeq,
-                                         kDrainEarlyOffloadSeq),
+                                         kDrainEarlyOffloadSeq, kDrainEarlyAddSecondClipOffloadSeq,
+                                         kDrainEarlyCancelOffloadSeq,
+                                         kDrainEarlyPauseBeforeNotifOffloadSeq,
+                                         kDrainEarlyPauseBeforeNotifCancelOffloadSeq,
+                                         kDrainEarlyPauseBeforeNotifFlushOffloadSeq,
+                                         kDrainEarlyPauseAfterNotifFlushOffloadSeq,
+                                         kDrainEarlyPauseAfterReadyOffloadSeq),
                          testing::Values(false, true)),
         GetStreamIoTestName);
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioStreamIoOut);
@@ -5343,6 +5648,27 @@ INSTANTIATE_TEST_SUITE_P(AudioPatchTest, AudioModulePatch,
                          testing::ValuesIn(android::getAidlHalInstanceNames(IModule::descriptor)),
                          android::PrintInstanceNameToString);
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioModulePatch);
+
+std::shared_ptr<StateSequence> makeSyncOutBurstStandbyCommands(size_t burstCount, size_t cycleCount,
+                                                               int interCycleSleepNs) {
+    using State = StreamDescriptor::State;
+    using NodeRef = std::reference_wrapper<DagNode<StateTransitionFrom>>;
+    auto d = std::make_unique<StateDag>();
+    // Note: the DAG is built in a reverse order, starting from the final node.
+    NodeRef prevCycle(d->makeFinalNode(State::STANDBY));
+    for (size_t i = 0; i < cycleCount; ++i) {
+        StateDag::Node standby = d->makeNodes({std::make_pair(State::ACTIVE, kPauseCommand),
+                                               std::make_pair(State::PAUSED, kFlushCommand),
+                                               std::make_pair(State::IDLE, kStandbyCommand),
+                                               std::make_pair(State::STANDBY, interCycleSleepNs)},
+                                              prevCycle.get());
+        StateDag::Node idle =
+                d->makeNode(State::IDLE, kBurstCommand,
+                            d->makeNodes(State::ACTIVE, kBurstCommand, burstCount, standby));
+        prevCycle = NodeRef(d->makeNode(State::STANDBY, kStartCommand, idle));
+    }
+    return std::make_shared<StateSequenceFollower>(std::move(d));
+}
 
 static std::vector<std::string> getRemoteSubmixModuleInstance() {
     auto instances = android::getAidlHalInstanceNames(IModule::descriptor);
@@ -5393,6 +5719,12 @@ class WithRemoteSubmix {
                 mStream.StartWorkerToSendBurstCommands(burstCount, standbyInputWhenDone));
     }
 
+    void StartOutWorkerForBurstStandbyCycle(size_t burstCount, size_t cycleCount,
+                                            int interCycleSleepNs) {
+        ASSERT_NO_FATAL_FAILURE(mStream.StartOutWorkerForBurstStandbyCycle(burstCount, cycleCount,
+                                                                           interCycleSleepNs));
+    }
+
     void JoinWorkerAfterBurstCommands(bool callPrepareToCloseBeforeJoin) {
         ASSERT_NO_FATAL_FAILURE(mStream.JoinWorkerAfterBurstCommands(
                 true /*validatePositionIncrease*/, callPrepareToCloseBeforeJoin));
@@ -5414,6 +5746,15 @@ class WithRemoteSubmix {
     }
 
     std::optional<AudioDeviceAddress> getAudioDeviceAddress() const { return mAddress; }
+    std::vector<int64_t> getBurstIntervals() const {
+        const auto& occurrences = mStream.getBurstOccurrences();
+        if (occurrences.empty()) return {};
+        std::vector<int64_t> result;
+        for (size_t i = 0; i < occurrences.size() - 1; ++i) {
+            result.push_back(occurrences[i + 1] - occurrences[i]);
+        }
+        return result;
+    }
     const AudioPortConfig& getDevicePortConfig() const { return mStream.getDevicePortConfig(); }
     int8_t getLastBurstIteration() const { return mStream.getLastData()[0]; }
     const AudioPortConfig& getPortConfig() const { return mStream.getPortConfig(); }
@@ -5426,11 +5767,21 @@ class WithRemoteSubmix {
 
 class AudioModuleRemoteSubmix : public AudioCoreModule {
   public:
+    static constexpr const auto kStreamStartOffset = std::chrono::nanoseconds(100ms);
+    static constexpr const int kBurstCount = 50;
+    static constexpr const int kBurstCountTolerance = 2;
+    static constexpr const double kBurstInputIntervalsAlpha = .999;
+    // Output bursts are regulated by MonoPipe and exhibit shorter interval times at start.
+    static constexpr const double kBurstOutputIntervalsAlpha = .99;
+    static constexpr const int kIntervalsMeanTolerance = std::chrono::nanoseconds(2ms).count();
+    static constexpr const auto kIntervalsStdDevTolerance = std::chrono::nanoseconds(5ms).count();
+
     void SetUp() override {
         // Turn off "debug" which enables connections simulation. Since devices of the remote
         // submix module are virtual, there is no need for simulation.
         ASSERT_NO_FATAL_FAILURE(SetUpImpl(GetParam(), false /*setUpDebug*/));
-        if (int32_t version; module->getInterfaceVersion(&version).isOk() && version < 2) {
+        if (int32_t version;
+            module->getInterfaceVersion(&version).isOk() && version < kAidlVersion2) {
             GTEST_SKIP() << "V1 uses a deprecated remote submix device type encoding";
         }
         ASSERT_NO_FATAL_FAILURE(SetUpModuleConfig());
@@ -5441,35 +5792,68 @@ class AudioModuleRemoteSubmix : public AudioCoreModule {
         streamOut.reset();
     }
 
-    void CreateOutputStream() {
-        streamOut = std::make_unique<WithRemoteSubmix<IStreamOut>>();
-        ASSERT_NO_FATAL_FAILURE(streamOut->SetUp(module.get(), moduleConfig.get()));
-        // Note: any issue with connection attempts is considered as a problem.
-        ASSERT_EQ("", streamOut->skipTestReason());
-        ASSERT_TRUE(streamOut->getAudioDeviceAddress().has_value());
-    }
-
     void CreateInputStream(const std::optional<AudioDeviceAddress>& address = std::nullopt) {
-        if (address.has_value()) {
-            streamIn = std::make_unique<WithRemoteSubmix<IStreamIn>>(address.value());
-        } else {
-            ASSERT_TRUE(streamOut->getAudioDeviceAddress().has_value());
-            streamIn = std::make_unique<WithRemoteSubmix<IStreamIn>>(
-                    streamOut->getAudioDeviceAddress().value());
+        CreateStream<IStreamIn, IStreamOut>(streamIn, streamOut, address);
+    }
+
+    void CreateOutputStream(const std::optional<AudioDeviceAddress>& address = std::nullopt) {
+        CreateStream<IStreamOut, IStreamIn>(streamOut, streamIn, address);
+    }
+
+    void VerifyBurstIntervalsUniformity() {
+        ::android::audio_utils::Statistics<double> inputIntervals(kBurstInputIntervalsAlpha),
+            outputIntervals(kBurstOutputIntervalsAlpha);
+        for (const auto a : streamIn->getBurstIntervals()) {
+            inputIntervals.add(a);
         }
-        ASSERT_NO_FATAL_FAILURE(streamIn->SetUp(module.get(), moduleConfig.get()));
-        ASSERT_EQ("", streamIn->skipTestReason());
-        auto inAddress = streamIn->getAudioDeviceAddress();
-        ASSERT_TRUE(inAddress.has_value());
+        for (const auto a : streamOut->getBurstIntervals()) {
+            outputIntervals.add(a);
+        }
+        EXPECT_NEAR(inputIntervals.getN(), outputIntervals.getN(), kBurstCountTolerance)
+                << "input intervals: "
+                << ::android::internal::ToString(streamIn->getBurstIntervals())
+                << ", output intervals: "
+                << ::android::internal::ToString(streamOut->getBurstIntervals());
+        EXPECT_NEAR(inputIntervals.getMean(), outputIntervals.getMean(),
+                    kIntervalsMeanTolerance)
+                << "input intervals: "
+                << ::android::internal::ToString(streamIn->getBurstIntervals())
+                << ", output intervals: "
+                << ::android::internal::ToString(streamOut->getBurstIntervals());
+        EXPECT_LT(inputIntervals.getStdDev(), kIntervalsStdDevTolerance)
+                << ::android::internal::ToString(streamIn->getBurstIntervals());
+        EXPECT_LT(outputIntervals.getStdDev(), kIntervalsStdDevTolerance)
+                << ::android::internal::ToString(streamOut->getBurstIntervals());
+    }
+
+  private:
+    template <class ThisStream, class OtherStream>
+    void CreateStream(std::unique_ptr<WithRemoteSubmix<ThisStream>>& thisStream,
+                      std::unique_ptr<WithRemoteSubmix<OtherStream>>& otherStream,
+                      const std::optional<AudioDeviceAddress>& address) {
+        std::optional<AudioDeviceAddress> requestedAddress;
         if (address.has_value()) {
-            if (address.value() != AudioDeviceAddress{}) {
-                ASSERT_EQ(address.value(), inAddress.value());
-            }
+            requestedAddress = address;
+        } else if (otherStream) {
+            ASSERT_TRUE(otherStream->getAudioDeviceAddress().has_value());
+            requestedAddress = otherStream->getAudioDeviceAddress().value();
+        }
+        if (requestedAddress.has_value()) {
+            thisStream = std::make_unique<WithRemoteSubmix<ThisStream>>(requestedAddress.value());
         } else {
-            ASSERT_EQ(streamOut->getAudioDeviceAddress().value(), inAddress.value());
+            thisStream = std::make_unique<WithRemoteSubmix<ThisStream>>();
+        }
+        ASSERT_NO_FATAL_FAILURE(thisStream->SetUp(module.get(), moduleConfig.get()));
+        // Note: any issue with connection attempts is considered as a problem.
+        ASSERT_EQ("", thisStream->skipTestReason());
+        const auto actualAddress = thisStream->getAudioDeviceAddress();
+        ASSERT_TRUE(actualAddress.has_value());
+        if (requestedAddress.has_value() && requestedAddress.value() != AudioDeviceAddress{}) {
+            ASSERT_EQ(requestedAddress.value(), actualAddress.value());
         }
     }
 
+  public:
     std::unique_ptr<WithRemoteSubmix<IStreamOut>> streamOut;
     std::unique_ptr<WithRemoteSubmix<IStreamIn>> streamIn;
 };
@@ -5511,9 +5895,10 @@ TEST_P(AudioModuleRemoteSubmix, BlockedOutputUnblocksOnClose) {
 }
 
 TEST_P(AudioModuleRemoteSubmix, OutputBlocksUntilInputStarts) {
+    // Create and start output stream before creating the input side.
     ASSERT_NO_FATAL_FAILURE(CreateOutputStream());
-    ASSERT_NO_FATAL_FAILURE(CreateInputStream());
     ASSERT_NO_FATAL_FAILURE(streamOut->StartWorkerToSendBurstCommands());
+    ASSERT_NO_FATAL_FAILURE(CreateInputStream());
     // Read the head of the pipe and check that it starts with the first output burst, that is,
     // the contents of the very first write has not been superseded due to pipe overflow.
     // The burstCount is '0' because the very first burst is used to exit from the 'IDLE' state,
@@ -5559,6 +5944,68 @@ TEST_P(AudioModuleRemoteSubmix, OpenInputMultipleTimes) {
     }
     ASSERT_NO_FATAL_FAILURE(
             streamOut->JoinWorkerAfterBurstCommands(false /*callPrepareToCloseBeforeJoin*/));
+}
+
+// Create and start output, then input.
+TEST_P(AudioModuleRemoteSubmix, BurstIntervalsUniformity) {
+    ASSERT_NO_FATAL_FAILURE(CreateOutputStream());
+    // Start writing into the output stream.
+    ASSERT_NO_FATAL_FAILURE(streamOut->StartWorkerToSendBurstCommands(kBurstCount));
+    // Keep writing for some time before starting reads.
+    std::this_thread::sleep_for(kStreamStartOffset);
+    ASSERT_NO_FATAL_FAILURE(CreateInputStream());
+    ASSERT_NO_FATAL_FAILURE(streamIn->SendBurstCommands(
+            false /*callPrepareToCloseBeforeJoin*/, kBurstCount, true /*standbyInputWhenDone*/));
+    ASSERT_NO_FATAL_FAILURE(
+            streamOut->JoinWorkerAfterBurstCommands(false /*callPrepareToCloseBeforeJoin*/));
+    EXPECT_NO_FATAL_FAILURE(VerifyBurstIntervalsUniformity());
+}
+
+// Create and start input, then output.
+TEST_P(AudioModuleRemoteSubmix, BurstIntervalsUniformity2) {
+    ASSERT_NO_FATAL_FAILURE(CreateInputStream());
+    // Start reading from the input stream.
+    ASSERT_NO_FATAL_FAILURE(
+            streamIn->StartWorkerToSendBurstCommands(kBurstCount, true /*standbyInputWhenDone*/));
+    // Keep reading some time before starting writes.
+    std::this_thread::sleep_for(kStreamStartOffset);
+    ASSERT_NO_FATAL_FAILURE(CreateOutputStream());
+    ASSERT_NO_FATAL_FAILURE(
+            streamOut->SendBurstCommands(false /*callPrepareToCloseBeforeJoin*/, kBurstCount));
+    ASSERT_NO_FATAL_FAILURE(
+            streamIn->JoinWorkerAfterBurstCommands(false /*callPrepareToCloseBeforeJoin*/));
+    EXPECT_NO_FATAL_FAILURE(VerifyBurstIntervalsUniformity());
+}
+
+// Output goes through a number of transferring/standby cycles
+TEST_P(AudioModuleRemoteSubmix, BurstIntervalsUniformityOutputStandbyCycle) {
+    ASSERT_NO_FATAL_FAILURE(CreateInputStream());
+    // Since there are several cycles of transfer/standby, use more bursts.
+    constexpr const int kInputBurstCount = kBurstCount * 2;
+    // Start reading from the input stream.
+    ASSERT_NO_FATAL_FAILURE(streamIn->StartWorkerToSendBurstCommands(
+            kInputBurstCount, true /*standbyInputWhenDone*/));
+    std::this_thread::sleep_for(kStreamStartOffset);
+    ASSERT_NO_FATAL_FAILURE(CreateOutputStream());
+    constexpr const int kCycleCount = 3;
+    // Since output stream has gaps, account for them by reducing the bursts count used for writing
+    // by 75%.
+    constexpr const int kWriteCycleBurstCount = (kInputBurstCount * 3 / 4) / kCycleCount;
+    ASSERT_NO_FATAL_FAILURE(streamOut->StartOutWorkerForBurstStandbyCycle(
+            kWriteCycleBurstCount, kCycleCount, kStreamStartOffset.count()));
+    ASSERT_NO_FATAL_FAILURE(
+            streamOut->JoinWorkerAfterBurstCommands(false /*callPrepareToCloseBeforeJoin*/));
+    ASSERT_NO_FATAL_FAILURE(
+            streamIn->JoinWorkerAfterBurstCommands(false /*callPrepareToCloseBeforeJoin*/));
+    // Verify input intervals only.
+    ::android::audio_utils::Statistics<double> inputIntervals(kBurstInputIntervalsAlpha);
+    for (const auto a : streamIn->getBurstIntervals()) {
+        inputIntervals.add(a);
+    }
+    EXPECT_NEAR(inputIntervals.getN(), kInputBurstCount, kBurstCountTolerance)
+            << ::android::internal::ToString(streamIn->getBurstIntervals());
+    EXPECT_LT(inputIntervals.getStdDev(), kIntervalsStdDevTolerance)
+            << ::android::internal::ToString(streamIn->getBurstIntervals());
 }
 
 INSTANTIATE_TEST_SUITE_P(AudioModuleRemoteSubmixTest, AudioModuleRemoteSubmix,

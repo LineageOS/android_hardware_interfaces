@@ -792,6 +792,7 @@ TEST_P(GnssHalTest, BlocklistIndividualSatellites) {
     status = gnss_configuration_hal->setBlocklist(sources);
     ASSERT_TRUE(status.isOk());
 
+    const int kLocationsToAwaitForReacquisition = 7;
     bool strongest_sv_is_reobserved = false;
     // do several loops awaiting a few locations, allowing non-immediate reacquisition strategies
     int unblocklist_loops_remaining = kRetriesToUnBlocklist;
@@ -805,7 +806,7 @@ TEST_P(GnssHalTest, BlocklistIndividualSatellites) {
             aidl_gnss_cb_->sv_info_list_cbq_.reset();
             aidl_gnss_cb_->location_cbq_.reset();
         }
-        StartAndCheckLocations(kLocationsToAwait);
+        StartAndCheckLocations(kLocationsToAwaitForReacquisition);
 
         // early exit loop if test is being run with insufficient signal
         location_called_count = (aidl_gnss_hal_->getInterfaceVersion() <= 1)

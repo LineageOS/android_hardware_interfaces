@@ -34,7 +34,6 @@ cc_library_static {
     static_libs: [
         "VtsHalWifiV1_0TargetTestUtil",
         "VtsHalWifiSupplicantV1_0TargetTestUtil",
-        "VtsHalWifiSupplicantV1_1TargetTestUtil",
         "android.hardware.wifi.supplicant@1.0",
         "android.hardware.wifi.supplicant@1.1",
         "android.hardware.wifi.supplicant@1.2",
@@ -55,7 +54,6 @@ cc_test {
     static_libs: [
         "VtsHalWifiV1_0TargetTestUtil",
         "VtsHalWifiSupplicantV1_0TargetTestUtil",
-        "VtsHalWifiSupplicantV1_1TargetTestUtil",
         "VtsHalWifiSupplicantV1_2TargetTestUtil",
         "android.hardware.wifi.supplicant@1.0",
         "android.hardware.wifi.supplicant@1.1",
@@ -83,7 +81,6 @@ cc_test {
     static_libs: [
         "VtsHalWifiV1_0TargetTestUtil",
         "VtsHalWifiSupplicantV1_0TargetTestUtil",
-        "VtsHalWifiSupplicantV1_1TargetTestUtil",
         "VtsHalWifiSupplicantV1_2TargetTestUtil",
         "android.hardware.wifi.supplicant@1.0",
         "android.hardware.wifi.supplicant@1.1",

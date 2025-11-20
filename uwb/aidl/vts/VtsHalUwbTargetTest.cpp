@@ -216,7 +216,7 @@ TEST_P(UwbAidl, ChipSendUciMessage_GetDeviceInfo) {
                     init_cb_promise.set_value();
                 }
             });
-    std::chrono::milliseconds timeout{1000};
+    std::chrono::milliseconds timeout{kOpenCallbackTimeoutMs};
     const auto iuwb_chip = getAnyChip();
     EXPECT_TRUE(iuwb_chip->open(callback).isOk());
     EXPECT_EQ(open_cb_future.wait_for(timeout), std::future_status::ready);

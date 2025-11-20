@@ -2092,7 +2092,7 @@ std::string FakeVehicleHardware::dumpSetMinMaxValue(const std::vector<std::strin
 
     triggerSupportedValueChange(propId, areaId);
     return StringPrintf("Min/Max supported value for propId: %s, areaId: %s set\n",
-                        maybeInfo->propIdStr.c_str(), maybeInfo->propIdStr.c_str());
+                        maybeInfo->propIdStr.c_str(), maybeInfo->areaIdStr.c_str());
 }
 
 std::string FakeVehicleHardware::dumpSetSupportedValues(const std::vector<std::string>& options) {
@@ -2136,7 +2136,7 @@ std::string FakeVehicleHardware::dumpSetSupportedValues(const std::vector<std::s
     }
     triggerSupportedValueChange(maybeInfo->propId, maybeInfo->areaId);
     return StringPrintf("Supported values list for propId: %s, areaId: %s set\n",
-                        maybeInfo->propIdStr.c_str(), maybeInfo->propIdStr.c_str());
+                        maybeInfo->propIdStr.c_str(), maybeInfo->areaIdStr.c_str());
 }
 
 void FakeVehicleHardware::triggerSupportedValueChange(int32_t propId, int32_t areaId) {

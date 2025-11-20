@@ -30,11 +30,12 @@ class BluetoothAudioSessionControl {
    * The control API helps to check if session is ready or not
    * @return: true if the Bluetooth stack has started th specified session
    ***/
-  static bool IsSessionReady(const SessionType& session_type) {
+  static bool IsSessionReady(const SessionType& session_type,
+                             bool is_primary_hal = true) {
     std::shared_ptr<BluetoothAudioSession> session_ptr =
         BluetoothAudioSessionInstance::GetSessionInstance(session_type);
     if (session_ptr != nullptr) {
-      return session_ptr->IsSessionReady();
+      return session_ptr->IsSessionReady(is_primary_hal);
     }
 
     return false;

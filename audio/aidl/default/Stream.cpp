@@ -572,7 +572,7 @@ StreamOutWorkerLogic::Status StreamOutWorkerLogic::cycle() {
                         if (asyncCallback == nullptr ||
                             mState != StreamDescriptor::State::DRAIN_PAUSED) {
                             mState = StreamDescriptor::State::PAUSED;
-                        } else {
+                        } else if (mDrainState != DrainState::EN_SENT) {
                             mState = StreamDescriptor::State::TRANSFER_PAUSED;
                         }
                     } else if (mState == StreamDescriptor::State::IDLE ||

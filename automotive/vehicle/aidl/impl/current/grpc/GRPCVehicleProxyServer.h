@@ -85,6 +85,10 @@ class GrpcVehicleProxyServer : public proto::VehicleServer::Service {
                                            const proto::GetSupportedValuesListsRequest* requests,
                                            proto::GetSupportedValuesListsResult* results) override;
 
+    ::grpc::Status StartSupportedValuesChangeStream(
+            ::grpc::ServerContext* context, const ::google::protobuf::Empty* request,
+            ::grpc::ServerWriter<proto::SupportedValuesChange>* stream) override;
+
     GrpcVehicleProxyServer& Start();
 
     GrpcVehicleProxyServer& Shutdown();
@@ -94,9 +98,12 @@ class GrpcVehicleProxyServer : public proto::VehicleServer::Service {
   private:
     void OnVehiclePropChange(const std::vector<aidlvhal::VehiclePropValue>& values);
 
+    void OnSupportedValuesChange(const std::vector<PropIdAreaId>& propIdAreaIds);
+
     // We keep long-lasting connection for streaming the prop values.
+    template <typename ValueType>
     struct ConnectionDescriptor {
-        explicit ConnectionDescriptor(::grpc::ServerWriter<proto::VehiclePropValues>* stream)
+        explicit ConnectionDescriptor(::grpc::ServerWriter<ValueType>* stream)
             : mStream(stream),
               mConnectionID(connection_id_counter_.fetch_add(1) + 1),
               mMtx(std::make_unique<std::mutex>()),
@@ -111,14 +118,14 @@ class GrpcVehicleProxyServer : public proto::VehicleServer::Service {
 
         uint64_t ID() const { return mConnectionID; }
 
-        bool Write(const proto::VehiclePropValues& values);
+        bool Write(const ValueType& values);
 
         void Wait();
 
         void Shutdown();
 
       private:
-        ::grpc::ServerWriter<proto::VehiclePropValues>* mStream;
+        ::grpc::ServerWriter<ValueType>* mStream;
         uint64_t mConnectionID{0};
         std::unique_ptr<std::mutex> mMtx;
         std::unique_ptr<std::condition_variable> mCV;
@@ -132,7 +139,14 @@ class GrpcVehicleProxyServer : public proto::VehicleServer::Service {
     std::unique_ptr<IVehicleHardware> mHardware;
 
     std::shared_mutex mConnectionMutex;
-    std::vector<std::shared_ptr<ConnectionDescriptor>> mValueStreamingConnections;
+    std::vector<std::shared_ptr<ConnectionDescriptor<proto::VehiclePropValues>>>
+            mValueStreamingConnections;
+    std::vector<std::shared_ptr<ConnectionDescriptor<proto::SupportedValuesChange>>>
+            mSupportedValuesChangeConnections;
+
+    template <typename ValueType>
+    void writeToStream(std::vector<std::shared_ptr<ConnectionDescriptor<ValueType>>>& connections,
+                       const ValueType& protoValues);
 
     static constexpr auto kHardwareOpTimeout = std::chrono::seconds(1);
 };

@@ -294,7 +294,7 @@ cc_fuzz {
     fuzz_config: {
         cc: [
             "ericjeong@google.com",
-            "shanyu@google.com",
+            "tylertrephan@google.com",
         ],
         componentid: 533764,
         hotlists: [

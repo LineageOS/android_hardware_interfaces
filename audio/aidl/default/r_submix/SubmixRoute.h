@@ -44,9 +44,19 @@ static constexpr int kDefaultSampleRateHz = 48000;
 // read from the sink. The maximum latency of the device is the size of the MonoPipe's buffer
 // the minimum latency is the MonoPipe buffer size divided by this value.
 static constexpr int kDefaultPipePeriodCount = 4;
+static constexpr int kDefaultPipePeriodSizeFrames = 1024;
 // Size at the default sample rate
 // NOTE: This value will be rounded up to the nearest power of 2 by MonoPipe.
-static constexpr int kDefaultPipeSizeInFrames = 1024 * kDefaultPipePeriodCount;
+static constexpr int kDefaultPipeSizeInFrames =
+        kDefaultPipePeriodSizeFrames * kDefaultPipePeriodCount;
+// The duration of kMaxReadFailureAttempts * kReadAttemptSleepUs must be strictly inferior to the
+// duration of a record buffer (kDefaultPipePeriodSizeFrames) at the current record sample rate (of
+// the device, not of the recording itself). Here we have: 3 * 240 = 720 < 1024 frames
+static constexpr int kMaxReadFailureAttempts = 3;
+static constexpr int kReadAttemptSleepFrames = 240;
+static_assert(kMaxReadFailureAttempts * kReadAttemptSleepFrames * 7 <
+                      kDefaultPipePeriodSizeFrames * 5,
+              "Duration of attempts * sleep must be significantly less than the period size");
 
 // Configuration of the audio stream.
 struct AudioConfig {

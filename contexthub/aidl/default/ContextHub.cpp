@@ -245,11 +245,13 @@ ScopedAStatus ContextHub::HubInterface::registerEndpoint(const EndpointInfo& in_
     if (!mActive) {
         return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
     }
+    if (in_endpoint.id.hubId != kInfo.hubId) {
+        return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
     std::unique_lock<std::mutex> lock(mEndpointMutex);
 
     for (const EndpointInfo& endpoint : mEndpoints) {
-        if ((endpoint.id.id == in_endpoint.id.id && endpoint.id.hubId == in_endpoint.id.hubId) ||
-            endpoint.name == in_endpoint.name) {
+        if (endpoint.id.id == in_endpoint.id.id || endpoint.name == in_endpoint.name) {
             return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
         }
     }

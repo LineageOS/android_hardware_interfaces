@@ -51,7 +51,6 @@ cc_defaults {
         "libcppcose_rkp",
         "libfs_mgr",
         "libjsoncpp",
-        "libkeymint",
         "libkeymint_remote_prov_support",
         "libkeymint_support",
     ],

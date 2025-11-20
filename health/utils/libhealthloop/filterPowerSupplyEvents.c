@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include <bpf_helpers.h>    // load_word()
-#include <linux/bpf.h>      // struct __sk_buff
-#include <linux/netlink.h>  // struct nlmsghdr
-#include <stdint.h>         // uint32_t
+#include <android_bpf_defs.h>  // load_word()
+#include <linux/bpf.h>         // struct __sk_buff
+#include <linux/netlink.h>     // struct nlmsghdr
+#include <stdint.h>            // uint32_t
 
 // M4: match 4 bytes. Returns 0 if all bytes match.
 static inline uint32_t M4(struct __sk_buff* skb, unsigned int offset, uint8_t c0, uint8_t c1,
@@ -51,7 +51,7 @@ static inline uint32_t match_power_supply(struct __sk_buff* skb, unsigned int of
 
 // The Linux kernel 5.4 BPF verifier rejects this program, probably because of its size. Hence the
 // restriction that the kernel version must be at least 5.10.
-DEFINE_BPF_PROG_KVER("skfilter/power_supply", AID_ROOT, AID_SYSTEM, filterPowerSupplyEvents,
+DEFINE_BPF_PROG_KVER("skfilter/power_supply", AID_ROOT, AID_SYSTEM, skfilter_power_supply,
                      KVER(5, 10, 0))
 (struct __sk_buff* skb) {
     uint32_t i;

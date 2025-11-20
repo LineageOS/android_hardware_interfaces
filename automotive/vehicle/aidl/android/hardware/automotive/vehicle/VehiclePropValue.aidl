@@ -40,7 +40,20 @@ parcelable VehiclePropValue {
     /** Property identifier */
     int prop;
 
-    /** Status of the property */
+    /**
+     * Status of the property for reading.
+     *
+     * For read/write property, this may also apply for writing but not
+     * guaranteed, e.g. the property might be available for read but not
+     * available for writing. In such case, status is AVAILABLE and the value
+     * field contains valid information.
+     *
+     * NOTE: There is currently no way for a client to monitor the write status for a read/write or
+     * write property. The client only knows if the property is available for writing when it tries
+     * to set the value (via the StatusCode).
+     *
+     * NOTE: If the status is not AVAILABLE, the value field must be ignored.
+     */
     VehiclePropertyStatus status = VehiclePropertyStatus.AVAILABLE;
 
     RawPropValues value;

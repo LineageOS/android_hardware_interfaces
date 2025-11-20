@@ -1,0 +1,37 @@
+{
+  "fast_download_enabled": true,
+  "sar_backoff_high_resolution_enabled": true,
+  "reg_on_delay_ms": 500,
+  "uart_device_port": "/dev/ttySAC18",
+  "transport_type_priority": [
+    1,
+    2,
+    3
+  ],
+  "accelerated_bt_on_enabled": true,
+  "thread_dispatcher_enabled": true,
+  "bt_power_controlled_by_lpp": true,
+  "hw_stages_without_lpp_control_bt_power_pin": [
+    "stage1",
+    "stage2"
+  ],
+  "fw_unsupported_hw_stages": [
+    "stage1",
+    "stage2"
+  ],
+  "vendor_transport_crash_interval_sec": 3000,
+  "hp_uart_skip_suspend_enabled": true,
+  "energy_controller_logging_enabled": true,
+  "self_restart_recovery_enabled": true,
+  "ble_non_connection_sar_enabled": true,
+  "kernel_rx_wakelock_time_ms": 200,
+  "low_power_mode_enabled": true,
+  "bqr_event_mask": "456",
+  "ldac_quality_mode": "mode1",
+  "transport_fallback_type": 1,
+  "lpm_enable_proc_node": "/proc/bluetooth/sleep/lpm",
+  "lpm_waking_proc_node": "/proc/bluetooth/sleep/btwrite",
+  "lpm_wakelock_ctrl_proc_node": "/proc/bluetooth/sleep/wakelock_ctrl",
+  "rfkill_folder_prefix": "/sys/class/rfkill/rfkill",
+  "rfkill_type_bluetooth": "bluetooth"
+}

@@ -19,8 +19,11 @@ package android.hardware.power;
 /**
  * Headroom value result depending on the request params.
  *
- * Each value is ranged from [0, 100], where 0 indicates no GPU resources were left
- * during the calculation interval and the app may expect low resources to be granted.
+ * Each value is either NaN or ranged from [0, 100], where NaN indicates that the result is
+ * temporarily unavailable (e.g. there is not enough util data to compute or the variance is too
+ * high to be actionable) such that the caller may not take any action until a non-NaN value is
+ * returned, while value 0 indicates no resources were left during the calculation interval
+ * and the caller may expect low resources to be granted.
  */
 @VintfStability
 @JavaDerive(equals=true, toString=true)

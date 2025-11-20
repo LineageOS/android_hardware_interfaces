@@ -69,4 +69,11 @@ enum PixelFormat {
   RG_1616_UINT = 0x3a,
   RGBA_10101010 = 0x3b,
   YCBCR_P210 = 0x3c,
+  R_12_UINT = 0x3d,
+  R_14_UINT = 0x3e,
+  RG_1212_UINT = 0x3f,
+  RG_1414_UINT = 0x40,
+  RGBA_12121212_UINT = 0x41,
+  RGBA_14141414_UINT = 0x42,
+  BGRA_1010102 = 0x43,
 }

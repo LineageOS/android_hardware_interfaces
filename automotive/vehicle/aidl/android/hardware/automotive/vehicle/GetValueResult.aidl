@@ -29,6 +29,8 @@ parcelable GetValueResult {
     // fails and prop should be ignored.
     StatusCode status = StatusCode.OK;
     // Contains the property value if status is OK. Must be null if status is
-    // not OK.
+    // not OK. To prevent confusion, if a property not in available status,
+    // GetValueResult.status should be used to represent this instead of
+    // VehiclePropValue.status.
     @nullable VehiclePropValue prop;
 }

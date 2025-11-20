@@ -128,13 +128,16 @@ void FakeFaceEngine::enrollImpl(ISessionCallback* cb, const keymaster::HardwareA
             }
             EnrollmentFrame frame = {};
             auto ac = convertAcquiredInfo(acquired[j]);
-            frame.data.acquiredInfo = ac.first;
-            frame.data.vendorCode = ac.second;
-            frame.stage = (i == 0 && j == 0) ? EnrollmentStage::FIRST_FRAME_RECEIVED
-                          : (i == progress.size() - 2 && j == N - 1)
-                                  ? EnrollmentStage::ENROLLMENT_FINISHED
-                                  : EnrollmentStage::WAITING_FOR_CENTERING;
-            cb->onEnrollmentFrame(frame);
+            if (ac.first != AcquiredInfo::UNKNOWN) {
+                frame.data.acquiredInfo = ac.first;
+                frame.data.vendorCode = ac.second;
+
+                frame.stage = (i == 0 && j == 0) ? EnrollmentStage::FIRST_FRAME_RECEIVED
+                              : (i == progress.size() - 2 && j == N - 1)
+                                      ? EnrollmentStage::ENROLLMENT_FINISHED
+                                      : EnrollmentStage::WAITING_FOR_CENTERING;
+                cb->onEnrollmentFrame(frame);
+            }
         }
 
         if (left == 0 && !IS_TRUE(parts[2])) {  // end and failed
@@ -198,18 +201,8 @@ void FakeFaceEngine::authenticateImpl(ISessionCallback* cb, int64_t /*operationI
     int64_t now = Util::getSystemNanoTime();
     int64_t duration = Face::cfg().get<std::int32_t>("operation_authenticate_duration");
     auto acquired = Face::cfg().get<std::string>("operation_authenticate_acquired");
-    if (acquired.empty()) {
-        Face::cfg().set<std::string>("operation_authenticate_acquired", defaultAcquiredInfo);
-        acquired = defaultAcquiredInfo;
-    }
     auto acquiredInfos = Util::parseIntSequence(acquired);
     int N = acquiredInfos.size();
-
-    if (N == 0) {
-        LOG(ERROR) << "Fail to parse authentiate acquired info: " + acquired;
-        cb->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorError */);
-        return;
-    }
 
     if (mLockoutTracker.checkIfLockout(cb)) {
         return;
@@ -255,19 +248,18 @@ void FakeFaceEngine::authenticateImpl(ISessionCallback* cb, int64_t /*operationI
             LOG(INFO) << "AcquiredInfo:" << i << ": (" << (int)ac.first << "," << (int)ac.second
                       << ")";
             i++;
-
-            // the captured face id may change during authentication period
-            auto idnew = Face::cfg().get<std::int32_t>("enrollment_hit");
-            if (id != idnew) {
-                isEnrolled = std::find(enrolls.begin(), enrolls.end(), idnew) != enrolls.end();
-                LOG(INFO) << "enrollment_hit changed from " << id << " to " << idnew;
-                id = idnew;
-                break;
-            }
         }
 
-        SLEEP_MS(duration / N);
+        SLEEP_MS(duration / (N + 1));
     } while (!Util::hasElapsed(now, duration));
+
+    // The captured face id may change after authentication request is made
+    auto idnew = getEnrollmentHit();
+    if (id != idnew) {
+        isEnrolled = std::find(enrolls.begin(), enrolls.end(), idnew) != enrolls.end();
+        LOG(INFO) << "enrollment_hit changed from " << id << " to " << idnew;
+        id = idnew;
+    }
 
     if (id > 0 && isEnrolled) {
         mLockoutTracker.reset();
@@ -280,6 +272,20 @@ void FakeFaceEngine::authenticateImpl(ISessionCallback* cb, int64_t /*operationI
         cb->onError(Error::TIMEOUT, 0 /* vendorError*/);
         return;
     }
+}
+
+int32_t FakeFaceEngine::getEnrollmentHit() {
+    int64_t now = Util::getSystemNanoTime();
+    int64_t timeout = 5000LL;
+    int32_t enrollmentHit = -1;
+
+    do {
+        enrollmentHit = Face::cfg().get<std::int32_t>("enrollment_hit");
+        if (enrollmentHit > 0) break;
+        SLEEP_MS(timeout / 10);
+    } while (!Util::hasElapsed(now, timeout));
+
+    return enrollmentHit;
 }
 
 std::pair<AcquiredInfo, int32_t> FakeFaceEngine::convertAcquiredInfo(int32_t code) {

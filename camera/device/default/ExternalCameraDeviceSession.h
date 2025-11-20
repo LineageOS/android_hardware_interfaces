@@ -153,7 +153,7 @@ class ExternalCameraDeviceSession : public BnCameraDeviceSession, public OutputT
         // when requesting 1st buffer from a stream.
         // TODO: consider a separate timeout for new vs. steady state?
         // TODO: or make sure framework is warming up the pipeline during configure new stream?
-        static const int kReqProcTimeoutMs = 66;
+        static const int kReqProcTimeoutMs = 132;
 
         static const int kReqWaitTimeoutMs = 33;
         static const int kReqWaitTimesWarn = 90;   // 33ms * 90 ~= 3 sec

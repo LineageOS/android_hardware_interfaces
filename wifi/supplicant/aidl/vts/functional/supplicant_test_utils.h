@@ -83,8 +83,21 @@ void addP2pIface(const std::shared_ptr<ISupplicant> supplicant) {
 }
 
 std::shared_ptr<ISupplicant> getSupplicant(const char* supplicant_name) {
-    std::shared_ptr<ISupplicant> supplicant = ISupplicant::fromBinder(
-        ndk::SpAIBinder(AServiceManager_waitForService(supplicant_name)));
+    // Retry supplicant retrieval if needed
+    std::shared_ptr<ISupplicant> supplicant;
+    for (int i = 0; i < 3; i++) {
+        supplicant = ISupplicant::fromBinder(
+                ndk::SpAIBinder(AServiceManager_waitForService(supplicant_name)));
+        if (supplicant != nullptr) {
+            break;
+        }
+        sleep(1);  // sleep for 1 second
+    }
+
+    if (supplicant == nullptr) {
+        return nullptr;
+    }
+
     addStaIface(supplicant);
     if (testing::deviceSupportsFeature("android.hardware.wifi.direct")) {
         addP2pIface(supplicant);

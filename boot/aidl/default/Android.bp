@@ -50,6 +50,10 @@ cc_binary {
         "libboot_control",
     ],
 
+    vintf_fragment_modules: [
+        "android.hardware.boot-service.default.xml",
+    ],
+
     installable: false, // installed in APEX
 }
 
@@ -103,8 +107,5 @@ apex {
     ],
     prebuilts: [
         "android.hardware.boot-service.default.rc",
-    ],
-    vintf_fragment_modules: [
-        "android.hardware.boot-service.default.xml",
     ],
 }

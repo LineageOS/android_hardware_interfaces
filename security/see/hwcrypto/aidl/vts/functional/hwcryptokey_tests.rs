@@ -22,9 +22,13 @@ use android_hardware_security_see_hwcrypto::aidl::android::hardware::security::s
 };
 use android_hardware_security_see_hwcrypto::aidl::android::hardware::security::see::hwcrypto::types::{
     HalErrorCode, AesKey::AesKey, ExplicitKeyMaterial::ExplicitKeyMaterial, KeyType::KeyType, KeyLifetime::KeyLifetime, KeyUse::KeyUse,
-    HmacKey::HmacKey, ProtectionId::ProtectionId,
+    HmacOperationParameters::HmacOperationParameters,
+    HmacKey::HmacKey, OperationData::OperationData, ProtectionId::ProtectionId,
 };
-use android_hardware_security_see_hwcrypto::aidl::android::hardware::security::see::hwcrypto::KeyPolicy::KeyPolicy;
+use android_hardware_security_see_hwcrypto::aidl::android::hardware::security::see::hwcrypto::{
+    CryptoOperation::CryptoOperation, CryptoOperationSet::CryptoOperationSet, KeyPolicy::KeyPolicy,
+    OperationParameters::OperationParameters,
+};
 use hwcryptohal_common;
 use rdroidtest::{ignore_if, rdroidtest};
 
@@ -97,7 +101,7 @@ fn test_hwcrypto_token_export_import() {
         .expect("Couldn't get back a hwcryptokey binder object");
     let clear_key = ExplicitKeyMaterial::Hmac(HmacKey::Sha256([0; 32]));
     let policy = KeyPolicy {
-        usage: KeyUse::DERIVE,
+        usage: KeyUse::SIGN,
         keyLifetime: KeyLifetime::PORTABLE,
         keyPermissions: Vec::new(),
         keyManagementKey: false,
@@ -108,9 +112,58 @@ fn test_hwcrypto_token_export_import() {
     let token =
         key.getShareableToken(dice_policy.as_slice()).expect("Couldn't get shareable token");
     let imported_key = hw_crypto_key
-        .keyTokenImport(&token, dice_policy.as_slice());
-    assert!(imported_key.is_ok(), "Couldn't import shareable token");
-    // TODO: Use operations to verify that the keys match
+        .keyTokenImport(&token, dice_policy.as_slice())
+        .expect("Couldn't import shareable token");
+
+    let policy = imported_key.getKeyPolicy();
+    assert!(policy.is_ok(), "Couldn't get token key policy");
+
+    let hw_crypto_operations = hw_crypto_key
+        .getHwCryptoOperations()
+        .expect("Couldn't get back a hwcryptokey operations binder object");
+
+    // Using operations to verify that the keys match
+    let hmac_parameters = HmacOperationParameters { key: Some(key) };
+    let op_parameters = OperationParameters::Hmac(hmac_parameters);
+    let mut cmd_list = Vec::<CryptoOperation>::new();
+    let data_output = OperationData::DataBuffer(Vec::new());
+    cmd_list.push(CryptoOperation::DataOutput(data_output));
+    cmd_list.push(CryptoOperation::SetOperationParameters(op_parameters));
+    let input_data = OperationData::DataBuffer("text to be mac'ed".as_bytes().to_vec());
+    cmd_list.push(CryptoOperation::DataInput(input_data));
+    cmd_list.push(CryptoOperation::Finish(None));
+    let crypto_op_set = CryptoOperationSet { context: None, operations: cmd_list };
+    let mut crypto_sets = Vec::new();
+    crypto_sets.push(crypto_op_set);
+    hw_crypto_operations.processCommandList(&mut crypto_sets).expect("couldn't process commands");
+    // Extracting the vector from the command list because of ownership
+    let CryptoOperation::DataOutput(OperationData::DataBuffer(mac)) =
+        crypto_sets.remove(0).operations.remove(0)
+    else {
+        panic!("not reachable, we created this object above on the test");
+    };
+
+    // creating a key with the imported key to compare
+    let hmac_parameters = HmacOperationParameters { key: Some(imported_key) };
+    let op_parameters = OperationParameters::Hmac(hmac_parameters);
+    let mut cmd_list = Vec::<CryptoOperation>::new();
+    let data_output = OperationData::DataBuffer(Vec::new());
+    cmd_list.push(CryptoOperation::DataOutput(data_output));
+    cmd_list.push(CryptoOperation::SetOperationParameters(op_parameters));
+    let input_data = OperationData::DataBuffer("text to be mac'ed".as_bytes().to_vec());
+    cmd_list.push(CryptoOperation::DataInput(input_data));
+    cmd_list.push(CryptoOperation::Finish(None));
+    let crypto_op_set = CryptoOperationSet { context: None, operations: cmd_list };
+    let mut crypto_sets = Vec::new();
+    crypto_sets.push(crypto_op_set);
+    hw_crypto_operations.processCommandList(&mut crypto_sets).expect("couldn't process commands");
+    // Extracting the vector from the command list because of ownership
+    let CryptoOperation::DataOutput(OperationData::DataBuffer(mac2)) =
+        crypto_sets.remove(0).operations.remove(0)
+    else {
+        panic!("not reachable, we created this object above on the test");
+    };
+    assert_eq!(mac, mac2, "got a different mac");
 }
 
 #[rdroidtest]
@@ -130,27 +183,21 @@ fn test_hwcrypto_android_invalid_calls() {
     let protections = Vec::new();
     let res = key.setProtectionId(ProtectionId::WIDEVINE_OUTPUT_BUFFER, &protections);
     assert_eq!(
-        res.err()
-            .expect("should not be call this function from the host")
-            .service_specific_error(),
+        res.err().expect("should not be able to call this function from the host").service_specific_error(),
         HalErrorCode::UNAUTHORIZED,
         "wrong error type received"
     );
     let derivation_key = DiceBoundDerivationKey::OpaqueKey(Some(key));
     let res = hw_crypto_key.deriveCurrentDicePolicyBoundKey(&derivation_key);
     assert_eq!(
-        res.err()
-            .expect("should not be call this function from the host")
-            .service_specific_error(),
+        res.err().expect("should not be able to call this function from the host").service_specific_error(),
         HalErrorCode::UNAUTHORIZED,
         "wrong error type received"
     );
     let fake_policy = Vec::new();
     let res = hw_crypto_key.deriveDicePolicyBoundKey(&derivation_key, &fake_policy);
     assert_eq!(
-        res.err()
-            .expect("should not be call this function from the host")
-            .service_specific_error(),
+        res.err().expect("should not be able to call this function from the host").service_specific_error(),
         HalErrorCode::UNAUTHORIZED,
         "wrong error type received"
     );
@@ -163,9 +210,7 @@ fn test_hwcrypto_android_invalid_calls() {
     };
     let res = hw_crypto_key.deriveKey(&derived_parameters);
     assert_eq!(
-        res.err()
-            .expect("should not be call this function from the host")
-            .service_specific_error(),
+        res.err().expect("should not be able to call this function from the host").service_specific_error(),
         HalErrorCode::UNAUTHORIZED,
         "wrong error type received"
     );

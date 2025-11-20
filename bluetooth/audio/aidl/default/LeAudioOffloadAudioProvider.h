@@ -141,6 +141,18 @@ class LeAudioOffloadAudioProvider : public BluetoothAudioProvider {
       std::optional<std::vector<std::optional<AseDirectionConfiguration>>>&
           valid_direction_configurations,
       bool isExact);
+  void filterRequirementAseDirectionConfigurationExact(
+      std::optional<std::vector<std::optional<AseDirectionConfiguration>>>&
+          direction_configurations,
+      const std::vector<std::optional<AseDirectionRequirement>>& requirements,
+      std::optional<std::vector<std::optional<AseDirectionConfiguration>>>&
+          valid_direction_configurations);
+  void filterRequirementAseDirectionConfigurationLoose(
+      std::optional<std::vector<std::optional<AseDirectionConfiguration>>>&
+          direction_configurations,
+      const std::vector<std::optional<AseDirectionRequirement>>& requirements,
+      std::optional<std::vector<std::optional<AseDirectionConfiguration>>>&
+          valid_direction_configurations);
   std::optional<LeAudioAseConfigurationSetting>
   getCapabilitiesMatchedAseConfigurationSettings(
       IBluetoothAudioProvider::LeAudioAseConfigurationSetting& setting,

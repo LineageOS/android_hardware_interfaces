@@ -240,6 +240,33 @@ TEST_P(RadioImsTest, updateImsCallStatus) {
     verifyError(radioRsp_ims->rspInfo.error);
 }
 
+/*
+ * Test IRadioIms.updateAllowedServices() for the response returned.
+ */
+TEST_P(RadioImsTest, updateAllowedServices) {
+    if (!deviceSupportsFeature(FEATURE_TELEPHONY_IMS)) {
+        ALOGI("Skipping updateAllowedServices because ims is not supported in device");
+        return;
+    } else {
+        ALOGI("Running updateAllowedServices because ims is supported in device");
+    }
+
+    serial = GetRandomSerialNumber();
+
+    ImsService imsService;
+
+    ndk::ScopedAStatus res = radio_ims->updateAllowedServices(serial, {imsService});
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_ims->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_ims->rspInfo.serial);
+
+    ALOGI("updateAllowedServices, rspInfo.error = %s\n",
+          toString(radioRsp_ims->rspInfo.error).c_str());
+
+    verifyError(radioRsp_ims->rspInfo.error);
+}
+
 void RadioImsTest::verifyError(RadioError resp) {
     switch (resp) {
         case RadioError::NONE:

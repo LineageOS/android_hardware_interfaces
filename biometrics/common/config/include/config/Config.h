@@ -114,6 +114,7 @@ class Config {
         }
         return os.str();
     }
+    virtual std::string getSubTag() { return "Config "; }
 
     ConfigValue parseBool(const std::string& value);
     ConfigValue parseString(const std::string& name);

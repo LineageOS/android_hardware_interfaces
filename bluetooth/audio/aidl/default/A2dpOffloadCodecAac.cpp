@@ -31,7 +31,7 @@ enum : bool {
 
 enum : bool {
   kEnableSamplingFrequency44100 = true,
-  kEnableSamplingFrequency48000 = true,
+  kEnableSamplingFrequency48000 = false,
   kEnableSamplingFrequency88200 = false,
   kEnableSamplingFrequency96000 = false,
 };

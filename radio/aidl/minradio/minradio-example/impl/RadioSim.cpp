@@ -32,7 +32,7 @@ constexpr auto ok = &ScopedAStatus::ok;
 
 RadioSim::RadioSim(std::shared_ptr<minimal::SlotContext> context) : minimal::RadioSim(context) {
     addCtsCertificate();  // do NOT call on real device's production build
-    setIccid("98683081462002318379");
+    setIccid("9868308146200231837");
     mFilesystem->write(minimal::sim::paths::msisdn, minimal::sim::encodeMsisdn("+16500000000"));
 }
 

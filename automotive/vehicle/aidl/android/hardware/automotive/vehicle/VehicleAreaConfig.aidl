@@ -265,7 +265,8 @@ parcelable VehicleAreaConfig {
      *
      * If this is not {@code null}. The VHAL implementation must implement
      * {@code getMinMaxSupportedValue}, {@code getSupportedValuesLists},
-     * {@code subscribeSupportedValueChange} for the [propId, areaId].
+     * {@code subscribeSupportedValueChange}, {@code unsubscribeSupportedValueChange} for the
+     * [propId, areaId].
      *
      * This should be non-null if the VHAL implementation wants to expose
      * min/max supported value or supported values list that may change dynamically. For example,

@@ -38,6 +38,7 @@ using ::grpc::Status;
 namespace {
 
 constexpr size_t MAX_RETRY_COUNT = 5;
+constexpr int32_t RECONNECT_SLEEP_MS = 100;
 
 std::shared_ptr<ChannelCredentials> getChannelCredentials() {
     return InsecureChannelCredentials();
@@ -68,8 +69,13 @@ std::vector<AidlResultType> convertSupportedValueProtoResultToAidlResults(
 GRPCVehicleHardware::GRPCVehicleHardware(std::string service_addr)
     : mServiceAddr(std::move(service_addr)),
       mGrpcChannel(CreateChannel(mServiceAddr, getChannelCredentials())),
-      mGrpcStub(proto::VehicleServer::NewStub(mGrpcChannel)),
-      mValuePollingThread([this] { ValuePollingLoop(); }) {}
+      mGrpcStub(proto::VehicleServer::NewStub(mGrpcChannel)) {
+    // Do not init the thread using initialization list because the thread might use some local
+    // variables that are declared after the thread, which might not be initialized yet when the
+    // thread starts.
+    mValuePollingThread = std::thread([this] { ValuePollingLoop(); });
+    mSupportedValuesChangeThread = std::thread([this] { SupportedValuesChangeLoop(); });
+}
 
 // Only used for unit testing.
 GRPCVehicleHardware::GRPCVehicleHardware(std::unique_ptr<proto::VehicleServer::StubInterface> stub,
@@ -77,18 +83,32 @@ GRPCVehicleHardware::GRPCVehicleHardware(std::unique_ptr<proto::VehicleServer::S
     : mServiceAddr(""), mGrpcChannel(nullptr), mGrpcStub(std::move(stub)) {
     if (startValuePollingLoop) {
         mValuePollingThread = std::thread([this] { ValuePollingLoop(); });
+        mSupportedValuesChangeThread = std::thread([this] { SupportedValuesChangeLoop(); });
     }
 }
 
 GRPCVehicleHardware::~GRPCVehicleHardware() {
+    LOG(INFO) << __func__;
     {
         std::lock_guard lck(mShutdownMutex);
         mShuttingDownFlag.store(true);
+        LOG(INFO) << __func__ << ": Cancelling all active stream contexts";
+        for (ClientContext* context : mStreamContexts) {
+            context->TryCancel();
+        }
+        mStreamContexts.clear();
     }
-    mShutdownCV.notify_all();
+    LOG(INFO) << __func__ << ": Waiting for value polling thread to join";
     if (mValuePollingThread.joinable()) {
         mValuePollingThread.join();
     }
+    LOG(INFO)
+            << __func__
+            << ": Value polling thread joined, waiting for supported values change thread to join";
+    if (mSupportedValuesChangeThread.joinable()) {
+        mSupportedValuesChangeThread.join();
+    }
+    LOG(INFO) << __func__ << ": Supported values change thread joined";
 }
 
 std::vector<aidlvhal::VehiclePropConfig> GRPCVehicleHardware::getAllPropertyConfigs() const {
@@ -287,6 +307,16 @@ void GRPCVehicleHardware::registerOnPropertySetErrorEvent(
     mOnSetErr = std::move(callback);
 }
 
+void GRPCVehicleHardware::registerSupportedValueChangeCallback(
+        std::unique_ptr<const SupportedValueChangeCallback> callback) {
+    std::lock_guard lck(mCallbackMutex);
+    if (mOnSupportedValueChange) {
+        LOG(ERROR) << __func__ << " must only be called once.";
+        return;
+    }
+    mOnSupportedValueChange = std::move(callback);
+}
+
 DumpResult GRPCVehicleHardware::dump(const std::vector<std::string>& options) {
     ClientContext context;
     proto::DumpOptions protoDumpOptions;
@@ -378,20 +408,23 @@ bool GRPCVehicleHardware::waitForConnected(std::chrono::milliseconds waitTime) {
 void GRPCVehicleHardware::ValuePollingLoop() {
     while (!mShuttingDownFlag.load()) {
         pollValue();
-        // try to reconnect
+        // Check the flag again to avoid the 100ms wait if we are shutting down.
+        if (mShuttingDownFlag.load()) {
+            return;
+        }
+        // try to reconnect after a short sleep.
+        LOG(WARNING) << __func__ << ": GRPC Value Streaming disconnect, reconnect after "
+                     << RECONNECT_SLEEP_MS << "ms";
+        std::this_thread::sleep_for(std::chrono::milliseconds(RECONNECT_SLEEP_MS));
     }
 }
 
 void GRPCVehicleHardware::pollValue() {
     ClientContext context;
-
-    bool rpc_stopped{false};
-    std::thread shuttingdown_watcher([this, &rpc_stopped, &context]() {
-        std::unique_lock<std::mutex> lck(mShutdownMutex);
-        mShutdownCV.wait(
-                lck, [this, &rpc_stopped]() { return rpc_stopped || mShuttingDownFlag.load(); });
-        context.TryCancel();
-    });
+    {
+        std::lock_guard lck(mShutdownMutex);
+        mStreamContexts.insert(&context);
+    }
 
     auto value_stream = mGrpcStub->StartPropertyValuesStream(&context, ::google::protobuf::Empty());
     LOG(INFO) << __func__ << ": GRPC Value Streaming Started";
@@ -424,14 +457,70 @@ void GRPCVehicleHardware::pollValue() {
 
     {
         std::lock_guard lck(mShutdownMutex);
-        rpc_stopped = true;
+        mStreamContexts.erase(&context);
     }
-    mShutdownCV.notify_all();
-    shuttingdown_watcher.join();
 
     auto grpc_status = value_stream->Finish();
     // never reach here until connection lost
     LOG(ERROR) << __func__ << ": GRPC Value Streaming Failed: " << grpc_status.error_message();
+}
+
+void GRPCVehicleHardware::SupportedValuesChangeLoop() {
+    while (!mShuttingDownFlag.load()) {
+        auto status = pollSupportedValuesChange();
+        if (status.error_code() == grpc::StatusCode::UNIMPLEMENTED) {
+            LOG(WARNING)
+                    << __func__
+                    << ": GRPC vhal proxy server does not implement StartSupportedValuesChange, "
+                       "supported values change will never happen";
+            break;
+        }
+        if (mShuttingDownFlag.load()) {
+            return;
+        }
+        // try to reconnect after a short sleep.
+        LOG(WARNING) << __func__ << ": GRPC Value Streaming disconnect, reconnect after "
+                     << RECONNECT_SLEEP_MS << "ms";
+        std::this_thread::sleep_for(std::chrono::milliseconds(RECONNECT_SLEEP_MS));
+    }
+}
+
+Status GRPCVehicleHardware::pollSupportedValuesChange() {
+    ClientContext context;
+    {
+        std::lock_guard lck(mShutdownMutex);
+        mStreamContexts.insert(&context);
+    }
+
+    auto value_stream =
+            mGrpcStub->StartSupportedValuesChangeStream(&context, ::google::protobuf::Empty());
+    LOG(INFO) << __func__ << ": GRPC Value Streaming Started";
+    proto::SupportedValuesChange supportedValuesChange;
+    while (!mShuttingDownFlag.load() && value_stream->Read(&supportedValuesChange)) {
+        std::vector<PropIdAreaId> propIdAreaIds;
+        for (const auto protoPropIdAreaId : supportedValuesChange.prop_id_area_ids()) {
+            PropIdAreaId propIdAreaId = {};
+            proto_msg_converter::protoToAidl(protoPropIdAreaId, &propIdAreaId);
+            propIdAreaIds.push_back(std::move(propIdAreaId));
+        }
+        if (propIdAreaIds.empty()) {
+            continue;
+        }
+        std::shared_lock lck(mCallbackMutex);
+        if (mOnSupportedValueChange) {
+            (*mOnSupportedValueChange)(propIdAreaIds);
+        }
+    }
+
+    {
+        std::lock_guard lck(mShutdownMutex);
+        mStreamContexts.erase(&context);
+    }
+
+    auto grpc_status = value_stream->Finish();
+    // never reach here until connection lost
+    LOG(ERROR) << __func__ << ": GRPC Value Streaming Failed: " << grpc_status.error_message();
+    return grpc_status;
 }
 
 std::vector<aidlvhal::MinMaxSupportedValueResult> GRPCVehicleHardware::getMinMaxSupportedValues(

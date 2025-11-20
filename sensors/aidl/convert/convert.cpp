@@ -418,10 +418,21 @@ void convertFromSensorEvent(const sensors_event_t& src, Event* dst) {
             info.type = (AdditionalInfo::AdditionalInfoType)srcInfo.type;
             info.serial = srcInfo.serial;
 
-            AdditionalInfo::AdditionalInfoPayload::Int32Values data;
-            CHECK_EQ(data.values.size() * sizeof(int32_t), sizeof(srcInfo.data_int32));
-            memcpy(data.values.data(), srcInfo.data_int32, sizeof(srcInfo.data_int32));
-            info.payload.set<AdditionalInfo::AdditionalInfoPayload::Tag::dataInt32>(data);
+            // AdditionalInfo operation environment parameters section
+            if (info.type == AdditionalInfo::AdditionalInfoType::AINFO_LOCAL_GEOMAGNETIC_FIELD ||
+                info.type == AdditionalInfo::AdditionalInfoType::AINFO_LOCAL_GRAVITY ||
+                (info.type >= AdditionalInfo::AdditionalInfoType::AINFO_CUSTOM_START &&
+                 info.type < AdditionalInfo::AdditionalInfoType::AINFO_DEBUGGING_START)) {
+                AdditionalInfo::AdditionalInfoPayload::FloatValues data;
+                CHECK_EQ(data.values.size() * sizeof(float), sizeof(srcInfo.data_float));
+                memcpy(data.values.data(), srcInfo.data_float, sizeof(srcInfo.data_float));
+                info.payload.set<AdditionalInfo::AdditionalInfoPayload::Tag::dataFloat>(data);
+            } else {
+                AdditionalInfo::AdditionalInfoPayload::Int32Values data;
+                CHECK_EQ(data.values.size() * sizeof(int32_t), sizeof(srcInfo.data_int32));
+                memcpy(data.values.data(), srcInfo.data_int32, sizeof(srcInfo.data_int32));
+                info.payload.set<AdditionalInfo::AdditionalInfoPayload::Tag::dataInt32>(data);
+            }
 
             dst->payload.set<Event::EventPayload::Tag::additional>(info);
             break;

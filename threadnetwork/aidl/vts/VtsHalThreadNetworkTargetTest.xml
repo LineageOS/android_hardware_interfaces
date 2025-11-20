@@ -15,6 +15,7 @@
 -->
 
 <configuration description="Runs VtsHalThreadNetworkTargetTest.">
+    <target_preparer class="com.android.tradefed.targetprep.RootTargetPreparer"/>
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="if pm list features |grep 'android.hardware.thread_network'; then cmd thread_network force-stop-ot-daemon enabled; fi" />
         <option name="run-command" value="cmd bluetooth_manager enable" />

@@ -1,8 +1,12 @@
-# AIDL VHAL libraries and reference implementation.
+# AIDL VHAL V3 libraries and reference implementation.
 ---
 
-This directory stores the libraries useful for implementing vendor AIDL VHAL.
-This directory also stores a reference fake implementation for AIDL VHAL.
+NOTE: This is an outdated version. Please see
+`hardware/interfaces/automotive/vehicle/aidl/impl/current` for the latest
+version.
+
+This directory stores the libraries useful for implementing vendor AIDL VHAL V3.
+This directory also stores a reference fake implementation for AIDL VHAL V3.
 
 ## default_config
 

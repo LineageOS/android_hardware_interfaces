@@ -258,7 +258,7 @@ std::unordered_map<VehicleProperty, std::unordered_set<std::string>>
         {VehicleProperty::REAR_FOG_LIGHTS_STATE, {"access", "change_mode", "data_enum", "require_supported_values_list", "version"}},
         {VehicleProperty::REAR_FOG_LIGHTS_SWITCH, {"access", "change_mode", "data_enum", "require_supported_values_list", "version"}},
         {VehicleProperty::EV_CHARGE_CURRENT_DRAW_LIMIT, {"access", "change_mode", "unit", "version"}},
-        {VehicleProperty::EV_CHARGE_PERCENT_LIMIT, {"access", "change_mode", "legacy_supported_values_in_config", "require_supported_values_list", "version"}},
+        {VehicleProperty::EV_CHARGE_PERCENT_LIMIT, {"access", "change_mode", "legacy_supported_values_in_config", "version"}},
         {VehicleProperty::EV_CHARGE_STATE, {"access", "change_mode", "data_enum", "require_supported_values_list", "version"}},
         {VehicleProperty::EV_CHARGE_SWITCH, {"access", "change_mode", "version"}},
         {VehicleProperty::EV_CHARGE_TIME_REMAINING, {"access", "change_mode", "unit", "version"}},

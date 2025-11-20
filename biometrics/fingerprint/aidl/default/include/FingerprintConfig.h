@@ -22,6 +22,7 @@ namespace aidl::android::hardware::biometrics::fingerprint {
 
 class FingerprintConfig : public Config {
     Config::Data* getConfigData(int* size) override;
+    std::string getSubTag() { return "Fingerprint "; }
 };
 
 }  // namespace aidl::android::hardware::biometrics::fingerprint

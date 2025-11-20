@@ -15,6 +15,7 @@
  */
 
 #include "RenderEngine.h"
+#include "Readback.h"
 #include "renderengine/impl/ExternalTexture.h"
 
 namespace aidl::android::hardware::graphics::composer3::libhwc_aidl_test {

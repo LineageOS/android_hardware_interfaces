@@ -22,6 +22,7 @@
 #include "FakeFingerprintEngineRear.h"
 #include "FakeFingerprintEngineSide.h"
 #include "FakeFingerprintEngineUdfps.h"
+#include "FakeFingerprintEngineUdfpsUltraSonic.h"
 
 #include "FingerprintConfig.h"
 #include "Session.h"

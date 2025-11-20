@@ -62,3 +62,9 @@ ndk::ScopedAStatus RadioImsResponse::updateImsCallStatusResponse(const RadioResp
     parent_ims.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
+
+ndk::ScopedAStatus RadioImsResponse::updateAllowedServicesResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_ims.notify(info.serial);
+    return ndk::ScopedAStatus::ok();
+}

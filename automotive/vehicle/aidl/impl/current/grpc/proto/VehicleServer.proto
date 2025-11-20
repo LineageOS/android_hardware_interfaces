@@ -23,6 +23,7 @@ import "android/hardware/automotive/vehicle/DumpResult.proto";
 import "android/hardware/automotive/vehicle/GetMinMaxSupportedValuesTypes.proto";
 import "android/hardware/automotive/vehicle/GetSupportedValuesListsTypes.proto";
 import "android/hardware/automotive/vehicle/SubscribeRequest.proto";
+import "android/hardware/automotive/vehicle/SupportedValuesChange.proto";
 import "android/hardware/automotive/vehicle/StatusCode.proto";
 import "android/hardware/automotive/vehicle/UnsubscribeRequest.proto";
 import "android/hardware/automotive/vehicle/VehiclePropConfig.proto";
@@ -54,4 +55,7 @@ service VehicleServer {
 
     rpc GetSupportedValuesLists(GetSupportedValuesListsRequest)
             returns (GetSupportedValuesListsResult) {}
+
+    rpc StartSupportedValuesChangeStream(google.protobuf.Empty)
+            returns (stream SupportedValuesChange) {}
 }

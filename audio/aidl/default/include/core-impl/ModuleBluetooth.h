@@ -53,6 +53,8 @@ class ModuleBluetooth final : public Module {
             ::aidl::android::media::audio::common::AudioPortConfig* out_suggested,
             bool* _aidl_return) override;
 
+    ndk::ScopedAStatus supportsVariableLatency(bool* _aidl_return) override;
+
     ndk::ScopedAStatus checkAudioPatchEndpointsMatch(
             const std::vector<::aidl::android::media::audio::common::AudioPortConfig*>& sources,
             const std::vector<::aidl::android::media::audio::common::AudioPortConfig*>& sinks)
@@ -77,6 +79,8 @@ class ModuleBluetooth final : public Module {
     ndk::ScopedAStatus onMasterVolumeChanged(float volume) override;
     int32_t getNominalLatencyMs(
             const ::aidl::android::media::audio::common::AudioPortConfig& portConfig) override;
+
+    binder_status_t dump(int fd, const char** args, uint32_t numArgs) override;
 
     ndk::ScopedAStatus createProxy(
             const ::aidl::android::media::audio::common::AudioPort& audioPort,

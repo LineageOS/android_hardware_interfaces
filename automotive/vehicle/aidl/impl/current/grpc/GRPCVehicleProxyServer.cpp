@@ -56,7 +56,9 @@ void aidlResultsToProtoResults(const AidlResultType& aidlResults, ProtoResultTyp
 }
 }  // namespace
 
-std::atomic<uint64_t> GrpcVehicleProxyServer::ConnectionDescriptor::connection_id_counter_{0};
+template <typename ValueType>
+std::atomic<uint64_t>
+        GrpcVehicleProxyServer::ConnectionDescriptor<ValueType>::connection_id_counter_{0};
 
 GrpcVehicleProxyServer::GrpcVehicleProxyServer(std::string serverAddr,
                                                std::unique_ptr<IVehicleHardware>&& hardware)
@@ -69,6 +71,11 @@ GrpcVehicleProxyServer::GrpcVehicleProxyServer(std::vector<std::string> serverAd
             std::make_unique<const IVehicleHardware::PropertyChangeCallback>(
                     [this](std::vector<aidlvhal::VehiclePropValue> values) {
                         OnVehiclePropChange(values);
+                    }));
+    mHardware->registerSupportedValueChangeCallback(
+            std::make_unique<const IVehicleHardware::SupportedValueChangeCallback>(
+                    [this](std::vector<PropIdAreaId> propIdAreaIds) {
+                        OnSupportedValuesChange(propIdAreaIds);
                     }));
 }
 
@@ -253,7 +260,7 @@ GrpcVehicleProxyServer::GrpcVehicleProxyServer(std::vector<std::string> serverAd
 ::grpc::Status GrpcVehicleProxyServer::StartPropertyValuesStream(
         ::grpc::ServerContext* context, const ::google::protobuf::Empty* request,
         ::grpc::ServerWriter<proto::VehiclePropValues>* stream) {
-    auto conn = std::make_shared<ConnectionDescriptor>(stream);
+    auto conn = std::make_shared<ConnectionDescriptor<proto::VehiclePropValues>>(stream);
     {
         std::lock_guard lck(mConnectionMutex);
         mValueStreamingConnections.push_back(conn);
@@ -283,17 +290,47 @@ GrpcVehicleProxyServer::GrpcVehicleProxyServer(std::vector<std::string> serverAd
     return ::grpc::Status::OK;
 }
 
+::grpc::Status GrpcVehicleProxyServer::StartSupportedValuesChangeStream(
+        ::grpc::ServerContext* context, const ::google::protobuf::Empty* request,
+        ::grpc::ServerWriter<proto::SupportedValuesChange>* stream) {
+    auto conn = std::make_shared<ConnectionDescriptor<proto::SupportedValuesChange>>(stream);
+    {
+        std::lock_guard lck(mConnectionMutex);
+        mSupportedValuesChangeConnections.push_back(conn);
+    }
+    conn->Wait();
+    LOG(ERROR) << __func__ << ": Stream lost, ID : " << conn->ID();
+    return ::grpc::Status(::grpc::StatusCode::ABORTED, "Connection lost.");
+}
+
 void GrpcVehicleProxyServer::OnVehiclePropChange(
         const std::vector<aidlvhal::VehiclePropValue>& values) {
-    std::unordered_set<uint64_t> brokenConn;
     proto::VehiclePropValues protoValues;
     for (const auto& value : values) {
         auto* protoValuePtr = protoValues.add_values();
         proto_msg_converter::aidlToProto(value, protoValuePtr);
     }
+    writeToStream(mValueStreamingConnections, protoValues);
+}
+
+void GrpcVehicleProxyServer::OnSupportedValuesChange(
+        const std::vector<PropIdAreaId>& propIdAreaIds) {
+    proto::SupportedValuesChange protoValues;
+    for (const auto& propIdAreaId : propIdAreaIds) {
+        auto* protoValuePtr = protoValues.add_prop_id_area_ids();
+        proto_msg_converter::aidlToProto(propIdAreaId, protoValuePtr);
+    }
+    writeToStream(mSupportedValuesChangeConnections, protoValues);
+}
+
+template <typename ValueType>
+void GrpcVehicleProxyServer::writeToStream(
+        std::vector<std::shared_ptr<ConnectionDescriptor<ValueType>>>& connections,
+        const ValueType& protoValues) {
+    std::unordered_set<uint64_t> brokenConn;
     {
         std::shared_lock read_lock(mConnectionMutex);
-        for (auto& connection : mValueStreamingConnections) {
+        for (auto& connection : connections) {
             auto writeOK = connection->Write(protoValues);
             if (!writeOK) {
                 LOG(ERROR) << __func__
@@ -306,12 +343,11 @@ void GrpcVehicleProxyServer::OnVehiclePropChange(
         return;
     }
     std::unique_lock write_lock(mConnectionMutex);
-    mValueStreamingConnections.erase(
-            std::remove_if(mValueStreamingConnections.begin(), mValueStreamingConnections.end(),
-                           [&brokenConn](const auto& conn) {
-                               return brokenConn.find(conn->ID()) != brokenConn.end();
-                           }),
-            mValueStreamingConnections.end());
+    connections.erase(std::remove_if(connections.begin(), connections.end(),
+                                     [&brokenConn](const auto& conn) {
+                                         return brokenConn.find(conn->ID()) != brokenConn.end();
+                                     }),
+                      connections.end());
 }
 
 GrpcVehicleProxyServer& GrpcVehicleProxyServer::Start() {
@@ -331,10 +367,17 @@ GrpcVehicleProxyServer& GrpcVehicleProxyServer::Start() {
 }
 
 GrpcVehicleProxyServer& GrpcVehicleProxyServer::Shutdown() {
+    LOG(INFO) << __func__ << ": Start shutting down GrpcVehicleProxyServer";
     std::shared_lock read_lock(mConnectionMutex);
+    LOG(INFO) << __func__ << ": Waiting for value stream connection to shutdown";
     for (auto& conn : mValueStreamingConnections) {
         conn->Shutdown();
     }
+    LOG(INFO) << __func__ << ": Waiting for supported values change stream connection to shutdown";
+    for (auto& conn : mSupportedValuesChangeConnections) {
+        conn->Shutdown();
+    }
+    LOG(INFO) << __func__ << ": Requesting server to shutdown";
     if (mServer) {
         mServer->Shutdown();
     }
@@ -342,17 +385,21 @@ GrpcVehicleProxyServer& GrpcVehicleProxyServer::Shutdown() {
 }
 
 void GrpcVehicleProxyServer::Wait() {
+    LOG(INFO) << __func__ << ": Waiting for server to shutdown";
     if (mServer) {
         mServer->Wait();
     }
+    LOG(INFO) << __func__ << ": Server shutdown complete";
     mServer.reset();
 }
 
-GrpcVehicleProxyServer::ConnectionDescriptor::~ConnectionDescriptor() {
+template <typename ValueType>
+GrpcVehicleProxyServer::ConnectionDescriptor<ValueType>::~ConnectionDescriptor() {
     Shutdown();
 }
 
-bool GrpcVehicleProxyServer::ConnectionDescriptor::Write(const proto::VehiclePropValues& values) {
+template <typename ValueType>
+bool GrpcVehicleProxyServer::ConnectionDescriptor<ValueType>::Write(const ValueType& values) {
     if (!mStream) {
         LOG(ERROR) << __func__ << ": Empty stream. ID: " << ID();
         Shutdown();
@@ -370,12 +417,14 @@ bool GrpcVehicleProxyServer::ConnectionDescriptor::Write(const proto::VehiclePro
     return false;
 }
 
-void GrpcVehicleProxyServer::ConnectionDescriptor::Wait() {
+template <typename ValueType>
+void GrpcVehicleProxyServer::ConnectionDescriptor<ValueType>::Wait() {
     std::unique_lock lck(*mMtx);
     mCV->wait(lck, [this] { return mShutdownFlag; });
 }
 
-void GrpcVehicleProxyServer::ConnectionDescriptor::Shutdown() {
+template <typename ValueType>
+void GrpcVehicleProxyServer::ConnectionDescriptor<ValueType>::Shutdown() {
     {
         std::lock_guard lck(*mMtx);
         mShutdownFlag = true;

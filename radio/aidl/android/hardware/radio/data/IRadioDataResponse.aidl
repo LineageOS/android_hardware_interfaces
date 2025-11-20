@@ -240,4 +240,43 @@ oneway interface IRadioDataResponse {
      *   RadioError:INVALID_ARGUMENTS
      */
     void stopKeepaliveResponse(in RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.ims is not defined
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:NO_RESOURCES
+     *   RadioError:INVALID_CALL_ID
+     */
+    void setUserDataEnabledResponse(in RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.ims is not defined
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:NO_RESOURCES
+     *   RadioError:INVALID_CALL_ID
+     */
+    void setUserDataRoamingEnabledResponse(in RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.data is not defined
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:NO_RESOURCES
+     *   RadioError:INVALID_CALL_ID
+     */
+    void notifyImsDataNetworkResponse(in RadioResponseInfo info);
 }

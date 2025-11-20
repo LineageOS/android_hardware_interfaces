@@ -68,6 +68,11 @@ apex {
         "minradio-example.rc",
     ],
     overrides: ["rild"],
+    // TODO(b/415983829): for some reason, neither of these gets loaded
+    //rros: [
+    //    "ConnectivityOverlayMinradio",
+    //    "ConnectivityOverlayMinradioGoogle",
+    //],
 }
 
 prebuilt_etc {

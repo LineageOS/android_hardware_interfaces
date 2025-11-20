@@ -26,6 +26,7 @@ package {
 aidl_interface {
     name: "android.hardware.gnss",
     vendor_available: true,
+    host_supported: true,
     srcs: [
         "android/hardware/gnss/*.aidl",
         "android/hardware/gnss/measurement_corrections/*.aidl",

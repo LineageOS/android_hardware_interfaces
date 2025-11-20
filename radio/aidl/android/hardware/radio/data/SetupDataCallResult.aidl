@@ -115,11 +115,17 @@ parcelable SetupDataCallResult {
     String[] pcscf;
     /**
      * MTU received from network for IPv4.
+     * It is an unsigned 16-bit integer, meaning its valid range is from 0 to 65535.
+     * Additionally, the MTU must be an even number. If an odd value is received,
+     * it will be rounded down.
      * Value <= 0 means network has either not sent a value or sent an invalid value.
      */
     int mtuV4;
     /**
      * MTU received from network for IPv6.
+     * It is an unsigned 16-bit integer, meaning its valid range is from 0 to 65535.
+     * Additionally, the MTU must be an even number. If an odd value is received,
+     * it will be rounded down.
      * Value <= 0 means network has either not sent a value or sent an invalid value.
      */
     int mtuV6;

@@ -28,6 +28,7 @@
 #include <aidl/android/hardware/security/secureclock/ISecureClock.h>
 #include <android-base/logging.h>
 #include <android/binder_manager.h>
+#include <vendorsupport/api_level.h>
 
 using aidl::android::hardware::gatekeeper::GatekeeperEnrollResponse;
 using aidl::android::hardware::gatekeeper::GatekeeperVerifyResponse;
@@ -538,6 +539,92 @@ TEST_P(AuthTest, AuthPerOperation) {
     dodgy_hat->mac[0] ^= 0x01;
     EXPECT_EQ(ErrorCode::KEY_USER_NOT_AUTHENTICATED,
               Finish(message, {} /* signature */, &ciphertext, dodgy_hat.value()));
+}
+
+// Test use of a key with large message that requires an auth token for each action on the
+// operation, with a per-operation challenge value included.
+TEST_P(AuthTest, AuthPerOperationLargeMessage) {
+    if (!GatekeeperAvailable()) {
+        GTEST_SKIP() << "No Gatekeeper available";
+    }
+    if (SecLevel() == SecurityLevel::STRONGBOX &&
+        get_vendor_api_level() <= AVendorSupport_getVendorApiLevelOf(__ANDROID_API_V__)) {
+        // Certain Strongbox implementations incorrectly handle Auth-bound key
+        // operations with large input messages, leading to VERIFICATION_FAILED
+        // error. This test is skipped for these older implementations.
+        GTEST_SKIP() << "Skip test on StrongBox device with vendor-api-level <= __ANDROID_API_V__";
+    }
+
+    // Create an AES key that requires authentication per-action.
+    auto builder = AuthorizationSetBuilder()
+                           .AesEncryptionKey(256)
+                           .BlockMode(BlockMode::CBC)
+                           .Padding(PaddingMode::PKCS7)
+                           .Authorization(TAG_USER_SECURE_ID, sid_)
+                           .Authorization(TAG_USER_AUTH_TYPE, HardwareAuthenticatorType::PASSWORD);
+    vector<uint8_t> keyblob;
+    vector<KeyCharacteristics> key_characteristics;
+    vector<Certificate> cert_chain;
+    ASSERT_EQ(ErrorCode::OK,
+              GenerateKey(builder, std::nullopt, &keyblob, &key_characteristics, &cert_chain));
+
+    vector<vector<size_t>> chunk_sizes = {
+            {2048},
+            {2048, 0},
+            {1024, 1024},
+            {1024, 1024, 0},
+            {512, 512, 512, 512},
+            {512, 512, 512, 512, 0},
+    };
+    auto params = AuthorizationSetBuilder().BlockMode(BlockMode::CBC).Padding(PaddingMode::PKCS7);
+
+    for (const auto& chunks : chunk_sizes) {
+        AuthorizationSet out_params;
+        ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, keyblob, params, &out_params));
+        auto iv = out_params.GetTagValue(TAG_NONCE);
+        EXPECT_TRUE(iv);
+
+        // Get a HAT with the challenge from an in-progress operation.
+        auto hat = doVerify(challenge_, handle_, password_);
+        ASSERT_TRUE(hat.has_value());
+        ASSERT_EQ(hat->userId, sid_);
+
+        // Encrypt in the given chunk sizes.
+        string message;
+        string ciphertext;
+        for (int i = 0; i < chunks.size(); i++) {
+            SCOPED_TRACE(testing::Message()
+                         << "chunk[" << i << "] of " << chunks.size() << ", size " << chunks[i]);
+            string msg_chunk = string(chunks[i], 'A');
+            string ct_chunk;
+            if (i < chunks.size() - 1) {
+                // Pass in n-1 chunks to `update()`
+                std::cerr << "Update(size=" << chunks[i] << ")\n";
+                ASSERT_EQ(ErrorCode::OK, Update(msg_chunk, &ct_chunk, hat.value(), {}));
+            } else {
+                // Pass the final chunk to `finish()`
+                std::cerr << "Finish(size=" << chunks[i] << ")\n";
+                ASSERT_EQ(ErrorCode::OK,
+                          Finish(msg_chunk, {} /* signature */, &ct_chunk, hat.value()));
+            }
+            message += msg_chunk;
+            ciphertext += ct_chunk;
+        }
+
+        auto params_iv = AuthorizationSetBuilder().Authorizations(params).Authorization(TAG_NONCE,
+                                                                                        iv->get());
+        out_params.Clear();
+        // Decrypt in one go
+        ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, keyblob, params_iv, &out_params));
+        hat = doVerify(challenge_, handle_, password_);
+        ASSERT_TRUE(hat.has_value());
+        ASSERT_EQ(hat->userId, sid_);
+
+        string plaintext;
+        ASSERT_EQ(ErrorCode::OK, Finish(ciphertext, {} /* signature */, &plaintext, hat.value()));
+
+        EXPECT_EQ(message, plaintext);
+    }
 }
 
 // Test use of a key that requires an auth token for each action on the operation, with

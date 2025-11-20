@@ -49,6 +49,7 @@ cc_library_shared {
     header_libs: [
         "libhardware_headers",
         "libxsdc-utils",
+        "libbluetooth_offload_leaudio_headers",
     ],
     defaults: [
         "aconfig_lib_cc_static_link.defaults",
@@ -69,6 +70,9 @@ cc_library_shared {
     ],
     static_libs: [
         "btaudiohal_flags_c_lib",
+        "libbluetooth_offload_leaudio_audio",
+        "liblc3",
+        "libopus-experimental",
     ],
     generated_sources: [
         "le_audio_codec_capabilities",

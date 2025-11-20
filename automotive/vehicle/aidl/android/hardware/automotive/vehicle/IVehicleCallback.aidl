@@ -68,6 +68,11 @@ interface IVehicleCallback {
      * arguments) or when the {@link IVehicle#setValues} method was called and
      * the actual change needs to be reported.
      *
+     * This should also be used to deliver property status change events. E.g.
+     * when the property becomes unavailable or error for reading, a
+     * {@code VehiclePropValue} with non-okay status and empty value should be
+     * delivered.
+     *
      * @param propValues The updated property values wrapped in an object.
      *    If the properties fit within binder limitation, they would be in
      *    {@code propValues.payloads}, otherwise, they would be in a shared

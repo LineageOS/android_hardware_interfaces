@@ -52,6 +52,17 @@ class VehicleHardwareForTest : public IVehicleHardware {
         }
     }
 
+    void registerSupportedValueChangeCallback(
+            std::unique_ptr<const SupportedValueChangeCallback> callback) override {
+        mOnSupportedValuesChange = std::move(callback);
+    }
+
+    void onSupportedValuesChange(std::vector<PropIdAreaId> propIdAreaIds) {
+        if (mOnSupportedValuesChange) {
+            (*mOnSupportedValuesChange)(propIdAreaIds);
+        }
+    }
+
     // Functions that we do not care.
     std::vector<aidlvhal::VehiclePropConfig> getAllPropertyConfigs() const override { return {}; }
 
@@ -76,6 +87,7 @@ class VehicleHardwareForTest : public IVehicleHardware {
 
   private:
     std::unique_ptr<const PropertyChangeCallback> mOnProp;
+    std::unique_ptr<const SupportedValueChangeCallback> mOnSupportedValuesChange;
 };
 
 class MockVehicleHardware : public IVehicleHardware {
@@ -174,6 +186,65 @@ TEST(GRPCVehicleProxyServerUnitTest, ClientConnectDisconnect) {
     EXPECT_TRUE(*updateReceived2);
 
     vehicleServer->Shutdown().Wait();
+}
+
+TEST(GRPCVehicleProxyServerUnitTest, RegisterSupportedValuesChange) {
+    int32_t testPropId1 = 123;
+    int32_t testAreaId1 = 234;
+    int32_t testPropId2 = 345;
+    int32_t testAreaId2 = 456;
+
+    auto testHardware = std::make_unique<VehicleHardwareForTest>();
+    // HACK: manipulate the underlying hardware via raw pointer for testing.
+    auto* testHardwareRaw = testHardware.get();
+    auto vehicleServer =
+            std::make_unique<GrpcVehicleProxyServer>(kFakeServerAddr, std::move(testHardware));
+    vehicleServer->Start();
+
+    constexpr auto kWaitForConnectionMaxTime = std::chrono::seconds(5);
+    constexpr auto kWaitForStreamStartTime = std::chrono::seconds(1);
+    constexpr auto kWaitForUpdateDeliveryTime = std::chrono::seconds(1);
+
+    std::vector<PropIdAreaId> changedPropIdAreaIds;
+    std::mutex m;
+    std::condition_variable cv;
+    auto vehicleHardware1 = std::make_unique<GRPCVehicleHardware>(kFakeServerAddr);
+    vehicleHardware1->registerSupportedValueChangeCallback(
+            std::make_unique<const IVehicleHardware::SupportedValueChangeCallback>(
+                    [&changedPropIdAreaIds, &m, &cv](std::vector<PropIdAreaId> propIdAreaIds) {
+                        {
+                            std::lock_guard lk(m);
+                            changedPropIdAreaIds = propIdAreaIds;
+                        }
+                        cv.notify_one();
+                    }));
+
+    EXPECT_TRUE(vehicleHardware1->waitForConnected(kWaitForConnectionMaxTime));
+    std::this_thread::sleep_for(kWaitForStreamStartTime);
+
+    testHardwareRaw->onSupportedValuesChange({PropIdAreaId{
+                                                      .propId = testPropId1,
+                                                      .areaId = testAreaId1,
+                                              },
+                                              PropIdAreaId{
+                                                      .propId = testPropId2,
+                                                      .areaId = testAreaId2,
+                                              }});
+
+    {
+        std::unique_lock lk(m);
+        cv.wait_for(lk, std::chrono::seconds(1),
+                    [&changedPropIdAreaIds] { return !changedPropIdAreaIds.empty(); });
+    }
+
+    // Must make sure we always stop the server even if the test failed.
+    vehicleServer->Shutdown().Wait();
+
+    {
+        std::unique_lock lk(m);
+        ASSERT_FALSE(changedPropIdAreaIds.empty())
+                << "Not received onSupportedValuesChange event before timeout";
+    }
 }
 
 TEST(GRPCVehicleProxyServerUnitTest, Subscribe) {

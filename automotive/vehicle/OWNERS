@@ -1,6 +1,2 @@
 ericjeong@google.com
-shanyu@google.com
-
-# Property definition
-per-file aidl_property/** = tylertrephan@google.com
-per-file aidl/generated_lib/** = tylertrephan@google.com
+tylertrephan@google.com

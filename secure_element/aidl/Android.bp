@@ -21,6 +21,13 @@ aidl_interface {
         java: {
             sdk_version: "system_current",
         },
+        rust: {
+            enabled: true,
+            gen_mockall: true,
+            additional_rustlibs: [
+                "libmockall",
+            ],
+        },
     },
     versions_with_info: [
         {

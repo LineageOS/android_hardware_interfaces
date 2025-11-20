@@ -114,14 +114,14 @@ ndk::ScopedAStatus ModulePrimary::createMmapBuffer(const AudioPortConfig& portCo
     }
     desc->sharedMemory.fd = ndk::ScopedFileDescriptor(fd);
     desc->sharedMemory.size = bufferSizeBytes;
-    desc->burstSizeFrames = bufferSizeFrames / 2;
-    desc->flags = 0;
+    desc->burstSizeFrames = bufferSizeFrames / 4;
+    desc->flags = 1 << MmapBufferDescriptor::FLAG_INDEX_APPLICATION_SHAREABLE;
     LOG(DEBUG) << __func__ << ": " << desc->toString();
     return ndk::ScopedAStatus::ok();
 }
 
 int32_t ModulePrimary::getNominalLatencyMs(const AudioPortConfig& portConfig) {
-    static constexpr int32_t kLowLatencyMs = 5;
+    static constexpr int32_t kLowLatencyMs = 10;
     // 85 ms is chosen considering 4096 frames @ 48 kHz. This is the value which allows
     // the virtual Android device implementation to pass CTS. Hardware implementations
     // should have significantly lower latency.

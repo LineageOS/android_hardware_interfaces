@@ -22,6 +22,7 @@ namespace aidl::android::hardware::biometrics::face {
 
 class FaceConfig : public Config {
     Config::Data* getConfigData(int* size) override;
+    std::string getSubTag() { return "Face "; }
 };
 
 }  // namespace aidl::android::hardware::biometrics::face

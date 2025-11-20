@@ -29,6 +29,19 @@
 
 namespace aidl::android::hardware::audio::core {
 
+class PortCallbacksHandler : public ::android::bluetooth::audio::aidl::BluetoothAudioPortCallbacks {
+  public:
+    explicit PortCallbacksHandler(std::shared_ptr<IStreamOutEventCallback> streamCallback)
+        : mStreamCallback(streamCallback) {}
+    bool hasCallback() const { return mStreamCallback != nullptr; }
+    void onRecommendedLatencyModeChanged(
+            const std::vector<::aidl::android::hardware::bluetooth::audio::LatencyMode>& modes)
+            override;
+
+  private:
+    std::shared_ptr<IStreamOutEventCallback> mStreamCallback;
+};
+
 class StreamBluetooth : public StreamCommonImpl {
   public:
     static bool checkConfigParams(
@@ -59,12 +72,22 @@ class StreamBluetooth : public StreamCommonImpl {
     ndk::ScopedAStatus prepareToClose() override;
     ndk::ScopedAStatus bluetoothParametersUpdated() override;
 
+  protected:
+    ndk::ScopedAStatus getRecommendedLatencyModes(
+            std::vector<::aidl::android::media::audio::common::AudioLatencyMode>* _aidl_return);
+    ndk::ScopedAStatus setLatencyMode(
+            ::aidl::android::media::audio::common::AudioLatencyMode in_mode);
+
+    void dump(int fd, const char** args, uint32_t numArgs);
+
   private:
     const size_t mFrameSizeBytes;
     const bool mIsInput;
     const std::weak_ptr<IBluetoothA2dp> mBluetoothA2dp;
     const std::weak_ptr<IBluetoothLe> mBluetoothLe;
     const size_t mPreferredDataIntervalUs;
+    std::shared_ptr<PortCallbacksHandler> mCallbacksHandler;
+    std::string mSessionTypeName;
     mutable std::mutex mLock;
     // The lock is also used to serialize calls to the proxy.
     std::shared_ptr<::android::bluetooth::audio::aidl::BluetoothAudioPortAidl> mBtDeviceProxy
@@ -92,6 +115,8 @@ class StreamInBluetooth final : public StreamIn, public StreamBluetooth {
     ndk::ScopedAStatus getActiveMicrophones(
             std::vector<::aidl::android::media::audio::common::MicrophoneDynamicInfo>* _aidl_return)
             override;
+
+    binder_status_t dump(int fd, const char** args, uint32_t numArgs) override;
 };
 
 class StreamOutBluetooth final : public StreamOut, public StreamBluetooth {
@@ -112,6 +137,14 @@ class StreamOutBluetooth final : public StreamOut, public StreamBluetooth {
 
   private:
     void onClose(StreamDescriptor::State) override { defaultOnClose(); }
+
+    ndk::ScopedAStatus getRecommendedLatencyModes(
+            std::vector<::aidl::android::media::audio::common::AudioLatencyMode>* _aidl_return)
+            override;
+    ndk::ScopedAStatus setLatencyMode(
+            ::aidl::android::media::audio::common::AudioLatencyMode in_mode) override;
+
+    binder_status_t dump(int fd, const char** args, uint32_t numArgs) override;
 };
 
 }  // namespace aidl::android::hardware::audio::core

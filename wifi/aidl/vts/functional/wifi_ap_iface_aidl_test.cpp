@@ -37,7 +37,7 @@ class WifiApIfaceAidlTest : public testing::TestWithParam<std::string> {
                 "/system/bin/cmd wifi get-softap-supported-features",
                 "wifi_softap_bridged_ap_supported");
         stopWifiService(getInstanceName());
-
+        sleep(1);  // Ensure that all chips/interfaces are invalidated.
         wifi_chip_ = getWifiChip(getInstanceName());
         ASSERT_NE(nullptr, wifi_chip_.get());
 

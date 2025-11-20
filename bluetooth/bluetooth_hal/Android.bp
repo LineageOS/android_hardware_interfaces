@@ -1,0 +1,520 @@
+//
+// Copyright 2020 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+cc_defaults {
+    name: "libbluetooth_hal_defaults",
+    srcs: [
+        ":hal_common_srcs",
+        ":hal_config_srcs",
+        ":hal_debug_srcs",
+        ":hal_extension_srcs",
+        ":hal_hwinit_srcs",
+        ":hal_transport_srcs",
+        ":hal_util_srcs",
+    ],
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
+    local_include_dirs: ["include/public/"],
+    header_libs: [
+        "libeigen",
+    ],
+    whole_static_libs: [
+        "android.hardware.bluetooth-V1-ndk",
+        "android.hardware.bluetooth.finder-V1-ndk",
+        "android.hardware.bluetooth.ranging-V1-ndk",
+        "hal_proto_lib",
+        "//hardware/google/interfaces:hardware.google.bluetooth.ccc-V1-ndk",
+        "//hardware/google/interfaces:hardware.google.bluetooth.ext-V1-ndk",
+        "//hardware/google/interfaces:hardware.google.bluetooth.sar-V1-ndk",
+        "//hardware/google/interfaces:hardware.google.bluetooth.bt_channel_avoidance-V1-ndk",
+    ],
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "libcutils",
+        "libhardware_legacy",
+        "libutils",
+        "libprotobuf-cpp-full",
+        "server_configurable_flags",
+        "libaconfig_storage_read_api_cc",
+    ],
+    conlyflags: [
+        "-std=c99",
+    ],
+}
+
+filegroup {
+    name: "hal_common_srcs",
+    srcs: [
+        "bluetooth_hal.cc",
+        "bluetooth_hci.cc",
+        "hci_router.cc",
+        "hci_router_client.cc",
+        "hci_router_client_agent.cc",
+    ],
+}
+
+filegroup {
+    name: "hal_config_srcs",
+    srcs: [
+        "config/cs_config_loader.cc",
+        "config/firmware_config_loader.cc",
+        "config/hal_config_loader.cc",
+    ],
+}
+
+filegroup {
+    name: "hal_debug_srcs",
+    srcs: [
+        "debug/bluetooth_activity.cc",
+        "debug/bluetooth_bqr.cc",
+        "debug/debug_central.cc",
+        "debug/stack_trace_helper.cc",
+        "debug/vnd_snoop_logger.cc",
+        "debug/debug_event_watcher.cc",
+    ],
+}
+
+filegroup {
+    name: "hal_extension_srcs",
+    srcs: [
+        "extensions/cs/bluetooth_channel_sounding.cc",
+        "extensions/cs/bluetooth_channel_sounding_handler.cc",
+        "extensions/cs/bluetooth_channel_sounding_session.cc",
+        "extensions/cs/bluetooth_channel_sounding_util.cc",
+        "extensions/channel_avoidance/bluetooth_channel_avoidance.cc",
+        "extensions/channel_avoidance/bluetooth_channel_avoidance_handler.cc",
+        "extensions/ext/bluetooth_ext.cc",
+        "extensions/ext/bluetooth_ext_handler.cc",
+        "extensions/finder/bluetooth_finder.cc",
+        "extensions/finder/bluetooth_finder_handler.cc",
+        "extensions/sar/bluetooth_sar.cc",
+        "extensions/sar/bluetooth_sar_handler.cc",
+        "extensions/thread/socket_processor.cc",
+        "extensions/thread/thread_daemon.cc",
+        "extensions/thread/thread_handler.cc",
+        "extensions/ccc/bluetooth_ccc.cc",
+        "extensions/ccc/bluetooth_ccc_handler.cc",
+        "extensions/ccc/bluetooth_ccc_timesync_event.cc",
+        "extensions/ccc/bluetooth_ccc_timesync_command.cc",
+    ],
+}
+
+filegroup {
+    name: "hal_hwinit_srcs",
+    srcs: [
+        "chip/chip_provisioner.cc",
+        "chip/async_chip_provisioner.cc",
+    ],
+}
+
+filegroup {
+    name: "hal_util_srcs",
+    srcs: [
+        "util/android_base_wrapper.cc",
+        "util/logging.cc",
+        "util/system_call_wrapper.cc",
+        "util/fd_watcher.cc",
+        "util/files.cc",
+        "util/timer_manager.cc",
+        "util/power/wakelock.cc",
+        "util/power/wakelock_watchdog.cc",
+        "util/power/power_interface.cc",
+    ],
+}
+
+filegroup {
+    name: "hal_transport_srcs",
+    srcs: [
+        "transport/device_control/uart_manager.cc",
+        "transport/device_control/power_manager.cc",
+        "transport/transport_interface.cc",
+        "transport/uart_h4/data_processor.cc",
+        "transport/uart_h4/hci_packetizer.cc",
+        "transport/uart_h4/transport_uart_h4.cc",
+    ],
+}
+
+cc_library_static {
+    name: "libbluetooth_hal",
+    vendor_available: true,
+    defaults: ["libbluetooth_hal_defaults"],
+    export_include_dirs: ["include/public"],
+}
+
+cc_library_headers {
+    name: "libbluetooth_hal_headers",
+    export_include_dirs: ["include/public"],
+    proprietary: true,
+}
+
+cc_defaults {
+    name: "bluetooth_hal_test_defaults",
+    team: "trendy_team_bluetooth",
+    test_suites: ["general-tests"],
+    local_include_dirs: ["include/public"],
+    cflags: ["-DUNIT_TEST"],
+    host_supported: true,
+}
+
+cc_test {
+    name: "bluetooth_hal_core_test",
+    defaults: ["bluetooth_hal_test_defaults"],
+    srcs: [
+        "hal_packet_test.cc",
+        "hci_monitor_test.cc",
+        "hci_router_client_test.cc",
+        "hci_router_client.cc",
+        "bluetooth_address_test.cc",
+        ":test_mock_router_srcs",
+    ],
+    static_libs: [
+        "libgmock",
+    ],
+    shared_libs: [
+        "libbase",
+    ],
+}
+
+cc_test {
+    name: "bluetooth_hal_router_client_agent_test",
+    defaults: ["bluetooth_hal_test_defaults"],
+    srcs: [
+        "hci_router_client_agent_test.cc",
+        "hci_router_client_agent.cc",
+    ],
+    static_libs: [
+        "libgmock",
+    ],
+    shared_libs: [
+        "libbase",
+    ],
+}
+
+cc_test {
+    name: "bluetooth_hal_hci_router_test",
+    defaults: ["bluetooth_hal_test_defaults"],
+    srcs: [
+        "hci_router.cc",
+        "hci_router_test.cc",
+        "hci_router_client.cc",
+        "extensions/thread/socket_processor.cc",
+        "extensions/thread/thread_daemon.cc",
+        "extensions/thread/thread_handler.cc",
+        "util/system_call_wrapper.cc",
+        ":test_mock_transport_srcs",
+        ":test_mock_util_srcs",
+        ":test_mock_debug_srcs",
+        ":test_mock_router_client_agent_srcs",
+    ],
+    static_libs: [
+        "libgmock",
+    ],
+    shared_libs: [
+        "libbase",
+    ],
+}
+
+cc_test {
+    name: "bluetooth_hal_finder_test",
+    defaults: ["bluetooth_hal_test_defaults"],
+    host_supported: false,
+    srcs: [
+        "hci_router_client.cc",
+        "extensions/finder/bluetooth_finder_handler.cc",
+        "extensions/finder/bluetooth_finder_handler_test.cc",
+        ":test_mock_router_srcs",
+        ":test_mock_util_srcs",
+    ],
+    static_libs: [
+        "libgmock",
+        "android.hardware.bluetooth.finder-V1-ndk",
+    ],
+    shared_libs: [
+        "libbase",
+    ],
+}
+
+cc_test {
+    name: "bluetooth_hal_ext_test",
+    defaults: ["bluetooth_hal_test_defaults"],
+    host_supported: true,
+    srcs: [
+        "hci_router_client.cc",
+        "extensions/ext/bluetooth_ext_handler.cc",
+        "extensions/ext/bluetooth_ext_handler_test.cc",
+        ":test_mock_router_srcs",
+    ],
+    static_libs: [
+        "libgmock",
+    ],
+    shared_libs: [
+        "libbase",
+    ],
+}
+
+cc_test {
+    name: "bluetooth_hal_sar_test",
+    defaults: ["bluetooth_hal_test_defaults"],
+    srcs: [
+        "hci_router_client.cc",
+        "extensions/sar/bluetooth_sar_handler.cc",
+        "extensions/sar/bluetooth_sar_handler_test.cc",
+        ":test_mock_router_srcs",
+    ],
+    static_libs: [
+        "libgmock",
+    ],
+    shared_libs: [
+        "libbase",
+    ],
+}
+
+cc_test {
+    name: "bluetooth_hal_channel_sounding_test",
+    defaults: ["bluetooth_hal_test_defaults"],
+    srcs: [
+        "hci_router_client.cc",
+        "extensions/cs/bluetooth_channel_sounding_session.cc",
+        "extensions/cs/bluetooth_channel_sounding_util.cc",
+        "extensions/cs/bluetooth_channel_sounding_handler.cc",
+        "extensions/cs/bluetooth_channel_sounding_handler_test.cc",
+        ":test_mock_router_srcs",
+        ":test_mock_util_srcs",
+    ],
+    header_libs: [
+        "libeigen",
+    ],
+    static_libs: [
+        "android.hardware.bluetooth-V1-ndk",
+        "android.hardware.bluetooth.ranging-V1-ndk",
+        "libgmock",
+        "hal_proto_lib",
+    ],
+    shared_libs: [
+        "libbinder_ndk",
+        "libbase",
+        "libprotobuf-cpp-full",
+    ],
+}
+
+cc_test {
+    name: "bluetooth_hal_thread_handler_test",
+    defaults: ["bluetooth_hal_test_defaults"],
+    srcs: [
+        "extensions/thread/socket_processor.cc",
+        "extensions/thread/thread_daemon.cc",
+        "extensions/thread/thread_handler.cc",
+        "extensions/thread/thread_handler_test.cc",
+        "hci_router_client.cc",
+        "util/system_call_wrapper.cc",
+        ":test_mock_router_srcs",
+    ],
+    static_libs: [
+        "libgmock",
+    ],
+    shared_libs: [
+        "libbase",
+    ],
+}
+
+cc_test {
+    name: "bluetooth_hal_socket_processor_test",
+    defaults: ["bluetooth_hal_test_defaults"],
+    srcs: [
+        "extensions/thread/socket_processor.cc",
+        "extensions/thread/socket_processor_test.cc",
+    ],
+    static_libs: [
+        "libgmock",
+    ],
+    shared_libs: [
+        "libbase",
+    ],
+}
+
+cc_test {
+    name: "bluetooth_hal_thread_daemon_test",
+    defaults: ["bluetooth_hal_test_defaults"],
+    srcs: [
+        "extensions/thread/thread_daemon.cc",
+        "extensions/thread/thread_daemon_test.cc",
+        ":test_mock_thread_srcs",
+    ],
+    static_libs: [
+        "libgmock",
+    ],
+    shared_libs: [
+        "libbase",
+    ],
+}
+
+cc_test {
+    name: "bluetooth_hal_ccc_test",
+    defaults: ["bluetooth_hal_test_defaults"],
+    srcs: [
+        ":test_mock_router_srcs",
+        "hci_router_client.cc",
+        "extensions/ccc/bluetooth_ccc_timesync_event.cc",
+        "extensions/ccc/bluetooth_ccc_timesync_command.cc",
+        "extensions/ccc/bluetooth_ccc_handler.cc",
+        "extensions/ccc/bluetooth_ccc_timesync_event_test.cc",
+        "extensions/ccc/bluetooth_ccc_timesync_command_test.cc",
+        "extensions/ccc/bluetooth_ccc_handler_test.cc",
+    ],
+    static_libs: [
+        "libgmock",
+    ],
+    shared_libs: [
+        "libbase",
+    ],
+}
+
+cc_test {
+    name: "bluetooth_hal_channel_avoidance_test",
+    defaults: ["bluetooth_hal_test_defaults"],
+    srcs: [
+        ":test_mock_router_srcs",
+        "hci_router_client.cc",
+        "extensions/channel_avoidance/bluetooth_channel_avoidance_handler.cc",
+        "extensions/channel_avoidance/bluetooth_channel_avoidance_handler_test.cc",
+    ],
+    static_libs: [
+        "libgmock",
+    ],
+    shared_libs: [
+        "libbase",
+    ],
+}
+
+cc_test {
+    name: "bluetooth_hal_config_loader_test",
+    defaults: ["bluetooth_hal_test_defaults"],
+    srcs: [
+        "config/hal_config_loader.cc",
+        "config/hal_config_loader_test.cc",
+        ":test_mock_transport_srcs",
+        ":test_mock_util_srcs",
+        "config/cs_config_loader.cc",
+        "config/cs_config_loader_test.cc",
+        "config/firmware_config_loader.cc",
+        "config/firmware_config_loader_test.cc",
+    ],
+    static_libs: [
+        "libgmock",
+        "hal_proto_lib",
+    ],
+    shared_libs: [
+        "libbase",
+        "libprotobuf-cpp-full",
+    ],
+}
+
+cc_test {
+    name: "bluetooth_hal_hci_packetizer_test",
+    defaults: ["bluetooth_hal_test_defaults"],
+    srcs: [
+        "transport/uart_h4/hci_packetizer.cc",
+        "transport/uart_h4/hci_packetizer_test.cc",
+    ],
+    static_libs: [
+        "libgmock",
+    ],
+}
+
+cc_test {
+    name: "bluetooth_hal_transport_interface_test",
+    defaults: ["bluetooth_hal_test_defaults"],
+    srcs: [
+        "transport/device_control/uart_manager.cc",
+        "transport/device_control/power_manager.cc",
+        "transport/transport_interface.cc",
+        "transport/transport_interface_test.cc",
+        "transport/uart_h4/data_processor.cc",
+        "transport/uart_h4/hci_packetizer.cc",
+        "transport/uart_h4/transport_uart_h4.cc",
+        "util/fd_watcher.cc",
+        "util/system_call_wrapper.cc",
+        "util/timer_manager.cc",
+        ":test_mock_util_srcs",
+    ],
+    static_libs: [
+        "libgmock",
+        "hal_proto_lib",
+
+    ],
+    shared_libs: [
+        "libbase",
+        "libprotobuf-cpp-full",
+    ],
+}
+
+cc_test {
+    name: "bluetooth_hal_transport_uart_h4_test",
+    defaults: ["bluetooth_hal_test_defaults"],
+    srcs: [
+        "config/hal_config_loader.cc",
+        "transport/device_control/uart_manager.cc",
+        "transport/device_control/power_manager.cc",
+        "transport/transport_interface.cc",
+        "transport/uart_h4/data_processor.cc",
+        "transport/uart_h4/hci_packetizer.cc",
+        "transport/uart_h4/transport_uart_h4.cc",
+        "transport/uart_h4/transport_uart_h4_test.cc",
+        "util/fd_watcher.cc",
+        "util/system_call_wrapper.cc",
+        "util/timer_manager.cc",
+        ":test_mock_util_srcs",
+    ],
+    static_libs: [
+        "libgmock",
+        "hal_proto_lib",
+    ],
+    shared_libs: [
+        "libbase",
+        "libprotobuf-cpp-full",
+    ],
+}
+
+cc_test {
+    name: "bluetooth_hal_data_processor_test",
+    defaults: ["bluetooth_hal_test_defaults"],
+    srcs: [
+        "transport/uart_h4/hci_packetizer.cc",
+        "transport/uart_h4/data_processor.cc",
+        "transport/uart_h4/data_processor_test.cc",
+        "util/fd_watcher.cc",
+    ],
+    static_libs: [
+        "libgmock",
+    ],
+    shared_libs: [
+        "libbase",
+    ],
+}
+
+cc_test {
+    name: "bluetooth_hal_timer_manager_test",
+    defaults: ["bluetooth_hal_test_defaults"],
+    srcs: [
+        "util/timer_manager.cc",
+        "util/timer_manager_test.cc",
+    ],
+    shared_libs: [
+        "libbase",
+    ],
+}

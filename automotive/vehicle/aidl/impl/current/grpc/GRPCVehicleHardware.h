@@ -31,6 +31,7 @@
 #include <chrono>
 #include <condition_variable>
 #include <memory>
+#include <set>
 #include <shared_mutex>
 #include <string>
 #include <thread>
@@ -82,6 +83,12 @@ class GRPCVehicleHardware : public IVehicleHardware {
     void registerOnPropertySetErrorEvent(
             std::unique_ptr<const PropertySetErrorCallback> callback) override;
 
+    // Register a callback that would be called when the min/max supported value or supported
+    // values list change dynamically for propertyID returned from
+    // getPropertyIdsThatImplementGetSupportedValue
+    void registerSupportedValueChangeCallback(
+            std::unique_ptr<const SupportedValueChangeCallback> callback) override;
+
     // Update the sample rate for the [propId, areaId] pair.
     aidlvhal::StatusCode updateSampleRate(int32_t propId, int32_t areaId,
                                           float sampleRate) override;
@@ -109,12 +116,15 @@ class GRPCVehicleHardware : public IVehicleHardware {
     std::shared_ptr<::grpc::Channel> mGrpcChannel;
     std::unique_ptr<proto::VehicleServer::StubInterface> mGrpcStub;
     std::thread mValuePollingThread;
+    std::thread mSupportedValuesChangeThread;
 
     std::unique_ptr<const PropertySetErrorCallback> mOnSetErr;
+    std::unique_ptr<const SupportedValueChangeCallback> mOnSupportedValueChange;
 
     std::mutex mShutdownMutex;
-    std::condition_variable mShutdownCV;
     std::atomic<bool> mShuttingDownFlag{false};
+    // Stores the ClientContexts for active streams. This is stored so that we may cancel them.
+    std::set<::grpc::ClientContext*> mStreamContexts GUARDED_BY(mShutdownMutex);
 
     mutable std::mutex mLatestUpdateTimestampsMutex;
 
@@ -130,6 +140,8 @@ class GRPCVehicleHardware : public IVehicleHardware {
 
     void ValuePollingLoop();
     void pollValue();
+    void SupportedValuesChangeLoop();
+    ::grpc::Status pollSupportedValuesChange();
 
     aidlvhal::StatusCode getValuesWithRetry(const std::vector<aidlvhal::GetValueRequest>& requests,
                                             std::vector<aidlvhal::GetValueResult>* results,

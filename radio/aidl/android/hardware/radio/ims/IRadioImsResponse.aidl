@@ -146,4 +146,21 @@ oneway interface IRadioImsResponse {
      *   RadioError:NO_RESOURCES
      */
     void updateImsCallStatusResponse(in RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.ims is not defined
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INVALID_STATE
+     *   RadioError:NO_MEMORY
+     *   RadioError:SYSTEM_ERR
+     *   RadioError:MODEM_ERR
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:NO_RESOURCES
+     */
+    void updateAllowedServicesResponse(in RadioResponseInfo info);
 }

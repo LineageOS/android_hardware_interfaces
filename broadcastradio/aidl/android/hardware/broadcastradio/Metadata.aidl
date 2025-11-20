@@ -72,8 +72,8 @@ union Metadata {
      *
      * <p>This is a generic field to cover any radio technology.
      *
-     * <p>Note: If the program name has the same content as dab*Name or ({@link Metadata#rdsPs},
-     * it may not be present, to preserve space - framework must repopulate
+     * <p>Note: If the program name has the same content as dab*Name, ({@link Metadata#rdsPs}
+     * or hd*Name*, it may not be present to preserve space - framework must repopulate
      * it on the client side.
      */
     String programName;

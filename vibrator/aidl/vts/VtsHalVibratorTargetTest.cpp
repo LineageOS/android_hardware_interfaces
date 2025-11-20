@@ -87,7 +87,7 @@ const std::vector<CompositePrimitive> kInvalidPrimitives = {
 };
 
 // Timeout to wait for vibration callback completion.
-static constexpr std::chrono::milliseconds VIBRATION_CALLBACK_TIMEOUT = 100ms;
+static constexpr std::chrono::milliseconds VIBRATION_CALLBACK_TIMEOUT = 200ms;
 
 static constexpr int32_t VENDOR_EFFECTS_MIN_VERSION = 3;
 static constexpr int32_t PWLE_V2_MIN_VERSION = 3;

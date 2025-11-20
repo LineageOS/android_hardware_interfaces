@@ -1,6 +1,6 @@
-# Rust Skeleton VHAL implementation.
+# Rust Skeleton VHAL V3 implementation.
 
-WARNING: This is not a reference VHAL implementation and does not contain
+WARNING: This is not a reference VHAL V3 implementation and does not contain
 any actual implementation.
 
 This folder contains a skeleton VHAL implementation in Rust to demonstrate

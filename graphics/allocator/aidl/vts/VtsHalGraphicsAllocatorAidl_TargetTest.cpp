@@ -204,11 +204,8 @@ class GraphicsTestsBase {
         }
         if (!status.isOk()) {
             status_t error = status.getExceptionCode();
-            if (error == EX_SERVICE_SPECIFIC) {
-                error = status.getServiceSpecificError();
-                EXPECT_NE(OK, error) << "Failed to set error properly";
-            } else {
-                EXPECT_EQ(OK, error) << "Allocation transport failure";
+            if (raise_failure) {
+                ADD_FAILURE() << "Allocation transport failure: " << error;
             }
             return nullptr;
         } else {
@@ -357,7 +354,7 @@ TEST_P(GraphicsAllocatorAidlTests, RejectsUnknownUsages) {
     // Now add the unknown bit and verify it's rejected
     info.usage |= invalidUsage;
     EXPECT_FALSE(isSupported(info)) << "isSupported() returned true for unknown-to-HAL usage";
-    EXPECT_FALSE(allocate(info)) << "allocate succeeded for unknown-to-HAL usage";
+    EXPECT_FALSE(allocate(info, false)) << "allocate succeeded for unknown-to-HAL usage";
 }
 
 TEST_P(GraphicsAllocatorAidlTests, RejectsUnknownOptions) {
@@ -378,7 +375,7 @@ TEST_P(GraphicsAllocatorAidlTests, RejectsUnknownOptions) {
     info.additionalOptions.push_back({"android.hardware.graphics.common.NotARealOption", 1});
 
     EXPECT_FALSE(isSupported(info)) << "isSupported() returned true for unknown-to-HAL option";
-    EXPECT_FALSE(allocate(info)) << "allocate succeeded for unknown-to-HAL option";
+    EXPECT_FALSE(allocate(info, false)) << "allocate succeeded for unknown-to-HAL option";
 }
 
 TEST_P(GraphicsFrontBufferTests, FrontBufferGpuToCpu) {

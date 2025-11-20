@@ -851,6 +851,8 @@ interface IModule {
      * @throws EX_ILLEGAL_ARGUMENT If the device port config can not be found by the ID,
      *                             or the effect reference is invalid.
      * @throws EX_UNSUPPORTED_OPERATION If the module does not support device port effects.
+     * @throws EX_NULL_POINTER As an alternative to `EX_ILLEGAL_ARGUMENT` when the effect reference
+     *                         is null (depending on the implementation backend).
      */
     void addDeviceEffect(int portConfigId, in IEffect effect);
 
@@ -865,6 +867,8 @@ interface IModule {
      *                             or the effect reference is invalid, or the effect is
      *                             not currently applied to the port config.
      * @throws EX_UNSUPPORTED_OPERATION If the module does not support device port effects.
+     * @throws EX_NULL_POINTER As an alternative to `EX_ILLEGAL_ARGUMENT` when the effect reference
+     *                         is null (depending on the implementation backend).
      */
     void removeDeviceEffect(int portConfigId, in IEffect effect);
 

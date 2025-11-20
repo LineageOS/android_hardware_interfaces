@@ -166,7 +166,9 @@ bool FakeFingerprintEngine::onEnrollFingerDown(ISessionCallback* cb,
                 return true;
             }
             auto ac = convertAcquiredInfo(acquired[j]);
-            cb->onAcquired(ac.first, ac.second);
+            if (ac.first != AcquiredInfo::UNKNOWN) {
+                cb->onAcquired(ac.first, ac.second);
+            }
         }
 
         if (left == 0 && !IS_TRUE(parts[2])) {  // end and failed
@@ -203,12 +205,6 @@ bool FakeFingerprintEngine::onAuthenticateFingerDown(ISessionCallback* cb,
     auto acquired = Fingerprint::cfg().get<std::string>("operation_authenticate_acquired");
     auto acquiredInfos = Util::parseIntSequence(acquired);
     int N = acquiredInfos.size();
-
-    if (N == 0) {
-        LOG(ERROR) << "Fail to parse authentiate acquired info: " + acquired;
-        cb->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorError */);
-        return true;
-    }
 
     // got lockout?
     if (checkSensorLockout(cb)) {
@@ -248,11 +244,13 @@ bool FakeFingerprintEngine::onAuthenticateFingerDown(ISessionCallback* cb,
 
         if (i < N) {
             auto ac = convertAcquiredInfo(acquiredInfos[i]);
-            cb->onAcquired(ac.first, ac.second);
+            if (ac.first != AcquiredInfo::UNKNOWN) {
+                cb->onAcquired(ac.first, ac.second);
+            }
             i++;
         }
 
-        SLEEP_MS(duration / N);
+        SLEEP_MS(duration / (N + 1));
     } while (!Util::hasElapsed(now, duration));
 
     auto id = Fingerprint::cfg().get<std::int32_t>("enrollment_hit");
@@ -284,12 +282,6 @@ bool FakeFingerprintEngine::onDetectInteractFingerDown(ISessionCallback* cb,
     int N = acquiredInfos.size();
     int64_t now = Util::getSystemNanoTime();
 
-    if (N == 0) {
-        LOG(ERROR) << "Fail to parse detect interaction acquired info: " + acquired;
-        cb->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorError */);
-        return true;
-    }
-
     int i = 0;
     do {
         auto err = Fingerprint::cfg().get<std::int32_t>("operation_detect_interaction_error");
@@ -311,7 +303,7 @@ bool FakeFingerprintEngine::onDetectInteractFingerDown(ISessionCallback* cb,
             cb->onAcquired(ac.first, ac.second);
             i++;
         }
-        SLEEP_MS(duration / N);
+        SLEEP_MS(duration / (N + 1));
     } while (!Util::hasElapsed(now, duration));
 
     cb->onInteractionDetected();

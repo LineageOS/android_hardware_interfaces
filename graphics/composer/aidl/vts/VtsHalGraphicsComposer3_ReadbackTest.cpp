@@ -23,10 +23,10 @@
 #include <cutils/ashmem.h>
 #include <gtest/gtest.h>
 #include <ui/DisplayId.h>
-#include <ui/DisplayIdentification.h>
 #include <ui/GraphicBuffer.h>
 #include <ui/PixelFormat.h>
 #include <ui/Rect.h>
+#include <algorithm>
 #include <cstdint>
 #include <unordered_map>
 #include "ComposerClientWrapper.h"
@@ -86,78 +86,20 @@ class GraphicsCompositionTestBase : public ::testing::Test {
 
     void setUpDisplayProperties() {
         for (const auto& display : mAllDisplays) {
-            int64_t displayId = display.getDisplayId();
-
-            // Set testColorModes
-            const auto& [status, modes] = mComposerClient->getColorModes(displayId);
-            ASSERT_TRUE(status.isOk());
-            std::vector<ColorMode> testColorModes;
-            for (ColorMode mode : modes) {
-                if (std::find(ReadbackHelper::colorModes.begin(), ReadbackHelper::colorModes.end(),
-                              mode) != ReadbackHelper::colorModes.end()) {
-                    testColorModes.push_back(mode);
-                }
-            }
-
-            // Set pixelFormat and dataspace
-            auto [readbackStatus, readBackBufferAttributes] =
-                    mComposerClient->getReadbackBufferAttributes(displayId);
-            if (readbackStatus.isOk()) {
-            } else {
-                EXPECT_NO_FATAL_FAILURE(assertServiceSpecificError(
-                        readbackStatus, IComposerClient::EX_UNSUPPORTED));
-            }
-
-            // Set testRenderEngine and clientCompositionDisplaySettings
-            EXPECT_TRUE(mComposerClient->setPowerMode(displayId, PowerMode::ON).isOk());
-            const auto format = readbackStatus.isOk() ? readBackBufferAttributes.format
-                                                      : common::PixelFormat::RGBA_8888;
-            std::unique_ptr<TestRenderEngine> testRenderEngine;
-            ASSERT_NO_FATAL_FAILURE(
-                    testRenderEngine = std::unique_ptr<TestRenderEngine>(new TestRenderEngine(
-                            ::android::renderengine::RenderEngineCreationArgs::Builder()
-                                    .setPixelFormat(static_cast<int>(format))
-                                    .setImageCacheSize(
-                                            TestRenderEngine::sMaxFrameBufferAcquireBuffers)
-                                    .setEnableProtectedContext(false)
-                                    .setPrecacheToneMapperShaderOnly(false)
-                                    .setContextPriority(::android::renderengine::RenderEngine::
-                                                                ContextPriority::HIGH)
-                                    .build())));
-
-            ::android::renderengine::DisplaySettings clientCompositionDisplaySettings;
-            clientCompositionDisplaySettings.physicalDisplay =
-                    Rect(display.getDisplayWidth(), display.getDisplayHeight());
-            clientCompositionDisplaySettings.clip =
-                    clientCompositionDisplaySettings.physicalDisplay;
-
-            testRenderEngine->initGraphicBuffer(
-                    static_cast<uint32_t>(display.getDisplayWidth()),
-                    static_cast<uint32_t>(display.getDisplayHeight()),
-                    /*layerCount*/ 1U,
-                    static_cast<uint64_t>(
-                            static_cast<uint64_t>(common::BufferUsage::CPU_READ_OFTEN) |
-                            static_cast<uint64_t>(common::BufferUsage::CPU_WRITE_OFTEN) |
-                            static_cast<uint64_t>(common::BufferUsage::GPU_RENDER_TARGET)));
-            testRenderEngine->setDisplaySettings(clientCompositionDisplaySettings);
-
-            DisplayProperties displayProperties(displayId, testColorModes,
-                                                std::move(testRenderEngine),
-                                                std::move(clientCompositionDisplaySettings),
-                                                std::move(readBackBufferAttributes.format));
-
-            mDisplayProperties.emplace(displayId, std::move(displayProperties));
+            auto props = ReadbackHelper::setupDisplayProperty(display, mComposerClient);
+            mDisplayProperties.emplace(display.getDisplayId(), std::move(props));
         }
     }
 
-    // Get the dataspace and check if readback is supported given the default pixel format and the
-    // current dataspace. Dataspace can get updated after calls to
+    // Gets and Updates the dataspace and check if readback is supported given the default pixel
+    // format and the current dataspace. Dataspace can get updated after calls to
     // ComposerClientWrapper::setColorMode so it's essential to get the latest dataspace.
     std::pair<common::Dataspace, bool> GetDataspaceAndIfReadBackSupported(int64_t displayId) {
         auto [status, readBackBufferAttributes] =
                 mComposerClient->getReadbackBufferAttributes(displayId);
         if (status.isOk()) {
             auto dataspace = readBackBufferAttributes.dataspace;
+            mDisplayProperties.at(displayId).dataspace = dataspace;
 
             // We are making an assumption that Pixel Format never changes, so assert for this
             // assumption. If this is not the case on any display, then we should stop caching it.
@@ -217,26 +159,6 @@ class GraphicsCompositionTestBase : public ::testing::Test {
 
         mDisplayProperties.at(displayId).reader.parse(std::move(results));
     }
-
-    struct DisplayProperties {
-        DisplayProperties(int64_t displayId, std::vector<ColorMode> testColorModes,
-                          std::unique_ptr<TestRenderEngine> testRenderEngine,
-                          ::android::renderengine::DisplaySettings clientCompositionDisplaySettings,
-                          common::PixelFormat pixelFormat)
-            : testColorModes(testColorModes),
-              pixelFormat(pixelFormat),
-              testRenderEngine(std::move(testRenderEngine)),
-              clientCompositionDisplaySettings(std::move(clientCompositionDisplaySettings)),
-              writer(displayId),
-              reader(displayId) {}
-
-        std::vector<ColorMode> testColorModes = {};
-        common::PixelFormat pixelFormat = common::PixelFormat::UNSPECIFIED;
-        std::unique_ptr<TestRenderEngine> testRenderEngine = nullptr;
-        ::android::renderengine::DisplaySettings clientCompositionDisplaySettings = {};
-        ComposerClientWriter writer;
-        ComposerClientReader reader;
-    };
 
     std::shared_ptr<ComposerClientWrapper> mComposerClient;
     std::vector<DisplayWrapper> mAllDisplays;
@@ -686,6 +608,24 @@ TEST_P(GraphicsCompositionTest, Luts) {
         GTEST_SKIP();
     }
 
+    bool supportsHlg = false;
+    for (const auto& i : properties.combinations) {
+        bool supportsBt2020Gamut =
+                std::any_of(i.standards.cbegin(), i.standards.cend(), [](const auto& standard) {
+                    return standard == common::Dataspace::STANDARD_BT2020;
+                });
+        bool supportsHlgTransfer = std::any_of(
+                i.transfers.cbegin(), i.transfers.cend(),
+                [](const auto& transfer) { return transfer == common::Dataspace::TRANSFER_HLG; });
+        bool supportsFullRange = std::any_of(
+                i.ranges.cbegin(), i.ranges.cend(),
+                [](const auto& range) { return range == common::Dataspace::RANGE_FULL; });
+        supportsHlg = supportsBt2020Gamut && supportsHlgTransfer && supportsFullRange;
+        if (supportsHlg) {
+            break;
+        }
+    }
+
     for (const DisplayWrapper display : mAllDisplays) {
         ASSERT_TRUE(
                 mComposerClient
@@ -729,7 +669,10 @@ TEST_P(GraphicsCompositionTest, Luts) {
                             mDisplayProperties.at(display.getDisplayId()).writer);
                     layer->setDisplayFrame(coloredSquare);
                     layer->setZOrder(10);
-                    layer->setDataspace(Dataspace::SRGB);
+                    // Fallback to sRGB support if the device doesn't support HLG
+                    // This is to accommodate nascent devices that support LUTs but only for HDR
+                    // formats, without compromising test coverage of the LUT feature altogether
+                    layer->setDataspace(supportsHlg ? Dataspace::BT2020_HLG : Dataspace::SRGB);
 
                     Luts luts;
                     generateLuts(&luts, l.dimension, l.size, key);
@@ -754,12 +697,9 @@ TEST_P(GraphicsCompositionTest, Luts) {
                                                     ComposerClientWriter::kNoTimestamp,
                                                     ComposerClientWrapper::kNoFrameIntervalNs);
                     execute(display.getDisplayId());
-                    if (!mDisplayProperties.at(display.getDisplayId())
-                                 .reader.takeChangedCompositionTypes(display.getDisplayId())
-                                 .empty()) {
-                        continue;
-                    }
 
+                    // We should be guaranteed to use DPU composition here
+                    ASSERT_TRUE(supportsHlg);
                     auto changedCompositionTypes =
                             mDisplayProperties.at(display.getDisplayId())
                                     .reader.takeChangedCompositionTypes(display.getDisplayId());
@@ -782,6 +722,9 @@ TEST_P(GraphicsCompositionTest, Luts) {
                     testRenderEngine->setRenderLayers(layers);
                     ASSERT_NO_FATAL_FAILURE(testRenderEngine->drawLayers());
                     ASSERT_NO_FATAL_FAILURE(testRenderEngine->checkColorBuffer(expectedColors));
+                    mComposerClient->destroyLayer(
+                            display.getDisplayId(), layer->getLayer(),
+                            &mDisplayProperties.at(display.getDisplayId()).writer);
                 }
             }
         }
@@ -879,6 +822,11 @@ TEST_P(GraphicsCompositionTest, MixedColorSpaces) {
                             .reader.takeChangedCompositionTypes(display.getDisplayId());
             ASSERT_TRUE(changedCompositionTypes.empty());
             ASSERT_TRUE(mDisplayProperties.at(display.getDisplayId()).reader.takeErrors().empty());
+
+            mComposerClient->destroyLayer(display.getDisplayId(), srgbLayer->getLayer(),
+                    &mDisplayProperties.at(display.getDisplayId()).writer);
+            mComposerClient->destroyLayer(display.getDisplayId(), displayP3Layer->getLayer(),
+                    &mDisplayProperties.at(display.getDisplayId()).writer);
         }
     }
 }

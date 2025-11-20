@@ -125,6 +125,8 @@ interface IStreamCommon {
      * @throws EX_ILLEGAL_ARGUMENT If the effect reference is invalid.
      * @throws EX_ILLEGAL_STATE If the stream is closed.
      * @throws EX_UNSUPPORTED_OPERATION If the module does not support audio effects.
+     * @throws EX_NULL_POINTER As an alternative to `EX_ILLEGAL_ARGUMENT` when the effect reference
+     *                         is null (depending on the implementation backend).
      */
     void addEffect(in IEffect effect);
 
@@ -138,6 +140,8 @@ interface IStreamCommon {
      *                             not currently applied to the stream.
      * @throws EX_ILLEGAL_STATE If the stream is closed.
      * @throws EX_UNSUPPORTED_OPERATION If the module does not support audio effects.
+     * @throws EX_NULL_POINTER As an alternative to `EX_ILLEGAL_ARGUMENT` when the effect reference
+     *                         is null (depending on the implementation backend).
      */
     void removeEffect(in IEffect effect);
 }

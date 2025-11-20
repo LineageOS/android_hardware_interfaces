@@ -47,30 +47,26 @@ class StreamRemoteSubmix : public StreamCommonImpl {
     ndk::ScopedAStatus prepareToClose() override;
 
   private:
-    long getDelayInUsForFrameCount(size_t frameCount);
+    long getDurationInUsForFrameCount(size_t frameCount) const;
     size_t getStreamPipeSizeInFrames();
     ::android::status_t outWrite(void* buffer, size_t frameCount, size_t* actualFrameCount);
     ::android::status_t inRead(void* buffer, size_t frameCount, size_t* actualFrameCount);
 
     const ::aidl::android::media::audio::common::AudioDeviceAddress mDeviceAddress;
     const bool mIsInput;
-    r_submix::AudioConfig mStreamConfig;
+    const r_submix::AudioConfig mStreamConfig;
+    const int mReadAttemptSleepUs;
     std::shared_ptr<r_submix::SubmixRoute> mCurrentRoute = nullptr;
 
     // Limit for the number of error log entries to avoid spamming the logs.
     static constexpr int kMaxErrorLogs = 5;
-    // The duration of kMaxReadFailureAttempts * READ_ATTEMPT_SLEEP_MS must be strictly inferior
-    // to the duration of a record buffer at the current record sample rate (of the device, not of
-    // the recording itself). Here we have: 3 * 5ms = 15ms < 1024 frames * 1000 / 48000 = 21.333ms
-    static constexpr int kMaxReadFailureAttempts = 3;
-    // 5ms between two read attempts when pipe is empty
-    static constexpr int kReadAttemptSleepUs = 5000;
 
     int64_t mStartTimeNs = 0;
     long mFramesSinceStart = 0;
     int mReadErrorCount = 0;
     int mReadFailureCount = 0;
     int mWriteShutdownCount = 0;
+    bool mSkipNextTransfer = false;
 };
 
 class StreamInRemoteSubmix final : public StreamIn, public deprecated::StreamSwitcher {

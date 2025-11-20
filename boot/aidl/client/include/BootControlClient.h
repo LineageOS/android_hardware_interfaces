@@ -32,7 +32,7 @@ struct CommandResult {
     constexpr bool IsOk() const { return success; }
 };
 
-enum class BootControlVersion { BOOTCTL_V1_0, BOOTCTL_V1_1, BOOTCTL_V1_2, BOOTCTL_AIDL };
+enum class BootControlVersion { BOOTCTL_V1_2, BOOTCTL_AIDL };
 
 class BootControlClient {
   public:

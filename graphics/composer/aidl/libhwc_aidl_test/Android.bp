@@ -37,6 +37,7 @@ cc_library_static {
         "GraphicsComposerCallback.cpp",
         "Readback.cpp",
         "RenderEngine.cpp",
+        "TestLayer.cpp",
     ],
     shared_libs: [
         "libEGL",

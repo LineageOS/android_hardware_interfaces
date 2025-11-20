@@ -73,6 +73,7 @@ class FakeFaceEngine {
 
   private:
     int32_t getRandomInRange(int32_t bound1, int32_t bound2);
+    int32_t getEnrollmentHit();
     static constexpr int32_t FACE_ACQUIRED_VENDOR_BASE = 1000;
     static constexpr int32_t FACE_ERROR_VENDOR_BASE = 1000;
     std::pair<AcquiredInfo, int32_t> convertAcquiredInfo(int32_t code);

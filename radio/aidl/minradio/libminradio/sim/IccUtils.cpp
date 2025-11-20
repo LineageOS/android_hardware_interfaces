@@ -88,12 +88,19 @@ std::vector<uint8_t> hexStringToBytes(std::string_view str) {
 }
 
 // com.android.internal.telephony.uicc.IccUtils.bchToString (inversion)
+// com.android.internal.telephony.uicc.euicc.padTrailingFs
 // NOTE: BCH is a nibble-swizzled bytes reprezentation
 std::vector<uint8_t> hexStringToBch(std::string_view str) {
-    CHECK(str.size() % 2 == 0) << "Hex string length not even";
-    std::vector<uint8_t> bch(str.size() / 2);
+    std::vector<uint8_t> bch((str.size() + 1) / 2);
     for (size_t i = 0; i < bch.size(); i++) {
-        bch[i] = charToByte(str[i * 2]) | charToByte(str[i * 2 + 1]) << 4;
+        size_t inpos = i * 2;
+        uint8_t encoded = charToByte(str[inpos]);
+        if (inpos + 1 < str.size()) {
+            encoded |= charToByte(str[inpos + 1]) << 4;
+        } else {
+            encoded |= 0xF0;
+        }
+        bch[i] = encoded;
     }
     return bch;
 }

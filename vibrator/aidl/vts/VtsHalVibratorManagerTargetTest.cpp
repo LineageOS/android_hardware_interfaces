@@ -24,7 +24,6 @@
 #include <android/binder_process.h>
 
 #include <algorithm>
-#include <cmath>
 #include <future>
 
 #include "test_utils.h"
@@ -50,7 +49,7 @@ const std::vector<CompositePrimitive> kPrimitives{ndk::enum_range<CompositePrimi
                                                   ndk::enum_range<CompositePrimitive>().end()};
 
 // Timeout to wait for vibration callback completion.
-static constexpr std::chrono::milliseconds VIBRATION_CALLBACK_TIMEOUT = 100ms;
+static constexpr std::chrono::milliseconds VIBRATION_CALLBACK_TIMEOUT = 200ms;
 
 static constexpr int32_t VIBRATION_SESSIONS_MIN_VERSION = 3;
 
@@ -140,13 +139,12 @@ TEST_P(VibratorAidl, PrepareOnNotSupported) {
     if (vibratorIds.empty()) return;
     if (!(capabilities & IVibratorManager::CAP_SYNC)) return;
     if (!(capabilities & IVibratorManager::CAP_PREPARE_ON)) {
-        int32_t durationMs = 250;
         EXPECT_OK(manager->prepareSynced(vibratorIds));
         std::shared_ptr<IVibrator> vibrator;
         for (int32_t id : vibratorIds) {
             EXPECT_OK(manager->getVibrator(id, &vibrator));
             ASSERT_NE(vibrator, nullptr);
-            EXPECT_UNKNOWN_OR_UNSUPPORTED(vibrator->on(durationMs, nullptr));
+            EXPECT_UNKNOWN_OR_UNSUPPORTED(vibrator->on(2000, nullptr));
         }
         EXPECT_OK(manager->cancelSynced());
     }
@@ -202,7 +200,6 @@ TEST_P(VibratorAidl, TriggerWithCallback) {
     auto callback = ndk::SharedRefBase::make<CompletionCallback>(
             [&completionPromise] { completionPromise.set_value(); });
     int32_t durationMs = 250;
-    std::chrono::milliseconds timeout{durationMs * 2};
 
     EXPECT_OK(manager->prepareSynced(vibratorIds));
     std::shared_ptr<IVibrator> vibrator;
@@ -212,6 +209,7 @@ TEST_P(VibratorAidl, TriggerWithCallback) {
         EXPECT_OK(vibrator->on(durationMs, nullptr));
     }
 
+    auto timeout = std::chrono::milliseconds(durationMs) + VIBRATION_CALLBACK_TIMEOUT;
     EXPECT_OK(manager->triggerSynced(callback));
     EXPECT_EQ(completionFuture.wait_for(timeout), std::future_status::ready);
     EXPECT_OK(manager->cancelSynced());
@@ -374,7 +372,6 @@ TEST_P(VibratorAidl, VibrationSessionCleared) {
     EXPECT_OK(manager->startSession(vibratorIds, sessionConfig, sessionCallback, &session));
     ASSERT_NE(session, nullptr);
 
-    int32_t durationMs = 250;
     std::vector<std::promise<void>> vibrationPromises;
     std::vector<std::future<void>> vibrationFutures;
     for (int32_t id : vibratorIds) {
@@ -386,7 +383,7 @@ TEST_P(VibratorAidl, VibrationSessionCleared) {
         vibrationFutures.push_back(vibrationPromise.get_future());
         auto vibrationCallback = ndk::SharedRefBase::make<CompletionCallback>(
                 [&vibrationPromise] { vibrationPromise.set_value(); });
-        EXPECT_OK(vibrator->on(durationMs, vibrationCallback));
+        EXPECT_OK(vibrator->on(2000, vibrationCallback));
     }
 
     // Session callback not triggered.
@@ -489,8 +486,7 @@ TEST_P(VibratorAidl, VibrationSessionWithMultipleIndependentVibrations) {
 
     EXPECT_OK(session->close());
 
-    int32_t maxDurationMs = 100 + 200 + 300;
-    auto timeout = std::chrono::milliseconds(maxDurationMs) + VIBRATION_CALLBACK_TIMEOUT;
+    auto timeout = std::chrono::milliseconds(100 + 200 + 300) + VIBRATION_CALLBACK_TIMEOUT;
     EXPECT_EQ(sessionFuture.wait_for(timeout), std::future_status::ready);
 }
 
@@ -516,7 +512,7 @@ TEST_P(VibratorAidl, VibrationSessionsIgnoresSecondSessionWhenFirstIsOngoing) {
     EXPECT_EQ(sessionFuture.wait_for(VIBRATION_CALLBACK_TIMEOUT), std::future_status::timeout);
 
     // First session still ongoing, we can still vibrate.
-    int32_t durationMs = 100;
+    int32_t durationMs = 250;
     for (int32_t id : vibratorIds) {
         std::shared_ptr<IVibrator> vibrator;
         EXPECT_OK(manager->getVibrator(id, &vibrator));

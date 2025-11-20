@@ -16,31 +16,113 @@
 
 #include "Readback.h"
 #include <aidl/android/hardware/graphics/common/BufferUsage.h>
+#include <renderengine/impl/ExternalTexture.h>
 #include "RenderEngine.h"
-#include "renderengine/impl/ExternalTexture.h"
+#include "android-base/stringprintf.h"
 
 namespace aidl::android::hardware::graphics::composer3::libhwc_aidl_test {
+
+namespace {
+void saveAsImage(const std::string& prefix, void* bufferData, uint32_t bytesPerPixel,
+                 uint32_t stride, uint32_t height, uint32_t width) {
+    std::string filename = ::android::base::StringPrintf(
+            "/data/local/tmp/%s_%ld.ppm", prefix.c_str(), static_cast<long>(time(nullptr)));
+    FILE* file = fopen(filename.c_str(), "wb");
+    if (!file) {
+        ALOGE("Failed to open file %s for writing", filename.c_str());
+        return;
+    }
+
+    // PPM header (P6 format - binary RGB)
+    // TODO(b/329149798): Add support for 1010102 buffers
+    fprintf(file, "P6\n%d %d\n255\n", width, height);
+
+    for (uint32_t y = 0; y < height; y++) {
+        std::vector<uint8_t> rowData(width * 3);
+        for (uint32_t x = 0; x < width; x++) {
+            uint8_t* srcData = static_cast<uint8_t*>(bufferData);
+            uint32_t srcOffset = y * stride * bytesPerPixel + x * bytesPerPixel;
+            uint32_t dstOffset = x * 3;
+
+            rowData[dstOffset + 0] = srcData[srcOffset + 0];  // R
+            rowData[dstOffset + 1] = srcData[srcOffset + 1];  // G
+            rowData[dstOffset + 2] = srcData[srcOffset + 2];  // B
+        }
+        fwrite(rowData.data(), 3, width, file);
+    }
+
+    fclose(file);
+}
+
+#define ASSERT_APPROX_EQ(val1, val2, error) \
+    ASSERT_NEAR(static_cast<double>(val1), static_cast<double>(val2), static_cast<double>(error))
+}  // namespace
 
 const std::vector<ColorMode> ReadbackHelper::colorModes = {ColorMode::SRGB, ColorMode::DISPLAY_P3};
 const std::vector<Dataspace> ReadbackHelper::dataspaces = {common::Dataspace::SRGB,
                                                            common::Dataspace::DISPLAY_P3};
 
-void TestLayer::write(ComposerClientWriter& writer) {
-    writer.setLayerDisplayFrame(mDisplay, mLayer, mDisplayFrame);
-    writer.setLayerSourceCrop(mDisplay, mLayer, mSourceCrop);
-    writer.setLayerZOrder(mDisplay, mLayer, mZOrder);
-    writer.setLayerSurfaceDamage(mDisplay, mLayer, mSurfaceDamage);
-    writer.setLayerTransform(mDisplay, mLayer, mTransform);
-    writer.setLayerPlaneAlpha(mDisplay, mLayer, mAlpha);
-    writer.setLayerBlendMode(mDisplay, mLayer, mBlendMode);
-    writer.setLayerBrightness(mDisplay, mLayer, mBrightness);
-    writer.setLayerDataspace(mDisplay, mLayer, mDataspace);
-    Luts luts{
-            .pfd = ::ndk::ScopedFileDescriptor(dup(mLuts.pfd.get())),
-            .offsets = mLuts.offsets,
-            .lutProperties = mLuts.lutProperties,
-    };
-    writer.setLayerLuts(mDisplay, mLayer, luts);
+DisplayProperties ReadbackHelper::setupDisplayProperty(
+        const DisplayWrapper& display,
+        const std::shared_ptr<ComposerClientWrapper>& composerClient) {
+    int64_t displayId = display.getDisplayId();
+
+    // Set testColorModes
+    const auto& [status, modes] = composerClient->getColorModes(displayId);
+    EXPECT_TRUE(status.isOk());
+    if (!status.isOk()) {
+        abort();
+    }
+    std::vector<ColorMode> testColorModes;
+    for (ColorMode mode : modes) {
+        if (std::find(colorModes.begin(), colorModes.end(), mode) != colorModes.end()) {
+            testColorModes.push_back(mode);
+        }
+    }
+
+    // Set pixelFormat and dataspace
+    auto [readbackStatus, readBackBufferAttributes] =
+            composerClient->getReadbackBufferAttributes(displayId);
+    if (!readbackStatus.isOk()) {
+        EXPECT_EQ(readbackStatus.getExceptionCode(), EX_SERVICE_SPECIFIC);
+        EXPECT_EQ(readbackStatus.getServiceSpecificError(), IComposerClient::EX_UNSUPPORTED);
+    }
+
+    // Set testRenderEngine and clientCompositionDisplaySettings
+    EXPECT_TRUE(composerClient->setPowerMode(displayId, PowerMode::ON).isOk());
+    const auto format = readbackStatus.isOk() ? readBackBufferAttributes.format
+                                              : common::PixelFormat::RGBA_8888;
+    std::unique_ptr<TestRenderEngine> testRenderEngine;
+    EXPECT_NO_FATAL_FAILURE(
+            testRenderEngine = std::unique_ptr<TestRenderEngine>(new TestRenderEngine(
+                    ::android::renderengine::RenderEngineCreationArgs::Builder()
+                            .setPixelFormat(static_cast<int>(format))
+                            .setImageCacheSize(TestRenderEngine::sMaxFrameBufferAcquireBuffers)
+                            .setEnableProtectedContext(false)
+                            .setPrecacheToneMapperShaderOnly(false)
+                            .setContextPriority(
+                                    ::android::renderengine::RenderEngine::ContextPriority::HIGH)
+                            .build())));
+
+    ::android::renderengine::DisplaySettings clientCompositionDisplaySettings;
+    clientCompositionDisplaySettings.physicalDisplay =
+            ::android::Rect(display.getDisplayWidth(), display.getDisplayHeight());
+    clientCompositionDisplaySettings.clip = clientCompositionDisplaySettings.physicalDisplay;
+
+    testRenderEngine->initGraphicBuffer(
+            static_cast<uint32_t>(display.getDisplayWidth()),
+            static_cast<uint32_t>(display.getDisplayHeight()),
+            /*layerCount*/ 1U,
+            static_cast<uint64_t>(static_cast<uint64_t>(common::BufferUsage::CPU_READ_OFTEN) |
+                                  static_cast<uint64_t>(common::BufferUsage::CPU_WRITE_OFTEN) |
+                                  static_cast<uint64_t>(common::BufferUsage::GPU_RENDER_TARGET)));
+    testRenderEngine->setDisplaySettings(clientCompositionDisplaySettings);
+
+    DisplayProperties displayProperties(displayId, testColorModes, std::move(testRenderEngine),
+                                        std::move(clientCompositionDisplaySettings),
+                                        std::move(readBackBufferAttributes.format),
+                                        std::move(readBackBufferAttributes.dataspace));
+    return displayProperties;
 }
 
 std::string ReadbackHelper::getColorModeString(ColorMode mode) {
@@ -78,57 +160,6 @@ Dataspace ReadbackHelper::getDataspaceForColorMode(ColorMode mode) {
     }
 }
 
-LayerSettings TestLayer::toRenderEngineLayerSettings() {
-    LayerSettings layerSettings;
-
-    layerSettings.alpha = ::android::half(mAlpha);
-    layerSettings.disableBlending = mBlendMode == BlendMode::NONE;
-    layerSettings.source.buffer.isOpaque = mBlendMode == BlendMode::NONE;
-    layerSettings.geometry.boundaries = ::android::FloatRect(
-            static_cast<float>(mDisplayFrame.left), static_cast<float>(mDisplayFrame.top),
-            static_cast<float>(mDisplayFrame.right), static_cast<float>(mDisplayFrame.bottom));
-
-    const ::android::mat4 translation = ::android::mat4::translate(::android::vec4(
-            (static_cast<uint64_t>(mTransform) & static_cast<uint64_t>(Transform::FLIP_H)
-                     ? static_cast<float>(-mDisplayFrame.right)
-                     : 0.0f),
-            (static_cast<uint64_t>(mTransform) & static_cast<uint64_t>(Transform::FLIP_V)
-                     ? static_cast<float>(-mDisplayFrame.bottom)
-                     : 0.0f),
-            0.0f, 1.0f));
-
-    const ::android::mat4 scale = ::android::mat4::scale(::android::vec4(
-            static_cast<uint64_t>(mTransform) & static_cast<uint64_t>(Transform::FLIP_H) ? -1.0f
-                                                                                         : 1.0f,
-            static_cast<uint64_t>(mTransform) & static_cast<uint64_t>(Transform::FLIP_V) ? -1.0f
-                                                                                         : 1.0f,
-            1.0f, 1.0f));
-
-    layerSettings.geometry.positionTransform = scale * translation;
-    layerSettings.whitePointNits = mWhitePointNits;
-    layerSettings.sourceDataspace = static_cast<::android::ui::Dataspace>(mDataspace);
-    if (mLuts.pfd.get() >= 0 && mLuts.offsets) {
-        std::vector<int32_t> dimensions;
-        std::vector<int32_t> sizes;
-        std::vector<int32_t> keys;
-        dimensions.reserve(mLuts.lutProperties.size());
-        sizes.reserve(mLuts.lutProperties.size());
-        keys.reserve(mLuts.lutProperties.size());
-
-        for (auto& l : mLuts.lutProperties) {
-            dimensions.emplace_back(static_cast<int32_t>(l.dimension));
-            sizes.emplace_back(static_cast<int32_t>(l.size));
-            keys.emplace_back(static_cast<int32_t>(l.samplingKeys[0]));
-        }
-
-        layerSettings.luts = std::make_shared<::android::gui::DisplayLuts>(
-                ::android::base::unique_fd(dup(mLuts.pfd.get())), *mLuts.offsets, dimensions, sizes,
-                keys);
-    }
-
-    return layerSettings;
-}
-
 int32_t ReadbackHelper::GetBitsPerChannel(common::PixelFormat pixelFormat) {
     switch (pixelFormat) {
         case common::PixelFormat::RGBA_1010102:
@@ -138,6 +169,14 @@ int32_t ReadbackHelper::GetBitsPerChannel(common::PixelFormat pixelFormat) {
             return 8;
         default:
             return -1;
+    }
+}
+
+int32_t ReadbackHelper::GetTolerance(int32_t bitsPerChannel) {
+    if (bitsPerChannel > 8) {
+        return 3;
+    } else {
+        return 0;
     }
 }
 
@@ -239,9 +278,11 @@ void ReadbackHelper::compareColorBuffers(const std::vector<Color>& expectedColor
                                          common::PixelFormat pixelFormat) {
     int32_t bitsPerChannel = GetBitsPerChannel(pixelFormat);
     int32_t alphaBits = GetAlphaBits(pixelFormat);
+    int32_t tolerance = GetTolerance(bitsPerChannel);
     ASSERT_GT(bytesPerPixel, 0);
     ASSERT_NE(-1, alphaBits);
     ASSERT_NE(-1, bitsPerChannel);
+    ASSERT_GE(tolerance, 0);
     uint32_t maxValue = (1 << bitsPerChannel) - 1;
     uint32_t maxAlphaValue = (1 << alphaBits) - 1;
     for (uint32_t row = 0; row < height; row++) {
@@ -276,11 +317,11 @@ void ReadbackHelper::compareColorBuffers(const std::vector<Color>& expectedColor
                 uint32_t actualBlue = (*pixelStart >> (32 - alphaBits - bitsPerChannel)) & maxValue;
                 uint32_t actualAlpha = (*pixelStart >> (32 - alphaBits)) & maxAlphaValue;
 
-                ASSERT_EQ(expectedRed, actualRed)
+                ASSERT_APPROX_EQ(expectedRed, actualRed, tolerance)
                         << "Red channel mismatch at (" << row << ", " << col << ")";
-                ASSERT_EQ(expectedGreen, actualGreen)
+                ASSERT_APPROX_EQ(expectedGreen, actualGreen, tolerance)
                         << "Green channel mismatch at (" << row << ", " << col << ")";
-                ASSERT_EQ(expectedBlue, actualBlue)
+                ASSERT_APPROX_EQ(expectedBlue, actualBlue, tolerance)
                         << "Blue channel mismatch at (" << row << ", " << col << ")";
             }
         }
@@ -293,9 +334,11 @@ void ReadbackHelper::compareColorBuffers(void* expectedBuffer, void* actualBuffe
                                          common::PixelFormat pixelFormat) {
     int32_t bitsPerChannel = GetBitsPerChannel(pixelFormat);
     int32_t alphaBits = GetAlphaBits(pixelFormat);
+    int32_t tolerance = GetTolerance(bitsPerChannel);
     ASSERT_GT(bytesPerPixel, 0);
     ASSERT_NE(-1, alphaBits);
     ASSERT_NE(-1, bitsPerChannel);
+    ASSERT_GE(tolerance, 0);
     uint32_t maxValue = (1 << bitsPerChannel) - 1;
     uint32_t maxAlphaValue = (1 << alphaBits) - 1;
     for (uint32_t row = 0; row < height; row++) {
@@ -331,11 +374,11 @@ void ReadbackHelper::compareColorBuffers(void* expectedBuffer, void* actualBuffe
                         (*actualStart >> (32 - alphaBits - bitsPerChannel)) & maxValue;
                 uint32_t actualAlpha = (*actualStart >> (32 - alphaBits)) & maxAlphaValue;
 
-                ASSERT_EQ(expectedRed, actualRed)
+                ASSERT_APPROX_EQ(expectedRed, actualRed, tolerance)
                         << "Red channel mismatch at (" << row << ", " << col << ")";
-                ASSERT_EQ(expectedGreen, actualGreen)
+                ASSERT_APPROX_EQ(expectedGreen, actualGreen, tolerance)
                         << "Green channel mismatch at (" << row << ", " << col << ")";
-                ASSERT_EQ(expectedBlue, actualBlue)
+                ASSERT_APPROX_EQ(expectedBlue, actualBlue, tolerance)
                         << "Blue channel mismatch at (" << row << ", " << col << ")";
             }
         }
@@ -379,7 +422,7 @@ void ReadbackBuffer::setReadbackBuffer() {
     EXPECT_TRUE(mComposerClient->setReadbackBuffer(mDisplay, bufferHandle, fence).isOk());
 }
 
-void ReadbackBuffer::checkReadbackBuffer(const std::vector<Color>& expectedColors) {
+void ReadbackBuffer::checkReadbackBuffer(const std::vector<Color>& expectedColors, bool saveImage) {
     ASSERT_NE(nullptr, mGraphicBuffer);
     // lock buffer for reading
     const auto& [fenceStatus, bufferFence] = mComposerClient->getReadbackBufferFence(mDisplay);
@@ -399,6 +442,13 @@ void ReadbackBuffer::checkReadbackBuffer(const std::vector<Color>& expectedColor
                                     : mGraphicBuffer->getStride();
     ReadbackHelper::compareColorBuffers(expectedColors, bufData, stride, bytesPerPixel, mWidth,
                                         mHeight, mPixelFormat);
+
+    // If requested, save the buffer as an image while it's still locked
+    if (saveImage) {
+        std::string prefix = "readback_display" + std::to_string(mDisplay);
+        saveAsImage(prefix, bufData, static_cast<uint32_t>(bytesPerPixel), stride, mHeight, mWidth);
+    }
+
     status = mGraphicBuffer->unlock();
     EXPECT_EQ(::android::OK, status);
 }

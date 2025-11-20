@@ -43,7 +43,10 @@ class AidlCallbackHandler {
     AidlCallbackHandler() {
         death_handler_ = AIBinder_DeathRecipient_new(AidlCallbackHandler::onCallbackDeath);
     }
-    ~AidlCallbackHandler() { invalidate(); }
+
+    // Instances of this class are not dynamically allocated, so the destructor
+    // will only be called on program exit.
+    ~AidlCallbackHandler() = default;
 
     bool addCallback(const std::shared_ptr<CallbackType>& cb) {
         if (cb == nullptr) {
@@ -103,6 +106,7 @@ class AidlCallbackHandler {
     // can only call a static function, so use the cookie to find the
     // proper handler and route the request there.
     static void onCallbackDeath(void* cookie) {
+        LOG(INFO) << "Callback died. cookie=" << cookie;
         std::unique_lock<std::mutex> lk(callback_handler_lock_);
         auto cbQuery = callback_handler_map_.find(cookie);
         if (cbQuery == callback_handler_map_.end()) {
