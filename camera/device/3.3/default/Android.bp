@@ -13,7 +13,7 @@ cc_library_shared {
     defaults: ["hidl_defaults"],
     proprietary: true,
     cflags: select(soong_config_variable("camera", "override_format_from_reserved"), {
-        "true": ["-DTARGET_CAMERA_OVERRIDE_FORMAT_FROM_RESERVED"],
+        true: ["-DTARGET_CAMERA_OVERRIDE_FORMAT_FROM_RESERVED"],
         default: [],
     }),
     srcs: [
