@@ -21,8 +21,11 @@
 #include <fmq/MessageQueue.h>
 #include <math.h>
 #include <atomic>
+#include <map>
+#include <mutex>
 #include <set>
 #include <thread>
+#include <vector>
 #include "Demux.h"
 #include "Frontend.h"
 #include "Tuner.h"

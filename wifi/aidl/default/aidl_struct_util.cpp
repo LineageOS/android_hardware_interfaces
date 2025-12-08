@@ -1104,41 +1104,6 @@ bool convertLegacyLinkLayerStatsToAidl(const legacy_hal::LinkLayerStats& legacy_
     return true;
 }
 
-// TODO (b/324519882): Remove logs after validating the structure size.
-void logAidlLinkLayerStatsSize(StaLinkLayerStats& aidl_stats) {
-    unsigned long expectedMaxRadios = 5;
-    unsigned long expectedMaxLinks = 5;
-    unsigned long expectedMaxChannelStats = 512;
-    unsigned long expectedMaxPeers = 3;
-    unsigned long expectedMaxRateStats = 1024;
-
-    unsigned long maxChannelStats = 0, maxPeers = 0, maxRateStats = 0;
-    for (size_t i = 0; i < aidl_stats.radios.size(); i++) {
-        maxChannelStats =
-                std::max(maxChannelStats, (unsigned long)aidl_stats.radios[i].channelStats.size());
-    }
-    for (size_t i = 0; i < aidl_stats.iface.links.size(); i++) {
-        maxPeers = std::max(maxPeers, (unsigned long)aidl_stats.iface.links[i].peers.size());
-        for (size_t j = 0; j < aidl_stats.iface.links[i].peers.size(); j++) {
-            maxRateStats =
-                    std::max(maxRateStats,
-                             (unsigned long)aidl_stats.iface.links[i].peers[j].rateStats.size());
-        }
-    }
-
-    if (aidl_stats.radios.size() > expectedMaxRadios ||
-        aidl_stats.iface.links.size() > expectedMaxLinks ||
-        maxChannelStats > expectedMaxChannelStats || maxPeers > expectedMaxPeers ||
-        maxRateStats > expectedMaxRateStats) {
-        LOG(INFO) << "StaLinkLayerStats exceeds expected vector size";
-        LOG(INFO) << "  numRadios: " << aidl_stats.radios.size();
-        LOG(INFO) << "  numLinks: " << aidl_stats.iface.links.size();
-        LOG(INFO) << "  maxChannelStats: " << maxChannelStats;
-        LOG(INFO) << "  maxPeers: " << maxPeers;
-        LOG(INFO) << "  maxRateStats: " << maxRateStats;
-    }
-}
-
 bool convertLegacyPeerInfoStatsToAidl(const legacy_hal::WifiPeerInfo& legacy_peer_info_stats,
                                       StaPeerInfo* aidl_peer_info_stats) {
     if (!aidl_peer_info_stats) {
@@ -1326,6 +1291,8 @@ NanPairingAkm convertLegacyAkmTypeToAidl(legacy_hal::NanAkm type) {
 
 uint16_t convertAidlBootstrappingMethodToLegacy(NanBootstrappingMethod type) {
     switch (type) {
+        case NanBootstrappingMethod::BOOTSTRAPPING_NONE_MASK:
+            return NAN_PAIRING_BOOTSTRAPPING_NONE_MASK;
         case NanBootstrappingMethod::BOOTSTRAPPING_OPPORTUNISTIC_MASK:
             return NAN_PAIRING_BOOTSTRAPPING_OPPORTUNISTIC_MASK;
         case NanBootstrappingMethod::BOOTSTRAPPING_PIN_CODE_DISPLAY_MASK:
@@ -1853,6 +1820,8 @@ bool convertAidlNanPublishRequestToLegacy(const NanPublishRequest& aidl_request,
             (aidl_request.baseConfigs.securityConfig.securityType != NanDataPathSecurityType::OPEN)
                     ? legacy_hal::NAN_DP_CONFIG_SECURITY
                     : legacy_hal::NAN_DP_CONFIG_NO_SECURITY;
+    legacy_request->sdea_params.gtk_protection =
+            aidl_request.baseConfigs.securityConfig.requiresEnhancedFrameProtection ? 1 : 0;
 
     legacy_request->sdea_params.ranging_state = aidl_request.baseConfigs.rangingRequired
                                                         ? legacy_hal::NAN_RANGING_ENABLE
@@ -1988,6 +1957,8 @@ bool convertAidlNanSubscribeRequestToLegacy(const NanSubscribeRequest& aidl_requ
             (aidl_request.baseConfigs.securityConfig.securityType != NanDataPathSecurityType::OPEN)
                     ? legacy_hal::NAN_DP_CONFIG_SECURITY
                     : legacy_hal::NAN_DP_CONFIG_NO_SECURITY;
+    legacy_request->sdea_params.gtk_protection =
+            aidl_request.baseConfigs.securityConfig.requiresEnhancedFrameProtection ? 1 : 0;
     legacy_request->sdea_params.ranging_state = aidl_request.baseConfigs.rangingRequired
                                                         ? legacy_hal::NAN_RANGING_ENABLE
                                                         : legacy_hal::NAN_RANGING_DISABLE;
@@ -3704,6 +3675,8 @@ bool convertAidlNanBootstrappingIndicationResponseToLegacy(
     legacy_request->rsp_code = aidl_request.acceptRequest ? NAN_BOOTSTRAPPING_REQUEST_ACCEPT
                                                           : NAN_BOOTSTRAPPING_REQUEST_REJECT;
     legacy_request->publish_subscribe_id = static_cast<uint8_t>(aidl_request.discoverySessionId);
+    legacy_request->response_bootstrapping_method =
+            convertAidlBootstrappingMethodToLegacy(aidl_request.responseBootstrappingMethod);
 
     return true;
 }

@@ -35,6 +35,8 @@ class MockHciRouter : public HciRouter {
   MOCK_METHOD(bool, Initialize,
               (const std::shared_ptr<HciRouterCallback>& callback), (override));
 
+  MOCK_METHOD(void, Close, (), (override));
+
   MOCK_METHOD(void, Cleanup, (), (override));
 
   MOCK_METHOD(bool, Send, (const HalPacket& packet), (override));
@@ -51,6 +53,8 @@ class MockHciRouter : public HciRouter {
               (override));
 
   MOCK_METHOD(void, SendPacketToStack, (const HalPacket& packet), (override));
+
+  static inline MockHciRouter* mock_hci_router_{nullptr};
 };
 
 }  // namespace hci

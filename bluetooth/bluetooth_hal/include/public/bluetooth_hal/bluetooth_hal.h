@@ -16,6 +16,8 @@
 
 #include <memory>
 
+#include "bluetooth_hal/chip/chip_provisioner_interface.h"
+#include "bluetooth_hal/extensions/cs/bluetooth_channel_sounding_distance_estimator_interface.h"
 #include "bluetooth_hal/transport/transport_interface.h"
 
 namespace bluetooth_hal {
@@ -24,9 +26,18 @@ class BluetoothHal {
  public:
   static BluetoothHal& GetHal();
   bool RegisterVendorTransport(
-      std::unique_ptr<::bluetooth_hal::transport::TransportInterface>
-          transport);
+      ::bluetooth_hal::transport::TransportType type,
+      ::bluetooth_hal::transport::TransportInterface::FactoryFn factory);
+  void RegisterVendorChipProvisioner(
+      ::bluetooth_hal::chip::ChipProvisionerInterface::FactoryFn factory);
+  void RegisterVendorChannelSoundingDistanceEstimator(
+      ::bluetooth_hal::extensions::cs::
+          ChannelSoundingDistanceEstimatorInterface::FactoryFn factory);
   void Start();
+  void StartOffloadHal();
+
+ private:
+  void StartExtensions();
 };
 
 }  // namespace bluetooth_hal

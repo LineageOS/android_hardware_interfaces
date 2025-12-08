@@ -79,14 +79,20 @@ int fillRGBAFromI420(const uint8_t* src_y, int src_stride_y, const uint8_t* src_
 
 EvsVideoEmulatedCamera::EvsVideoEmulatedCamera(Sigil, const char* deviceName,
                                                std::unique_ptr<ConfigManager::CameraInfo>& camInfo)
-    : mVideoFileName(deviceName), mCameraInfo(camInfo) {
-    mDescription.id = mVideoFileName;
-
+    : mCameraInfo(camInfo) {
+    mDescription.id = deviceName;
     /* set camera metadata */
     if (camInfo) {
         uint8_t* ptr = reinterpret_cast<uint8_t*>(camInfo->characteristics);
         const size_t len = get_camera_metadata_size(camInfo->characteristics);
         mDescription.metadata.insert(mDescription.metadata.end(), ptr, ptr + len);
+        mVideoFileName = camInfo->filePath;
+    }
+    // Fallback to previous behaviour - using device id as path to video file
+    if (mVideoFileName.length() == 0) {
+        LOG(WARNING) << "\"file_path\" attribute is empty, using camera id as a path fallback, use "
+                     << "\"file_path\" xml attribute in camera device config.";
+        mVideoFileName = deviceName;
     }
 
     initializeParameters();

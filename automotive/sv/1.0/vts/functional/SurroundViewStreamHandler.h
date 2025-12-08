@@ -21,6 +21,7 @@
 #include <android/hardware/automotive/sv/1.0/ISurroundViewStream.h>
 #include <android/hardware/automotive/sv/1.0/ISurroundViewSession.h>
 
+#include <mutex>
 #include <thread>
 #include <vector>
 

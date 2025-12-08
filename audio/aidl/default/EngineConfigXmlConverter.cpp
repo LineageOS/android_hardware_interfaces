@@ -127,9 +127,6 @@ ConversionResult<AudioAttributes> EngineConfigXmlConverter::convertAudioAttribut
 ConversionResult<AudioHalAttributesGroup> EngineConfigXmlConverter::convertAttributesGroupToAidl(
         const eng_xsd::AttributesGroup& xsdcAttributesGroup) {
     AudioHalAttributesGroup aidlAttributesGroup;
-    static const int kStreamTypeEnumOffset =
-            static_cast<int>(eng_xsd::Stream::AUDIO_STREAM_VOICE_CALL) -
-            static_cast<int>(AudioStreamType::VOICE_CALL);
     aidlAttributesGroup.streamType = xsdcAttributesGroup.hasStreamType()
                                              ? VALUE_OR_FATAL(convertAudioStreamTypeToAidl(
                                                        xsdcAttributesGroup.getStreamType()))
@@ -173,7 +170,9 @@ ConversionResult<AudioHalProductStrategy> EngineConfigXmlConverter::convertProdu
                 VALUE_OR_FATAL(convertProductStrategyNameToAidl(xsdcProductStrategy.getName()));
     }
     aidlProductStrategy.name = xsdcProductStrategy.getName();
-
+    if (xsdcProductStrategy.hasZoneId()) {
+        aidlProductStrategy.zoneId = xsdcProductStrategy.getZoneId();
+    }
     if (xsdcProductStrategy.hasAttributesGroup()) {
         aidlProductStrategy.attributesGroups = VALUE_OR_FATAL(
                 (convertCollectionToAidl<eng_xsd::AttributesGroup, AudioHalAttributesGroup>(

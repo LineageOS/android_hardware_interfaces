@@ -22,6 +22,7 @@
 #include <aidl/android/hardware/security/sharedsecret/ISharedSecret.h>
 #include <android/binder_manager.h>
 #include <gtest/gtest.h>
+#include <algorithm>
 #include <vector>
 
 namespace aidl::android::hardware::security::sharedsecret::test {

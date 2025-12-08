@@ -198,8 +198,6 @@ class RadioSimTest : public RadioServiceTest {
   public:
     void SetUp() override;
 
-    bool shouldTestCdma();
-
     /* Override updateSimCardStatus in RadioServiceTest to not call setResponseFunctions */
     void updateSimCardStatus();
 

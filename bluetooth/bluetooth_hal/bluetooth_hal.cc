@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#define LOG_TAG "bluetooth_hal"
+
 #include "bluetooth_hal/bluetooth_hal.h"
 
 #include <memory>
@@ -24,17 +26,25 @@
 #include "android/binder_manager.h"
 #include "android/binder_process.h"
 #include "android/binder_status.h"
-#include "bluetooth_hal/bluetooth_hci.h"
+#include "bluetooth_hal/chip/chip_provisioner_interface.h"
 #include "bluetooth_hal/extensions/cs/bluetooth_channel_sounding.h"
+#include "bluetooth_hal/extensions/cs/bluetooth_channel_sounding_distance_estimator_interface.h"
 #include "bluetooth_hal/extensions/finder/bluetooth_finder.h"
+#include "bluetooth_hal/hci_proxy_aidl.h"
+#include "bluetooth_hal/hci_proxy_ffi.h"
 #include "bluetooth_hal/transport/transport_interface.h"
 
 namespace bluetooth_hal {
 
-using ::bluetooth_hal::BluetoothHci;
+using ::aidl::android::hardware::bluetooth::hal::IBluetoothHci_addService;
+using ::bluetooth_hal::HciProxyAidl;
+using ::bluetooth_hal::chip::ChipProvisionerInterface;
 using ::bluetooth_hal::extensions::cs::BluetoothChannelSounding;
+using ::bluetooth_hal::extensions::cs::
+    ChannelSoundingDistanceEstimatorInterface;
 using ::bluetooth_hal::extensions::finder::BluetoothFinder;
 using ::bluetooth_hal::transport::TransportInterface;
+using ::bluetooth_hal::transport::TransportType;
 
 using ::ndk::SharedRefBase;
 
@@ -44,20 +54,49 @@ BluetoothHal& BluetoothHal::GetHal() {
 }
 
 bool BluetoothHal::RegisterVendorTransport(
-    std::unique_ptr<::bluetooth_hal::transport::TransportInterface> transport) {
-  return TransportInterface::RegisterVendorTransport(std::move(transport));
+    TransportType type, TransportInterface::FactoryFn factory) {
+  return TransportInterface::RegisterVendorTransport(type, std::move(factory));
+}
+
+void BluetoothHal::RegisterVendorChipProvisioner(
+    ChipProvisionerInterface::FactoryFn factory) {
+  ChipProvisionerInterface::RegisterVendorChipProvisioner(std::move(factory));
+}
+
+void BluetoothHal::RegisterVendorChannelSoundingDistanceEstimator(
+    ChannelSoundingDistanceEstimatorInterface::FactoryFn factory) {
+  ChannelSoundingDistanceEstimatorInterface::
+      RegisterVendorChannelSoundingDistanceEstimator(std::move(factory));
 }
 
 void BluetoothHal::Start() {
-  std::shared_ptr<BluetoothChannelSounding> bluetooth_channel_sounding =
-      SharedRefBase::make<BluetoothChannelSounding>();
-  std::shared_ptr<BluetoothFinder> bluetooth_finder =
-      SharedRefBase::make<BluetoothFinder>();
+  StartExtensions();
 
+  std::string instance = std::string() + HciProxyAidl::descriptor + "/default";
+  std::shared_ptr<HciProxyAidl> hci_proxy = SharedRefBase::make<HciProxyAidl>();
+  int status =
+      AServiceManager_addService(hci_proxy->asBinder().get(), instance.c_str());
+  if (status == STATUS_OK) {
+    ABinderProcess_joinThreadPool();
+  } else {
+    LOG(ERROR) << "Could not register as a service!";
+  }
+}
+
+void BluetoothHal::StartOffloadHal() {
+  StartExtensions();
+  static HciProxyFfi ffi;
+  IBluetoothHci_addService(&ffi);
+  ABinderProcess_joinThreadPool();
+}
+
+void BluetoothHal::StartExtensions() {
   std::string instance;
   int status;
 
   instance = std::string() + BluetoothChannelSounding::descriptor + "/default";
+  std::shared_ptr<BluetoothChannelSounding> bluetooth_channel_sounding =
+      SharedRefBase::make<BluetoothChannelSounding>();
   status = AServiceManager_addService(
       bluetooth_channel_sounding->asBinder().get(), instance.c_str());
   if (status != STATUS_OK) {
@@ -65,19 +104,12 @@ void BluetoothHal::Start() {
   }
 
   instance = std::string() + BluetoothFinder::descriptor + "/default";
+  std::shared_ptr<BluetoothFinder> bluetooth_finder =
+      SharedRefBase::make<BluetoothFinder>();
   status = AServiceManager_addService(bluetooth_finder->asBinder().get(),
                                       instance.c_str());
   if (status != STATUS_OK) {
     LOG(ERROR) << "Could not register BluetoothFinder as a service!";
-  }
-
-  instance = std::string() + BluetoothHci::descriptor + "/default";
-  status = AServiceManager_addService(BluetoothHci::GetHci().asBinder().get(),
-                                      instance.c_str());
-  if (status == STATUS_OK) {
-    ABinderProcess_joinThreadPool();
-  } else {
-    LOG(ERROR) << "Could not register as a service!";
   }
 }
 

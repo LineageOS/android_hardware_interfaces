@@ -125,19 +125,8 @@ ndk::ScopedAStatus Health::getChargeStatus(BatteryStatus* out) {
 }
 
 ndk::ScopedAStatus Health::setChargingPolicy(BatteryChargingPolicy in_value) {
-    ::android::status_t err = battery_monitor_.setChargingPolicy(static_cast<int>(in_value));
-
-    switch (err) {
-        case ::android::OK:
-            return ndk::ScopedAStatus::ok();
-        case ::android::NAME_NOT_FOUND:
-            return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
-        case ::android::BAD_VALUE:
-            return ndk::ScopedAStatus::fromStatus(::android::INVALID_OPERATION);
-        default:
-            return ndk::ScopedAStatus::fromServiceSpecificErrorWithMessage(
-                    IHealth::STATUS_UNKNOWN, ::android::statusToString(err).c_str());
-    }
+    in_value = static_cast<BatteryChargingPolicy>(0);
+    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
 }
 
 ndk::ScopedAStatus Health::getChargingPolicy(BatteryChargingPolicy* out) {

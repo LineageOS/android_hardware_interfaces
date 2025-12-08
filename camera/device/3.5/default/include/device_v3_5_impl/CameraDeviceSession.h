@@ -17,11 +17,14 @@
 #ifndef ANDROID_HARDWARE_CAMERA_DEVICE_V3_5_CAMERADEVICE3SESSION_H
 #define ANDROID_HARDWARE_CAMERA_DEVICE_V3_5_CAMERADEVICE3SESSION_H
 
-#include <android/hardware/camera/device/3.5/ICameraDevice.h>
-#include <android/hardware/camera/device/3.5/ICameraDeviceSession.h>
-#include <android/hardware/camera/device/3.5/ICameraDeviceCallback.h>
 #include <../../3.4/default/include/device_v3_4_impl/CameraDeviceSession.h>
+#include <android/hardware/camera/device/3.5/ICameraDevice.h>
+#include <android/hardware/camera/device/3.5/ICameraDeviceCallback.h>
+#include <android/hardware/camera/device/3.5/ICameraDeviceSession.h>
+#include <mutex>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
 namespace android {
 namespace hardware {

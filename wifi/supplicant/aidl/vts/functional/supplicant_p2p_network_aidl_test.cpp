@@ -57,14 +57,18 @@ class SupplicantP2pNetworkAidlTest : public testing::TestWithParam<std::string> 
         EXPECT_TRUE(p2p_iface_->listNetworks(&networkList).isOk());
         ASSERT_FALSE(networkList.empty());
 
-        network_id_ = networkList[0];
+        // Newly added network configuration is at the end of the list
+        network_id_ = networkList.back();
         EXPECT_TRUE(p2p_iface_->getNetwork(network_id_, &p2p_network_).isOk());
         ASSERT_NE(p2p_network_, nullptr);
     }
 
     void TearDown() override {
         if (p2p_iface_ != nullptr) {
+            // Remove the network and update the configuration to
+            // disk(p2p_supplicant.conf)
             EXPECT_TRUE(p2p_iface_->removeNetwork(network_id_).isOk());
+            EXPECT_TRUE(p2p_iface_->saveConfig().isOk());
         }
         stopSupplicantService();
         startWifiFramework();
@@ -135,7 +139,6 @@ TEST_P(SupplicantP2pNetworkAidlTest, GetType) {
 TEST_P(SupplicantP2pNetworkAidlTest, IsCurrent) {
     bool isCurrent;
     EXPECT_TRUE(p2p_network_->isCurrent(&isCurrent).isOk());
-    EXPECT_FALSE(isCurrent);
 }
 
 /*

@@ -40,4 +40,5 @@ interface ICryptoPlugin {
   boolean requiresSecureDecoderComponent(in String mime);
   void setMediaDrmSession(in byte[] sessionId);
   void setSharedBufferBase(in android.hardware.drm.SharedBuffer base);
+  android.hardware.drm.KeyHandleResult getKeyHandle(in byte[] keyId, in android.hardware.drm.Mode mode);
 }

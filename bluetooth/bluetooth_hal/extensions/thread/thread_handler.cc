@@ -32,9 +32,6 @@ using ::bluetooth_hal::hci::HciPacketType;
 using ::bluetooth_hal::hci::MonitorMode;
 using ::bluetooth_hal::thread::ThreadDaemon;
 
-std::mutex ThreadHandler::mutex_;
-std::unique_ptr<ThreadHandler> ThreadHandler::handler_ = nullptr;
-
 ThreadHandler::ThreadHandler() {
   thread_daemon_ = std::make_unique<ThreadDaemon>(
       [this](const ::bluetooth_hal::hci::HalPacket& packet) {

@@ -124,6 +124,7 @@ class StreamSwitcher : virtual public StreamCommonInterface {
     ndk::ScopedAStatus removeEffect(
             const std::shared_ptr<::aidl::android::hardware::audio::effect::IEffect>& in_effect)
             override;
+    ndk::ScopedAStatus createMmapBuffer(MmapBufferDescriptor* _aidl_return) override;
 
     ndk::ScopedAStatus getStreamCommonCommon(std::shared_ptr<IStreamCommon>* _aidl_return) override;
     ndk::ScopedAStatus updateMetadataCommon(const Metadata& metadata) override;

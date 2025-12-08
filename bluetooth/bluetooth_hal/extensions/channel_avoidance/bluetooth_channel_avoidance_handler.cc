@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "bthal.extensions.channel_avoidance"
+#define LOG_TAG "bluetooth_hal.extensions.channel_avoidance"
 
 #include "bluetooth_hal/extensions/channel_avoidance/bluetooth_channel_avoidance_handler.h"
 

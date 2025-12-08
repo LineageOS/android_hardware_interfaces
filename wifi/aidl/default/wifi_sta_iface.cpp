@@ -578,7 +578,6 @@ std::pair<StaLinkLayerStats, ndk::ScopedAStatus> WifiStaIface::getLinkLayerStats
     } else {
         return {StaLinkLayerStats{}, createWifiStatus(WifiStatusCode::ERROR_UNKNOWN)};
     }
-    aidl_struct_util::logAidlLinkLayerStatsSize(aidl_stats);
     return {aidl_stats, ndk::ScopedAStatus::ok()};
 }
 

@@ -231,7 +231,7 @@ TEST_P(VisualizerParamTest, testCaptureSampleBufferSizeAndOutput) {
     EXPECT_STATUS(EX_NONE, mEffect->getParameter(id, &getParam)) << " with: " << id.toString();
 
     ASSERT_NO_FATAL_FAILURE(processAndWriteToOutput(mInputBuffer, mOutputBuffer, mEffect,
-                                                    &mOpenEffectReturn, mVersion));
+                                                    mOpenEffectReturn, mVersion));
     ASSERT_EQ(mInputBuffer, mOutputBuffer);
 
     if (allParamsValid) {
@@ -294,7 +294,7 @@ TEST_P(VisualizerDataTest, testScalingModeParameters) {
         // The stop and reset calls to the effect are made towards the end in order to fetch the
         // captureSampleBuffer values
         ASSERT_NO_FATAL_FAILURE(processAndWriteToOutput(mInputBuffer, mOutputBuffer, mEffect,
-                                                        &mOpenEffectReturn, mVersion, 1, false));
+                                                        mOpenEffectReturn, mVersion, 1, false));
         if (allParamsValid) {
             Parameter getParam;
             EXPECT_STATUS(EX_NONE, mEffect->getParameter(idCsb, &getParam))

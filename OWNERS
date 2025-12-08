@@ -4,8 +4,7 @@ per-file *.hal,*.aidl,OWNERS = devinmoore@google.com,elsk@google.com,malchev@goo
 # Android Native API Council
 devinmoore@google.com
 elsk@google.com
-malchev@google.com
 smoreland@google.com
 
-# historical/backup
-maco@google.com
+maco@google.com #{LAST_RESORT_SUGGESTION}
+malchev@google.com #{LAST_RESORT_SUGGESTION}

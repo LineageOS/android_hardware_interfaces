@@ -59,9 +59,6 @@ cc_library_static {
     name: "android.hardware.automotive.vehicle@default-grpc-libgrpc-V3",
     vendor: true,
     host_supported: true,
-    include_dirs: [
-        "external/protobuf/src",
-    ],
     generated_headers: [
         "VehicleServerProtoStub_h@default-grpc-V3",
     ],
@@ -76,6 +73,7 @@ cc_library_static {
     ],
     shared_libs: [
         "libgrpc++",
+        "libprotobuf-cpp-full",
     ],
     cflags: [
         "-Wno-unused-parameter",

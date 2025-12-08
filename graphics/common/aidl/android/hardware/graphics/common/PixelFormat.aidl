@@ -639,4 +639,14 @@ enum PixelFormat {
      * interpretation is defined by the dataspace.
      */
     BGRA_1010102 = 0x43,
+
+    /**
+     * 32-bit packed format that has 2-bit unused, 10-bit R, G, and B components,
+     * in that order, from the most-significant bits to the least-significant
+     * bits.
+     *
+     * The component values are unsigned normalized to the range [0, 1], whose
+     * interpretation is defined by the dataspace.
+     */
+    BGRX_1010102 = 0x44,
 }

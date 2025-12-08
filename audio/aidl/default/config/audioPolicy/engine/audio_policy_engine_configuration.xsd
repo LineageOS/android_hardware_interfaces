@@ -107,6 +107,7 @@
                     <xs:attribute name="name" type="xs:string" use="required"/>
                     <!-- Only needs to be specified for vendor strategies. -->
                     <xs:attribute name="id" type="xs:int" use="optional"/>
+                    <xs:attribute name="zoneId" type="xs:int" use="optional"/>
                 </xs:complexType>
             </xs:element>
         </xs:sequence>

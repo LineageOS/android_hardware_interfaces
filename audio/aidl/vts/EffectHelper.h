@@ -32,6 +32,7 @@
 #include <android/binder_auto_utils.h>
 #include <fmq/AidlMessageQueue.h>
 #include <gtest/gtest.h>
+#include <system/audio.h>
 #include <system/audio_aidl_utils.h>
 #include <system/audio_effects/aidl_effects_utils.h>
 #include <system/audio_effects/effect_uuid.h>
@@ -43,6 +44,8 @@
 using namespace android;
 using aidl::android::hardware::audio::effect::CommandId;
 using aidl::android::hardware::audio::effect::Descriptor;
+using aidl::android::hardware::audio::effect::Eraser;
+using aidl::android::hardware::audio::effect::getEffectTypeUuidEraser;
 using aidl::android::hardware::audio::effect::getEffectTypeUuidSpatializer;
 using aidl::android::hardware::audio::effect::getRange;
 using aidl::android::hardware::audio::effect::IEffect;
@@ -88,6 +91,12 @@ static constexpr float kMaxAudioSampleValue = 1;
 static constexpr int kNPointFFT = 16384;
 static constexpr int kSamplingFrequency = 44100;
 static constexpr int kDefaultChannelLayout = AudioChannelLayout::LAYOUT_STEREO;
+static const AudioChannelLayout kChannelLayout =
+        AudioChannelLayout::make<AudioChannelLayout::layoutMask>(kDefaultChannelLayout);
+static constexpr audio_session_t kSessionId = AUDIO_SESSION_NONE;
+static constexpr int kIoHandle = AUDIO_IO_HANDLE_NONE;
+static constexpr float kFrameCount = 0x100;
+
 static constexpr float kLn10Div20 = 0.11512925f;  // ln(10)/20
 
 class EffectHelper {
@@ -102,6 +111,7 @@ class EffectHelper {
             ASSERT_NO_FATAL_FAILURE(expectState(effect, State::INIT));
         }
         mIsSpatializer = id.type == getEffectTypeUuidSpatializer();
+        mIsEraser = id.type == getEffectTypeUuidEraser();
         mDescriptor = desc;
     }
 
@@ -213,8 +223,9 @@ class EffectHelper {
         }
     }
 
-    static void writeToFmq(std::unique_ptr<StatusMQ>& statusMq, std::unique_ptr<DataMQ>& dataMq,
-                           const std::vector<float>& buffer, int version) {
+    static void writeToFmq(const std::unique_ptr<StatusMQ>& statusMq,
+                           const std::unique_ptr<DataMQ>& dataMq, const std::vector<float>& buffer,
+                           int version) {
         const size_t available = dataMq->availableToWrite();
         ASSERT_NE(0Ul, available);
         auto bufferFloats = buffer.size();
@@ -230,8 +241,8 @@ class EffectHelper {
         ASSERT_EQ(::android::OK, EventFlag::deleteEventFlag(&efGroup));
     }
 
-    static void readFromFmq(std::unique_ptr<StatusMQ>& statusMq, size_t statusNum,
-                            std::unique_ptr<DataMQ>& dataMq, size_t expectFloats,
+    static void readFromFmq(const std::unique_ptr<StatusMQ>& statusMq, size_t statusNum,
+                            const std::unique_ptr<DataMQ>& dataMq, size_t expectFloats,
                             std::vector<float>& buffer,
                             std::optional<int> expectStatus = STATUS_OK) {
         if (0 == statusNum) {
@@ -251,7 +262,32 @@ class EffectHelper {
         }
     }
 
-    static void expectDataMqUpdateEventFlag(std::unique_ptr<StatusMQ>& statusMq) {
+    static void writeToAndReadFromFmq(const std::unique_ptr<StatusMQ>& statusMq, size_t statusNum,
+                                      const std::unique_ptr<DataMQ>& inputMq,
+                                      const std::unique_ptr<DataMQ>& outputMq,
+                                      const std::vector<float>& inputBuffer,
+                                      std::vector<float>& outputBuffer,
+                                      std::optional<int> expectStatus = std::nullopt,
+                                      const int version = -1) {
+        const size_t inputBufferFloats = inputBuffer.size();
+        size_t processed_size = 0ul;
+        while (processed_size < inputBufferFloats) {
+            const size_t floatsToWrite =
+                    std::min(inputMq->availableToWrite(), inputBufferFloats - processed_size);
+            ASSERT_NE(0Ul, floatsToWrite);
+
+            std::vector<float> input(inputBuffer.begin() + processed_size,
+                                     inputBuffer.begin() + processed_size + floatsToWrite);
+            // write to input FMQ
+            ASSERT_NO_FATAL_FAILURE(writeToFmq(statusMq, inputMq, input, version));
+            // read same size from output FMQ
+            ASSERT_NO_FATAL_FAILURE(readFromFmq(statusMq, statusNum, outputMq, floatsToWrite,
+                                                outputBuffer, expectStatus));
+            processed_size += floatsToWrite;
+        }
+    }
+
+    static void expectDataMqUpdateEventFlag(const std::unique_ptr<StatusMQ>& statusMq) {
         EventFlag* efGroup;
         ASSERT_EQ(::android::OK,
                   EventFlag::createEventFlag(statusMq->getEventFlagWord(), &efGroup));
@@ -262,27 +298,42 @@ class EffectHelper {
         EXPECT_TRUE(efState & kEventFlagDataMqUpdate);
     }
 
-    Parameter::Common createParamCommon(
-            int session = 0, int ioHandle = -1, int iSampleRate = 48000, int oSampleRate = 48000,
-            long iFrameCount = 0x100, long oFrameCount = 0x100,
-            AudioChannelLayout inputChannelLayout =
-                    AudioChannelLayout::make<AudioChannelLayout::layoutMask>(kDefaultChannelLayout),
-            AudioChannelLayout outputChannelLayout =
-                    AudioChannelLayout::make<AudioChannelLayout::layoutMask>(
-                            kDefaultChannelLayout)) {
+    Parameter::Common createParamCommon(int session = kSessionId, int iFrameCount = kFrameCount,
+                                        int oFrameCount = kFrameCount) {
+        // default Parameter::Common
+        int sampleRate = 48000;
+        AudioChannelLayout iChannelLayout = kChannelLayout, oChannelLayout = kChannelLayout;
+
         // query supported input layout and use it as the default parameter in common
-        if (mIsSpatializer && isRangeValid<Range::spatializer>(Spatializer::supportedChannelLayout,
-                                                               mDescriptor.capability)) {
-            const auto layoutRange = getRange<Range::spatializer, Range::SpatializerRange>(
-                    mDescriptor.capability, Spatializer::supportedChannelLayout);
-            if (std::vector<AudioChannelLayout> layouts;
-                layoutRange &&
-                0 != (layouts = layoutRange->min.get<Spatializer::supportedChannelLayout>())
-                                .size()) {
-                inputChannelLayout = layouts[0];
+        if (mIsSpatializer) {
+            if (isRangeValid<Range::spatializer>(Spatializer::supportedChannelLayout,
+                                                 mDescriptor.capability)) {
+                const auto layoutRange = getRange<Range::spatializer, Range::SpatializerRange>(
+                        mDescriptor.capability, Spatializer::supportedChannelLayout);
+                if (std::vector<AudioChannelLayout> layouts;
+                    layoutRange &&
+                    0 != (layouts = layoutRange->min.get<Spatializer::supportedChannelLayout>())
+                                    .size()) {
+                    iChannelLayout = layouts[0];
+                }
             }
+        } else if (mIsEraser) {
+            // TODO: b/418780826, hardcoded for now, update with capability range
+            sampleRate = 16000;
+            iChannelLayout = oChannelLayout =
+                    AudioChannelLayout::make<AudioChannelLayout::layoutMask>(
+                            AudioChannelLayout::LAYOUT_MONO);
         }
 
+        return createParamCommon(session, kIoHandle, sampleRate, sampleRate, iFrameCount,
+                                 oFrameCount, iChannelLayout, oChannelLayout);
+    }
+
+    Parameter::Common createParamCommon(int session, int ioHandle, int iSampleRate, int oSampleRate,
+                                        long iFrameCount = kFrameCount,
+                                        long oFrameCount = kFrameCount,
+                                        AudioChannelLayout inputChannelLayout = kChannelLayout,
+                                        AudioChannelLayout outputChannelLayout = kChannelLayout) {
         Parameter::Common common;
         common.session = session;
         common.ioHandle = ioHandle;
@@ -298,6 +349,32 @@ class EffectHelper {
         output.base.format = kDefaultFormatDescription;
         output.frameCount = oFrameCount;
         return common;
+    }
+
+    // TODO: b/418780826, update this to capability range based implementation
+    Parameter::Common getDefaultEraserCommonParam(std::shared_ptr<IEffect> effect) {
+        if (!effect) {
+            LOG(ERROR) << __func__ << " null effect pointer";
+            return Parameter::Common{};
+        }
+        static aidl::android::media::audio::eraser::Capability capability = [&]() {
+            Parameter param;
+            Eraser::Id eraserId = Eraser::Id::make<Eraser::Id::commonTag>(Eraser::capability);
+            Parameter::Id capId = Parameter::Id::make<Parameter::Id::eraserTag>(eraserId);
+            EXPECT_IS_OK(effect->getParameter(capId, &param));
+
+            const auto specific = param.get<Parameter::specific>();
+            const auto eraser = specific.get<Parameter::Specific::eraser>();
+            return eraser.get<Eraser::capability>();
+        }();
+
+        if (capability.sampleRates.size() == 0 || capability.channelLayouts.size() == 0) {
+            return createParamCommon(kSessionId);
+        }
+        const int sampleRate = capability.sampleRates[0];
+        const auto chLayout = capability.channelLayouts[0];
+        return createParamCommon(kSessionId /* session */, 1 /* ioHandle */, sampleRate, sampleRate,
+                                 mInputFrameSize, mOutputFrameSize, chLayout, chLayout);
     }
 
     typedef ::android::AidlMessageQueue<
@@ -376,11 +453,12 @@ class EffectHelper {
     }
 
     // keep writing data to the FMQ until effect transit from DRAINING to IDLE
-    static void waitForDrain(std::vector<float>& inputBuffer, std::vector<float>& outputBuffer,
+    static void waitForDrain(const std::vector<float>& inputBuffer,
+                             std::vector<float>& outputBuffer,
                              const std::shared_ptr<IEffect>& effect,
-                             std::unique_ptr<EffectHelper::StatusMQ>& statusMQ,
-                             std::unique_ptr<EffectHelper::DataMQ>& inputMQ,
-                             std::unique_ptr<EffectHelper::DataMQ>& outputMQ, int version) {
+                             const std::unique_ptr<EffectHelper::StatusMQ>& statusMQ,
+                             const std::unique_ptr<EffectHelper::DataMQ>& inputMQ,
+                             const std::unique_ptr<EffectHelper::DataMQ>& outputMQ, int version) {
         State state;
         while (effect->getState(&state).getStatus() == EX_NONE && state == State::DRAINING) {
             EXPECT_NO_FATAL_FAILURE(
@@ -396,15 +474,15 @@ class EffectHelper {
     static void processAndWriteToOutput(std::vector<float>& inputBuffer,
                                         std::vector<float>& outputBuffer,
                                         const std::shared_ptr<IEffect>& effect,
-                                        IEffect::OpenEffectReturn* openEffectReturn,
+                                        const IEffect::OpenEffectReturn& openEffectReturn,
                                         int version = -1, int times = 1,
                                         bool callStopReset = true) {
         // Initialize AidlMessagequeues
-        auto statusMQ = std::make_unique<EffectHelper::StatusMQ>(openEffectReturn->statusMQ);
+        auto statusMQ = std::make_unique<EffectHelper::StatusMQ>(openEffectReturn.statusMQ);
         ASSERT_TRUE(statusMQ->isValid());
-        auto inputMQ = std::make_unique<EffectHelper::DataMQ>(openEffectReturn->inputDataMQ);
+        auto inputMQ = std::make_unique<EffectHelper::DataMQ>(openEffectReturn.inputDataMQ);
         ASSERT_TRUE(inputMQ->isValid());
-        auto outputMQ = std::make_unique<EffectHelper::DataMQ>(openEffectReturn->outputDataMQ);
+        auto outputMQ = std::make_unique<EffectHelper::DataMQ>(openEffectReturn.outputDataMQ);
         ASSERT_TRUE(outputMQ->isValid());
 
         // Enabling the process
@@ -426,12 +504,46 @@ class EffectHelper {
         // Disable the process
         if (callStopReset) {
             ASSERT_NO_FATAL_FAILURE(command(effect, CommandId::STOP));
-            EXPECT_NO_FATAL_FAILURE(waitForDrain(inputBuffer, outputBuffer, effect, statusMQ,
-                                                 inputMQ, outputMQ, version));
+            if (version >= kDrainSupportedVersion) {
+                EXPECT_NO_FATAL_FAILURE(waitForDrain(inputBuffer, outputBuffer, effect, statusMQ,
+                                                     inputMQ, outputMQ, version));
+            }
         }
 
         if (callStopReset) {
             ASSERT_NO_FATAL_FAILURE(command(effect, CommandId::RESET));
+        }
+    }
+
+    static void processInputAndWriteToOutput(const std::vector<float>& inputBuffer,
+                                             std::vector<float>& outputBuffer,
+                                             const std::shared_ptr<IEffect>& effect,
+                                             const IEffect::OpenEffectReturn& openEffectReturn,
+                                             int version = -1) {
+        // Initialize AidlMessagequeues
+        auto statusMQ = std::make_unique<EffectHelper::StatusMQ>(openEffectReturn.statusMQ);
+        ASSERT_TRUE(statusMQ->isValid());
+        auto inputMQ = std::make_unique<EffectHelper::DataMQ>(openEffectReturn.inputDataMQ);
+        ASSERT_TRUE(inputMQ->isValid());
+        auto outputMQ = std::make_unique<EffectHelper::DataMQ>(openEffectReturn.outputDataMQ);
+        ASSERT_TRUE(outputMQ->isValid());
+
+        // Enabling the process
+        ASSERT_NO_FATAL_FAILURE(command(effect, CommandId::START));
+
+        // Write from buffer to message queues and calling process
+        if (version == -1) {
+            ASSERT_IS_OK(effect->getInterfaceVersion(&version));
+        }
+
+        EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToAndReadFromFmq(
+                statusMQ, 1, inputMQ, outputMQ, inputBuffer, outputBuffer, std::nullopt, version));
+
+        // Disable the process
+        ASSERT_NO_FATAL_FAILURE(command(effect, CommandId::STOP));
+        if (version >= kDrainSupportedVersion) {
+            EXPECT_NO_FATAL_FAILURE(waitForDrain(inputBuffer, outputBuffer, effect, statusMQ,
+                                                 inputMQ, outputMQ, version));
         }
     }
 
@@ -607,7 +719,7 @@ class EffectHelper {
         return (effect && effect->getInterfaceVersion(&version).isOk()) ? version : 0;
     }
 
-    bool mIsSpatializer;
+    bool mIsSpatializer, mIsEraser;
     Descriptor mDescriptor;
     size_t mInputFrameSize, mOutputFrameSize;
     size_t mInputSamples, mOutputSamples;

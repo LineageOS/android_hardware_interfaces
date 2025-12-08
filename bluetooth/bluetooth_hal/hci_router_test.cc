@@ -89,16 +89,6 @@ class HciRouterTest : public Test {
             [this](TransportInterfaceCallback* transport_interface_callback) {
               this->transport_interface_callback_ =
                   transport_interface_callback;
-              on_transport_packet_ready_ = [this](const HalPacket& packet) {
-                // The on_packet_ready should only be called after the
-                // command is sent to the transport.
-                WaitForCommandSent(packet);
-                // Drop this packet as the purpose of empty_packet_ is just
-                // to block the test, we don't have to actually send it.
-                if (packet != empty_packet_) {
-                  transport_interface_callback_->OnTransportPacketReady(packet);
-                }
-              };
               return true;
             }));
     ON_CALL(mock_transport_interface_, SetHciRouterBusy(_))
@@ -134,7 +124,7 @@ class HciRouterTest : public Test {
   }
 
   void CleanupHciRouter() {
-    EXPECT_CALL(mock_transport_interface_, Cleanup()).Times(1);
+    EXPECT_CALL(mock_transport_interface_, CleanupTransport()).Times(1);
     router_->Cleanup();
     ASSERT_EQ(new_state_, HalState::kShutdown);
     ASSERT_EQ(router_->GetHalState(), HalState::kShutdown);
@@ -166,6 +156,7 @@ class HciRouterTest : public Test {
 
   void CompleteFirmwareDownloadAndStackInit() {
     // Mock the chip provisioner firmware download behaivor.
+    router_->UpdateHalState(HalState::kPreFirmwareDownload);
     router_->UpdateHalState(HalState::kFirmwareDownloading);
     router_->UpdateHalState(HalState::kFirmwareDownloadCompleted);
     router_->UpdateHalState(HalState::kFirmwareReady);
@@ -210,20 +201,8 @@ class HciRouterTest : public Test {
     ASSERT_EQ(router_->GetHalState(), target_state);
   }
 
-  std::pair<HalPacket, HalPacket> CreateCommandEventPacketsWithOrderEnsured(
-      std::vector<uint8_t> command, std::vector<uint8_t> event) {
-    HalPacket command_packet(command);
-    HalPacket event_packet(event);
-    // Use promise and future to synchronize the command and event.
-    std::promise<void> promise;
-    std::future<void> future = promise.get_future();
-    command_sent_promises_[command] = std::move(promise);
-    command_sent_futures_[event] = std::move(future);
-    return std::make_pair(command_packet, event_packet);
-  }
-
-  void MarkCommandAsSent(const HalPacket& command) {
-    auto it = command_sent_promises_.find(command);
+  void MarkPacketAsSent(const HalPacket& packet) {
+    auto it = command_sent_promises_.find(packet);
     if (it != command_sent_promises_.end()) {
       it->second.set_value();
     }
@@ -231,15 +210,54 @@ class HciRouterTest : public Test {
 
   bool OnSendToTransport(const HalPacket& packet) {
     // To let the on_packet_ready know the command is sent.
-    MarkCommandAsSent(packet);
+    MarkPacketAsSent(packet);
     return true;
   }
 
-  void WaitForCommandSent(const HalPacket& event) {
-    auto it = command_sent_futures_.find(event);
+  void WaitPacketSentToTransport(const HalPacket& packet) {
+    auto it = command_sent_futures_.find(packet);
     if (it != command_sent_futures_.end()) {
-      it->second.get();
+      auto status = it->second.wait_for(std::chrono::seconds(1));
+      // Expect the packet was sent to the transport in time.
+      EXPECT_EQ(status, std::future_status::ready);
     }
+    // Expect the packet was sent via Send*ToRouter() helpers.
+    EXPECT_FALSE(it == command_sent_futures_.end());
+  }
+
+  /**
+   * @brief Send packet to the HciRouter, also prepare a future lock for
+   * WaitPacketSentToTransport(const HalPacket& packet).
+   *
+   * As HciRouter::Send* is handled asynchronously, a future lock is required to
+   * determine weither the packet has been sent to the transport layer.
+   *
+   * @return true if the packet is posted to the asynchronous thread, otherwise
+   * false.
+   */
+  bool SendToRouter(const HalPacket& packet) {
+    std::promise<void> promise;
+    std::future<void> future = promise.get_future();
+    command_sent_promises_[packet] = std::move(promise);
+    command_sent_futures_[packet] = std::move(future);
+    return router_->Send(packet);
+  }
+
+  bool SendCommandToRouter(const HalPacket& packet,
+                           const HalPacketCallback& callback) {
+    std::promise<void> promise;
+    std::future<void> future = promise.get_future();
+    command_sent_promises_[packet] = std::move(promise);
+    command_sent_futures_[packet] = std::move(future);
+    return router_->SendCommand(packet, callback);
+  }
+
+  bool SendCommandNoAckToRouter(const HalPacket& packet) {
+    std::promise<void> promise;
+    std::future<void> future = promise.get_future();
+    command_sent_promises_[packet] = std::move(promise);
+    command_sent_futures_[packet] = std::move(future);
+    return router_->SendCommandNoAck(packet);
   }
 
   void ExpectHalStateChange(HalState new_state, HalState old_state,
@@ -262,9 +280,6 @@ class HciRouterTest : public Test {
   HalState new_state_;
   HalState old_state_;
   HalPacket hal_packet_;
-  // An empty RX for blocking the test until command has sent to transport.
-  HalPacket empty_packet_ = HalPacket({0x02, 0x00, 0x00, 0x00, 0x00});
-  HalPacketCallback on_transport_packet_ready_;
   TransportInterfaceCallback* transport_interface_callback_;
   MockTransportInterface mock_transport_interface_;
   MockHalConfigLoader mock_hal_config_loader_;
@@ -281,20 +296,21 @@ TEST_F(HciRouterTest, InitializeWithAcceleratedBtOn) {
       .WillByDefault(Return(true));
 
   // Turn off Bluetooth, but without cleanup the transport layer.
-  router_->Cleanup();
+  router_->Close();
   CompleteResetFirmwareWithAcceleratedBtOn();
 
   // Turn on Bluetooth from kBtChipReady state, skip firmware download.
   router_->Initialize(fake_hci_callback_);
   CompleteResetFirmwareWithAcceleratedBtOn();
 
-  auto [cmd_reset, evt_reset] = CreateCommandEventPacketsWithOrderEnsured(
-      {0x01, 0x03, 0x0c, 0x00}, {0x04, 0x0e, 0x04, 0x01, 0x03, 0x0c, 0x00});
+  HalPacket cmd_reset({0x01, 0x03, 0x0c, 0x00});
+  HalPacket evt_reset({0x04, 0x0e, 0x04, 0x01, 0x03, 0x0c, 0x00});
   EXPECT_CALL(mock_transport_interface_, Send(cmd_reset)).Times(1);
   EXPECT_CALL(*fake_hci_callback_, OnPacketCallback(_)).Times(1);
-  EXPECT_TRUE(router_->Send(cmd_reset));
+  EXPECT_TRUE(SendToRouter(cmd_reset));
+  WaitPacketSentToTransport(cmd_reset);
   EXPECT_TRUE(GetIsRouterBusy());
-  on_transport_packet_ready_(evt_reset);
+  transport_interface_callback_->OnTransportPacketReady(evt_reset);
   EXPECT_FALSE(GetIsRouterBusy());
   EXPECT_EQ(hal_packet_, evt_reset);
 
@@ -306,71 +322,105 @@ TEST_F(HciRouterTest, InitializeWithAcceleratedBtOn) {
 TEST_F(HciRouterTest, HandleSendAclData) {
   HalPacket acl_data({0x02, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07});
   EXPECT_CALL(mock_transport_interface_, Send(acl_data)).Times(1);
+  EXPECT_CALL(mock_hci_router_client_agent_, DispatchPacketToClients(acl_data))
+      .WillOnce(Invoke([&](const HalPacket& captured_packet) {
+        EXPECT_EQ(captured_packet.GetDestination(),
+                  PacketDestination::kController);
+        return MonitorMode::kNone;
+      }));
 
-  EXPECT_TRUE(router_->Send(acl_data));
+  EXPECT_TRUE(SendToRouter(acl_data));
+  WaitPacketSentToTransport(acl_data);
   EXPECT_FALSE(GetIsRouterBusy());
 }
 
 TEST_F(HciRouterTest, HandleSendHciCommand) {
-  auto [cmd, blocker] = CreateCommandEventPacketsWithOrderEnsured(
-      {0x01, 0x03, 0x0c, 0x00}, empty_packet_);
+  HalPacket cmd({0x01, 0x03, 0x0c, 0x00});
   EXPECT_CALL(mock_transport_interface_, Send(cmd)).Times(1);
+  EXPECT_CALL(mock_hci_router_client_agent_, DispatchPacketToClients(cmd))
+      .WillOnce(Invoke([&](const HalPacket& captured_packet) {
+        EXPECT_EQ(captured_packet.GetDestination(),
+                  PacketDestination::kController);
+        return MonitorMode::kNone;
+      }));
 
-  EXPECT_TRUE(router_->Send(cmd));
+  EXPECT_TRUE(SendToRouter(cmd));
+  WaitPacketSentToTransport(cmd);
   EXPECT_TRUE(GetIsRouterBusy());
-
-  on_transport_packet_ready_(blocker);
 }
 
 TEST_F(HciRouterTest, HandleSendHciCommandTwiceWithoutEvent) {
-  auto [cmd_reset, blocker] = CreateCommandEventPacketsWithOrderEnsured(
-      {0x01, 0x03, 0x0c, 0x00}, empty_packet_);
+  HalPacket cmd_reset({0x01, 0x03, 0x0c, 0x00});
   HalPacket cmd_set_host_le_support({0x01, 0x6d, 0x0c, 0x02, 0x01, 0x00});
   EXPECT_CALL(mock_transport_interface_, Send(cmd_reset)).Times(1);
   EXPECT_CALL(mock_transport_interface_, Send(cmd_set_host_le_support))
       .Times(0);
+  EXPECT_CALL(mock_hci_router_client_agent_, DispatchPacketToClients(cmd_reset))
+      .WillOnce(Invoke([&](const HalPacket& captured_packet) {
+        EXPECT_EQ(captured_packet.GetDestination(),
+                  PacketDestination::kController);
+        return MonitorMode::kNone;
+      }));
+  EXPECT_CALL(mock_hci_router_client_agent_,
+              DispatchPacketToClients(cmd_set_host_le_support))
+      .Times(0);
 
-  EXPECT_TRUE(router_->Send(cmd_reset));
-  EXPECT_TRUE(GetIsRouterBusy());
-  EXPECT_TRUE(router_->Send(cmd_set_host_le_support));
+  EXPECT_TRUE(SendToRouter(cmd_reset));
+  WaitPacketSentToTransport(cmd_reset);
   EXPECT_TRUE(GetIsRouterBusy());
 
-  on_transport_packet_ready_(blocker);
+  EXPECT_TRUE(SendToRouter(cmd_set_host_le_support));
+  // The packet should not reach to the router, so no need to wait here.
+  EXPECT_TRUE(GetIsRouterBusy());
 }
 
 TEST_F(HciRouterTest, HandleSendHciCommandTwiceWithEvent) {
-  auto [cmd_reset, evt_reset] = CreateCommandEventPacketsWithOrderEnsured(
-      {0x01, 0x03, 0x0c, 0x00}, {0x04, 0x0e, 0x04, 0x01, 0x03, 0x0c, 0x00});
-  auto [cmd_set_host_le_support, blocker] =
-      CreateCommandEventPacketsWithOrderEnsured(
-          {0x01, 0x6d, 0x0c, 0x02, 0x01, 0x00}, empty_packet_);
+  HalPacket cmd_reset({0x01, 0x03, 0x0c, 0x00});
+  HalPacket evt_reset({0x04, 0x0e, 0x04, 0x01, 0x03, 0x0c, 0x00});
+  HalPacket cmd_set_host_le_support({0x01, 0x6d, 0x0c, 0x02, 0x01, 0x00});
 
   EXPECT_CALL(mock_transport_interface_, Send(cmd_reset)).Times(1);
   EXPECT_CALL(mock_transport_interface_, Send(cmd_set_host_le_support))
       .Times(1);
-  EXPECT_CALL(*fake_hci_callback_, OnPacketCallback(_)).Times(1);
+  EXPECT_CALL(*fake_hci_callback_, OnPacketCallback(evt_reset)).Times(1);
+  EXPECT_CALL(mock_hci_router_client_agent_, DispatchPacketToClients(cmd_reset))
+      .WillOnce(Invoke([&](const HalPacket& captured_packet) {
+        EXPECT_EQ(captured_packet.GetDestination(),
+                  PacketDestination::kController);
+        return MonitorMode::kNone;
+      }));
+  EXPECT_CALL(mock_hci_router_client_agent_,
+              DispatchPacketToClients(cmd_set_host_le_support))
+      .WillOnce(Invoke([&](const HalPacket& captured_packet) {
+        EXPECT_EQ(captured_packet.GetDestination(),
+                  PacketDestination::kController);
+        return MonitorMode::kNone;
+      }));
+  EXPECT_CALL(mock_hci_router_client_agent_, DispatchPacketToClients(evt_reset))
+      .WillOnce(Invoke([&](const HalPacket& captured_packet) {
+        EXPECT_EQ(captured_packet.GetDestination(), PacketDestination::kHost);
+        return MonitorMode::kNone;
+      }));
 
   // Send the first command.
-  EXPECT_TRUE(router_->Send(cmd_reset));
+  EXPECT_TRUE(SendToRouter(cmd_reset));
+  WaitPacketSentToTransport(cmd_reset);
   EXPECT_TRUE(GetIsRouterBusy());
   // Receive the event for the first command, and pass to the stack callback.
-  on_transport_packet_ready_(evt_reset);
+  transport_interface_callback_->OnTransportPacketReady(evt_reset);
   EXPECT_FALSE(GetIsRouterBusy());
   EXPECT_EQ(hal_packet_, evt_reset);
   // Send the second command.
-  EXPECT_TRUE(router_->Send(cmd_set_host_le_support));
+  EXPECT_TRUE(SendToRouter(cmd_set_host_le_support));
+  WaitPacketSentToTransport(cmd_set_host_le_support);
   EXPECT_TRUE(GetIsRouterBusy());
-
-  on_transport_packet_ready_(blocker);
 }
 
 TEST_F(HciRouterTest, HandleSendHciCommandTwiceWithLateEvent) {
-  auto [cmd_reset, evt_reset] = CreateCommandEventPacketsWithOrderEnsured(
-      {0x01, 0x03, 0x0c, 0x00}, {0x04, 0x0e, 0x04, 0x01, 0x03, 0x0c, 0x00});
-  auto [cmd_set_host_le_support, evt_set_host_le_support] =
-      CreateCommandEventPacketsWithOrderEnsured(
-          {0x01, 0x6d, 0x0c, 0x02, 0x01, 0x00},
-          {0x04, 0x0e, 0x04, 0x01, 0x6d, 0x0c, 0x00});
+  HalPacket cmd_reset({0x01, 0x03, 0x0c, 0x00});
+  HalPacket evt_reset({0x04, 0x0e, 0x04, 0x01, 0x03, 0x0c, 0x00});
+  HalPacket cmd_set_host_le_support({0x01, 0x6d, 0x0c, 0x02, 0x01, 0x00});
+  HalPacket evt_set_host_le_support({0x04, 0x0e, 0x04, 0x01, 0x6d, 0x0c, 0x00});
 
   EXPECT_CALL(mock_transport_interface_, Send(cmd_reset)).Times(1);
   EXPECT_CALL(mock_transport_interface_, Send(cmd_set_host_le_support))
@@ -378,44 +428,45 @@ TEST_F(HciRouterTest, HandleSendHciCommandTwiceWithLateEvent) {
   EXPECT_CALL(*fake_hci_callback_, OnPacketCallback(_)).Times(2);
 
   // Send the first command.
-  EXPECT_TRUE(router_->Send(cmd_reset));
+  EXPECT_TRUE(SendToRouter(cmd_reset));
+  WaitPacketSentToTransport(cmd_reset);
   EXPECT_TRUE(GetIsRouterBusy());
   // Send the second command.
-  EXPECT_TRUE(router_->Send(cmd_set_host_le_support));
+  EXPECT_TRUE(SendToRouter(cmd_set_host_le_support));
   EXPECT_TRUE(GetIsRouterBusy());
   // Receive the event for the first command, and pass to the stack callback.
-  on_transport_packet_ready_(evt_reset);
+  transport_interface_callback_->OnTransportPacketReady(evt_reset);
   EXPECT_EQ(hal_packet_, evt_reset);
+  // Router stays busy as there is still a command in the queue.
   EXPECT_TRUE(GetIsRouterBusy());
+  // Wait for the enqueued command to be sent to the transport
+  WaitPacketSentToTransport(cmd_set_host_le_support);
   // Receive the event for the second command.
-  on_transport_packet_ready_(evt_set_host_le_support);
+  transport_interface_callback_->OnTransportPacketReady(
+      evt_set_host_le_support);
   EXPECT_EQ(hal_packet_, evt_set_host_le_support);
   EXPECT_FALSE(GetIsRouterBusy());
 }
 
 TEST_F(HciRouterTest, HandleSendCommandTwiceWithoutEvent) {
-  auto [cmd_reset, blocker] = CreateCommandEventPacketsWithOrderEnsured(
-      {0x01, 0x03, 0x0c, 0x00}, empty_packet_);
+  HalPacket cmd_reset({0x01, 0x03, 0x0c, 0x00});
   HalPacket cmd_set_host_le_support({0x01, 0x6d, 0x0c, 0x02, 0x01, 0x00});
   EXPECT_CALL(mock_transport_interface_, Send(cmd_reset)).Times(1);
   EXPECT_CALL(mock_transport_interface_, Send(cmd_set_host_le_support))
       .Times(0);
 
-  EXPECT_TRUE(router_->SendCommand(cmd_reset, EmptyHalPacketCallback));
+  EXPECT_TRUE(SendCommandToRouter(cmd_reset, EmptyHalPacketCallback));
+  WaitPacketSentToTransport(cmd_reset);
   EXPECT_TRUE(GetIsRouterBusy());
   EXPECT_TRUE(
-      router_->SendCommand(cmd_set_host_le_support, EmptyHalPacketCallback));
+      SendCommandToRouter(cmd_set_host_le_support, EmptyHalPacketCallback));
   EXPECT_TRUE(GetIsRouterBusy());
-
-  on_transport_packet_ready_(blocker);
 }
 
 TEST_F(HciRouterTest, HandleSendCommandTwiceWithEvent) {
-  auto [cmd_reset, evt_reset] = CreateCommandEventPacketsWithOrderEnsured(
-      {0x01, 0x03, 0x0c, 0x00}, {0x04, 0x0e, 0x04, 0x01, 0x03, 0x0c, 0x00});
-  auto [cmd_set_host_le_support, blocker] =
-      CreateCommandEventPacketsWithOrderEnsured(
-          {0x01, 0x6d, 0x0c, 0x02, 0x01, 0x00}, empty_packet_);
+  HalPacket cmd_reset({0x01, 0x03, 0x0c, 0x00});
+  HalPacket evt_reset({0x04, 0x0e, 0x04, 0x01, 0x03, 0x0c, 0x00});
+  HalPacket cmd_set_host_le_support({0x01, 0x6d, 0x0c, 0x02, 0x01, 0x00});
 
   EXPECT_CALL(mock_transport_interface_, Send(cmd_reset)).Times(1);
   EXPECT_CALL(mock_transport_interface_, Send(cmd_set_host_le_support))
@@ -424,29 +475,27 @@ TEST_F(HciRouterTest, HandleSendCommandTwiceWithEvent) {
 
   // Send the first command with a client callback.
   HalPacket event;
-  EXPECT_TRUE(router_->SendCommand(
+  EXPECT_TRUE(SendCommandToRouter(
       cmd_reset, [&event](const HalPacket& packet) { event = packet; }));
+  WaitPacketSentToTransport(cmd_reset);
   EXPECT_TRUE(GetIsRouterBusy());
   // Receive the event for the first command, check if the event is sent to
   // the client callback.
-  on_transport_packet_ready_(evt_reset);
+  transport_interface_callback_->OnTransportPacketReady(evt_reset);
   EXPECT_FALSE(GetIsRouterBusy());
   EXPECT_EQ(event, evt_reset);
   // Send the second command.
   EXPECT_TRUE(
-      router_->SendCommand(cmd_set_host_le_support, EmptyHalPacketCallback));
+      SendCommandToRouter(cmd_set_host_le_support, EmptyHalPacketCallback));
+  WaitPacketSentToTransport(cmd_set_host_le_support);
   EXPECT_TRUE(GetIsRouterBusy());
-
-  on_transport_packet_ready_(blocker);
 }
 
 TEST_F(HciRouterTest, HandleSendCommandTwiceWithLateEvent) {
-  auto [cmd_reset, evt_reset] = CreateCommandEventPacketsWithOrderEnsured(
-      {0x01, 0x03, 0x0c, 0x00}, {0x04, 0x0e, 0x04, 0x01, 0x03, 0x0c, 0x00});
-  auto [cmd_set_host_le_support, evt_set_host_le_support] =
-      CreateCommandEventPacketsWithOrderEnsured(
-          {0x01, 0x6d, 0x0c, 0x02, 0x01, 0x00},
-          {0x04, 0x0e, 0x04, 0x01, 0x6d, 0x0c, 0x00});
+  HalPacket cmd_reset({0x01, 0x03, 0x0c, 0x00});
+  HalPacket evt_reset({0x04, 0x0e, 0x04, 0x01, 0x03, 0x0c, 0x00});
+  HalPacket cmd_set_host_le_support({0x01, 0x6d, 0x0c, 0x02, 0x01, 0x00});
+  HalPacket evt_set_host_le_support({0x04, 0x0e, 0x04, 0x01, 0x6d, 0x0c, 0x00});
 
   EXPECT_CALL(mock_transport_interface_, Send(cmd_reset)).Times(1);
   EXPECT_CALL(mock_transport_interface_, Send(cmd_set_host_le_support))
@@ -455,30 +504,33 @@ TEST_F(HciRouterTest, HandleSendCommandTwiceWithLateEvent) {
 
   // Send the first command with a client callback.
   HalPacket event;
-  EXPECT_TRUE(router_->SendCommand(
+  EXPECT_TRUE(SendCommandToRouter(
       cmd_reset, [&event](const HalPacket& packet) { event = packet; }));
+  WaitPacketSentToTransport(cmd_reset);
   EXPECT_TRUE(GetIsRouterBusy());
   // Send the second command.
   EXPECT_TRUE(
-      router_->SendCommand(cmd_set_host_le_support, EmptyHalPacketCallback));
+      SendCommandToRouter(cmd_set_host_le_support, EmptyHalPacketCallback));
   EXPECT_TRUE(GetIsRouterBusy());
   // Receive the event for the first command, check if the event is sent to
   // the client callback.
-  on_transport_packet_ready_(evt_reset);
+  transport_interface_callback_->OnTransportPacketReady(evt_reset);
   EXPECT_TRUE(GetIsRouterBusy());
   EXPECT_EQ(event, evt_reset);
+
+  // Wait for the enqueued command to be sent to the transport
+  WaitPacketSentToTransport(cmd_set_host_le_support);
   // Receive the event for the second command.
-  on_transport_packet_ready_(evt_set_host_le_support);
+  transport_interface_callback_->OnTransportPacketReady(
+      evt_set_host_le_support);
   EXPECT_FALSE(GetIsRouterBusy());
 }
 
 TEST_F(HciRouterTest, HandleSendHciCommandInCallback) {
-  auto [cmd_reset, evt_reset] = CreateCommandEventPacketsWithOrderEnsured(
-      {0x01, 0x03, 0x0c, 0x00}, {0x04, 0x0e, 0x04, 0x01, 0x03, 0x0c, 0x00});
-  auto [cmd_set_host_le_support, evt_set_host_le_support] =
-      CreateCommandEventPacketsWithOrderEnsured(
-          {0x01, 0x6d, 0x0c, 0x02, 0x01, 0x00},
-          {0x04, 0x0e, 0x04, 0x01, 0x6d, 0x0c, 0x00});
+  HalPacket cmd_reset({0x01, 0x03, 0x0c, 0x00});
+  HalPacket evt_reset({0x04, 0x0e, 0x04, 0x01, 0x03, 0x0c, 0x00});
+  HalPacket cmd_set_host_le_support({0x01, 0x6d, 0x0c, 0x02, 0x01, 0x00});
+  HalPacket evt_set_host_le_support({0x04, 0x0e, 0x04, 0x01, 0x6d, 0x0c, 0x00});
 
   // Expect both cmd_reset and cmd_set_host_le_support are sent to the
   // transport layer, and no callback to the stack.
@@ -490,35 +542,35 @@ TEST_F(HciRouterTest, HandleSendHciCommandInCallback) {
   // Send the first command with a client callback, and send the second
   // command in the client callback.
   HalPacket event;
-  EXPECT_TRUE(router_->SendCommand(cmd_reset, [&event, &cmd_set_host_le_support,
-                                               this](const HalPacket& packet) {
+  EXPECT_TRUE(SendCommandToRouter(cmd_reset, [&event, &cmd_set_host_le_support,
+                                              this](const HalPacket& packet) {
     event = packet;
     EXPECT_TRUE(
-        router_->SendCommand(cmd_set_host_le_support, EmptyHalPacketCallback));
+        SendCommandToRouter(cmd_set_host_le_support, EmptyHalPacketCallback));
   }));
+  WaitPacketSentToTransport(cmd_reset);
   EXPECT_TRUE(GetIsRouterBusy());
 
   // Receive the generated event for the first command, check if the second
   // command is properly sent.
-  on_transport_packet_ready_(evt_reset);
+  transport_interface_callback_->OnTransportPacketReady(evt_reset);
   EXPECT_EQ(event, evt_reset);
   EXPECT_TRUE(GetIsRouterBusy());
   // Check the second command is properly handled.
-  on_transport_packet_ready_(evt_set_host_le_support);
+  WaitPacketSentToTransport(cmd_set_host_le_support);
+  transport_interface_callback_->OnTransportPacketReady(
+      evt_set_host_le_support);
   EXPECT_FALSE(GetIsRouterBusy());
 }
 
 TEST_F(HciRouterTest, HandleSendHciCommandInCallbackAfterAnotherSendCommand) {
-  auto [cmd_reset, evt_reset] = CreateCommandEventPacketsWithOrderEnsured(
-      {0x01, 0x03, 0x0c, 0x00}, {0x04, 0x0e, 0x04, 0x01, 0x03, 0x0c, 0x00});
-  auto [cmd_set_min_enc_key_size, evt_set_min_enc_key_size] =
-      CreateCommandEventPacketsWithOrderEnsured(
-          {0x01, 0x84, 0x0c, 0x01, 0x07},
-          {0x04, 0x0e, 0x04, 0x01, 0x84, 0x0c, 0x00});
-  auto [cmd_set_host_le_support, evt_set_host_le_support] =
-      CreateCommandEventPacketsWithOrderEnsured(
-          {0x01, 0x6d, 0x0c, 0x02, 0x01, 0x00},
-          {0x04, 0x0e, 0x04, 0x01, 0x6d, 0x0c, 0x00});
+  HalPacket cmd_reset({0x01, 0x03, 0x0c, 0x00});
+  HalPacket evt_reset({0x04, 0x0e, 0x04, 0x01, 0x03, 0x0c, 0x00});
+  HalPacket cmd_set_min_enc_key_size({0x01, 0x84, 0x0c, 0x01, 0x07});
+  HalPacket evt_set_min_enc_key_size(
+      {0x04, 0x0e, 0x04, 0x01, 0x84, 0x0c, 0x00});
+  HalPacket cmd_set_host_le_support({0x01, 0x6d, 0x0c, 0x02, 0x01, 0x00});
+  HalPacket evt_set_host_le_support({0x04, 0x0e, 0x04, 0x01, 0x6d, 0x0c, 0x00});
 
   // Expect both cmd_reset and cmd_set_host_le_support are sent to the
   // transport layer, and no callback to the stack.
@@ -532,106 +584,150 @@ TEST_F(HciRouterTest, HandleSendHciCommandInCallbackAfterAnotherSendCommand) {
   // Send the first command with a client callback, and send the second
   // command in the client callback.
   HalPacket event;
-  EXPECT_TRUE(router_->SendCommand(cmd_reset, [&event, &cmd_set_host_le_support,
-                                               this](const HalPacket& packet) {
+  EXPECT_TRUE(SendCommandToRouter(cmd_reset, [&event, &cmd_set_host_le_support,
+                                              this](const HalPacket& packet) {
     event = packet;
     EXPECT_TRUE(
-        router_->SendCommand(cmd_set_host_le_support, EmptyHalPacketCallback));
+        SendCommandToRouter(cmd_set_host_le_support, EmptyHalPacketCallback));
   }));
+  WaitPacketSentToTransport(cmd_reset);
   EXPECT_TRUE(GetIsRouterBusy());
-  EXPECT_TRUE(router_->SendCommand(
+  EXPECT_TRUE(SendCommandToRouter(
       cmd_set_min_enc_key_size,
       [&event](const HalPacket& packet) { event = packet; }));
   EXPECT_TRUE(GetIsRouterBusy());
 
   // Receive three generated events in order
-  on_transport_packet_ready_(evt_reset);
+  transport_interface_callback_->OnTransportPacketReady(evt_reset);
   EXPECT_EQ(event, evt_reset);
   EXPECT_TRUE(GetIsRouterBusy());
 
-  on_transport_packet_ready_(evt_set_min_enc_key_size);
+  WaitPacketSentToTransport(cmd_set_min_enc_key_size);
+  transport_interface_callback_->OnTransportPacketReady(
+      evt_set_min_enc_key_size);
   EXPECT_EQ(event, evt_set_min_enc_key_size);
   EXPECT_TRUE(GetIsRouterBusy());
 
-  on_transport_packet_ready_(evt_set_host_le_support);
+  WaitPacketSentToTransport(cmd_set_host_le_support);
+  transport_interface_callback_->OnTransportPacketReady(
+      evt_set_host_le_support);
   EXPECT_FALSE(GetIsRouterBusy());
+}
+
+TEST_F(HciRouterTest, HandleSendDebugInfoCommandAfterSendCommand) {
+  HalPacket cmd_reset({0x01, 0x03, 0x0c, 0x00});
+  HalPacket cmd_debug_info({0x01, 0x5B, 0xFD, 0x00});
+
+  // Expect both cmd_reset and cmd_debug_info are sent to the transport layer.
+  EXPECT_CALL(mock_transport_interface_, Send(cmd_reset)).Times(1);
+  EXPECT_CALL(mock_transport_interface_, Send(cmd_debug_info)).Times(1);
+
+  // Send the first command with a client callback.
+  HalPacket event;
+  EXPECT_TRUE(SendCommandToRouter(cmd_reset, EmptyHalPacketCallback));
+  WaitPacketSentToTransport(cmd_reset);
+  EXPECT_TRUE(GetIsRouterBusy());
+
+  // Send the second command (Debug Info) without waiting the event for the
+  // first command.
+  EXPECT_TRUE(SendCommandToRouter(cmd_debug_info, EmptyHalPacketCallback));
+  WaitPacketSentToTransport(cmd_debug_info);
 }
 
 TEST_F(HciRouterTest, HandleSendCommandNoAck) {
   HalPacket cmd_reset({0x01, 0x03, 0x0c, 0x00});
   HalPacket cmd_set_host_le_support({0x01, 0x6d, 0x0c, 0x02, 0x01, 0x00});
 
+  // Check if the received event is dispatched to client agent and transport.
   EXPECT_CALL(mock_transport_interface_, Send(cmd_reset)).Times(1);
   EXPECT_CALL(mock_transport_interface_, Send(cmd_set_host_le_support))
       .Times(1);
+  EXPECT_CALL(mock_hci_router_client_agent_, DispatchPacketToClients(cmd_reset))
+      .WillOnce(Invoke([&](const HalPacket& captured_packet) {
+        EXPECT_EQ(captured_packet.GetDestination(),
+                  PacketDestination::kController);
+        return MonitorMode::kNone;
+      }));
+  EXPECT_CALL(mock_hci_router_client_agent_,
+              DispatchPacketToClients(cmd_set_host_le_support))
+      .WillOnce(Invoke([&](const HalPacket& captured_packet) {
+        EXPECT_EQ(captured_packet.GetDestination(),
+                  PacketDestination::kController);
+        return MonitorMode::kNone;
+      }));
 
   // Send the first command.
-  EXPECT_TRUE(router_->SendCommandNoAck(cmd_reset));
+  EXPECT_TRUE(SendCommandNoAckToRouter(cmd_reset));
+  WaitPacketSentToTransport(cmd_reset);
   EXPECT_FALSE(GetIsRouterBusy());
   // Send the second command.
-  EXPECT_TRUE(router_->SendCommandNoAck(cmd_set_host_le_support));
+  EXPECT_TRUE(SendCommandNoAckToRouter(cmd_set_host_le_support));
+  WaitPacketSentToTransport(cmd_set_host_le_support);
   EXPECT_FALSE(GetIsRouterBusy());
 }
 
 TEST_F(HciRouterTest, HandleDispatchPacketToClientsMonitorNone) {
   HalPacket event({0x04, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07});
-  ON_CALL(mock_hci_router_client_agent_, DispatchPacketToClients(_))
-      .WillByDefault(Return(MonitorMode::kNone));
 
-  // Check if the received event is dispatched to both callback and stack.
+  // Check if the received event is dispatched to client agent and stack.
   EXPECT_CALL(mock_hci_router_client_agent_, DispatchPacketToClients(event))
-      .Times(1);
+      .WillOnce(Invoke([&](const HalPacket& captured_event) {
+        EXPECT_EQ(captured_event.GetDestination(), PacketDestination::kHost);
+        return MonitorMode::kNone;
+      }));
   EXPECT_CALL(*fake_hci_callback_, OnPacketCallback(event)).Times(1);
 
-  on_transport_packet_ready_(event);
+  transport_interface_callback_->OnTransportPacketReady(event);
   EXPECT_EQ(hal_packet_, event);
 }
 
 TEST_F(HciRouterTest, HandleDispatchPacketToClientsMonitorMonitor) {
   HalPacket event({0x04, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07});
-  ON_CALL(mock_hci_router_client_agent_, DispatchPacketToClients(_))
-      .WillByDefault(Return(MonitorMode::kMonitor));
 
-  // Check if the received event is dispatched to both callback and stack.
+  // Check if the received event is dispatched to client agent and stack.
   EXPECT_CALL(mock_hci_router_client_agent_, DispatchPacketToClients(event))
-      .Times(1);
+      .WillOnce(Invoke([&](const HalPacket& captured_event) {
+        EXPECT_EQ(captured_event.GetDestination(), PacketDestination::kHost);
+        return MonitorMode::kMonitor;
+      }));
   EXPECT_CALL(*fake_hci_callback_, OnPacketCallback(event)).Times(1);
 
-  on_transport_packet_ready_(event);
+  transport_interface_callback_->OnTransportPacketReady(event);
   EXPECT_EQ(hal_packet_, event);
 }
 
 TEST_F(HciRouterTest, HandleDispatchPacketToClientsMonitorIntercept) {
   HalPacket event({0x04, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07});
-  ON_CALL(mock_hci_router_client_agent_, DispatchPacketToClients(_))
-      .WillByDefault(Return(MonitorMode::kIntercept));
 
   // Check if the received event is only dispatched to the agent.
   EXPECT_CALL(mock_hci_router_client_agent_, DispatchPacketToClients(event))
-      .Times(1);
+      .WillOnce(Invoke([&](const HalPacket& captured_event) {
+        EXPECT_EQ(captured_event.GetDestination(), PacketDestination::kHost);
+        return MonitorMode::kIntercept;
+      }));
   EXPECT_CALL(*fake_hci_callback_, OnPacketCallback(_)).Times(0);
 
-  on_transport_packet_ready_(event);
+  transport_interface_callback_->OnTransportPacketReady(event);
 }
 
 TEST_F(HciRouterTest, HandleOnAclDataCallback) {
   EXPECT_CALL(*fake_hci_callback_, OnPacketCallback(_)).Times(1);
   HalPacket packet({0x02, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07});
-  on_transport_packet_ready_(packet);
+  transport_interface_callback_->OnTransportPacketReady(packet);
   EXPECT_EQ(hal_packet_, packet);
 }
 
 TEST_F(HciRouterTest, HandleOnScoDataCallback) {
   EXPECT_CALL(*fake_hci_callback_, OnPacketCallback(_)).Times(1);
   HalPacket packet({0x03, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07});
-  on_transport_packet_ready_(packet);
+  transport_interface_callback_->OnTransportPacketReady(packet);
   EXPECT_EQ(hal_packet_, packet);
 }
 
 TEST_F(HciRouterTest, HandleOnIsoDataCallback) {
   EXPECT_CALL(*fake_hci_callback_, OnPacketCallback(_)).Times(1);
   HalPacket packet({0x05, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07});
-  on_transport_packet_ready_(packet);
+  transport_interface_callback_->OnTransportPacketReady(packet);
   EXPECT_EQ(hal_packet_, packet);
 }
 
@@ -648,7 +744,7 @@ TEST_F(HciRouterTest, HandleDispatchPacketToClientsInterceptThreadData) {
       .Times(1);
   EXPECT_CALL(*fake_hci_callback_, OnPacketCallback(_)).Times(0);
 
-  on_transport_packet_ready_(thread_data);
+  transport_interface_callback_->OnTransportPacketReady(thread_data);
 }
 
 TEST_F(HciRouterTest, HandleSendPacketToStack) {
@@ -662,7 +758,9 @@ TEST_F(HciRouterTest, HandleUpdateHalState) {
   // A second shutdown is called in the test Cleanup.
   ExpectHalStateChange(HalState::kShutdown, HalState::kRunning, 2);
   ExpectHalStateChange(HalState::kInit, HalState::kShutdown);
-  ExpectHalStateChange(HalState::kFirmwareDownloading, HalState::kInit);
+  ExpectHalStateChange(HalState::kPreFirmwareDownload, HalState::kInit);
+  ExpectHalStateChange(HalState::kFirmwareDownloading,
+                       HalState::kPreFirmwareDownload);
   ExpectHalStateChange(HalState::kFirmwareDownloadCompleted,
                        HalState::kFirmwareDownloading);
   ExpectHalStateChange(HalState::kFirmwareReady,
@@ -671,6 +769,7 @@ TEST_F(HciRouterTest, HandleUpdateHalState) {
   ExpectHalStateChange(HalState::kRunning, HalState::kBtChipReady);
   router_->UpdateHalState(HalState::kShutdown);
   router_->UpdateHalState(HalState::kInit);
+  router_->UpdateHalState(HalState::kPreFirmwareDownload);
   router_->UpdateHalState(HalState::kFirmwareDownloading);
   router_->UpdateHalState(HalState::kFirmwareDownloadCompleted);
   router_->UpdateHalState(HalState::kFirmwareReady);

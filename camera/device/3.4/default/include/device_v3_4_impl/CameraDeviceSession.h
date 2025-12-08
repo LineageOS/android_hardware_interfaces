@@ -17,18 +17,19 @@
 #ifndef ANDROID_HARDWARE_CAMERA_DEVICE_V3_4_CAMERADEVICE3SESSION_H
 #define ANDROID_HARDWARE_CAMERA_DEVICE_V3_4_CAMERADEVICE3SESSION_H
 
-#include <android/hardware/camera/device/3.2/ICameraDevice.h>
-#include <android/hardware/camera/device/3.4/ICameraDeviceSession.h>
-#include <android/hardware/camera/device/3.4/ICameraDeviceCallback.h>
 #include <../../3.3/default/CameraDeviceSession.h>
 #include <../../3.3/default/include/convert.h>
+#include <android/hardware/camera/device/3.2/ICameraDevice.h>
+#include <android/hardware/camera/device/3.4/ICameraDeviceCallback.h>
+#include <android/hardware/camera/device/3.4/ICameraDeviceSession.h>
 #include <fmq/MessageQueue.h>
 #include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
 #include <deque>
 #include <map>
-#include <unordered_set>
+#include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include "CameraMetadata.h"
 #include "HandleImporter.h"
 #include "hardware/camera3.h"

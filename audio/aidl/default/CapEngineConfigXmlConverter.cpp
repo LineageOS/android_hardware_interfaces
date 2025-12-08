@@ -56,7 +56,6 @@ static constexpr const char* gLegacyStrategyPrefix = "STRATEGY_";
 static constexpr const char* gLegacyOutputDevicePrefix = "AUDIO_DEVICE_OUT_";
 static constexpr const char* gLegacyInputDevicePrefix = "AUDIO_DEVICE_IN_";
 static constexpr const char* gLegacyStreamPrefix = "AUDIO_STREAM_";
-static constexpr const char* gLegacySourcePrefix = "AUDIO_SOURCE_";
 
 std::optional<std::vector<std::optional<AudioHalCapDomain>>>&
 CapEngineConfigXmlConverter::getAidlCapEngineConfig() {
@@ -121,7 +120,6 @@ ConversionResult<AudioHalCapRule::CriterionRule> convertCriterionRuleToAidl(
 
 ConversionResult<AudioHalCapRule> convertRule(const eng_xsd::CompoundRuleType& xsdcCompoundRule) {
     AudioHalCapRule rule{};
-    bool isPreviousCompoundRule = true;
     if (xsdcCompoundRule.getType() == eng_xsd::TypeEnum::Any) {
         rule.compoundRule = AudioHalCapRule::CompoundRule::ANY;
     } else if (xsdcCompoundRule.getType() == eng_xsd::TypeEnum::All) {

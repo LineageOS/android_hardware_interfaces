@@ -24,6 +24,11 @@ aidl_interface {
         },
         ndk: {
             apps_enabled: false,
+            min_sdk_version: "30",
+            apex_available: [
+                "//apex_available:platform",
+                "com.android.wifi",
+            ],
         },
         rust: {
             enabled: true,

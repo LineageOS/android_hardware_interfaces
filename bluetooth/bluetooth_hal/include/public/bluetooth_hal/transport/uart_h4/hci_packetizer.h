@@ -18,10 +18,11 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <memory>
 #include <span>
+#include <utility>
 
 #include "bluetooth_hal/hal_packet.h"
+#include "bluetooth_hal/transport/hci_packet_rescuer.h"
 
 namespace bluetooth_hal {
 namespace transport {
@@ -69,6 +70,7 @@ class HciPacketizer {
   size_t total_bytes_read_{0};
 
   ::bluetooth_hal::hci::HalPacketCallback on_packet_ready_;
+  ::bluetooth_hal::transport::HciPacketRescuer hci_packet_rescuer_;
 };
 
 }  // namespace transport

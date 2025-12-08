@@ -17,6 +17,8 @@
 #define ANDROID_HARDWARE_BROADCASTRADIO_V1_1_CALL_BARRIER
 
 #include <chrono>
+#include <condition_variable>
+#include <mutex>
 #include <thread>
 
 namespace android {

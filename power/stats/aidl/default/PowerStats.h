@@ -18,7 +18,11 @@
 
 #include <aidl/android/hardware/power/stats/BnPowerStats.h>
 
+#include <memory>
+#include <optional>
+#include <string>
 #include <unordered_map>
+#include <vector>
 
 namespace aidl {
 namespace android {

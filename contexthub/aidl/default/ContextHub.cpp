@@ -151,10 +151,18 @@ ScopedAStatus ContextHub::sendMessageToHub(int32_t in_contextHubId,
 ScopedAStatus ContextHub::setTestMode(bool enable) {
     if (enable) {
         std::lock_guard lock(mHostHubsLock);
+        // Remove all hubs except the Context Hub Service hub to allow Java endpoints while testing.
+        constexpr uint64_t kServiceHubId = 0x416e64726f696400L;
+        std::vector<uint64_t> hubsIdsToRemoveList;
         for (auto& [id, hub] : mIdToHostHub) {
-            hub->mActive = false;
+            if (id != kServiceHubId) {
+              hubsIdsToRemoveList.push_back(id);
+              hub->mActive = false;
+            }
         }
-        mIdToHostHub.clear();
+        for (auto id : hubsIdsToRemoveList) {
+            mIdToHostHub.erase(id);
+        }
     }
     return ScopedAStatus::ok();
 }
@@ -243,15 +251,20 @@ ScopedAStatus ContextHub::registerEndpointHub(
 
 ScopedAStatus ContextHub::HubInterface::registerEndpoint(const EndpointInfo& in_endpoint) {
     if (!mActive) {
+        ALOGE("registerEndpoint failed: hub is not active");
         return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
     }
     if (in_endpoint.id.hubId != kInfo.hubId) {
+        ALOGE("registerEndpoint failed: hub ID mismatch: %" PRIu64 "vs expected %" PRIu64,
+              in_endpoint.id.hubId, kInfo.hubId);
         return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
     std::unique_lock<std::mutex> lock(mEndpointMutex);
 
     for (const EndpointInfo& endpoint : mEndpoints) {
         if (endpoint.id.id == in_endpoint.id.id || endpoint.name == in_endpoint.name) {
+            ALOGE("registerEndpoint failed: endpoint already exists (id= %" PRIu64 " name=%s)",
+                  in_endpoint.id.id, in_endpoint.name.c_str());
             return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
         }
     }
@@ -261,6 +274,7 @@ ScopedAStatus ContextHub::HubInterface::registerEndpoint(const EndpointInfo& in_
 
 ScopedAStatus ContextHub::HubInterface::unregisterEndpoint(const EndpointInfo& in_endpoint) {
     if (!mActive) {
+        ALOGE("unregisterEndpoint failed: hub is not active");
         return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
     }
     std::unique_lock<std::mutex> lock(mEndpointMutex);
@@ -271,16 +285,20 @@ ScopedAStatus ContextHub::HubInterface::unregisterEndpoint(const EndpointInfo& i
             return ScopedAStatus::ok();
         }
     }
+    ALOGE("unregisterEndpoint failed: endpoint not found (id= %" PRIu64 " name=%s)",
+          in_endpoint.id.id, in_endpoint.name.c_str());
     return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
 };
 
 ScopedAStatus ContextHub::HubInterface::requestSessionIdRange(
         int32_t in_size, std::array<int32_t, 2>* _aidl_return) {
     if (!mActive) {
+        ALOGE("requestSessionIdRange failed: hub is not active");
         return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
     }
     constexpr int32_t kMaxSize = 1024;
     if (in_size > kMaxSize || _aidl_return == nullptr) {
+        ALOGE("requestSessionIdRange failed: invalid arguments: size=%" PRId32, in_size);
         return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
 
@@ -306,6 +324,7 @@ ScopedAStatus ContextHub::HubInterface::openEndpointSession(
         int32_t in_sessionId, const EndpointId& in_destination, const EndpointId& in_initiator,
         const std::optional<std::string>& in_serviceDescriptor) {
     if (!mActive) {
+        ALOGE("openEndpointSession failed: hub is not active");
         return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
     }
     // We are not calling onCloseEndpointSession on failure because the remote endpoints (our
@@ -377,6 +396,7 @@ ScopedAStatus ContextHub::HubInterface::openEndpointSession(
 ScopedAStatus ContextHub::HubInterface::sendMessageToEndpoint(int32_t in_sessionId,
                                                               const Message& in_msg) {
     if (!mActive) {
+        ALOGE("sendMessageToEndpoint failed: hub is not active");
         return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
     }
     std::weak_ptr<IEndpointCallback> callback;
@@ -428,6 +448,7 @@ ScopedAStatus ContextHub::HubInterface::sendMessageToEndpoint(int32_t in_session
 ScopedAStatus ContextHub::HubInterface::sendMessageDeliveryStatusToEndpoint(
         int32_t /* in_sessionId */, const MessageDeliveryStatus& /* in_msgStatus */) {
     if (!mActive) {
+        ALOGE("sendMessageDeliveryStatusToEndpoint failed: hub is not active");
         return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
     }
     return ScopedAStatus::ok();
@@ -436,6 +457,7 @@ ScopedAStatus ContextHub::HubInterface::sendMessageDeliveryStatusToEndpoint(
 ScopedAStatus ContextHub::HubInterface::closeEndpointSession(int32_t in_sessionId,
                                                              Reason /* in_reason */) {
     if (!mActive) {
+        ALOGE("closeEndpointSession failed: hub is not active");
         return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
     }
     std::unique_lock<std::mutex> lock(mEndpointMutex);
@@ -452,6 +474,7 @@ ScopedAStatus ContextHub::HubInterface::closeEndpointSession(int32_t in_sessionI
 
 ScopedAStatus ContextHub::HubInterface::endpointSessionOpenComplete(int32_t /* in_sessionId */) {
     if (!mActive) {
+        ALOGE("endpointSessionOpenComplete failed: hub is not active");
         return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
     }
     return ScopedAStatus::ok();
@@ -459,6 +482,7 @@ ScopedAStatus ContextHub::HubInterface::endpointSessionOpenComplete(int32_t /* i
 
 ScopedAStatus ContextHub::HubInterface::unregister() {
     if (!mActive.exchange(false)) {
+        ALOGE("unregister failed: hub is not active");
         return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
     }
     std::lock_guard lock(mHal.mHostHubsLock);

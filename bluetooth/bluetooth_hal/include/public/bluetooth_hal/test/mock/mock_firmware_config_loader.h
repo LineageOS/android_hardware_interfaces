@@ -16,17 +16,16 @@
 
 #pragma once
 
+#include <cstddef>
 #include <functional>
 #include <optional>
+#include <string>
 
 #include "bluetooth_hal/config/firmware_config_loader.h"
 #include "gmock/gmock.h"
 
 namespace bluetooth_hal {
 namespace config {
-
-class MockFirmwareConfigLoader;
-static MockFirmwareConfigLoader* mock_firmware_config_loader = nullptr;
 
 class MockFirmwareConfigLoader : public FirmwareConfigLoader {
  public:
@@ -43,6 +42,8 @@ class MockFirmwareConfigLoader : public FirmwareConfigLoader {
 
   MOCK_METHOD(int, GetLaunchRamDelayMs, (), (const, override));
 
+  MOCK_METHOD(size_t, GetFirmwareFileCount, (), (const, override));
+
   MOCK_METHOD(std::string, DumpConfigToString, (), (const, override));
 
   static FirmwareConfigLoader& GetLoader();
@@ -50,22 +51,9 @@ class MockFirmwareConfigLoader : public FirmwareConfigLoader {
   static void ResetLoader();
 
   static void SetMockLoader(MockFirmwareConfigLoader* loader);
+
+  static inline MockFirmwareConfigLoader* mock_firmware_config_loader_{nullptr};
 };
-
-FirmwareConfigLoader& FirmwareConfigLoader::GetLoader() {
-  return *mock_firmware_config_loader;
-}
-
-void MockFirmwareConfigLoader::SetMockLoader(MockFirmwareConfigLoader* loader) {
-  mock_firmware_config_loader = loader;
-}
-
-void FirmwareConfigLoader::ResetLoader() {
-  if (mock_firmware_config_loader != nullptr) {
-    delete mock_firmware_config_loader;
-    mock_firmware_config_loader = nullptr;
-  }
-}
 
 }  // namespace config
 }  // namespace bluetooth_hal

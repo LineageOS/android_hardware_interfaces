@@ -17,7 +17,6 @@
 #pragma once
 
 #include <string>
-#include <string_view>
 
 #include "bluetooth_hal/hal_types.h"
 #include "bluetooth_hal/util/android_base_wrapper.h"
@@ -25,15 +24,12 @@
 namespace bluetooth_hal {
 namespace config {
 
-using ::bluetooth_hal::Property;
-using ::bluetooth_hal::util::AndroidBaseWrapper;
-
 inline void EnableTransportFallback() {
   // Disable Accelerate Bluetooth On to re-initialize the UART.
-  AndroidBaseWrapper::GetWrapper().SetProperty(
-      Property::kIsAcceleratedBtOnEnabled, "false");
-  AndroidBaseWrapper::GetWrapper().SetProperty(
-      Property::kTransportFallbackEnabled, "true");
+  ::bluetooth_hal::util::AndroidBaseWrapper::GetWrapper().SetProperty(
+      ::bluetooth_hal::Property::kIsAcceleratedBtOnEnabled, "false");
+  ::bluetooth_hal::util::AndroidBaseWrapper::GetWrapper().SetProperty(
+      ::bluetooth_hal::Property::kTransportFallbackEnabled, "true");
 }
 
 }  // namespace config

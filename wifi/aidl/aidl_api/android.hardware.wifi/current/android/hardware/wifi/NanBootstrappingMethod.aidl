@@ -34,6 +34,7 @@
 package android.hardware.wifi;
 @Backing(type="int") @VintfStability
 enum NanBootstrappingMethod {
+  BOOTSTRAPPING_NONE_MASK = 0,
   BOOTSTRAPPING_OPPORTUNISTIC_MASK = (1 << 0) /* 1 */,
   BOOTSTRAPPING_PIN_CODE_DISPLAY_MASK = (1 << 1) /* 2 */,
   BOOTSTRAPPING_PASSPHRASE_DISPLAY_MASK = (1 << 2) /* 4 */,

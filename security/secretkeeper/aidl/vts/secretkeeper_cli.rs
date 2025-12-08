@@ -32,7 +32,7 @@ use dice_policy_builder::{
 use explicitkeydice::OwnedDiceArtifactsWithExplicitKey;
 use secretkeeper_client::SkSession;
 use secretkeeper_comm::data_types::{
-    error::SecretkeeperError,
+    error::{SecretkeeperError, SecretkeeperErrorCode},
     packet::{ResponsePacket, ResponseType},
     request::Request,
     request_response_impl::{GetSecretRequest, GetSecretResponse, StoreSecretRequest},
@@ -226,8 +226,8 @@ impl SkClient {
             Ok(Some(Secret(get_response.secret.0)))
         } else {
             // Only expect a not-found failure.
-            let err = *SecretkeeperError::deserialize_from_packet(get_response).unwrap();
-            if err == SecretkeeperError::EntryNotFound {
+            let err = SecretkeeperError::deserialize_from_packet(get_response).unwrap();
+            if err.code == SecretkeeperErrorCode::EntryNotFound {
                 Ok(None)
             } else {
                 Err(anyhow!("GET failed: {err:?}"))

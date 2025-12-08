@@ -174,7 +174,7 @@ class GraphicsCompositionTest : public GraphicsCompositionTestBase,
 };
 
 TEST_P(GraphicsCompositionTest, SingleSolidColorLayer) {
-    for (const DisplayWrapper display : mAllDisplays) {
+    for (const DisplayWrapper& display : mAllDisplays) {
         auto& testColorModes = mDisplayProperties.at(display.getDisplayId()).testColorModes;
         for (ColorMode mode : testColorModes) {
             EXPECT_TRUE(
@@ -189,7 +189,7 @@ TEST_P(GraphicsCompositionTest, SingleSolidColorLayer) {
             }
 
             auto layer = std::make_shared<TestColorLayer>(
-                    mComposerClient, display.getDisplayId(),
+                    *mComposerClient, display.getDisplayId(),
                     mDisplayProperties.at(display.getDisplayId()).writer);
             common::Rect coloredSquare(
                     {0, 0, display.getDisplayWidth(), display.getDisplayHeight()});
@@ -241,7 +241,7 @@ TEST_P(GraphicsCompositionTest, SingleSolidColorLayer) {
 }
 
 TEST_P(GraphicsCompositionTest, SetLayerBuffer) {
-    for (const DisplayWrapper display : mAllDisplays) {
+    for (const DisplayWrapper& display : mAllDisplays) {
         auto& testColorModes = mDisplayProperties.at(display.getDisplayId()).testColorModes;
         for (ColorMode mode : testColorModes) {
             EXPECT_TRUE(
@@ -276,7 +276,7 @@ TEST_P(GraphicsCompositionTest, SetLayerBuffer) {
                                            BLUE);
 
             auto layer = std::make_shared<TestBufferLayer>(
-                    mComposerClient,
+                    *mComposerClient,
                     *mDisplayProperties.at(display.getDisplayId()).testRenderEngine,
                     display.getDisplayId(), display.getDisplayWidth(), display.getDisplayHeight(),
                     common::PixelFormat::RGBA_8888,
@@ -317,7 +317,7 @@ TEST_P(GraphicsCompositionTest, SetLayerBuffer) {
 }
 
 TEST_P(GraphicsCompositionTest, SetLayerBufferNoEffect) {
-    for (const DisplayWrapper display : mAllDisplays) {
+    for (const DisplayWrapper& display : mAllDisplays) {
         auto& testColorModes = mDisplayProperties.at(display.getDisplayId()).testColorModes;
         for (ColorMode mode : testColorModes) {
             EXPECT_TRUE(
@@ -332,7 +332,7 @@ TEST_P(GraphicsCompositionTest, SetLayerBufferNoEffect) {
             }
 
             auto& writer = mDisplayProperties.at(display.getDisplayId()).writer;
-            auto layer = std::make_shared<TestColorLayer>(mComposerClient, display.getDisplayId(),
+            auto layer = std::make_shared<TestColorLayer>(*mComposerClient, display.getDisplayId(),
                                                           writer);
             common::Rect coloredSquare(
                     {0, 0, display.getDisplayWidth(), display.getDisplayHeight()});
@@ -387,7 +387,7 @@ TEST_P(GraphicsCompositionTest, SetLayerBufferNoEffect) {
 }
 
 TEST_P(GraphicsCompositionTest, SetReadbackBuffer) {
-    for (const DisplayWrapper display : mAllDisplays) {
+    for (const DisplayWrapper& display : mAllDisplays) {
         auto [dataspace, readbackSupported] =
                 GetDataspaceAndIfReadBackSupported(display.getDisplayId());
         if (!readbackSupported) {
@@ -403,7 +403,7 @@ TEST_P(GraphicsCompositionTest, SetReadbackBuffer) {
 }
 
 TEST_P(GraphicsCompositionTest, SetReadbackBuffer_BadDisplay) {
-    for (const DisplayWrapper display : mAllDisplays) {
+    for (const DisplayWrapper& display : mAllDisplays) {
         auto [_, readbackSupported] = GetDataspaceAndIfReadBackSupported(display.getDisplayId());
         if (!readbackSupported) {
             continue;
@@ -426,7 +426,7 @@ TEST_P(GraphicsCompositionTest, SetReadbackBuffer_BadDisplay) {
 }
 
 TEST_P(GraphicsCompositionTest, SetReadbackBuffer_BadParameter) {
-    for (const DisplayWrapper display : mAllDisplays) {
+    for (const DisplayWrapper& display : mAllDisplays) {
         auto [_, readbackSupported] = GetDataspaceAndIfReadBackSupported(display.getDisplayId());
         if (!readbackSupported) {
             continue;
@@ -444,7 +444,7 @@ TEST_P(GraphicsCompositionTest, SetReadbackBuffer_BadParameter) {
 }
 
 TEST_P(GraphicsCompositionTest, GetReadbackBufferFenceInactive) {
-    for (const DisplayWrapper display : mAllDisplays) {
+    for (const DisplayWrapper& display : mAllDisplays) {
         auto [_, readbackSupported] = GetDataspaceAndIfReadBackSupported(display.getDisplayId());
         if (!readbackSupported) {
             continue;
@@ -460,7 +460,7 @@ TEST_P(GraphicsCompositionTest, GetReadbackBufferFenceInactive) {
 }
 
 TEST_P(GraphicsCompositionTest, ClientComposition) {
-    for (const DisplayWrapper display : mAllDisplays) {
+    for (const DisplayWrapper& display : mAllDisplays) {
         EXPECT_TRUE(
                 mComposerClient
                         ->setClientTargetSlotCount(display.getDisplayId(), kClientTargetSlotCount)
@@ -494,7 +494,7 @@ TEST_P(GraphicsCompositionTest, ClientComposition) {
                                            BLUE);
 
             auto layer = std::make_shared<TestBufferLayer>(
-                    mComposerClient,
+                    *mComposerClient,
                     *mDisplayProperties.at(display.getDisplayId()).testRenderEngine,
                     display.getDisplayId(), display.getDisplayWidth(), display.getDisplayHeight(),
                     PixelFormat::RGBA_8888, mDisplayProperties.at(display.getDisplayId()).writer);
@@ -626,7 +626,7 @@ TEST_P(GraphicsCompositionTest, Luts) {
         }
     }
 
-    for (const DisplayWrapper display : mAllDisplays) {
+    for (const DisplayWrapper& display : mAllDisplays) {
         ASSERT_TRUE(
                 mComposerClient
                         ->setClientTargetSlotCount(display.getDisplayId(), kClientTargetSlotCount)
@@ -662,7 +662,7 @@ TEST_P(GraphicsCompositionTest, Luts) {
                                                    coloredSquare, WHITE);
 
                     auto layer = std::make_shared<TestBufferLayer>(
-                            mComposerClient,
+                            *mComposerClient,
                             *mDisplayProperties.at(display.getDisplayId()).testRenderEngine,
                             display.getDisplayId(), display.getDisplayWidth(),
                             display.getDisplayHeight(), PixelFormat::RGBA_8888,
@@ -744,7 +744,7 @@ TEST_P(GraphicsCompositionTest, MixedColorSpaces) {
         GTEST_SKIP();
     }
 
-    for (const DisplayWrapper display : mAllDisplays) {
+    for (const DisplayWrapper& display : mAllDisplays) {
         ASSERT_TRUE(
                 mComposerClient
                         ->setClientTargetSlotCount(display.getDisplayId(), kClientTargetSlotCount)
@@ -764,7 +764,7 @@ TEST_P(GraphicsCompositionTest, MixedColorSpaces) {
 
             // sRGB layer
             auto srgbLayer = std::make_shared<TestBufferLayer>(
-                    mComposerClient,
+                    *mComposerClient,
                     *mDisplayProperties.at(display.getDisplayId()).testRenderEngine,
                     display.getDisplayId(), display.getDisplayWidth(),
                     display.getDisplayHeight() / 2, PixelFormat::RGBA_8888,
@@ -782,7 +782,7 @@ TEST_P(GraphicsCompositionTest, MixedColorSpaces) {
 
             // display P3 layer
             auto displayP3Layer = std::make_shared<TestBufferLayer>(
-                    mComposerClient,
+                    *mComposerClient,
                     *mDisplayProperties.at(display.getDisplayId()).testRenderEngine,
                     display.getDisplayId(), display.getDisplayWidth(),
                     display.getDisplayHeight() / 2, PixelFormat::RGBA_8888,
@@ -832,7 +832,7 @@ TEST_P(GraphicsCompositionTest, MixedColorSpaces) {
 }
 
 TEST_P(GraphicsCompositionTest, DeviceAndClientComposition) {
-    for (const DisplayWrapper display : mAllDisplays) {
+    for (const DisplayWrapper& display : mAllDisplays) {
         ASSERT_TRUE(
                 mComposerClient
                         ->setClientTargetSlotCount(display.getDisplayId(), kClientTargetSlotCount)
@@ -867,7 +867,7 @@ TEST_P(GraphicsCompositionTest, DeviceAndClientComposition) {
             ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
 
             auto deviceLayer = std::make_shared<TestBufferLayer>(
-                    mComposerClient,
+                    *mComposerClient,
                     *mDisplayProperties.at(display.getDisplayId()).testRenderEngine,
                     display.getDisplayId(), display.getDisplayWidth(),
                     display.getDisplayHeight() / 2, PixelFormat::RGBA_8888,
@@ -895,7 +895,7 @@ TEST_P(GraphicsCompositionTest, DeviceAndClientComposition) {
             int32_t clientHeight = display.getDisplayHeight() / 2;
 
             auto clientLayer = std::make_shared<TestBufferLayer>(
-                    mComposerClient,
+                    *mComposerClient,
                     *mDisplayProperties.at(display.getDisplayId()).testRenderEngine,
                     display.getDisplayId(), clientWidth, clientHeight, PixelFormat::RGBA_FP16,
                     mDisplayProperties.at(display.getDisplayId()).writer, Composition::DEVICE);
@@ -967,7 +967,7 @@ TEST_P(GraphicsCompositionTest, DeviceAndClientComposition) {
 }
 
 TEST_P(GraphicsCompositionTest, SetLayerDamage) {
-    for (const DisplayWrapper display : mAllDisplays) {
+    for (const DisplayWrapper& display : mAllDisplays) {
         for (ColorMode mode : mDisplayProperties.at(display.getDisplayId()).testColorModes) {
             EXPECT_TRUE(
                     mComposerClient
@@ -988,7 +988,7 @@ TEST_P(GraphicsCompositionTest, SetLayerDamage) {
             ReadbackHelper::fillColorsArea(expectedColors, display.getDisplayWidth(), redRect, RED);
 
             auto layer = std::make_shared<TestBufferLayer>(
-                    mComposerClient,
+                    *mComposerClient,
                     *mDisplayProperties.at(display.getDisplayId()).testRenderEngine,
                     display.getDisplayId(), display.getDisplayWidth(), display.getDisplayHeight(),
                     PixelFormat::RGBA_8888, mDisplayProperties.at(display.getDisplayId()).writer);
@@ -1060,7 +1060,7 @@ TEST_P(GraphicsCompositionTest, SetLayerDamage) {
 }
 
 TEST_P(GraphicsCompositionTest, SetLayerPlaneAlpha) {
-    for (const DisplayWrapper display : mAllDisplays) {
+    for (const DisplayWrapper& display : mAllDisplays) {
         for (ColorMode mode : mDisplayProperties.at(display.getDisplayId()).testColorModes) {
             EXPECT_TRUE(
                     mComposerClient
@@ -1074,7 +1074,7 @@ TEST_P(GraphicsCompositionTest, SetLayerPlaneAlpha) {
             }
 
             auto layer = std::make_shared<TestColorLayer>(
-                    mComposerClient, display.getDisplayId(),
+                    *mComposerClient, display.getDisplayId(),
                     mDisplayProperties.at(display.getDisplayId()).writer);
             layer->setColor(RED);
             layer->setDisplayFrame({0, 0, display.getDisplayWidth(), display.getDisplayHeight()});
@@ -1122,7 +1122,7 @@ TEST_P(GraphicsCompositionTest, SetLayerPlaneAlpha) {
 }
 
 TEST_P(GraphicsCompositionTest, SetLayerSourceCrop) {
-    for (const DisplayWrapper display : mAllDisplays) {
+    for (const DisplayWrapper& display : mAllDisplays) {
         for (ColorMode mode : mDisplayProperties.at(display.getDisplayId()).testColorModes) {
             EXPECT_TRUE(
                     mComposerClient
@@ -1146,7 +1146,7 @@ TEST_P(GraphicsCompositionTest, SetLayerSourceCrop) {
                                            BLUE);
 
             auto layer = std::make_shared<TestBufferLayer>(
-                    mComposerClient,
+                    *mComposerClient,
                     *mDisplayProperties.at(display.getDisplayId()).testRenderEngine,
                     display.getDisplayId(), display.getDisplayWidth(), display.getDisplayHeight(),
                     PixelFormat::RGBA_8888, mDisplayProperties.at(display.getDisplayId()).writer);
@@ -1196,7 +1196,7 @@ TEST_P(GraphicsCompositionTest, SetLayerSourceCrop) {
 }
 
 TEST_P(GraphicsCompositionTest, SetLayerZOrder) {
-    for (const DisplayWrapper display : mAllDisplays) {
+    for (const DisplayWrapper& display : mAllDisplays) {
         for (ColorMode mode : mDisplayProperties.at(display.getDisplayId()).testColorModes) {
             EXPECT_TRUE(
                     mComposerClient
@@ -1214,13 +1214,13 @@ TEST_P(GraphicsCompositionTest, SetLayerZOrder) {
             common::Rect blueRect = {0, display.getDisplayHeight() / 4, display.getDisplayWidth(),
                                      display.getDisplayHeight()};
             auto redLayer = std::make_shared<TestColorLayer>(
-                    mComposerClient, display.getDisplayId(),
+                    *mComposerClient, display.getDisplayId(),
                     mDisplayProperties.at(display.getDisplayId()).writer);
             redLayer->setColor(RED);
             redLayer->setDisplayFrame(redRect);
 
             auto blueLayer = std::make_shared<TestColorLayer>(
-                    mComposerClient, display.getDisplayId(),
+                    *mComposerClient, display.getDisplayId(),
                     mDisplayProperties.at(display.getDisplayId()).writer);
             blueLayer->setColor(BLUE);
             blueLayer->setDisplayFrame(blueRect);
@@ -1298,7 +1298,7 @@ TEST_P(GraphicsCompositionTest, SetLayerZOrder) {
 }
 
 TEST_P(GraphicsCompositionTest, SetLayerBrightnessDims) {
-    for (const DisplayWrapper display : mAllDisplays) {
+    for (const DisplayWrapper& display : mAllDisplays) {
         for (ColorMode mode : mDisplayProperties.at(display.getDisplayId()).testColorModes) {
             EXPECT_TRUE(
                     mComposerClient
@@ -1320,7 +1320,7 @@ TEST_P(GraphicsCompositionTest, SetLayerBrightnessDims) {
             static constexpr float kMaxBrightnessNits = 300.f;
 
             const auto redLayer = std::make_shared<TestColorLayer>(
-                    mComposerClient, display.getDisplayId(),
+                    *mComposerClient, display.getDisplayId(),
                     mDisplayProperties.at(display.getDisplayId()).writer);
             redLayer->setColor(RED);
             redLayer->setDisplayFrame(redRect);
@@ -1328,7 +1328,7 @@ TEST_P(GraphicsCompositionTest, SetLayerBrightnessDims) {
             redLayer->setBrightness(1.f);
 
             const auto dimmerRedLayer = std::make_shared<TestColorLayer>(
-                    mComposerClient, display.getDisplayId(),
+                    *mComposerClient, display.getDisplayId(),
                     mDisplayProperties.at(display.getDisplayId()).writer);
             dimmerRedLayer->setColor(RED);
             dimmerRedLayer->setDisplayFrame(dimmerRedRect);
@@ -1417,7 +1417,7 @@ class GraphicsBlendModeCompositionTest
                 mDisplayGfx[display.getDisplayId()].topLayerColor);
 
         auto backgroundLayer = std::make_shared<TestColorLayer>(
-                mComposerClient, display.getDisplayId(),
+                *mComposerClient, display.getDisplayId(),
                 mDisplayProperties.at(display.getDisplayId()).writer);
         backgroundLayer->setDisplayFrame(
                 {0, 0, display.getDisplayWidth(), display.getDisplayHeight()});
@@ -1425,7 +1425,7 @@ class GraphicsBlendModeCompositionTest
         backgroundLayer->setColor(mDisplayGfx[display.getDisplayId()].backgroundColor);
 
         auto layer = std::make_shared<TestBufferLayer>(
-                mComposerClient, *mDisplayProperties.at(display.getDisplayId()).testRenderEngine,
+                *mComposerClient, *mDisplayProperties.at(display.getDisplayId()).testRenderEngine,
                 display.getDisplayId(), display.getDisplayWidth(), display.getDisplayHeight(),
                 PixelFormat::RGBA_8888, mDisplayProperties.at(display.getDisplayId()).writer);
         layer->setDisplayFrame({0, 0, display.getDisplayWidth(), display.getDisplayHeight()});
@@ -1489,7 +1489,7 @@ class GraphicsBlendModeCompositionTest
 };
 
 TEST_P(GraphicsBlendModeCompositionTest, None) {
-    for (const DisplayWrapper display : mAllDisplays) {
+    for (const DisplayWrapper& display : mAllDisplays) {
         for (ColorMode mode : mDisplayProperties.at(display.getDisplayId()).testColorModes) {
             EXPECT_TRUE(
                     mComposerClient
@@ -1544,7 +1544,7 @@ TEST_P(GraphicsBlendModeCompositionTest, None) {
 }
 
 TEST_P(GraphicsBlendModeCompositionTest, Coverage) {
-    for (const DisplayWrapper display : mAllDisplays) {
+    for (const DisplayWrapper& display : mAllDisplays) {
         for (ColorMode mode : mDisplayProperties.at(display.getDisplayId()).testColorModes) {
             EXPECT_TRUE(
                     mComposerClient
@@ -1595,7 +1595,7 @@ TEST_P(GraphicsBlendModeCompositionTest, Coverage) {
 }
 
 TEST_P(GraphicsBlendModeCompositionTest, Premultiplied) {
-    for (const DisplayWrapper display : mAllDisplays) {
+    for (const DisplayWrapper& display : mAllDisplays) {
         for (ColorMode mode : mDisplayProperties.at(display.getDisplayId()).testColorModes) {
             EXPECT_TRUE(
                     mComposerClient
@@ -1655,7 +1655,7 @@ class GraphicsTransformCompositionTest : public GraphicsCompositionTest {
 
         for (const DisplayWrapper& display : mAllDisplays) {
             auto backgroundLayer = std::make_shared<TestColorLayer>(
-                    mComposerClient, display.getDisplayId(),
+                    *mComposerClient, display.getDisplayId(),
                     mDisplayProperties.at(display.getDisplayId()).writer);
             backgroundLayer->setColor({0.0f, 0.0f, 0.0f, 0.0f});
             backgroundLayer->setDisplayFrame(
@@ -1671,7 +1671,7 @@ class GraphicsTransformCompositionTest : public GraphicsCompositionTest {
 
             auto& bufferLayer = mDisplayGfx[display.getDisplayId()].bufferLayer;
             bufferLayer = std::make_shared<TestBufferLayer>(
-                    mComposerClient,
+                    *mComposerClient,
                     *mDisplayProperties.at(display.getDisplayId()).testRenderEngine,
                     display.getDisplayId(), static_cast<uint32_t>(sideLength),
                     static_cast<uint32_t>(sideLength), PixelFormat::RGBA_8888,
@@ -1910,7 +1910,7 @@ class GraphicsColorManagementCompositionTest
     void makeLayer(const DisplayWrapper& display) {
         auto& layer = mDisplayGfx[display.getDisplayId()].layer;
         layer = std::make_shared<TestBufferLayer>(
-                mComposerClient, *mDisplayProperties.at(display.getDisplayId()).testRenderEngine,
+                *mComposerClient, *mDisplayProperties.at(display.getDisplayId()).testRenderEngine,
                 display.getDisplayId(), display.getDisplayWidth(), display.getDisplayHeight(),
                 common::PixelFormat::RGBA_8888,
                 mDisplayProperties.at(display.getDisplayId()).writer);

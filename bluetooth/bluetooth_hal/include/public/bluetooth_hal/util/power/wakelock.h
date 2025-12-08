@@ -58,6 +58,18 @@ class Wakelock {
    */
   virtual bool IsWakeSourceAcquired(WakeSource source) = 0;
 
+  /**
+   * @brief Set the timeout for releasing the wakelock.
+   *
+   * When the last wake source is released, a timer is scheduled to release
+   * the system wakelock after this timeout. This helps prevent rapid
+   * acquiring and releasing of the wakelock.
+   *
+   * @param timeout The timeout in milliseconds.
+   *
+   */
+  virtual void SetWakelockTimeout(const int timeout) = 0;
+
   static Wakelock& GetWakelock();
 
  protected:

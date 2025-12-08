@@ -925,7 +925,8 @@ TEST_P(SupplicantP2pIfaceAidlTest, ProvisionDiscoveryWithParams) {
     params.pairingBootstrappingMethod =
             P2pPairingBootstrappingMethodMask::BOOTSTRAPPING_OPPORTUNISTIC;
 
-    EXPECT_TRUE(p2p_iface_->provisionDiscoveryWithParams(params).isOk());
+    // This will fail with fake values.
+    EXPECT_FALSE(p2p_iface_->provisionDiscoveryWithParams(params).isOk());
 }
 
 /*
@@ -979,7 +980,8 @@ TEST_P(SupplicantP2pIfaceAidlTest, ReinvokePersistentGroup) {
     params.persistentNetworkId = 0;
     params.deviceIdentityEntryId = 0;
 
-    EXPECT_TRUE(p2p_iface_->reinvokePersistentGroup(params).isOk());
+    // This will fail with fake values.
+    EXPECT_FALSE(p2p_iface_->reinvokePersistentGroup(params).isOk());
 }
 
 /*
@@ -994,11 +996,15 @@ TEST_P(SupplicantP2pIfaceAidlTest, ManageNetworks) {
     EXPECT_TRUE(p2p_iface_->listNetworks(&networkList).isOk());
     ASSERT_FALSE(networkList.empty());
 
-    int networkId = networkList[0];
+    // Newly added network configuration is at the end of the list
+    int networkId = networkList.back();
     std::shared_ptr<ISupplicantP2pNetwork> network;
     EXPECT_TRUE(p2p_iface_->getNetwork(networkId, &network).isOk());
     ASSERT_NE(network, nullptr);
+    // Remove the network and update the configuration to
+    // disk(p2p_supplicant.conf)
     EXPECT_TRUE(p2p_iface_->removeNetwork(networkId).isOk());
+    EXPECT_TRUE(p2p_iface_->saveConfig().isOk());
 }
 
 /*

@@ -108,7 +108,7 @@ interface IVibrator {
      * @param timeoutMs number of milliseconds to vibrate.
      * @param callback A callback used to inform Frameworks of state change, if supported.
      */
-    void on(in int timeoutMs, in IVibratorCallback callback);
+    void on(in int timeoutMs, in @nullable IVibratorCallback callback);
 
     /**
      * Fire off a predefined haptic event.
@@ -126,7 +126,8 @@ interface IVibrator {
      *     milliseconds. This doesn't need to be perfectly accurate, but should be a reasonable
      *     approximation.
      */
-    int perform(in Effect effect, in EffectStrength strength, in IVibratorCallback callback);
+    int perform(in Effect effect, in EffectStrength strength,
+            in @nullable IVibratorCallback callback);
 
     /**
      * List supported effects.
@@ -215,7 +216,7 @@ interface IVibrator {
      *
      * @param composite Array of composition parameters.
      */
-    void compose(in CompositeEffect[] composite, in IVibratorCallback callback);
+    void compose(in CompositeEffect[] composite, in @nullable IVibratorCallback callback);
 
     /**
      * List of supported always-on effects.
@@ -383,7 +384,7 @@ interface IVibrator {
      * @deprecated This method is deprecated from AIDL v3 and is no longer required to be
      * implemented. Use `IVibrator.composePwleV2` instead.
      */
-    void composePwle(in PrimitivePwle[] composite, in IVibratorCallback callback);
+    void composePwle(in PrimitivePwle[] composite, in @nullable IVibratorCallback callback);
 
     /**
      * Fire off a vendor-defined haptic event.
@@ -404,7 +405,8 @@ interface IVibrator {
      *         - EX_ILLEGAL_ARGUMENT for bad framework parameters, e.g. scale or effect strength.
      *         - EX_SERVICE_SPECIFIC for bad vendor data, vibration is not triggered.
      */
-    void performVendorEffect(in VendorEffect vendorEffect, in IVibratorCallback callback);
+    void performVendorEffect(
+            in VendorEffect vendorEffect, in @nullable IVibratorCallback callback);
 
     /**
      * Retrieves a mapping of vibration frequency (Hz) to the maximum achievable output
@@ -490,5 +492,6 @@ interface IVibrator {
      * @param composite A CompositePwleV2 representing a composite vibration effect, composed of an
      *                  array of primitives that define the PWLE (Piecewise-Linear Envelope).
      */
-    void composePwleV2(in CompositePwleV2 composite, in IVibratorCallback callback);
+    void composePwleV2(
+            in CompositePwleV2 composite, in @nullable IVibratorCallback callback);
 }

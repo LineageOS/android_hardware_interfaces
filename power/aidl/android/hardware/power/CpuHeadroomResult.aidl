@@ -28,8 +28,5 @@ package android.hardware.power;
 @VintfStability
 @JavaDerive(equals=true, toString=true)
 union CpuHeadroomResult {
-    /**
-     * If ALL selection type is requested.
-     */
     float globalHeadroom;
 }

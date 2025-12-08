@@ -16,20 +16,43 @@
 
 #pragma once
 
+#include <array>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
 #include <future>
 #include <optional>
 
+#include "bluetooth_hal/chip/chip_provisioner_interface.h"
 #include "bluetooth_hal/config/firmware_config_loader.h"
 #include "bluetooth_hal/hal_packet.h"
 #include "bluetooth_hal/hal_types.h"
-#include "bluetooth_hal/hci_monitor.h"
 #include "bluetooth_hal/hci_router_client.h"
 
 namespace bluetooth_hal {
 namespace chip {
 
-class ChipProvisioner : public ::bluetooth_hal::hci::HciRouterClient {
+class ChipProvisioner : public ChipProvisionerInterface,
+                        public ::bluetooth_hal::hci::HciRouterClient {
  public:
+  // Defines the states for the firmware provisioning state machine.
+  enum class ProvisioningState {
+    kIdle,
+    kInitialReset,
+    kReadChipId,
+    kSetRuntimeBaudRate,
+    kCheckFirmwareStatus,
+    kSetFastDownload,
+    kDownloadMinidrv,
+    kWriteFirmware,
+    kFinalReset,
+    kReadFwVersion,
+    kWriteBdAddress,
+    kSetupLowPowerMode,
+    kDone,
+    kError,
+  };
+
   ChipProvisioner()
       : config_loader_(
             ::bluetooth_hal::config::FirmwareConfigLoader::GetLoader()) {}
@@ -40,8 +63,8 @@ class ChipProvisioner : public ::bluetooth_hal::hci::HciRouterClient {
    * @param on_hal_state_update A callback function that is invoked
    *        when the HAL state changes.
    */
-  void Initialize(
-      const std::function<void(::bluetooth_hal::HalState)> on_hal_state_update);
+  void Initialize(const std::function<void(::bluetooth_hal::HalState)>
+                      on_hal_state_update) override;
 
   /**
    * Downloads the chip firmware.
@@ -53,7 +76,7 @@ class ChipProvisioner : public ::bluetooth_hal::hci::HciRouterClient {
    * @return `true` if the firmware download completes successfully.
    *         `false` if the firmware download fails.
    */
-  bool DownloadFirmware();
+  bool DownloadFirmware() override;
 
   /**
    * Resets the chip firmware.
@@ -65,33 +88,33 @@ class ChipProvisioner : public ::bluetooth_hal::hci::HciRouterClient {
    * @return `true` if the firmware reset is successful.
    *         `false` if the firmware reset fails.
    */
-  bool ResetFirmware();
+  bool ResetFirmware() override;
 
- private:
-  void OnCommandCallback(const ::bluetooth_hal::hci::HalPacket& callback_event);
-
+ protected:
+  // HciRouterClient overrides.
+  void OnCommandCallback(
+      const ::bluetooth_hal::hci::HalPacket& callback_event) override;
   void OnBluetoothEnabled() override {};
-
   void OnBluetoothDisabled() override {};
-
   void OnBluetoothChipReady() override {};
-
   void OnBluetoothChipClosed() override {};
-
   void OnMonitorPacketCallback(
       [[maybe_unused]] ::bluetooth_hal::hci::MonitorMode mode,
       [[maybe_unused]] const ::bluetooth_hal::hci::HalPacket& packet) override {
   };
 
   void UpdateHalState(::bluetooth_hal::HalState state);
-  void HandleNextSetupStep(::bluetooth_hal::config::SetupCommandType command);
   bool ExecuteCurrentSetupStep(
       ::bluetooth_hal::config::SetupCommandType next_command_type);
-  bool SendCommandNoAck(const hci::HalPacket& packet);
-  bool SendCommandAndWait(const hci::HalPacket& packet);
+  bool SendCommandNoAck(const ::bluetooth_hal::hci::HalPacket& packet);
+  bool SendCommandAndWait(const ::bluetooth_hal::hci::HalPacket& packet);
   bool ProvisionBluetoothAddress();
-  std::optional<hci::HalPacket> PrepareWriteBdAddressPacket();
-  bool WriteFwPatchramPacket();
+  std::optional<::bluetooth_hal::hci::HalPacket> PrepareWriteBdAddressPacket();
+
+  virtual bool WriteFwPatchramPacket();
+
+ private:
+  void RunProvisioningSequence();
 
   std::optional<std::function<void(::bluetooth_hal::HalState)>>
       on_hal_state_update_;
@@ -101,6 +124,7 @@ class ChipProvisioner : public ::bluetooth_hal::hci::HciRouterClient {
 
   std::promise<void> command_promise_;
   bool firmware_command_success_;
+  ProvisioningState state_{ProvisioningState::kIdle};
 };
 
 }  // namespace chip

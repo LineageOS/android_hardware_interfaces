@@ -18,22 +18,6 @@ syntax = "proto3";
 
 package bluetooth_hal.config.proto;
 
-message FirmwareConfig {
-  optional string firmware_folder_name = 1;
-  optional string firmware_file_name = 2;
-  optional uint32 chip_id = 3;
-  optional uint32 load_mini_drv_delay_ms = 4;
-  optional uint32 launch_ram_delay_ms = 5;
-
-  enum FirmwareDataLoadingType {
-    PACKET_BY_PACKET = 0;
-    ACCUMULATED_BUFFER = 1;
-  }
-  optional FirmwareDataLoadingType firmware_data_loading_type = 6;
-
-  optional SetupCommands setup_commands = 7;
-}
-
 message SetupCommands {
   repeated uint32 hci_reset = 1;
   repeated uint32 hci_read_chip_id = 2;
@@ -44,4 +28,49 @@ message SetupCommands {
   repeated uint32 hci_read_fw_version = 7;
   repeated uint32 hci_setup_low_power_mode = 8;
   repeated uint32 hci_write_bd_address = 9;
+}
+
+enum FirmwareDataLoadingType {
+  PACKET_BY_PACKET = 0;
+  ACCUMULATED_BUFFER = 1;
+}
+
+// Configuration for command-based firmware data reading.
+message CommandBasedReading {
+  // The HCI VSC opcode that signals the end of the firmware data.
+  // If not specified, a default value (e.g., 0xFC4E) will be used.
+  optional uint32 launch_ram_opcode = 1;
+}
+
+// Configuration for fixed-size firmware data reading.
+message FixedSizeReading {
+  // The size of each chunk to read from the firmware file, in bytes.
+  // If not specified, a default value will be used.
+  optional uint32 chunk_size = 1;
+}
+
+// Represents the firmware configuration for a specific transport type.
+message FirmwareConfigForTransport {
+  // Matches values from bluetooth_hal::transport::TransportType
+  int32 transport_type = 1;
+
+  optional string firmware_folder_name = 2;
+  repeated string firmware_file_name = 3;
+  optional uint32 chip_id = 4;
+  optional uint32 load_mini_drv_delay_ms = 5;
+  optional uint32 launch_ram_delay_ms = 6;
+  optional FirmwareDataLoadingType firmware_data_loading_type = 7;
+  optional SetupCommands setup_commands = 8;
+
+  // Specifies the method for reading data from the firmware file.
+  // If not specified, defaults to command_based_reading.
+  oneof data_reading_method {
+    CommandBasedReading command_based_reading = 9;
+    FixedSizeReading fixed_size_reading = 10;
+  }
+}
+
+// Top-level message for the firmware_config.json file.
+message FirmwareConfigsContainer {
+  repeated FirmwareConfigForTransport firmware_configs = 1;
 }

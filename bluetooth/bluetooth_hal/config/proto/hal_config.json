@@ -15,7 +15,7 @@
     "stage1",
     "stage2"
   ],
-  "fw_unsupported_hw_stages": [
+  "unsupported_hw_stages": [
     "stage1",
     "stage2"
   ],
@@ -33,5 +33,6 @@
   "lpm_waking_proc_node": "/proc/bluetooth/sleep/btwrite",
   "lpm_wakelock_ctrl_proc_node": "/proc/bluetooth/sleep/wakelock_ctrl",
   "rfkill_folder_prefix": "/sys/class/rfkill/rfkill",
-  "rfkill_type_bluetooth": "bluetooth"
+  "rfkill_type_bluetooth": "bluetooth",
+  "enhanced_packet_validation_supported": true
 }

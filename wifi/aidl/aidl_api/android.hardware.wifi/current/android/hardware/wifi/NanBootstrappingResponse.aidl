@@ -37,4 +37,5 @@ parcelable NanBootstrappingResponse {
   int bootstrappingInstanceId;
   boolean acceptRequest;
   byte discoverySessionId;
+  android.hardware.wifi.NanBootstrappingMethod responseBootstrappingMethod;
 }

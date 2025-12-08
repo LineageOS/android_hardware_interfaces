@@ -34,6 +34,8 @@ class WakelockUtil {
         return "RX";
       case WakeSource::kHciBusy:
         return "HciBusy";
+      case WakeSource::kRouterTask:
+        return "RouterTask";
       case WakeSource::kTransport:
         return "Transport";
       case WakeSource::kInitialize:

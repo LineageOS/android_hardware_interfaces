@@ -171,17 +171,17 @@ class BluetoothAudioPortAidl : public BluetoothAudioPort {
     virtual ~BluetoothAudioPortAidl();
 
     bool registerPort(const ::aidl::android::media::audio::common::AudioDeviceDescription&
-                              description) override;
+                              description) override EXCLUDES(mCvMutex);
 
     void unregisterPort() override;
 
     bool loadAudioConfig(
             ::aidl::android::hardware::bluetooth::audio::PcmConfiguration& audio_cfg) override;
 
-    bool standby() override;
-    bool start() override;
-    bool suspend() override;
-    void stop() override;
+    bool standby() override EXCLUDES(mCvMutex);
+    bool start() override EXCLUDES(mCvMutex);
+    bool suspend() override EXCLUDES(mCvMutex);
+    void stop() override EXCLUDES(mCvMutex);
 
     bool getPresentationPosition(::aidl::android::hardware::bluetooth::audio::PresentationPosition&
                                          presentation_position) const override;
@@ -195,9 +195,9 @@ class BluetoothAudioPortAidl : public BluetoothAudioPort {
     /**
      * Return the current BluetoothStreamState
      */
-    BluetoothStreamState getState() const override;
+    BluetoothStreamState getState() const override EXCLUDES(mCvMutex);
 
-    bool setState(BluetoothStreamState state) override;
+    bool setState(BluetoothStreamState state) override EXCLUDES(mCvMutex);
 
     bool isA2dp() const override;
 
@@ -207,9 +207,10 @@ class BluetoothAudioPortAidl : public BluetoothAudioPort {
 
     bool getRecommendedLatencyModes(
             std::vector<::aidl::android::hardware::bluetooth::audio::LatencyMode>* latencyModes)
-            override;
+            override EXCLUDES(mCvMutex);
 
-    void setCallbacks(const std::shared_ptr<BluetoothAudioPortCallbacks>& callbacks) override;
+    void setCallbacks(const std::shared_ptr<BluetoothAudioPortCallbacks>& callbacks) override
+            EXCLUDES(mCvMutex);
 
     std::string getSessionNameForDebug() const override;
 
@@ -233,6 +234,9 @@ class BluetoothAudioPortAidl : public BluetoothAudioPort {
     mutable std::mutex mCvMutex;
     std::condition_variable mInternalCv GUARDED_BY(mCvMutex);
 
+    bool getRecommendedLatencyModes(
+            std::vector<::aidl::android::hardware::bluetooth::audio::LatencyMode>* latency_modes,
+            std::optional<bool>* supports_low_latency);
     // Check and initialize session type for |devices| If failed, this
     // BluetoothAudioPortAidl is not initialized and must be deleted.
     bool initSessionType(
@@ -242,9 +246,10 @@ class BluetoothAudioPortAidl : public BluetoothAudioPort {
 
     void controlResultHandler(
             uint16_t cookie,
-            const ::aidl::android::hardware::bluetooth::audio::BluetoothAudioStatus& status);
-    void lowLatencyAllowedHandler(uint16_t cookie, bool allowed);
-    void sessionChangedHandler(uint16_t cookie);
+            const ::aidl::android::hardware::bluetooth::audio::BluetoothAudioStatus& status)
+            EXCLUDES(mCvMutex);
+    void lowLatencyAllowedHandler(uint16_t cookie, bool allowed) EXCLUDES(mCvMutex);
+    void sessionChangedHandler(uint16_t cookie) EXCLUDES(mCvMutex);
 };
 
 class BluetoothAudioPortAidlOut : public BluetoothAudioPortAidl {

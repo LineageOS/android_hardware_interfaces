@@ -20,7 +20,6 @@ rust_defaults {
     name: "hw_crypto_hal_aidl_rust_defaults",
     enabled: false,
     prefer_rlib: true,
-    vendor_available: true,
     rustlibs: [
         "libbinder_rs",
         "android.hardware.security.see.hwcrypto-V1-rust",

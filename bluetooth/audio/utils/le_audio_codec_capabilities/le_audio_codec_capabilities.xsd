@@ -75,6 +75,7 @@
       <xs:enumeration value="LC3"/>
       <xs:enumeration value="APTX_ADAPTIVE_LE"/>
       <xs:enumeration value="APTX_ADAPTIVE_LEX"/>
+      <xs:enumeration value="OPUS"/>
     </xs:restriction>
   </xs:simpleType>
 </xs:schema>

@@ -18,11 +18,13 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <functional>
 #include <iomanip>
 #include <sstream>
 #include <string>
 #include <vector>
 
+#include "bluetooth_hal/bluetooth_address.h"
 #include "bluetooth_hal/hal_types.h"
 
 namespace bluetooth_hal {
@@ -53,6 +55,31 @@ class HalPacket : public std::vector<uint8_t> {
     at(0) = type;
     std::copy(payload.begin(), payload.end(), begin() + 1);
   }
+
+  /**
+   * @brief Set the final destination of the packet. The destination is
+   * PacketDestination::kNone by default.
+   *
+   * @param The final destination of the packet.
+   *
+   * @note It is **not recommended** to use this API as it can change the way
+   * HciMonitor works. The destination of the packet will be set once it is
+   * processed by the HciRouter.
+   *
+   */
+  void SetDestination(PacketDestination direction) const {
+    direction_ = direction;
+  }
+
+  /**
+   * @brief Get the final destination of the packet. By default, the destination
+   * is PacketDestination::kNone before the packet is processed by the
+   * HciRouter.
+   *
+   * @return The final destination of the packet.
+   *
+   */
+  PacketDestination GetDestination() const { return direction_; }
 
   /**
    * @brief Support getting the byte at an offset with other types.
@@ -92,6 +119,32 @@ class HalPacket : public std::vector<uint8_t> {
     uint8_t byte2 = at(start_index + 1);
 
     return static_cast<uint16_t>((byte2 << 8) | byte1);
+  }
+
+  /**
+   * @brief Support getting four bytes starting at an offset in little endian.
+   *
+   * @param offset Template of the offset, can be enum or other numeric types.
+   * @return the two bytes starting at the offset in little endian uint32_t.
+   *
+   */
+  template <typename T>
+  uint32_t AtUint32LittleEndian(T offset) const {
+    size_t start_index = static_cast<size_t>(offset);
+    constexpr int kNumOfBytes = sizeof(uint32_t);  // This will be 4
+
+    // Check if we have enough bytes remaining from the offset
+    if (start_index + (kNumOfBytes - 1) >= size()) {
+      return 0;  // Or handle error appropriately, e.g., throw an exception
+    }
+
+    uint32_t result = 0;
+    for (int i = 0; i < kNumOfBytes; ++i) {
+      uint8_t byte = at(start_index + i);
+      result |= (static_cast<uint32_t>(byte) << (i * 8));
+    }
+
+    return result;
   }
 
   /**
@@ -326,6 +379,28 @@ class HalPacket : public std::vector<uint8_t> {
                : 0;
   }
 
+  /**
+   * @brief Get the Bluetooth address from the packet at a given offset.
+   *
+   * @param offset Template for the offset, which can be an enum or other
+   * numeric types, indicating the starting position of the address.
+   * @return The extracted BluetoothAddress. Returns an empty,
+   * default-constructed BluetoothAddress if the read would be out of bounds.
+   *
+   */
+  template <typename T>
+  BluetoothAddress GetBluetoothAddressAt(T offset) const {
+    size_t start_index = static_cast<size_t>(offset);
+    if (start_index + kBluetoothAddressLength > size()) {
+      return BluetoothAddress();
+    }
+    std::array<uint8_t, kBluetoothAddressLength> address{};
+    std::copy_n(begin() + start_index, kBluetoothAddressLength,
+                address.begin());
+    std::reverse(address.begin(), address.end());
+    return BluetoothAddress(address);
+  }
+
  private:
   std::string ToString(size_t string_size) const {
     std::stringstream ss;
@@ -344,6 +419,8 @@ class HalPacket : public std::vector<uint8_t> {
     ss << "]";
     return ss.str();
   }
+
+  mutable PacketDestination direction_ = PacketDestination::kNone;
 };
 
 /**

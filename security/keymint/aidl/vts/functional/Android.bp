@@ -37,7 +37,6 @@ cc_defaults {
         "libcrypto",
         "libbase",
         "libgatekeeper",
-        "libvendorsupport",
         "packagemanager_aidl-cpp",
     ],
     static_libs: [
@@ -53,6 +52,7 @@ cc_defaults {
         "libjsoncpp",
         "libkeymint_remote_prov_support",
         "libkeymint_support",
+        "libvendorsupport",
     ],
 }
 
@@ -98,9 +98,6 @@ cc_test_library {
     ],
     export_static_lib_headers: [
         "libkeymint_support",
-    ],
-    shared_libs: [
-        "libkeystore2_flags_cc",
     ],
     static_libs: [
         "libgmock_ndk",

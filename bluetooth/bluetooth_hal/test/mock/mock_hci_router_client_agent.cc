@@ -16,14 +16,20 @@
 
 #include "bluetooth_hal/test/mock/mock_hci_router_client_agent.h"
 
+#include "android-base/logging.h"
 #include "bluetooth_hal/hci_router_client_agent.h"
 
 namespace bluetooth_hal {
 namespace hci {
 
-static MockHciRouterClientAgent* mock_agent_;
-
-HciRouterClientAgent& HciRouterClientAgent::GetAgent() { return *mock_agent_; }
+HciRouterClientAgent& HciRouterClientAgent::GetAgent() {
+  if (!MockHciRouterClientAgent::mock_agent_) {
+    LOG(FATAL) << __func__
+               << ": mock_agent_ is nullptr. Did you forget to call "
+                  "SetMockAgent in your test SetUp?";
+  }
+  return *MockHciRouterClientAgent::mock_agent_;
+}
 
 void MockHciRouterClientAgent::SetMockAgent(MockHciRouterClientAgent* agent) {
   mock_agent_ = agent;

@@ -55,15 +55,6 @@ void RadioModemTest::SetUp() {
     ASSERT_NE(nullptr, radio_config.get());
 }
 
-bool RadioModemTest::shouldTestCdma() {
-    int32_t aidl_version = 0;
-    ndk::ScopedAStatus aidl_status = radio_modem->getInterfaceVersion(&aidl_version);
-    EXPECT_TRUE(aidl_status.isOk());
-    if (aidl_version < 2) return true;  // < RADIO_HAL_VERSION_2_1
-
-    return !telephony_flags::cleanup_cdma();
-}
-
 /*
  * Test IRadioModem.setRadioPower() for the response returned.
  */
@@ -243,51 +234,6 @@ TEST_P(RadioModemTest, getImei) {
     if (cardStatus.cardState == CardStatus::STATE_ABSENT) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_modem->rspInfo.error,
                                      {RadioError::NONE, RadioError::EMPTY_RECORD}));
-    }
-}
-
-/*
- * Test IRadioModem.nvReadItem() for the response returned.
- */
-TEST_P(RadioModemTest, nvReadItem) {
-    if (!shouldTestCdma()) {
-        GTEST_SKIP() << "Skipping CDMA testing (deprecated)";
-    }
-
-    serial = GetRandomSerialNumber();
-
-    radio_modem->nvReadItem(serial, NvItem::LTE_BAND_ENABLE_25);
-    EXPECT_EQ(std::cv_status::no_timeout, wait());
-    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_modem->rspInfo.type);
-    EXPECT_EQ(serial, radioRsp_modem->rspInfo.serial);
-
-    if (cardStatus.cardState == CardStatus::STATE_ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_modem->rspInfo.error, {RadioError::NONE},
-                                     CHECK_GENERAL_ERROR));
-    }
-}
-
-/*
- * Test IRadioModem.nvWriteItem() for the response returned.
- */
-TEST_P(RadioModemTest, nvWriteItem) {
-    if (!shouldTestCdma()) {
-        GTEST_SKIP() << "Skipping CDMA testing (deprecated)";
-    }
-
-    serial = GetRandomSerialNumber();
-    NvWriteItem item;
-    memset(&item, 0, sizeof(item));
-    item.value = std::string();
-
-    radio_modem->nvWriteItem(serial, item);
-    EXPECT_EQ(std::cv_status::no_timeout, wait());
-    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_modem->rspInfo.type);
-    EXPECT_EQ(serial, radioRsp_modem->rspInfo.serial);
-
-    if (cardStatus.cardState == CardStatus::STATE_ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_modem->rspInfo.error, {RadioError::NONE},
-                                     CHECK_GENERAL_ERROR));
     }
 }
 

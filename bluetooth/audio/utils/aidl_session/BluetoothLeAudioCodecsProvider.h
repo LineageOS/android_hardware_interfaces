@@ -105,6 +105,9 @@ class BluetoothLeAudioCodecsProvider {
   static inline AptxAdaptiveLeCapabilities ComposeAptxAdaptiveLeCapability(
       const setting::CodecConfiguration& codec_configuration);
 
+  static inline OpusCapabilities ComposeOpusCapability(
+      const setting::CodecConfiguration& codec_configuration);
+
   static inline AudioLocation GetAudioLocation(
       const setting::AudioLocation& audio_location);
   static inline CodecType GetCodecType(const setting::CodecType& codec_type);

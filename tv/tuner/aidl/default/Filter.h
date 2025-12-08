@@ -28,8 +28,11 @@
 #include <sys/stat.h>
 #include <atomic>
 #include <condition_variable>
+#include <map>
+#include <memory>
 #include <set>
 #include <thread>
+#include <vector>
 
 #include "Demux.h"
 #include "Dvr.h"

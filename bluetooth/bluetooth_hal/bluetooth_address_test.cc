@@ -28,6 +28,18 @@ TEST(BluetoothAddressTest, HandleToString) {
   ASSERT_EQ(address.ToString(), "XX:XX:XX:XX:55:66");
 }
 
+TEST(BluetoothAddressTest, HandleToStringWithAlphanumeric) {
+  BluetoothAddress address = {0x1a, 0xb2, 0x3c, 0xd4, 0xe5, 0x6f};
+  ASSERT_EQ(address.ToFullString(), "1A:B2:3C:D4:E5:6F");
+  ASSERT_EQ(address.ToString(), "XX:XX:XX:XX:E5:6F");
+}
+
+TEST(BluetoothAddressTest, HandleToStringWithDefaultConstructor) {
+  BluetoothAddress address;
+  ASSERT_EQ(address.ToFullString(), "00:00:00:00:00:00");
+  ASSERT_EQ(address.ToString(), "XX:XX:XX:XX:00:00");
+}
+
 }  // namespace
 }  // namespace hci
 }  // namespace bluetooth_hal

@@ -58,8 +58,8 @@ constexpr uint8_t kCommandCompleteReadLocalCapabilityOffset =
     kCommandCompleteSubOpcodeOffset + 1;
 constexpr uint8_t kCommandCompleteReadLocalCapabilityValueLength = 4;
 
-constexpr uint8_t kHciVscEnableOneSidePctParamLength = 0x02;
-constexpr uint8_t kHciVscEnableOneSidePctSubOpCode = 0x02;
+constexpr uint8_t kHciVscEnableInlinePctParamLength = 0x02;
+constexpr uint8_t kHciVscEnableInlinePctSubOpCode = 0x02;
 
 constexpr uint8_t kHciVscEnableCsSubeventReportParamLength = 0x04;
 constexpr uint8_t kHciVscEnableCsSubeventReportSubOpCode = 0x03;
@@ -77,6 +77,13 @@ constexpr uint8_t kGattNotification = 0x1b;
 
 constexpr uint16_t kInitialProcedureCounter = 0xffff;
 
+enum class CsFeature : uint8_t {
+  kInlinePct = 0x01,
+  kMode0ChannelMap = 0x02,
+  kPreferredConnectionInterval = 0x04,
+  kPreferredSniffInterval = 0x08,
+};
+
 std::string ToHex(const std::span<const uint8_t> data);
 
 bool IsUuidMatched(
@@ -86,7 +93,7 @@ bool IsUuidMatched(
 
 ::bluetooth_hal::hci::HalPacket BuildReadLocalCapabilityCommand();
 
-::bluetooth_hal::hci::HalPacket BuildEnableOneSidePctCommand(uint8_t enable);
+::bluetooth_hal::hci::HalPacket BuildEnableInlinePctCommand(uint8_t enable);
 
 ::bluetooth_hal::hci::HalPacket BuildEnableCsSubeventReportCommand(
     uint16_t connection_handle, uint8_t enable);

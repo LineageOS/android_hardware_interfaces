@@ -143,7 +143,7 @@ fn make_sample_bcc_and_cdis(
     let private_key_seed = derive_cdi_private_key_seed(uds).unwrap();
 
     // Gets the root public key in DICE chain (BCC).
-    let (public_key, _) = keypair_from_seed(private_key_seed.as_array()).unwrap();
+    let (public_key, _) = keypair_from_seed(None, private_key_seed.as_array()).unwrap();
     let ed25519_public_key_value = ed25519_public_key_to_cbor_value(&public_key);
 
     // Gets the ABL certificate to as the root certificate of DICE chain.

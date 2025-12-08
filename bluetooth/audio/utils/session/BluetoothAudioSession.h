@@ -16,13 +16,14 @@
 
 #pragma once
 
-#include <mutex>
-#include <unordered_map>
-
 #include <android/hardware/bluetooth/audio/2.0/IBluetoothAudioPort.h>
 #include <fmq/MessageQueue.h>
 #include <hardware/audio.h>
 #include <hidl/MQDescriptor.h>
+
+#include <functional>
+#include <mutex>
+#include <unordered_map>
 
 namespace android {
 namespace bluetooth {

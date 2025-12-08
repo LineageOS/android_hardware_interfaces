@@ -319,6 +319,7 @@ class CameraAidlTest : public ::testing::TestWithParam<std::string> {
     static bool isDepthOnly(const camera_metadata_t* staticMeta);
 
     static bool isUltraHighResolution(const camera_metadata_t* staticMeta);
+    static bool supportsSensorPixelModeMaxResolution(const camera_metadata_t* staticMeta);
 
     static Status getAvailableOutputStreams(const camera_metadata_t* staticMeta,
                                             std::vector<AvailableStream>& outputStreams,

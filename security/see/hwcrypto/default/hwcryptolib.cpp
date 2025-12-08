@@ -41,7 +41,12 @@ namespace android {
 namespace trusty {
 namespace hwcryptohalservice {
 
-#define HWCRYPTO_KEY_PORT "com.android.trusty.rust.hwcryptohal.V1"
+// note: this port name shall be constructed as the service name followed by
+// the .bnd suffix.
+// if length is >= 64bytes, the shortened version shall be used,
+// by replacing "android.hardware.security.see" with "ahss".
+// here the full name is 63 bytes so we can keep the full uri
+#define HWCRYPTO_KEY_PORT "android.hardware.security.see.hwcrypto.IHwCryptoKey/default.bnd"
 
 // Even though we get the cpp_hwcrypto::IOpaqueKey and cpp_hwcrypto::ICryptoOperationContext and
 // create the ndk_hwcrypto wrappers on this library we cannot cast them back when we need them

@@ -16,330 +16,236 @@
 
 #pragma once
 
-#include <signal.h>
-
+#include <cstdint>
+#include <cstring>
 #include <list>
 #include <map>
+#include <mutex>
 #include <sstream>
+#include <string>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 #include "android-base/logging.h"
+#include "bluetooth_hal/bqr/bqr_handler.h"
+#include "bluetooth_hal/bqr/bqr_root_inflammation_event.h"
+#include "bluetooth_hal/bqr/bqr_types.h"
+#include "bluetooth_hal/debug/debug_client.h"
+#include "bluetooth_hal/debug/debug_monitor.h"
+#include "bluetooth_hal/debug/debug_types.h"
 #include "bluetooth_hal/hal_packet.h"
-
-// Code Enter Point
-enum class AnchorType : uint8_t {
-  // For DURATION_TRACKER.
-  BTHAL_INIT = 0,
-  BTHAL_INIT_OUT,
-  BTHAL_PERFORM_INIT,
-  BTHAL_PERFORM_INIT_OUT,
-  SEND_HCI_CMD,
-  SEND_HCI_CMD_OUT,
-  SEND_ACL_DAT,
-  SEND_ACL_DAT_OUT,
-  SEND_SCO_DAT,
-  SEND_SCO_DAT_OUT,
-  SEND_ISO_DAT,
-  SEND_ISO_DAT_OUT,
-  THREAD_SEND_DAT_UPLINK,
-  THREAD_SEND_DAT_DOWNLINK,
-  THREAD_START_DAEMON,
-  THREAD_STOP_DAEMON,
-  THREAD_ACCEPT_CLIENT,
-  THREAD_DADEMON_CLOSED,
-  THREAD_SOCKET_FILE_DELETED,
-  THREAD_CLIENT_ERROR,
-  THREAD_CLIENT_CONNECT,
-  THREAD_HARDWARE_RESET,
-  CALLBACK_HCI_EVT,
-  CALLBACK_HCI_EVT_OUT,
-  CALLBACK_HCI_ACL,
-  CALLBACK_HCI_ACL_OUT,
-  CALLBACK_HCI_SCO,
-  CALLBACK_HCI_SCO_OUT,
-  CALLBACK_HCI_ISO,
-  CALLBACK_HCI_ISO_OUT,
-  USERIAL_OPEN,
-  USERIAL_OPEN_OUT,
-  USERIAL_CLOSE,
-  USERIAL_CLOSE_OUT,
-  POWER_CTRL,
-  POWER_CTRL_OUT,
-  HCI_RESET,
-  HCI_RESET_OUT,
-  CHANGE_BAUDRATE,
-  CHANGE_BAUDRATE_OUT,
-  FW_DOWNLOAD,
-  FW_DOWNLOAD_OUT,
-  READ_LOCAL_NAME,
-  READ_LOCAL_NAME_OUT,
-  // For ONE_TIME_LOGGER.
-  SERVICE_DIED = 46,
-  BTHAL_THD_INIT,
-  BTHAL_THD_REINIT,
-  BTHAL_CLOSE,
-  BTHAL_PERFORM_CLOSE,
-  BIG_HAMMER,
-  ACTIVITY_WATCHER_ERR,
-  BT_REDARY,
-  BTHAL_INIT_ERR,
-  BT_PREPARE,
-  BT_INIT,
-  USERIAL_INFO,
-  USERIAL_OPEN_ERR,
-  USERIAL_TTY_OPEN,
-  USERIAL_READY,
-  HCI_SOCKET,
-  POWER_STATE,
-  BAUDRATE_ERR,
-  LOCAL_NAME_ERR,
-  FW_FAST_DNLD,
-  FW_DNLD_ERR,
-  FW_DNLD_SELECT,
-  FW_DNLD_DONE,
-  BT_CHIP_ID,
-  BT_CMD_ERR,
-  WAKELOCK_ERR,
-  WAKELOCK_DUP,
-  WAKELOCK_ACQUIRE,
-  WAKELOCK_RELEASE,
-  WAKELOCK_VOTE,
-  WAKELOCK_UNVOTE,
-  WATCHDOG,
-  LPM_WAKEUP_ERR,
-  LPM_WAKEUP,
-  LPM_SUSPEND,
-  LPM_WAKEUP_TIMEOUT,
-  LPM_SETUP_ERR,
-  LPM_ENABLE,
-  LPM_DISABLE,
-  LPM_CLOSE_ERR,
-  BT_SHUTDOWN,
-  BTHAL_USERIAL_TYPE_SELECT,
-  H4_TX_ERR,
-  H4_RX_ERR,
-  H4_TX_CMD,
-  H4_RX_EVT,
-  BQR_ERR_MSG,
-  HW_ERR_EVT,
-  DEBUG_INFO,
-  BTHAL_EXT_INJECT,
-};
+#include "bluetooth_hal/util/logging.h"
+#include "bluetooth_hal/util/timer_manager.h"
 
 /*
- * ONE_TIME_LOGGER is used to record HAL log messages in any places in codes and
- * send to DebugCentral.
- * @deprecated
- */
-#define ONE_TIME_LOGGER(type, fmt, ...)                \
-  do {                                                 \
-    char log[128] = {0};                               \
-    std::snprintf(log, sizeof(log), fmt, __VA_ARGS__); \
-    DebugCentral::Get()->UpdateRecord(type, log);      \
-  } while (0)
-
-/*
- * DURATION_TRACKER is used to log the Enter and Exit of a HAL function and
+ * SCOPED_ANCHOR is used to log the Enter and Exit of a HAL function and
  * send to DebugCentral.
  */
 #ifdef UNIT_TEST
-#define DURATION_TRACKER(type, anchor)
+#define SCOPED_ANCHOR(type, log)
 #else
-#define DURATION_TRACKER(type, anchor)    \
-  ::bluetooth_hal::debug::DebugAnchor a = \
-      ::bluetooth_hal::debug::DebugCentral::Get()->SetAnchor(type, anchor);
+#define SCOPED_ANCHOR(type, log)                                  \
+  ::bluetooth_hal::debug::DurationTracker duration_##__COUNTER__( \
+      ::bluetooth_hal::debug::type, log);
 #endif
 
 /*
  * ANCHOR_LOG* is used to log a message with a specific severity level
  * and send it to DebugCentral. It takes an anchor type as input.
  */
-#define ANCHOR_LOG(type)                            \
+#define ANCHOR_LOG(type)                                              \
+  ([](auto&& logger) -> auto&& { return logger; })(                   \
+      ::bluetooth_hal::debug::LogHelper(::bluetooth_hal::debug::type, \
+                                        ::android::base::VERBOSE, LOG_TAG))
+#define ANCHOR_LOG_DEBUG(type)                                        \
+  ([](auto&& logger) -> auto&& { return logger; })(                   \
+      ::bluetooth_hal::debug::LogHelper(::bluetooth_hal::debug::type, \
+                                        ::android::base::DEBUG, LOG_TAG))
+#define ANCHOR_LOG_INFO(type)                                         \
+  ([](auto&& logger) -> auto&& { return logger; })(                   \
+      ::bluetooth_hal::debug::LogHelper(::bluetooth_hal::debug::type, \
+                                        ::android::base::INFO, LOG_TAG))
+#define ANCHOR_LOG_WARNING(type)                                      \
+  ([](auto&& logger) -> auto&& { return logger; })(                   \
+      ::bluetooth_hal::debug::LogHelper(::bluetooth_hal::debug::type, \
+                                        ::android::base::WARNING, LOG_TAG))
+#define ANCHOR_LOG_ERROR(type)                                        \
+  ([](auto&& logger) -> auto&& { return logger; })(                   \
+      ::bluetooth_hal::debug::LogHelper(::bluetooth_hal::debug::type, \
+                                        ::android::base::ERROR, LOG_TAG))
+
+/*
+ * HAL_LOG pinrts system log, as well as stores it in the DebugCentral for
+ * Dump()
+ */
+#define HAL_LOG(severity)                           \
   ([](auto&& logger) -> auto&& { return logger; })( \
-      ::bluetooth_hal::debug::LogHelper(type, ::android::base::VERBOSE))
-#define ANCHOR_LOG_DEBUG(type)                      \
-  ([](auto&& logger) -> auto&& { return logger; })( \
-      ::bluetooth_hal::debug::LogHelper(type, ::android::base::DEBUG))
-#define ANCHOR_LOG_INFO(type)                       \
-  ([](auto&& logger) -> auto&& { return logger; })( \
-      ::bluetooth_hal::debug::LogHelper(type, ::android::base::INFO))
-#define ANCHOR_LOG_WARNING(type)                    \
-  ([](auto&& logger) -> auto&& { return logger; })( \
-      ::bluetooth_hal::debug::LogHelper(type, ::android::base::WARNING))
-#define ANCHOR_LOG_ERROR(type)                      \
-  ([](auto&& logger) -> auto&& { return logger; })( \
-      ::bluetooth_hal::debug::LogHelper(type, ::android::base::ERROR))
+      ::bluetooth_hal::debug::LogHelper(::android::base::severity, LOG_TAG))
 
 namespace bluetooth_hal {
 namespace debug {
 
-class DebugCentral;
-
-class DebugAnchor {
+class DurationTracker {
  public:
-  DebugAnchor(AnchorType type, const std::string& anchor,
-              DebugCentral& debugcentral);
+  DurationTracker(AnchorType type, const std::string& log);
 
   // Manually release the auto debug anchor.
-  ~DebugAnchor();
+  ~DurationTracker();
 
  private:
-  DebugCentral* debugcentral_;
-  std::string anchor_;
+  std::string log_;
   AnchorType type_;
-};
-
-// BQR root inflammation vendor error codes
-enum class BqrErrorCode : uint8_t {
-  UART_PARSING = 0x01,
-  UART_INCOMPLETE_PACKET = 0x02,
-  FIRMWARE_CHECKSUM = 0x03,
-  FIRMWARE_HARD_FAULT = 0x10,
-  FIRMWARE_MEM_MANAGE_FAULT = 0x11,
-  FIRMWARE_BUS_FAULT = 0x12,
-  FIRMWARE_USAGE_FAULT = 0x13,
-  FIRMWARE_WATCHDOG_TIMEOUT = 0x14,
-  FIRMWARE_ASSERTION_FAILURE = 0x15,
-  FIRMWARE_MISCELLANEOUS = 0x16,
-  FIRMWARE_HOST_REQUEST_DUMP = 0x17,
-  FIRMWARE_MISCELLANEOUS_MAJOR_FAULT = 0x20,
-  FIRMWARE_MISCELLANEOUS_CRITICAL_FAULT = 0x21,
-  FIRMWARE_THREAD_GENERIC_ERROR = 0x40,
-  FIRMWARE_THREAD_INVALID_FRAME = 0x41,
-  FIRMWARE_THREAD_INVALID_PARAM = 0x42,
-  FIRMWARE_THREAD_UNSUPPORTED_FRAME = 0x43,
-  SOC_BIG_HAMMER_FAULT = 0x7F,
-  HOST_RX_THREAD_STUCK = 0x80,
-  HOST_HCI_COMMAND_TIMEOUT = 0x81,
-  HOST_INVALID_HCI_EVENT = 0x82,
-  HOST_UNIMPLEMENTED_PACKET_TYPE = 0x83,
-  HOST_HCI_H4_TX_ERROR = 0x84,
-  HOST_OPEN_USERIAL = 0x90,
-  HOST_POWER_UP_CONTROLLER = 0x91,
-  HOST_CHANGE_BAUDRATE = 0x92,
-  HOST_RESET_BEFORE_FW = 0x93,
-  HOST_DOWNLOAD_FW = 0x94,
-  HOST_RESET_AFTER_FW = 0x95,
-  HOST_BDADDR_FAULT = 0x96,
-  HOST_OPEN_COEX_DEVICE_ERROR = 0x97,
-  HOST_ACCEL_BT_INIT_FAILED = 0x98,
-  HOST_ACCEL_BT_SHUTDOWN_FAILED = 0x99,
-  CHRE_ARBITRATOR_ERR_BASE = 0xE0,
-  CHRE_ARBITRATOR_UNIMPLEMENTED_PACKET = 0xE0,
-  CHRE_ARBITRATOR_INVALID_PACKET_SIZE = 0xE1,
 };
 
 class DebugCentral {
  public:
+  virtual ~DebugCentral() = default;
+
   /*
    * Get a singleton static instance of the debug central.
    */
-  static DebugCentral* Get();
+  static DebugCentral& Get();
 
-  /*
-   * Get the stack callback function
+  /**
+   * @brief Register a debug client to receive debug callbacks from the
+   * DebugCentral.
+   *
+   * @param debug_client The client resigers for debug information.
+   * @return return true if success, otherwise false.
    */
-  void Prepare(::bluetooth_hal::hci::HalPacketCallback notify_cb) {
-    notify_cb_ = notify_cb;
-  }
+  virtual bool RegisterDebugClient(DebugClient* debug_client) = 0;
 
-#if 0
-  /*
-   * Start to monitor error event
+  /**
+   * @brief Unregister the debug client that was registered.
+   *
+   * @param callback The debug client to be unregistered.
+   * @return return true if success, otherwise false.
    */
-  void StartMonitor(hci::HciFlowControl* handle);
-
-  /*
-   * Stop to monitor error event
-   */
-  void StopMonitor();
-#endif
+  virtual bool UnregisterDebugClient(DebugClient* debug_client) = 0;
 
   /*
    * Invokes when bugreport is triggered, dump all information to the debug fd.
    */
-  void Dump(int fd);
-
-  /*
-   * Upadte if there is a client connect bthal.
-   */
-  void HasClientConnectWith(bool has_client);
+  virtual void Dump(int fd) = 0;
 
   /*
    * set bluetooth serial port information.
    */
-  void SetBtUartDebugPort(const std::string& uart_port);
+  virtual void SetBtUartDebugPort(const std::string& uart_port) = 0;
 
   /*
    * Write debug message to logger.
    */
-  void UpdateRecord(AnchorType type, const std::string& anchor);
+  virtual void AddLog(AnchorType type, const std::string& log) = 0;
 
   /*
    * Notify BtHal have detected error, we will collect debug log first then and
    * report eror code to stack via BQR root inflammation event
    */
-  void ReportBqrError(BqrErrorCode error, std::string extra_info);
+  virtual void ReportBqrError(::bluetooth_hal::bqr::BqrErrorCode error,
+                              std::string extra_info) = 0;
 
-  /*
-   * Detect if current HCI command is host get controller debug dump opcode ?
+  /**
+   * @brief Inform DebugCentral to handle Root Inflammation Event reported from
+   * the Bluetooth chip. It also generates a Bluetooth HAL coredump.
+   *
+   * @param packet The root inflammation event.
    */
-  bool IsControllerDebugDumpOpcode(const ::bluetooth_hal::hci::HalPacket& data);
+  virtual void HandleRootInflammationEvent(
+      const ::bluetooth_hal::bqr::BqrRootInflammationEvent& event) = 0;
 
-  /*
-   * Two kinds of debug anchor are supported to collect log messages.
-   * is_lifetime : true - we handle the debug anchor's life cycle,
-   * add [ Set] message in the constructor and [Free] message in the destructor
-   * to record the enter and exit timestamp of an invoked function.
-   * Usually, we put this kind debug anchor in begin of function, the purpose
-   * of this debug anchor usage is record time-consuming of a function.
-   * [Example]: initialize_impl [ Set]: 13:36:15:133
-   *            initialize_impl [Free]: 13:36:17:072
-   * is_lifetime : false - we record the timestamp that debug anchor appeared in
-   * code. Usually, we put this kind debug anchor at the exception occurred
-   * place or record informative messages in a function. [Example]: Received
-   * Hardware error event: 19:56:49:036 [Example]: firmware_download Done:
-   * 13:36:17:024
+  /**
+   * @brief Inform DebugCentral to handle Debug Info Event reported from the
+   * Bluetooth chip. It also generates a Bluetooth HAL coredump.
+   *
+   * @param packet The debug info event.
    */
-  DebugAnchor SetAnchor(AnchorType type, const std::string& anchor) {
-    return DebugAnchor(type, anchor, instance_);
-  }
+  virtual void HandleDebugInfoEvent(
+      const ::bluetooth_hal::hci::HalPacket& packet) = 0;
 
- private:
-  static constexpr int kMaxHistory = 400;
-  static DebugCentral instance_;
-  // Determine if we should hijack the vendor debug event or not
-  bool hijack_event_ = false;
-  bool has_client_ = false;
-  ::bluetooth_hal::hci::HalPacketCallback notify_cb_;
-  std::string serial_debug_port_;
-  std::string crash_timestamp_;
-  std::recursive_mutex mutex_;
-  // std::vector<std::unique_ptr<hci::HciEventWatcher>> event_watchers_;
-  std::queue<std::vector<uint8_t>> socdump_;
-  std::queue<std::vector<uint8_t>> chredump_;
-  // BtHal Logger
-  std::list<std::pair<std::string, std::string>> history_record_;
-  std::map<AnchorType, std::pair<std::string, std::string>> lasttime_record_;
+  /**
+   * @brief Inform DebugCentral to handle Debug Info Command sent from the
+   * stack. It generates a Bluetooth HAL coredump if the Bluetooth chip did
+   * not report Debug Info events in time.
+   */
+  virtual void HandleDebugInfoCommand() = 0;
 
-  static void ForceGetCoredumpTimeout(union sigval sig);
-  bool report_ssr_crash(uint8_t vendor_error_code);
-  bool is_hw_stage_supported();
-  void dump_hal_log(int fd);
-  void handle_vendor_specific_event(
-      const ::bluetooth_hal::hci::HalPacket& packet);
-  void handle_bqr_fw_debug_data_dump(
-      const ::bluetooth_hal::hci::HalPacket& packet);
-  void handle_bqr_chre_debug_data_dump(
-      const ::bluetooth_hal::hci::HalPacket& packet);
-  void handle_debug_info_event(const ::bluetooth_hal::hci::HalPacket& packet);
-  void handle_bqr_event(const ::bluetooth_hal::hci::HalPacket& packet);
-  void start_crash_dump(bool slient_report, const std::string& reason);
+  /**
+   * @brief Request the Bluetooth HAL to generate a vendor dump file. This also
+   * triggers the Bluetoth HAL core dump and prepare for a crash. It can trigger
+   * a CoredumpCallback to the caller if the coredump procedure was initiated by
+   * the vendor implementation.
+   *
+   * The generated file name contains the timestamp of the first dump request in
+   * this Bluetooth cycle.
+   *
+   * @param file_path The path and the prefix of the file, for example
+   * "/path/file-" generates a dump file of "/path/file-YYYY-MM-DD-SS.bin".
+   * @param data The data to write into the file.
+   * @param vendor_error_code The vendor specific error code to record in the
+   * coredump file. If the coredump was initiated by the vendor implementation,
+   * this vendor erroc code is also sent back to the caller as sub_error_code.
+   */
+  virtual void GenerateVendorDumpFile(const std::string& file_path,
+                                      const std::vector<uint8_t>& data,
+                                      uint8_t vendor_error_code = 0) = 0;
+
+  /**
+   * @brief Request the Bluetooth HAL to generate a coredump.
+   *
+   * @param error_code The reason for the coredump.
+   * @param sub_error_code An optional sub error code that is used by some of
+   * the CoredumpErrorCodes.
+   */
+  virtual void GenerateCoredump(CoredumpErrorCode error_code,
+                                uint8_t sub_error_code = 0) = 0;
+
+  /**
+   * @brief The debug central only keeps one coredump per Bluetooth cycle.
+   * Invoking this function forces a reset to the coredump generator in case
+   * more coredumps are needed.
+   */
+  virtual void ResetCoredumpGenerator() = 0;
+
+  /**
+   * @brief Check if the DebugCentral is generating a coredump.
+   *
+   * @return true if the DebugCentral is generating a coredump, otherwise false.
+   */
+  virtual bool IsCoredumpGenerated() = 0;
+
+  /**
+   * @brief Get the timestamp of the coredump generated recently. The timestamp
+   * string is used as the suffix of the coredump files.
+   *
+   * @return The coredump timestamp in std::string, with the format of
+   * YYYY-MM-DD-MM-SS. Returns an empty string if no coredump was generated
+   * recently.
+   */
+  virtual std::string& GetCoredumpTimestampString() = 0;
+
+  /**
+   * @brief A helper function that returns the std::string format of
+   * CoredumpErrorCode.
+   *
+   * @param error_code The CoredumpErrorCode to transform to string.
+   * @param sub_error_code An optional sub error code that is used by some of
+   * the CoredumpErrorCodes.
+   * @return The CoredumpErrorCode in std::string.
+   */
+  static std::string CoredumpErrorCodeToString(CoredumpErrorCode error_code,
+                                               uint8_t sub_error_code);
 };
 
 class LogHelper {
  public:
-  LogHelper(AnchorType type, ::android::base::LogSeverity severity)
-      : type_(type), severity_(severity) {}
+  LogHelper(AnchorType type, ::android::base::LogSeverity severity,
+            const char* tag)
+      : type_(type), severity_(severity), tag_(tag) {}
+
+  LogHelper(::android::base::LogSeverity severity, const char* tag)
+      : type_(AnchorType::kNone), severity_(severity), tag_(tag) {}
 
   template <typename T>
   LogHelper& operator<<(const T& value) {
@@ -353,9 +259,9 @@ class LogHelper {
 #ifdef UNIT_TEST
       (void)type_;
 #else
-      DebugCentral::Get()->UpdateRecord(type_, log_message);
+      DebugCentral::Get().AddLog(type_, log_message);
 #endif
-      LOG(severity_) << log_message;
+      LOG_WITH_TAG(severity_, tag_) << log_message;
     }
   }
 
@@ -363,6 +269,7 @@ class LogHelper {
   AnchorType type_;
   ::android::base::LogSeverity severity_;
   std::ostringstream oss_;
+  const char* tag_;
 };
 
 }  // namespace debug

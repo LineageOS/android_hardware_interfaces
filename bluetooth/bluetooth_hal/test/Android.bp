@@ -41,6 +41,28 @@ filegroup {
     srcs: [
         "mock/mock_wakelock.cc",
         "mock/mock_android_base_wrapper.cc",
+        "mock/mock_system_call_wrapper.cc",
+    ],
+}
+
+filegroup {
+    name: "test_mock_hal_config_srcs",
+    srcs: [
+        "mock/mock_hal_config_loader.cc",
+    ],
+}
+
+filegroup {
+    name: "test_mock_firmware_config_srcs",
+    srcs: [
+        "mock/mock_firmware_config_loader.cc",
+    ],
+}
+
+filegroup {
+    name: "test_mock_cs_config_srcs",
+    srcs: [
+        "mock/mock_cs_config_loader.cc",
     ],
 }
 
@@ -55,5 +77,7 @@ filegroup {
     name: "test_mock_debug_srcs",
     srcs: [
         "mock/mock_vnd_snoop_logger.cc",
+        "mock/mock_bluetooth_activities.cc",
+        "mock/mock_debug_central.cc",
     ],
 }

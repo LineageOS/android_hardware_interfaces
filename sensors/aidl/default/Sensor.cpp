@@ -16,9 +16,11 @@
 
 #include "sensors-impl/Sensor.h"
 
+#include <log/log.h>
 #include "utils/SystemClock.h"
 
 #include <cmath>
+#include <sched.h>
 
 using ::ndk::ScopedAStatus;
 
@@ -105,6 +107,12 @@ void Sensor::run() {
     std::unique_lock<std::mutex> runLock(mRunMutex);
     constexpr int64_t kNanosecondsInSeconds = 1000 * 1000 * 1000;
 
+    struct sched_param params;
+    // Set the thread to the lowest real-time priority.
+    params.sched_priority = 1;
+    if (sched_setscheduler(/*pid=*/0, SCHED_FIFO, &params)) {
+        ALOGE("Unable to set SCHED_FIFO: error %s", strerror(errno));
+    }
     while (!mStopThread) {
         if (!mIsEnabled || mMode == OperationMode::DATA_INJECTION) {
             mWaitCV.wait(runLock, [&] {

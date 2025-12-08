@@ -21,6 +21,7 @@
 #include <android-base/chrono_utils.h>
 
 #include <chrono>
+#include <functional>
 #include <random>
 
 namespace aidl {

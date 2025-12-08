@@ -22,8 +22,12 @@
 #include <fmq/AidlMessageQueue.h>
 #include <math.h>
 #include <atomic>
+#include <map>
+#include <memory>
+#include <mutex>
 #include <set>
 #include <thread>
+#include <vector>
 #include "Demux.h"
 #include "Frontend.h"
 #include "Tuner.h"

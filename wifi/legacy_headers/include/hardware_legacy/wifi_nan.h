@@ -63,13 +63,14 @@ typedef u32 NanDataPathId;
 #define NAN_PMK_INFO_LEN                        32
 #define NAN_MAX_SCID_BUF_LEN                    1024
 #define NAN_MAX_SDEA_SERVICE_SPECIFIC_INFO_LEN  2048
-#define NAN_SECURITY_MIN_PASSPHRASE_LEN         8
+#define NAN_SECURITY_MIN_PASSPHRASE_LEN         6
 #define NAN_SECURITY_MAX_PASSPHRASE_LEN         63
 #define NAN_MAX_CHANNEL_INFO_SUPPORTED          4
 #define NAN_IDENTITY_KEY_LEN                    16
 #define NAN_IDENTITY_TAG_LEN                    8
 #define NAN_IDENTITY_NONCE_LEN                  8
 #define NAN_MAX_MATCH_IDENTITY_LEN             1024
+#define NAN_MAX_COMEBACK_COOKIE_LEN            255
 /*
   Definition of various NanResponseType
 */
@@ -370,6 +371,7 @@ typedef struct {
 #define NAN_SCHEDULE_UPDATE_CHANNEL_MASK  0x02
 
 /* NAN pairing bootstrapping method */
+#define NAN_PAIRING_BOOTSTRAPPING_NONE_MASK                0x00
 #define NAN_PAIRING_BOOTSTRAPPING_OPPORTUNISTIC_MASK       0x01
 #define NAN_PAIRING_BOOTSTRAPPING_PIN_CODE_DISPLAY_MASK    0x02
 #define NAN_PAIRING_BOOTSTRAPPING_PASSPHRASE_DISPLAY_MASK  0x04
@@ -2971,11 +2973,11 @@ typedef struct {
     u32 cookie_length;
 
     /* Cookie for the follow up request */
-    u8 cookie[];
+    u8 cookie[NAN_MAX_COMEBACK_COOKIE_LEN];
 
 } NanBootstrappingRequest;
 /*
- NAN pairing bootstrapping response from responder to a initate request
+ NAN pairing bootstrapping response from responder to a initiate request
 */
 typedef struct {
     /* Publish or Subscribe Id of local Publish/Subscribe */
@@ -3013,6 +3015,9 @@ typedef struct {
     /* Response Code indicating ACCEPT/REJECT */
     NanBootstrappingResponseCode rsp_code;
 
+    /* Response bootstrapping method */
+    u16 response_bootstrapping_method;
+
     /* The delay of bootstrapping in seconds */
     u32 come_back_delay;
 
@@ -3020,7 +3025,7 @@ typedef struct {
     u32 cookie_length;
 
     /* Cookie for the follow up response */
-    u8 cookie[];
+    u8 cookie[NAN_MAX_COMEBACK_COOKIE_LEN];
 
 } NanBootstrappingIndicationResponse;
 

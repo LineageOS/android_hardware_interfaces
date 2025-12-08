@@ -308,70 +308,40 @@ const AudioConfiguration BluetoothAudioSession::GetAudioConfig() {
 void BluetoothAudioSession::ReportAudioConfigChanged(
     const AudioConfiguration& audio_config) {
   std::lock_guard<std::recursive_mutex> guard(mutex_);
-  if (com::android::btaudio::hal::flags::leaudio_report_broadcast_ac_to_hal()) {
-    if (session_type_ ==
-            SessionType::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH ||
-        session_type_ ==
-            SessionType::LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH) {
-      if (audio_config.getTag() != AudioConfiguration::leAudioConfig) {
-        LOG(ERROR) << __func__ << " invalid audio config type for SessionType ="
-                   << toString(session_type_);
-        return;
-      }
-    } else if (session_type_ ==
-               SessionType::
-                   LE_AUDIO_BROADCAST_HARDWARE_OFFLOAD_ENCODING_DATAPATH) {
-      if (audio_config.getTag() != AudioConfiguration::leAudioBroadcastConfig) {
-        LOG(ERROR) << __func__ << " invalid audio config type for SessionType ="
-                   << toString(session_type_);
-        return;
-      }
-    } else if (session_type_ == SessionType::HFP_HARDWARE_OFFLOAD_DATAPATH) {
-      if (audio_config.getTag() != AudioConfiguration::hfpConfig) {
-        LOG(ERROR) << __func__ << " invalid audio config type for SessionType ="
-                   << toString(session_type_);
-        return;
-      }
-    } else if (session_type_ == SessionType::HFP_SOFTWARE_DECODING_DATAPATH ||
-               session_type_ == SessionType::HFP_SOFTWARE_ENCODING_DATAPATH) {
-      if (audio_config.getTag() != AudioConfiguration::pcmConfig) {
-        LOG(ERROR) << __func__ << " invalid audio config type for SessionType ="
-                   << toString(session_type_);
-        return;
-      }
-    } else {
-      LOG(ERROR) << __func__
-                 << " invalid SessionType =" << toString(session_type_);
+  if (session_type_ ==
+          SessionType::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH ||
+      session_type_ ==
+          SessionType::LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH) {
+    if (audio_config.getTag() != AudioConfiguration::leAudioConfig) {
+      LOG(ERROR) << __func__ << " invalid audio config type for SessionType ="
+                  << toString(session_type_);
+      return;
+    }
+  } else if (session_type_ ==
+              SessionType::
+                  LE_AUDIO_BROADCAST_HARDWARE_OFFLOAD_ENCODING_DATAPATH) {
+    if (audio_config.getTag() != AudioConfiguration::leAudioBroadcastConfig) {
+      LOG(ERROR) << __func__ << " invalid audio config type for SessionType ="
+                  << toString(session_type_);
+      return;
+    }
+  } else if (session_type_ == SessionType::HFP_HARDWARE_OFFLOAD_DATAPATH) {
+    if (audio_config.getTag() != AudioConfiguration::hfpConfig) {
+      LOG(ERROR) << __func__ << " invalid audio config type for SessionType ="
+                  << toString(session_type_);
+      return;
+    }
+  } else if (session_type_ == SessionType::HFP_SOFTWARE_DECODING_DATAPATH ||
+              session_type_ == SessionType::HFP_SOFTWARE_ENCODING_DATAPATH) {
+    if (audio_config.getTag() != AudioConfiguration::pcmConfig) {
+      LOG(ERROR) << __func__ << " invalid audio config type for SessionType ="
+                  << toString(session_type_);
       return;
     }
   } else {
-    if (session_type_ ==
-            SessionType::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH ||
-        session_type_ ==
-            SessionType::LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH) {
-      if (audio_config.getTag() != AudioConfiguration::leAudioConfig) {
-        LOG(ERROR) << __func__ << " invalid audio config type for SessionType ="
-                   << toString(session_type_);
-        return;
-      }
-    } else if (session_type_ == SessionType::HFP_HARDWARE_OFFLOAD_DATAPATH) {
-      if (audio_config.getTag() != AudioConfiguration::hfpConfig) {
-        LOG(ERROR) << __func__ << " invalid audio config type for SessionType ="
-                   << toString(session_type_);
-        return;
-      }
-    } else if (session_type_ == SessionType::HFP_SOFTWARE_DECODING_DATAPATH ||
-               session_type_ == SessionType::HFP_SOFTWARE_ENCODING_DATAPATH) {
-      if (audio_config.getTag() != AudioConfiguration::pcmConfig) {
-        LOG(ERROR) << __func__ << " invalid audio config type for SessionType ="
-                   << toString(session_type_);
-        return;
-      }
-    } else {
-      LOG(ERROR) << __func__
-                 << " invalid SessionType =" << toString(session_type_);
-      return;
-    }
+    LOG(ERROR) << __func__
+                << " invalid SessionType =" << toString(session_type_);
+    return;
   }
 
   if (session_type_ ==
@@ -941,46 +911,27 @@ std::vector<LatencyMode> BluetoothAudioSession::GetSupportedLatencyModes() {
     return std::vector<LatencyMode>();
   }
 
-  if (com::android::btaudio::hal::flags::dsa_lea()) {
-    std::vector<LatencyMode> supported_latency_modes;
-    if (session_type_ ==
-        SessionType::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH) {
-      for (LatencyMode mode : latency_modes_) {
-        if (mode == LatencyMode::LOW_LATENCY) {
-          // LOW_LATENCY is not supported for LE_HARDWARE_OFFLOAD_ENC sessions
-          continue;
-        }
-        supported_latency_modes.push_back(mode);
-      }
-    } else {
-      for (LatencyMode mode : latency_modes_) {
-        if (!low_latency_allowed_ && mode == LatencyMode::LOW_LATENCY) {
-          // ignore LOW_LATENCY mode if Bluetooth stack doesn't allow
-          continue;
-        }
-        if (mode == LatencyMode::DYNAMIC_SPATIAL_AUDIO_SOFTWARE ||
-            mode == LatencyMode::DYNAMIC_SPATIAL_AUDIO_HARDWARE) {
-          // DSA_SW and DSA_HW only supported for LE_HARDWARE_OFFLOAD_ENC
-          // sessions
-          continue;
-        }
-        supported_latency_modes.push_back(mode);
-      }
-    }
-    LOG(DEBUG) << __func__ << " - Supported LatencyMode="
-               << toString(supported_latency_modes);
-    return supported_latency_modes;
-  }
-
-  if (low_latency_allowed_) return latency_modes_;
-  std::vector<LatencyMode> modes;
+  std::vector<LatencyMode> supported_latency_modes;
   for (LatencyMode mode : latency_modes_) {
-    if (mode == LatencyMode::LOW_LATENCY)
-      // ignore those low latency mode if Bluetooth stack doesn't allow
+    if (!low_latency_allowed_ && mode == LatencyMode::LOW_LATENCY) {
+      // ignore LOW_LATENCY mode if Bluetooth stack doesn't allow
       continue;
-    modes.push_back(mode);
+    }
+
+    if (session_type_ !=
+            SessionType::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH &&
+        (mode == LatencyMode::DYNAMIC_SPATIAL_AUDIO_SOFTWARE ||
+         mode == LatencyMode::DYNAMIC_SPATIAL_AUDIO_HARDWARE)) {
+      // DSA_SW and DSA_HW only supported for LE_HARDWARE_OFFLOAD_ENC
+      // sessions
+      continue;
+    }
+
+    supported_latency_modes.push_back(mode);
   }
-  return modes;
+  LOG(DEBUG) << __func__ << " - Supported LatencyMode="
+             << toString(supported_latency_modes);
+  return supported_latency_modes;
 }
 
 void BluetoothAudioSession::SetLatencyMode(const LatencyMode& latency_mode) {

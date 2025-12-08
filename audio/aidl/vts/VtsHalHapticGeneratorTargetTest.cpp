@@ -74,14 +74,14 @@ class HapticGeneratorHelper : public EffectHelper {
                 0 /* session */, 1 /* ioHandle */, kSamplingFrequency /* iSampleRate */,
                 kSamplingFrequency /* oSampleRate */, kFrameCount /* iFrameCount */,
                 kFrameCount /* oFrameCount */, layout, layout);
-        ASSERT_NO_FATAL_FAILURE(open(mEffect, common, std::nullopt, &ret, EX_NONE));
+        ASSERT_NO_FATAL_FAILURE(open(mEffect, common, std::nullopt, &mOpenEffectReturn, EX_NONE));
         ASSERT_NE(nullptr, mEffect);
     }
 
     void TearDownHapticGenerator() {
         ASSERT_NO_FATAL_FAILURE(close(mEffect));
         ASSERT_NO_FATAL_FAILURE(destroy(mFactory, mEffect));
-        ret = IEffect::OpenEffectReturn{};
+        mOpenEffectReturn = IEffect::OpenEffectReturn{};
     }
 
     Parameter createScaleParam(const std::vector<HapticGenerator::HapticScale>& hapticScales) {
@@ -128,7 +128,7 @@ class HapticGeneratorHelper : public EffectHelper {
             HapticGenerator::VibratorScale::NONE;
     std::shared_ptr<IFactory> mFactory;
     std::shared_ptr<IEffect> mEffect;
-    IEffect::OpenEffectReturn ret;
+    IEffect::OpenEffectReturn mOpenEffectReturn;
     Parameter mHapticSpecificParameter;
     Parameter::Id mHapticIdParameter;
     int mEffectInterfaceVersion;
@@ -336,7 +336,8 @@ class HapticGeneratorDataTest : public ::testing::TestWithParam<HapticGeneratorD
         for (auto param : mHapticParam) {
             ASSERT_NO_FATAL_FAILURE(setAndVerifyParameter(param, tag));
             SCOPED_TRACE("Param: " + param.toString());
-            ASSERT_NO_FATAL_FAILURE(processAndWriteToOutput(mInput, mOutput, mEffect, &ret));
+            ASSERT_NO_FATAL_FAILURE(
+                    processAndWriteToOutput(mInput, mOutput, mEffect, mOpenEffectReturn));
             float hapticOutputEnergy = audio_utils_compute_energy_mono(
                     mOutput.data() + mAudioSamples, AUDIO_FORMAT_PCM_FLOAT, mHapticSamples);
             EXPECT_GT(hapticOutputEnergy, baseEnergy);
@@ -358,7 +359,8 @@ class HapticGeneratorDataTest : public ::testing::TestWithParam<HapticGeneratorD
             }
             ASSERT_NO_FATAL_FAILURE(setAndVerifyParameter(createVibratorParam(vibratorInfo),
                                                           HapticGenerator::vibratorInfo));
-            ASSERT_NO_FATAL_FAILURE(processAndWriteToOutput(mInput, mOutput, mEffect, &ret));
+            ASSERT_NO_FATAL_FAILURE(
+                    processAndWriteToOutput(mInput, mOutput, mEffect, mOpenEffectReturn));
             float outAmplitude = findAbsMax(mOutput.begin() + mAudioSamples, mOutput.end());
             if (outAmplitude > mMaxAmplitude) {
                 mMaxAmplitude = outAmplitude;

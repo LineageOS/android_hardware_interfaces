@@ -349,7 +349,7 @@ TEST_P(DownmixFoldDataTest, DownmixProcessData) {
         generateInputBuffer(mInputBuffer, position, false /*isStripe*/,
                             mInputChannelCount /*channelCount*/, kMaxDownmixSample);
         ASSERT_NO_FATAL_FAILURE(
-                processAndWriteToOutput(mInputBuffer, mOutputBuffer, mEffect, &mOpenEffectReturn));
+                processAndWriteToOutput(mInputBuffer, mOutputBuffer, mEffect, mOpenEffectReturn));
         validateOutput(channel, position);
         std::fill(mInputBuffer.begin(), mInputBuffer.end(), 0);
     }
@@ -399,7 +399,7 @@ TEST_P(DownmixStripDataTest, DownmixProcessData) {
     generateInputBuffer(mInputBuffer, 0 /*position*/, true /*isStripe*/,
                         mInputChannelCount /*channelCount*/, kMaxDownmixSample);
     ASSERT_NO_FATAL_FAILURE(
-            processAndWriteToOutput(mInputBuffer, mOutputBuffer, mEffect, &mOpenEffectReturn));
+            processAndWriteToOutput(mInputBuffer, mOutputBuffer, mEffect, mOpenEffectReturn));
     ASSERT_NO_FATAL_FAILURE(validateOutput());
 }
 

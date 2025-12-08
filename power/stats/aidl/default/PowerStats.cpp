@@ -18,7 +18,9 @@
 
 #include <android-base/logging.h>
 
+#include <algorithm>
 #include <numeric>
+#include <utility>
 
 namespace aidl {
 namespace android {

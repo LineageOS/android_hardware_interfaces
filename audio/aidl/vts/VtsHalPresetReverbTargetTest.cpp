@@ -164,7 +164,7 @@ class PresetReverbProcessTest : public ::testing::TestWithParam<PresetReverbProc
     void setPresetAndProcess(const PresetReverb::Presets& preset, std::vector<float>& output) {
         ASSERT_NO_FATAL_FAILURE(setAndVerifyPreset(preset));
         ASSERT_NO_FATAL_FAILURE(
-                processAndWriteToOutput(mInput, output, mEffect, &mOpenEffectReturn));
+                processAndWriteToOutput(mInput, output, mEffect, mOpenEffectReturn));
     }
 
     void validateIncreasingEnergy(const std::vector<PresetReverb::Presets>& presets) {

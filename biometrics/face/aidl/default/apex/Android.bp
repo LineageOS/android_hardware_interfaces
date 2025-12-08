@@ -24,16 +24,14 @@ apex {
     certificate: ":com.android.hardware.certificate",
     updatable: false,
     system_ext_specific: true,
-
     binaries: [
         // hal
         "android.hardware.biometrics.face-service.example",
     ],
-    prebuilts: [
-        // init_rc
-        "face-virtual-apex.rc",
-    ],
-
+    prebuilts: select(soong_config_variable("face_virtual", "inactive"), {
+        true: [],
+        default: ["face-virtual-apex.rc"],
+    }),
     overrides: [
         "android.hardware.biometrics.face-service.example",
     ],

@@ -19,6 +19,7 @@
 #include "Thermal.h"
 
 #include <android-base/logging.h>
+#include <algorithm>
 
 namespace aidl::android::hardware::thermal::impl::example {
 

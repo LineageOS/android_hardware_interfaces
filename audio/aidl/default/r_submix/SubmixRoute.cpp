@@ -25,7 +25,11 @@
 #include "SubmixRoute.h"
 
 using aidl::android::hardware::audio::common::getChannelCount;
+using aidl::android::media::audio::common::AudioChannelLayout;
 using aidl::android::media::audio::common::AudioDeviceAddress;
+using android::MonoPipe;
+using android::MonoPipeReader;
+using android::sp;
 
 namespace aidl::android::hardware::audio::core::r_submix {
 
@@ -45,7 +49,7 @@ std::shared_ptr<SubmixRoute> SubmixRoute::findOrCreateRoute(const AudioDeviceAdd
     if (routeItr != routes->end()) {
         return routeItr->second;
     }
-    auto route = std::make_shared<SubmixRoute>();
+    auto route = std::make_shared<SubmixRoute>(deviceAddress);
     if (::android::OK != route->createPipe(pipeConfig)) {
         LOG(ERROR) << __func__ << ": create pipe failed";
         return nullptr;
@@ -62,11 +66,6 @@ std::shared_ptr<SubmixRoute> SubmixRoute::findRoute(const AudioDeviceAddress& de
         return routeItr->second;
     }
     return nullptr;
-}
-
-// static
-void SubmixRoute::removeRoute(const AudioDeviceAddress& deviceAddress) {
-    getRoutes()->erase(deviceAddress);
 }
 
 // static
@@ -176,6 +175,9 @@ void SubmixRoute::closeStream(bool isInput) {
         }
     } else {
         mStreamOutOpen = false;
+        if (mSink != nullptr) {
+            mSink->shutdown(true);
+        }
     }
 }
 
@@ -242,6 +244,10 @@ AudioConfig SubmixRoute::releasePipe() {
     mSink.clear();
     mSource.clear();
     return mPipeConfig;
+}
+
+void SubmixRoute::remove() {
+    getRoutes()->erase(mDeviceAddress);
 }
 
 ::android::status_t SubmixRoute::resetPipe() {

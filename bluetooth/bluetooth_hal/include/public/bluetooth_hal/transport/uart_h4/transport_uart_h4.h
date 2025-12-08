@@ -147,6 +147,19 @@ class TransportUartH4 : virtual public TransportInterface,
    */
   void NotifyHalStateChange(::bluetooth_hal::HalState hal_state) override;
 
+  /**
+   * @brief Registers a vendor-specific packet validator.
+   *
+   * This function allows a transport implementation to register a
+   * vendor-specific packet validator. The validator is passed as a shared
+   * pointer to allow for sharing the same validator instance across multiple
+   * transports, if needed.
+   *
+   * @param factory The factory function to register.
+   */
+  void RegisterVendorPacketValidator(
+      VendorPacketValidatorInterface::FactoryFn factory);
+
  protected:
   void EnableTransportWakelock(bool enable);
   bool IsTransportWakelockEnabled();
@@ -159,6 +172,8 @@ class TransportUartH4 : virtual public TransportInterface,
 
   bool SetupLowPowerMode() override;
   void TeardownLowPowerMode() override;
+
+  void RefreshLpmTimer();
 
   std::unique_ptr<DataProcessor> data_processor_;
   std::recursive_mutex mutex_;

@@ -27,6 +27,7 @@ cc_test {
     defaults: [
         "VtsHalTargetTestDefaults",
         "use_libaidlvintf_gtest_helper_static",
+        "gnss_use_latest_hal_aidl_cpp_static",
     ],
     srcs: [
         "gnss_hal_test.cpp",
@@ -52,7 +53,6 @@ cc_test {
         "libbinder",
     ],
     static_libs: [
-        "android.hardware.gnss-V6-cpp",
         "android.hardware.gnss@common-vts-lib",
     ],
     test_suites: [

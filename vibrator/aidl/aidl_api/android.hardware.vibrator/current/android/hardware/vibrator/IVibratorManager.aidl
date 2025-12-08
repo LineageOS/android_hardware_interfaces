@@ -38,9 +38,9 @@ interface IVibratorManager {
   int[] getVibratorIds();
   android.hardware.vibrator.IVibrator getVibrator(in int vibratorId);
   void prepareSynced(in int[] vibratorIds);
-  void triggerSynced(in android.hardware.vibrator.IVibratorCallback callback);
+  void triggerSynced(in @nullable android.hardware.vibrator.IVibratorCallback callback);
   void cancelSynced();
-  android.hardware.vibrator.IVibrationSession startSession(in int[] vibratorIds, in android.hardware.vibrator.VibrationSessionConfig config, in android.hardware.vibrator.IVibratorCallback callback);
+  android.hardware.vibrator.IVibrationSession startSession(in int[] vibratorIds, in android.hardware.vibrator.VibrationSessionConfig config, in @nullable android.hardware.vibrator.IVibratorCallback callback);
   void clearSessions();
   const int CAP_SYNC = (1 << 0) /* 1 */;
   const int CAP_PREPARE_ON = (1 << 1) /* 2 */;

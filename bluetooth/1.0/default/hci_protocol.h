@@ -18,6 +18,8 @@
 
 #include <hidl/HidlSupport.h>
 
+#include <functional>
+
 #include "bt_vendor_lib.h"
 #include "hci_internals.h"
 #include "hci_packetizer.h"

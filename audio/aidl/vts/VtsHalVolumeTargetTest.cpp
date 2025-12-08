@@ -164,18 +164,18 @@ class VolumeDataTest : public ::testing::TestWithParam<VolumeDataTestParam>,
         roundToFreqCenteredToFftBin(mTestFrequencies, mBinOffsets, kBinWidth);
     }
 
-    std::vector<int> calculatePercentageDiff(const std::vector<float>& outputMag) {
-        std::vector<int> percentages(mTestFrequencies.size());
+    std::vector<float> calculatePercentageDiff(const std::vector<float>& outputMag) {
+        std::vector<float> percentages(mTestFrequencies.size());
 
         for (size_t i = 0; i < mInputMag.size(); i++) {
             float diff = mInputMag[i] - outputMag[i];
-            percentages[i] = std::round(diff / mInputMag[i] * 100);
+            percentages[i] = diff / mInputMag[i] * 100;
         }
         return percentages;
     }
 
     // Convert Decibel value to Percentage
-    int percentageDb(float level) { return std::round((1 - (pow(10, level / 20))) * 100); }
+    float percentageDb(float level) { return (1 - (pow(10, level / 20))) * 100; }
 
     void SetUp() override {
         SKIP_TEST_IF_DATA_UNSUPPORTED(mDescriptor.common.flags);
@@ -207,8 +207,9 @@ class VolumeDataTest : public ::testing::TestWithParam<VolumeDataTestParam>,
 };
 
 TEST_P(VolumeDataTest, ApplyLevelMuteUnmute) {
+    constexpr float kTolerancePercentage = 0.05;
     std::vector<float> output(kBufferSize);
-    std::vector<int> diffs(mTestFrequencies.size());
+    std::vector<float> diffs(mTestFrequencies.size());
     std::vector<float> outputMag(mTestFrequencies.size());
 
     if (!isLevelValid(kBaseLevel)) {
@@ -218,7 +219,7 @@ TEST_P(VolumeDataTest, ApplyLevelMuteUnmute) {
     // Apply Volume Level
 
     ASSERT_NO_FATAL_FAILURE(setAndVerifyParameters(Volume::levelDb, kBaseLevel, EX_NONE));
-    ASSERT_NO_FATAL_FAILURE(processAndWriteToOutput(mInput, output, mEffect, &mOpenEffectReturn));
+    ASSERT_NO_FATAL_FAILURE(processAndWriteToOutput(mInput, output, mEffect, mOpenEffectReturn));
 
     ASSERT_NO_FATAL_FAILURE(
             calculateAndVerifyMagnitude(outputMag, mChannelLayout, output, mBinOffsets));
@@ -226,13 +227,13 @@ TEST_P(VolumeDataTest, ApplyLevelMuteUnmute) {
     diffs = calculatePercentageDiff(outputMag);
 
     for (size_t i = 0; i < diffs.size(); i++) {
-        ASSERT_EQ(diffs[i], percentageDb(kBaseLevel));
+        ASSERT_NEAR(diffs[i], percentageDb(kBaseLevel), kTolerancePercentage);
     }
 
     // Apply Mute
 
     ASSERT_NO_FATAL_FAILURE(setAndVerifyParameters(Volume::mute, true /*mute*/, EX_NONE));
-    ASSERT_NO_FATAL_FAILURE(processAndWriteToOutput(mInput, output, mEffect, &mOpenEffectReturn));
+    ASSERT_NO_FATAL_FAILURE(processAndWriteToOutput(mInput, output, mEffect, mOpenEffectReturn));
 
     std::vector<float> subOutputMute(output.begin() + offset, output.end());
 
@@ -242,7 +243,7 @@ TEST_P(VolumeDataTest, ApplyLevelMuteUnmute) {
     diffs = calculatePercentageDiff(outputMag);
 
     for (size_t i = 0; i < diffs.size(); i++) {
-        ASSERT_EQ(diffs[i], percentageDb(kMinLevel /*Mute*/));
+        ASSERT_NEAR(diffs[i], percentageDb(kMinLevel /*Mute*/), kTolerancePercentage);
     }
 
     // Verifying Fade out
@@ -258,7 +259,7 @@ TEST_P(VolumeDataTest, ApplyLevelMuteUnmute) {
     // Apply Unmute
 
     ASSERT_NO_FATAL_FAILURE(setAndVerifyParameters(Volume::mute, false /*unmute*/, EX_NONE));
-    ASSERT_NO_FATAL_FAILURE(processAndWriteToOutput(mInput, output, mEffect, &mOpenEffectReturn));
+    ASSERT_NO_FATAL_FAILURE(processAndWriteToOutput(mInput, output, mEffect, mOpenEffectReturn));
 
     std::vector<float> subOutputUnmute(output.begin() + offset, output.end());
 
@@ -268,7 +269,7 @@ TEST_P(VolumeDataTest, ApplyLevelMuteUnmute) {
     diffs = calculatePercentageDiff(outputMag);
 
     for (size_t i = 0; i < diffs.size(); i++) {
-        ASSERT_EQ(diffs[i], percentageDb(kBaseLevel));
+        ASSERT_NEAR(diffs[i], percentageDb(kBaseLevel), kTolerancePercentage);
     }
 
     // Verifying Fade in
@@ -285,7 +286,7 @@ TEST_P(VolumeDataTest, ApplyLevelMuteUnmute) {
 TEST_P(VolumeDataTest, DecreasingLevels) {
     std::vector<int> decreasingLevels = {-24, -48, -96};
     std::vector<float> baseOutput(kBufferSize);
-    std::vector<int> baseDiffs(mTestFrequencies.size());
+    std::vector<float> baseDiffs(mTestFrequencies.size());
     std::vector<float> outputMag(mTestFrequencies.size());
 
     if (!isLevelValid(kBaseLevel)) {
@@ -294,7 +295,7 @@ TEST_P(VolumeDataTest, DecreasingLevels) {
 
     ASSERT_NO_FATAL_FAILURE(setAndVerifyParameters(Volume::levelDb, kBaseLevel, EX_NONE));
     ASSERT_NO_FATAL_FAILURE(
-            processAndWriteToOutput(mInput, baseOutput, mEffect, &mOpenEffectReturn));
+            processAndWriteToOutput(mInput, baseOutput, mEffect, mOpenEffectReturn));
 
     ASSERT_NO_FATAL_FAILURE(
             calculateAndVerifyMagnitude(outputMag, mChannelLayout, baseOutput, mBinOffsets));
@@ -303,7 +304,7 @@ TEST_P(VolumeDataTest, DecreasingLevels) {
 
     for (int level : decreasingLevels) {
         std::vector<float> output(kBufferSize);
-        std::vector<int> diffs(mTestFrequencies.size());
+        std::vector<float> diffs(mTestFrequencies.size());
 
         // Skipping the further steps for unnsupported level values
         if (!isLevelValid(level)) {
@@ -311,7 +312,7 @@ TEST_P(VolumeDataTest, DecreasingLevels) {
         }
         ASSERT_NO_FATAL_FAILURE(setAndVerifyParameters(Volume::levelDb, level, EX_NONE));
         ASSERT_NO_FATAL_FAILURE(
-                processAndWriteToOutput(mInput, output, mEffect, &mOpenEffectReturn));
+                processAndWriteToOutput(mInput, output, mEffect, mOpenEffectReturn));
 
         ASSERT_NO_FATAL_FAILURE(
                 calculateAndVerifyMagnitude(outputMag, mChannelLayout, output, mBinOffsets));

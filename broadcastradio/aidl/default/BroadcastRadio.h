@@ -31,7 +31,9 @@
 
 #include <android-base/thread_annotations.h>
 
+#include <memory>
 #include <optional>
+#include <vector>
 
 namespace aidl::android::hardware::broadcastradio {
 

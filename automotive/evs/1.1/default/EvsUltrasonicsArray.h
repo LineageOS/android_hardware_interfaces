@@ -17,8 +17,10 @@
 #ifndef ANDROID_HARDWARE_AUTOMOTIVE_EVS_V1_1_EVSULTRASONICSARRAY_H
 #define ANDROID_HARDWARE_AUTOMOTIVE_EVS_V1_1_EVSULTRASONICSARRAY_H
 
+#include <mutex>
 #include <thread>
 #include <utility>
+#include <vector>
 
 #include <android-base/macros.h>
 #include <android/hidl/allocator/1.0/IAllocator.h>

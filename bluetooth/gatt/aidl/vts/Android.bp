@@ -1,0 +1,29 @@
+package {
+    default_team: "trendy_team_bluetooth",
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+cc_test {
+    name: "VtsHalBluetoothGattTargetTest",
+    defaults: [
+        "use_libaidlvintf_gtest_helper_static",
+    ],
+    srcs: ["VtsHalBluetoothGattTargetTest.cpp"],
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "libcutils",
+        "liblog",
+        "libutils",
+    ],
+    static_libs: [
+        "android.hardware.bluetooth.gatt-V1-ndk",
+        "android.hardware.contexthub-V4-ndk",
+        "libgmock",
+    ],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
+    require_root: true,
+}

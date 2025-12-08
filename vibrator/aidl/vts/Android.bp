@@ -20,7 +20,7 @@ cc_test {
         "libbinder_ndk",
     ],
     static_libs: [
-        "android.hardware.vibrator-V3-ndk",
+        "android.hardware.vibrator-V4-ndk",
     ],
     test_suites: [
         "general-tests",
@@ -39,7 +39,7 @@ cc_test {
         "libbinder_ndk",
     ],
     static_libs: [
-        "android.hardware.vibrator-V3-ndk",
+        "android.hardware.vibrator-V4-ndk",
     ],
     test_suites: [
         "general-tests",

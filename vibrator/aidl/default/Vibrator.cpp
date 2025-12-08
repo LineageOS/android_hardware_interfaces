@@ -47,13 +47,15 @@ static constexpr int32_t ERROR_CODE_INVALID_DURATION = 1;
 
 void Vibrator::dispatchVibrate(int32_t timeoutMs,
                                const std::shared_ptr<IVibratorCallback>& callback) {
-    std::lock_guard lock(mMutex);
-    if (mIsVibrating) {
-        // Already vibrating, ignore new request.
-        return;
+    {
+        std::lock_guard lock(mMutex);
+        if (mIsVibrating) {
+            // Already vibrating, ignore new request.
+            return;
+        }
+        mVibrationCallback = std::shared_ptr<IVibratorCallback>(callback);
+        mIsVibrating = true;
     }
-    mVibrationCallback = callback;
-    mIsVibrating = true;
     // Note that thread lambdas aren't using implicit capture [=], to avoid capturing "this",
     // which may be asynchronously destructed.
     std::thread([timeoutMs, callback, sharedThis = this->ref<Vibrator>()] {
@@ -61,31 +63,48 @@ void Vibrator::dispatchVibrate(int32_t timeoutMs,
         usleep(timeoutMs * 1000);
 
         if (sharedThis) {
-            std::lock_guard lock(sharedThis->mMutex);
-            sharedThis->mIsVibrating = false;
-            if (sharedThis->mVibrationCallback && (callback == sharedThis->mVibrationCallback)) {
-                LOG(VERBOSE) << "Notifying callback onComplete";
-                if (!sharedThis->mVibrationCallback->onComplete().isOk()) {
-                    LOG(ERROR) << "Failed to call onComplete";
-                }
-                sharedThis->mVibrationCallback = nullptr;
-            }
-            if (sharedThis->mGlobalVibrationCallback) {
-                LOG(VERBOSE) << "Notifying global callback onComplete";
-                if (!sharedThis->mGlobalVibrationCallback->onComplete().isOk()) {
-                    LOG(ERROR) << "Failed to call onComplete";
-                }
+            std::shared_ptr<IVibratorCallback> vibrationCallback, globalCallback;
+            {
+                std::lock_guard lock(sharedThis->mMutex);
+                globalCallback = std::move(sharedThis->mGlobalVibrationCallback);
+                sharedThis->mIsVibrating = false;
+                // make sure any delayed call will not trigger this again.
                 sharedThis->mGlobalVibrationCallback = nullptr;
+                if (sharedThis->mVibrationCallback == callback) {
+                    vibrationCallback = std::move(sharedThis->mVibrationCallback);
+                    // make sure any delayed call will not trigger this again.
+                    sharedThis->mVibrationCallback = nullptr;
+                } else {
+                    vibrationCallback = nullptr;
+                }
+            }
+            if (vibrationCallback) {
+                LOG(VERBOSE) << "Notifying callback onComplete";
+                if (!vibrationCallback->onComplete().isOk()) {
+                    LOG(ERROR) << "Failed to call onComplete";
+                }
+            }
+            if (globalCallback) {
+                LOG(VERBOSE) << "Notifying global callback onComplete";
+                if (!globalCallback->onComplete().isOk()) {
+                    LOG(ERROR) << "Failed to call onComplete";
+                }
             }
         }
     }).detach();
 }
 
 void Vibrator::setGlobalVibrationCallback(const std::shared_ptr<IVibratorCallback>& callback) {
-    std::lock_guard lock(mMutex);
-    if (mIsVibrating) {
-        mGlobalVibrationCallback = callback;
-    } else if (callback) {
+    std::shared_ptr<IVibratorCallback> immediateCallback = nullptr;
+    {
+        std::lock_guard lock(mMutex);
+        if (mIsVibrating) {
+            mGlobalVibrationCallback = callback;
+        } else {
+            immediateCallback = callback;
+        }
+    }
+    if (immediateCallback) {
         std::thread([callback] {
             LOG(VERBOSE) << "Notifying global callback onComplete";
             if (!callback->onComplete().isOk()) {
@@ -122,12 +141,16 @@ ndk::ScopedAStatus Vibrator::getCapabilities(int32_t* _aidl_return) {
 
 ndk::ScopedAStatus Vibrator::off() {
     LOG(VERBOSE) << "Vibrator off";
-    std::lock_guard lock(mMutex);
-    std::shared_ptr<IVibratorCallback> callback = mVibrationCallback;
-    std::shared_ptr<IVibratorCallback> globalCallback = mGlobalVibrationCallback;
-    mIsVibrating = false;
-    mVibrationCallback = nullptr;
-    mGlobalVibrationCallback = nullptr;
+    std::shared_ptr<IVibratorCallback> callback, globalCallback;
+    {
+        std::lock_guard lock(mMutex);
+        callback = std::move(mVibrationCallback);
+        globalCallback = std::move(mGlobalVibrationCallback);
+        mIsVibrating = false;
+        // make sure any delayed call will not trigger these again.
+        mVibrationCallback = nullptr;
+        mGlobalVibrationCallback = nullptr;
+    }
     if (callback || globalCallback) {
         std::thread([callback, globalCallback] {
             if (callback) {

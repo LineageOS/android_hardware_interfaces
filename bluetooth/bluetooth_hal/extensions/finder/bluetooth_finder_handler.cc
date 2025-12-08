@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "bthal.extensions.finder"
+#define LOG_TAG "bluetooth_hal.extensions.finder"
 
 #include "bluetooth_hal/extensions/finder/bluetooth_finder_handler.h"
 

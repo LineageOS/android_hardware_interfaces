@@ -26,7 +26,6 @@ void stopSupplicantIfNeeded(const std::string& instance_name);
 void stopHostapd(const std::string& instance_name);
 void toggleWifiFramework(bool enable);
 void toggleWifiScanAlwaysAvailable(bool enable);
-bool isWifiFrameworkEnabled();
 bool isWifiScanAlwaysAvailable();
 // Used to configure the chip, driver and start wpa_hostapd before every
 // test.

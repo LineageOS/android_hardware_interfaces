@@ -24,6 +24,7 @@
 #include <aidl/android/hardware/bluetooth/audio/SessionType.h>
 #include <fmq/AidlMessageQueue.h>
 
+#include <functional>
 #include <mutex>
 #include <unordered_map>
 #include <vector>

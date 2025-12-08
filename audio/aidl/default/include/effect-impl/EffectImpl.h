@@ -88,6 +88,11 @@ class EffectImpl : public BnEffect, public EffectThread {
      */
     void process() override;
 
+    /**
+     * Finish effect draining, and transit the state to State::IDLE.
+     */
+    virtual void drainingComplete_l() EXCLUSIVE_LOCKS_REQUIRED(mImplMutex);
+
   protected:
     // current Hal version
     int mVersion = 0;
@@ -114,7 +119,7 @@ class EffectImpl : public BnEffect, public EffectThread {
     RetCode notifyEventFlag(uint32_t flag);
 
     std::string getEffectNameWithVersion() {
-        return getEffectName() + "V" + std::to_string(mVersion);
+        return getEffectName() + " (aidl_v" + std::to_string(mVersion) + ")";
     }
 
     ::android::hardware::EventFlag* mEventFlag;

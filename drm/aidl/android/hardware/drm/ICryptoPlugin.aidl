@@ -19,6 +19,7 @@ package android.hardware.drm;
 import android.hardware.common.Ashmem;
 import android.hardware.drm.DecryptArgs;
 import android.hardware.drm.DestinationBuffer;
+import android.hardware.drm.KeyHandleResult;
 import android.hardware.drm.LogMessage;
 import android.hardware.drm.Mode;
 import android.hardware.drm.Pattern;
@@ -115,4 +116,32 @@ interface ICryptoPlugin {
      *     SharedBuffer parcelable (bufferId, size, handle)
      */
     void setSharedBufferBase(in SharedBuffer base);
+
+    /**
+     * Retrieves an opaque handle that is associated with a specified key.
+     *
+     * @param keyId A 16-byte key id for the key that is used to do the decryption.
+     * It refers to a key in the associated MediaDrm instance.
+     * @param mode The cipher mode.
+     * @return A KeyHandleResult struct containing the opaque key handle.
+     * Implicit error codes:
+     *       + ERROR_DRM_CANNOT_HANDLE in other failure cases
+     *       + GENERAL_PLUGIN_ERROR on unexpected plugin-level errors.
+     *       + ERROR_DRM_INSUFFICIENT_OUTPUT_PROTECTION if required output
+     *             protections are not active
+     *       + ERROR_DRM_INSUFFICIENT_SECURITY if the security level of the
+     *             device is not sufficient to meet the requirements in
+     *             the license policy
+     *       + ERROR_DRM_INVALID_STATE if the device is in a state where it
+     *             is not able to perform decryption
+     *       + ERROR_DRM_LICENSE_EXPIRED if the license keys have expired
+     *       + ERROR_DRM_NO_LICENSE if no license keys have been loaded
+     *       + ERROR_DRM_RESOURCE_BUSY if the resources required to perform
+     *             the decryption are not available
+     *       + ERROR_DRM_SESSION_NOT_OPENED if the decrypt session is not
+     *             opened
+     *       + LICENSE_PARSE_ERROR on license parsing issue
+     *       + ERROR_DRM_SESSION_LOST_STATE on session state loss
+     */
+    KeyHandleResult getKeyHandle(in byte[] keyId, in Mode mode);
 }

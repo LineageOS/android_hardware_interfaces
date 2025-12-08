@@ -16,7 +16,10 @@
 
 #pragma once
 
+#include <memory>
+#include <mutex>
 #include <set>
+#include <vector>
 
 #include <aidl/android/hardware/thermal/BnThermal.h>
 

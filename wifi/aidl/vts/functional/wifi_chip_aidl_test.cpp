@@ -53,6 +53,9 @@ using aidl::android::hardware::wifi::WifiUsableChannel;
 class WifiChipAidlTest : public testing::TestWithParam<std::string> {
   public:
     void SetUp() override {
+        if (!::testing::deviceSupportsFeature("android.hardware.wifi")) {
+            GTEST_SKIP() << "Skipping this test since wifi is not supported.";
+        }
         stopWifiService(getInstanceName());
         wifi_chip_ = getWifiChip(getInstanceName());
         ASSERT_NE(nullptr, wifi_chip_.get());
@@ -525,7 +528,11 @@ TEST_P(WifiChipAidlTest, StartLoggingToDebugRingBuffer) {
 
     status = wifi_chip_->startLoggingToDebugRingBuffer(
             ring_name, WifiDebugRingBufferVerboseLevel::VERBOSE, 5, 1024);
-    EXPECT_TRUE(status.isOk() || checkStatusCode(&status, WifiStatusCode::ERROR_NOT_SUPPORTED));
+    if (checkStatusCode(&status, WifiStatusCode::ERROR_NOT_SUPPORTED)) {
+        GTEST_SKIP() << "Skipping this test since startLoggingToDebugRingBuffer() "
+                        "is not supported by vendor.";
+    }
+    EXPECT_TRUE(status.isOk());
 
     status = wifi_chip_->stopLoggingToDebugRingBuffer();
     EXPECT_TRUE(status.isOk() || checkStatusCode(&status, WifiStatusCode::ERROR_NOT_SUPPORTED));

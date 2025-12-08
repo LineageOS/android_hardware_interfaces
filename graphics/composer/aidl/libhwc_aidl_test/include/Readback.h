@@ -53,8 +53,7 @@ static const Color LIGHT_BLUE = {0.0f, 0.0f, 0.5f, 1.0f};
 
 class TestColorLayer : public TestLayer {
   public:
-    TestColorLayer(const std::shared_ptr<ComposerClientWrapper>& client, int64_t display,
-                   ComposerClientWriter& writer)
+    TestColorLayer(ComposerClientWrapper& client, int64_t display, ComposerClientWriter& writer)
         : TestLayer{client, display, writer} {}
 
     void write(ComposerClientWriter& writer) override;
@@ -69,10 +68,9 @@ class TestColorLayer : public TestLayer {
 
 class TestBufferLayer : public TestLayer {
   public:
-    TestBufferLayer(const std::shared_ptr<ComposerClientWrapper>& client,
-                    TestRenderEngine& renderEngine, int64_t display, uint32_t width,
-                    uint32_t height, common::PixelFormat format, ComposerClientWriter& writer,
-                    Composition composition = Composition::DEVICE);
+    TestBufferLayer(ComposerClientWrapper& client, TestRenderEngine& renderEngine, int64_t display,
+                    uint32_t width, uint32_t height, common::PixelFormat format,
+                    ComposerClientWriter& writer, Composition composition = Composition::DEVICE);
 
     void write(ComposerClientWriter& writer) override;
 

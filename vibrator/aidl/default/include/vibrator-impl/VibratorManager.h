@@ -46,16 +46,15 @@ class VibratorManager : public BnVibratorManager {
     void abortSession();
     void closeSession(int32_t delayMs);
 
+    void clearSession(const std::shared_ptr<IVibrationSession>& session);
+
   private:
     std::shared_ptr<Vibrator> mDefaultVibrator;
     mutable std::mutex mMutex;
     int32_t mCapabilities GUARDED_BY(mMutex) = 0;
     bool mIsPreparing GUARDED_BY(mMutex) = false;
-    bool mIsClosingSession GUARDED_BY(mMutex) = false;
     std::shared_ptr<IVibrationSession> mSession GUARDED_BY(mMutex) = nullptr;
     std::shared_ptr<IVibratorCallback> mSessionCallback GUARDED_BY(mMutex) = nullptr;
-
-    void clearSession(const std::shared_ptr<IVibrationSession>& session);
 };
 
 }  // namespace vibrator

@@ -23,6 +23,7 @@
 #include <android/binder_manager.h>
 #include <binder/IServiceManager.h>
 #include <binder/ProcessState.h>
+#include <android-base/properties.h>
 
 #include <future>
 
@@ -42,6 +43,35 @@ constexpr static int kCallbackTimeoutMs = 250;
 // this timeout should be same as AOSP stack timeout (HAL_OPEN_TIMEOUT_MS)
 constexpr static int kOpenCallbackTimeoutMs = 20000;
 }  // namespace
+
+static int get_vsr_api_level() {
+  int vendor_api_level =
+      ::android::base::GetIntProperty("ro.vendor.api_level", -1);
+  if (vendor_api_level != -1) {
+    return vendor_api_level;
+  }
+
+  // Android S and older devices do not define ro.vendor.api_level
+  vendor_api_level = ::android::base::GetIntProperty("ro.board.api_level", -1);
+  if (vendor_api_level == -1) {
+    vendor_api_level =
+        ::android::base::GetIntProperty("ro.board.first_api_level", -1);
+  }
+
+  int product_api_level =
+      ::android::base::GetIntProperty("ro.product.first_api_level", -1);
+  if (product_api_level == -1) {
+    product_api_level =
+        ::android::base::GetIntProperty("ro.build.version.sdk", -1);
+    EXPECT_NE(product_api_level, -1) << "Could not find ro.build.version.sdk";
+  }
+
+  // VSR API level is the minimum of vendor_api_level and product_api_level.
+  if (vendor_api_level == -1 || vendor_api_level > product_api_level) {
+    return product_api_level;
+  }
+  return vendor_api_level;
+}
 
 class UwbClientCallback : public BnUwbClientCallback {
   public:
@@ -202,6 +232,11 @@ TEST_P(UwbAidl, ChipGetName) {
 }
 
 TEST_P(UwbAidl, ChipSendUciMessage_GetDeviceInfo) {
+    int api_level = get_vsr_api_level();
+    if (api_level < __ANDROID_API_U__) {
+        GTEST_SKIP() << "API level is lower than 34";
+        return;
+    }
     std::promise<void> open_cb_promise;
     std::future<void> open_cb_future{open_cb_promise.get_future()};
     std::promise<void> init_cb_promise;

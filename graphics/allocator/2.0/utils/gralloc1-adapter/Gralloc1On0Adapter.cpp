@@ -31,6 +31,9 @@
 #include <inttypes.h>
 #include <unistd.h>
 
+#include <algorithm>
+#include <type_traits>
+
 template <typename PFN, typename T>
 static gralloc1_function_pointer_t asFP(T function)
 {

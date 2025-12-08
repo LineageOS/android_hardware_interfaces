@@ -48,6 +48,11 @@ class HciRouter {
       const std::shared_ptr<HciRouterCallback>& callback) = 0;
 
   /**
+   * @brief Perform disable Bluetooth.
+   */
+  virtual void Close() = 0;
+
+  /**
    * @brief Cleanup callbacks and de-initialize the lower layers.
    */
   virtual void Cleanup() = 0;

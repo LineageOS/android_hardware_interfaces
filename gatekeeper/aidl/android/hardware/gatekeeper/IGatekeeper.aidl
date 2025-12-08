@@ -124,7 +124,7 @@ interface IGatekeeper {
      *
      * Service status return:
      *
-     * OK if password is enrolled successfully.
+     * OK if password is verified successfully.
      * ERROR_GENERAL_FAILURE on failure.
      * ERROR_NOT_IMPLEMENTED if not implemented.
      *

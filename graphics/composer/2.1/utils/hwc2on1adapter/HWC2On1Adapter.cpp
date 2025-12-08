@@ -25,9 +25,12 @@
 
 #include <inttypes.h>
 
+#include <algorithm>
 #include <chrono>
 #include <cstdlib>
+#include <iterator>
 #include <sstream>
+#include <type_traits>
 
 #include <hardware/hwcomposer.h>
 #include <log/log.h>

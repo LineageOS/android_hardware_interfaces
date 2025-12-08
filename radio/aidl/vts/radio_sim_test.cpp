@@ -52,15 +52,6 @@ void RadioSimTest::SetUp() {
     ASSERT_NE(nullptr, radio_config.get());
 }
 
-bool RadioSimTest::shouldTestCdma() {
-    int32_t aidl_version = 0;
-    ndk::ScopedAStatus aidl_status = radio_sim->getInterfaceVersion(&aidl_version);
-    EXPECT_TRUE(aidl_status.isOk());
-    if (aidl_version < 4) return true;  // < RADIO_HAL_VERSION_2_3
-
-    return !telephony_flags::cleanup_cdma();
-}
-
 void RadioSimTest::updateSimCardStatus() {
     serial = GetRandomSerialNumber();
     radio_sim->getIccCardStatus(serial);

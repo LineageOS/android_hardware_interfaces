@@ -78,6 +78,7 @@ using android::hardware::gnss::gnss_assistance::AuxiliaryInformation;
 using android::hardware::gnss::gnss_assistance::GnssAssistance;
 using android::hardware::gnss::gnss_assistance::GpsSatelliteEphemeris;
 using android::hardware::gnss::gnss_assistance::IGnssAssistanceInterface;
+using android::hardware::gnss::gnss_assistance::IonexAssistance;
 using android::hardware::gnss::measurement_corrections::IMeasurementCorrectionsInterface;
 using android::hardware::gnss::visibility_control::IGnssVisibilityControl;
 
@@ -1928,6 +1929,8 @@ TEST_P(GnssHalTest, TestSvStatusIntervals) {
  * 1. Gets the GnssAssistanceExtension
  * 2. Injects empty GnssAssistance data and verifies that it returns an error.
  * 3. Injects non-empty GnssAssistance data and verifies that a success status is returned.
+ * 4. Injects valid ionexAssistance and verifies that a success status is returned.
+ * 5. Injects invalid ionexAssistance and verifies that that it returns an error.
  */
 TEST_P(GnssHalTest, TestGnssAssistanceExtension) {
     // Only runs on devices launched in Android 16+
@@ -1946,5 +1949,26 @@ TEST_P(GnssHalTest, TestGnssAssistanceExtension) {
         nonEmptyGnssAssistance.gpsAssistance->satelliteEphemeris.emplace_back();
         status = iGnssAssistance->injectGnssAssistance(nonEmptyGnssAssistance);
         ASSERT_TRUE(status.isOk());
+
+        if (aidl_gnss_hal_->getInterfaceVersion() >= 7) {
+            // Inject a valid IonexAssistance.
+            IonexAssistance validIonex;
+            IonexAssistance::TecMapSnapshot snapshot;
+            snapshot.tecMap = {1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f};
+            validIonex.header.axesInfo.latitudeAxis.numPoints = 3;
+            validIonex.header.axesInfo.longitudeAxis.numPoints = 3;
+            validIonex.tecMapSnapshot = snapshot;
+            nonEmptyGnssAssistance.ionexAssistance = validIonex;
+            status = iGnssAssistance->injectGnssAssistance(nonEmptyGnssAssistance);
+            ASSERT_TRUE(status.isOk());
+
+            // Inject an invalid IonexAssistance where map size mismatches the header.
+            // The header will have numPoints = 0, but the tecMap is non-empty.
+            IonexAssistance invalidIonex;
+            invalidIonex.tecMapSnapshot = snapshot;
+            nonEmptyGnssAssistance.ionexAssistance = invalidIonex;
+            status = iGnssAssistance->injectGnssAssistance(nonEmptyGnssAssistance);
+            ASSERT_FALSE(status.isOk());
+        }
     }
 }

@@ -23,6 +23,8 @@
 #include <queue>
 #include <thread>
 
+#include "android-base/logging.h"
+
 namespace bluetooth_hal {
 namespace util {
 
@@ -51,9 +53,11 @@ class Worker {
    * @brief Posts a message to the queue. Blocks if the queue is full.
    *
    * Waits until the queue has space available or the worker is stopped.
-   * If woken up because the worker stopped, the message is not posted.
+   * If the worker is stopped, the message will not be posted.
    *
    * @param message The message to post.
+   * @return True if the message was successfully posted, false if timeout or
+   * the worker has been stopped.
    */
   bool Post(Message message) {
     std::unique_lock<std::mutex> lock(mutex_);
@@ -61,8 +65,12 @@ class Worker {
     producer_cv_.wait_for(lock, kPostTimeout, [&] {
       return message_queue_.size() < kMaxQueueSize || !running_;
     });
+    if (!running_) {
+      return false;
+    }
     // If it still doen't meet the condition, then it means timeout.
-    if (message_queue_.size() >= kMaxQueueSize || !running_) {
+    if (message_queue_.size() >= kMaxQueueSize) {
+      LOG(FATAL) << __func__ << ": Timeout, no space in the message queue.";
       return false;
     }
     message_queue_.push(std::move(message));

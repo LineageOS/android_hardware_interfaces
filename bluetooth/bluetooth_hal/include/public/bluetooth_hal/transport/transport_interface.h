@@ -27,6 +27,7 @@
 #include "bluetooth_hal/hal_packet.h"
 #include "bluetooth_hal/hal_types.h"
 #include "bluetooth_hal/transport/subscriber.h"
+#include "bluetooth_hal/util/provider_factory.h"
 
 namespace bluetooth_hal {
 namespace transport {
@@ -74,6 +75,12 @@ class TransportInterfaceCallback {
  *
  */
 class TransportInterface {
+ public:
+  using VendorFactory =
+      ::bluetooth_hal::util::MultiKeyProviderFactory<TransportType,
+                                                     TransportInterface>;
+  using FactoryFn = VendorFactory::FactoryFn;
+
  public:
   virtual ~TransportInterface() = default;
 
@@ -126,6 +133,14 @@ class TransportInterface {
   static TransportInterface& GetTransport();
 
   /**
+   * @brief Cleans up the currently active transport instance.
+   *
+   * After this function is called, transport type will be set to default value.
+   *
+   */
+  static void CleanupTransport();
+
+  /**
    * Updates the current transport type for the TransportInterface.
    *
    * This method allows switching the transport type used by the
@@ -167,11 +182,10 @@ class TransportInterface {
    * not be null.
    *
    * @return `true` if the vendor transport was successfully registered,
-   * `false` otherwise.
-   *
+   * `false` otherwise (e.g., if the transport type is invalid or currently
+   * active).
    */
-  static bool RegisterVendorTransport(
-      std::unique_ptr<TransportInterface> transport);
+  static bool RegisterVendorTransport(TransportType type, FactoryFn factory);
 
   /**
    * @brief Unregisters a vendor-specific transport implementation.
@@ -237,19 +251,18 @@ class TransportInterface {
   static void Unsubscribe(Subscriber& subscriber);
 
  protected:
-  static std::atomic<bool> is_hci_router_busy_;
-  static std::atomic<::bluetooth_hal::HalState> hal_state_;
-  static std::vector<std::reference_wrapper<Subscriber>> subscribers_;
+  static inline std::atomic<bool> is_hci_router_busy_{false};
+  static inline std::atomic<::bluetooth_hal::HalState> hal_state_{
+      ::bluetooth_hal::HalState::kInit};
+  static inline std::vector<std::reference_wrapper<Subscriber>> subscribers_;
 
  private:
   static std::pair<std::unique_ptr<TransportInterface>, TransportType>
   CreateOrAcquireTransport(TransportType requested_type);
 
-  static TransportType current_transport_type_;
-  static std::recursive_mutex transport_mutex_;
-  static std::unique_ptr<TransportInterface> current_transport_;
-  static std::unordered_map<TransportType, std::unique_ptr<TransportInterface>>
-      vendor_transports_;
+  static inline TransportType current_transport_type_{TransportType::kUnknown};
+  static inline std::recursive_mutex transport_mutex_;
+  static inline std::unique_ptr<TransportInterface> current_transport_;
 };
 
 }  // namespace transport

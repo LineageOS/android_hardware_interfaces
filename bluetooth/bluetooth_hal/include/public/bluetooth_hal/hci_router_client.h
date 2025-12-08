@@ -124,10 +124,10 @@ class HciRouterClient : public HciRouterClientCallback {
   virtual void OnBluetoothEnabled() = 0;
 
   /**
-   * @brief Called when Bluetooth is enabled.
+   * @brief Called when Bluetooth is disabled.
    *
    * This method is invoked by the `HciRouterClient` class when the HAL state
-   * changes to the stat < `HalState::kRunning`.
+   * changes to a state < `HalState::kRunning`.
    *
    */
   virtual void OnBluetoothDisabled() = 0;

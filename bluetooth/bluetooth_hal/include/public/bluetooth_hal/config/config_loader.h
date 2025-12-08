@@ -49,8 +49,7 @@ class ConfigLoader {
    * @return true if the configuration is successfully loaded from the file,
    * false otherwise.
    */
-  virtual bool LoadConfigFromFile(std::string_view path) {
-    (void)path;
+  virtual bool LoadConfigFromFile([[maybe_unused]] std::string_view path) {
     return false;
   }
 
@@ -66,8 +65,7 @@ class ConfigLoader {
    * @return true if the configuration is successfully parsed and loaded, false
    * otherwise.
    */
-  virtual bool LoadConfigFromString(std::string_view content) {
-    (void)content;
+  virtual bool LoadConfigFromString([[maybe_unused]] std::string_view content) {
     return false;
   }
 

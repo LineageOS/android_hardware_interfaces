@@ -20,6 +20,7 @@
 #include <functional>
 #include <future>
 #include <memory>
+#include <thread>
 
 #include "gtest/gtest.h"
 

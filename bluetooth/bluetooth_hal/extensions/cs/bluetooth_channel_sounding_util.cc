@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "bthal.extensions.cs"
+#define LOG_TAG "bluetooth_hal.extensions.cs"
 
 #include "bluetooth_hal/extensions/cs/bluetooth_channel_sounding_util.h"
 
@@ -57,28 +57,29 @@ bool IsUuidMatched(
     const std::optional<std::vector<std::optional<VendorSpecificData>>>
         vendor_specific_data) {
   if (!vendor_specific_data.has_value()) {
-    LOG(WARNING) << __func__ << " no value";
+    LOG(WARNING) << __func__ << ": No value.";
     return false;
   }
 
   const auto& data = *vendor_specific_data;
 
   if (data.size() < kMinNumUuid) {
-    LOG(WARNING) << __func__ << " invalid size";
+    LOG(WARNING) << __func__ << ": Invalid size.";
     return false;
   }
 
   const auto uuid0 = data[0];
   if (!uuid0.has_value() ||
       uuid0->characteristicUuid != kUuidSpecialRangingSettingCapability) {
-    LOG(WARNING) << __func__
-                 << " uuid0 doesn't match kUuidSpecialRangingSettingCapability";
+    LOG(WARNING)
+        << __func__
+        << ": uuid0 doesn't match kUuidSpecialRangingSettingCapability.";
     return false;
   }
 
   if (uuid0->opaqueValue.size() < 5) {
     LOG(WARNING) << __func__
-                 << " invalid data for kUuidSpecialRangingSettingCapability";
+                 << ": Invalid data for kUuidSpecialRangingSettingCapability.";
     return false;
   }
 
@@ -86,7 +87,7 @@ bool IsUuidMatched(
   if (!uuid1.has_value() ||
       uuid1->characteristicUuid != kUuidSpecialRangingSettingCommand) {
     LOG(WARNING) << __func__
-                 << " uuid0 doesn't match kUuidSpecialRangingSettingCommand";
+                 << ": uuid0 doesn't match kUuidSpecialRangingSettingCommand.";
     return false;
   }
 
@@ -105,14 +106,14 @@ HalPacket BuildReadLocalCapabilityCommand() {
   return command;
 }
 
-HalPacket BuildEnableOneSidePctCommand(uint8_t enable) {
+HalPacket BuildEnableInlinePctCommand(uint8_t enable) {
   HalPacket command;
-  command.resize(1 + 3 + kHciVscEnableOneSidePctParamLength);
+  command.resize(1 + 3 + kHciVscEnableInlinePctParamLength);
   command[0] = static_cast<uint8_t>(HciPacketType::kCommand);
   command[1] = kHciVscSpecialRangingSettingOpcode & 0xff;
   command[2] = (kHciVscSpecialRangingSettingOpcode >> 8u) & 0xff;
-  command[3] = kHciVscEnableOneSidePctParamLength;
-  command[4] = kHciVscEnableOneSidePctSubOpCode;
+  command[3] = kHciVscEnableInlinePctParamLength;
+  command[4] = kHciVscEnableInlinePctSubOpCode;
   command[5] = enable;
 
   return command;

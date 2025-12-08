@@ -34,7 +34,7 @@
 package android.hardware.common.fmq;
 /* @hide */
 @VintfStability
-parcelable MQDescriptor<T, Flavor> {
+parcelable MQDescriptor<@FixedSize T, Flavor> {
   android.hardware.common.fmq.GrantorDescriptor[] grantors;
   android.hardware.common.NativeHandle handle;
   int quantum;

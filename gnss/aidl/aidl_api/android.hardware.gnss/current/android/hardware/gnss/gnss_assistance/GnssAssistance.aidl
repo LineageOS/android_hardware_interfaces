@@ -40,6 +40,7 @@ parcelable GnssAssistance {
   @nullable android.hardware.gnss.gnss_assistance.GnssAssistance.GalileoAssistance galileoAssistance;
   @nullable android.hardware.gnss.gnss_assistance.GnssAssistance.BeidouAssistance beidouAssistance;
   @nullable android.hardware.gnss.gnss_assistance.GnssAssistance.QzssAssistance qzssAssistance;
+  @nullable android.hardware.gnss.gnss_assistance.IonexAssistance ionexAssistance;
   @VintfStability
   parcelable GnssSatelliteCorrections {
     int svid;

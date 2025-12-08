@@ -839,6 +839,12 @@ ndk::ScopedAStatus StreamCommonImpl::removeEffect(
     return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
 }
 
+ndk::ScopedAStatus StreamCommonImpl::createMmapBuffer(MmapBufferDescriptor* _aidl_return) {
+    LOG(DEBUG) << __func__;
+    (void)_aidl_return;
+    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
 ndk::ScopedAStatus StreamCommonImpl::close() {
     LOG(DEBUG) << __func__;
     if (!isClosed()) {
@@ -927,12 +933,38 @@ void StreamCommonImpl::stopWorker() {
     mWorkerStopIssued = true;
 }
 
+ndk::ScopedAStatus validateMetadataAttributeTags(const std::vector<std::string>& tags) {
+    for (auto& tag : tags) {
+        if (!common::isVendorExtension(tag)) {
+            LOG(ERROR) << __func__ << ": metadata attribute tag " << tag << " is invalid.";
+            return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+        }
+    }
+    return ndk::ScopedAStatus::ok();
+}
+
 ndk::ScopedAStatus StreamCommonImpl::updateMetadataCommon(const Metadata& metadata) {
     LOG(DEBUG) << __func__;
     if (!isClosed()) {
         if (metadata.index() != mMetadata.index()) {
             LOG(FATAL) << __func__ << ": changing metadata variant is not allowed";
         }
+        ndk::ScopedAStatus status = std::visit(
+                [&](const auto& data) -> ndk::ScopedAStatus {
+                    for (const auto& track : data.tracks) {
+                        ndk::ScopedAStatus status = validateMetadataAttributeTags(track.tags);
+                        if (!status.isOk()) {
+                            return status;
+                        }
+                    }
+                    return ndk::ScopedAStatus::ok();
+                },
+                metadata);
+
+        if (!status.isOk()) {
+            return status;
+        }
+
         mMetadata = metadata;
         return ndk::ScopedAStatus::ok();
     }

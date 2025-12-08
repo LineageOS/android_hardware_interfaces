@@ -40,6 +40,10 @@ constexpr unsigned char kNwSsid[] = {'t', 'e', 's', 't', '1',
 constexpr char kNwPassphrase[] = "test12345";
 constexpr int kIfaceChannel = 6;
 constexpr int kIfaceInvalidChannel = 567;
+
+bool isWifiFrameworkEnabled() {
+    return testing::checkSubstringInCommandOutput("/system/bin/cmd wifi status", "Wifi is enabled");
+}
 }  // namespace
 
 class HostapdHidlTest

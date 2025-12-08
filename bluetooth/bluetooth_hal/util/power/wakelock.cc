@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "bthal.wakelock"
+#define LOG_TAG "bluetooth_hal.wakelock"
 
 #include "bluetooth_hal/util/power/wakelock.h"
 
@@ -38,10 +38,12 @@ namespace power {
 
 class WakelockImpl : public Wakelock {
  public:
+  WakelockImpl() : wakelock_timeout_(kWakelockTimeMilliseconds) {};
   void Acquire(WakeSource source) override;
   void Release(WakeSource source) override;
   bool IsAcquired() override;
   bool IsWakeSourceAcquired(WakeSource source) override;
+  void SetWakelockTimeout(const int timeout) override;
 
  private:
   void ReleaseWakelock();
@@ -55,6 +57,7 @@ class WakelockImpl : public Wakelock {
 
   // TODO: b/382605673 - Read it from the config manager.
   static constexpr int kWakelockTimeMilliseconds = 100;
+  int wakelock_timeout_;
 };
 
 void WakelockImpl::Acquire(WakeSource source) {
@@ -62,6 +65,7 @@ void WakelockImpl::Acquire(WakeSource source) {
   if (acquired_sources_.count(source) > 0) {
     return;
   }
+  WakelockWatchdog::GetWatchdog().Start(source);
 
   if (acquired_sources_.empty()) {
     if (release_wakelock_timer_.IsScheduled()) {
@@ -71,11 +75,10 @@ void WakelockImpl::Acquire(WakeSource source) {
     AcquireWakelock();
   }
   acquired_sources_.emplace(source);
-  WakelockWatchdog::GetWatchdog().Start(source);
 
-  ANCHOR_LOG(AnchorType::WAKELOCK_VOTE)
-      << "Wakelock VOTE for: " << WakelockUtil::WakeSourceToString(source)
-      << ", current wakelocks: " << ToString();
+  HAL_LOG(VERBOSE) << "Wakelock VOTE for: "
+                   << WakelockUtil::WakeSourceToString(source)
+                   << ", current wakelocks: " << ToString();
 }
 
 void WakelockImpl::Release(WakeSource source) {
@@ -83,18 +86,18 @@ void WakelockImpl::Release(WakeSource source) {
   if (acquired_sources_.erase(source) == 0) {
     return;
   }
-  WakelockWatchdog::GetWatchdog().Stop(source);
 
-  ANCHOR_LOG(AnchorType::WAKELOCK_UNVOTE)
-      << "Wakelock UNVOTE for: " << WakelockUtil::WakeSourceToString(source)
-      << ", current wakelocks: " << ToString();
+  HAL_LOG(VERBOSE) << "Wakelock UNVOTE for: "
+                   << WakelockUtil::WakeSourceToString(source)
+                   << ", current wakelocks: " << ToString();
 
   if (acquired_sources_.empty()) {
     // The wakelock list is empty, schedule a timer to release the wakelock.
     release_wakelock_timer_.Schedule(
         std::bind_front(&WakelockImpl::ReleaseWakelock, this),
-        std::chrono::milliseconds{kWakelockTimeMilliseconds});
+        std::chrono::milliseconds{wakelock_timeout_});
   }
+  WakelockWatchdog::GetWatchdog().Stop(source);
 }
 
 bool WakelockImpl::IsAcquired() {
@@ -110,7 +113,7 @@ bool WakelockImpl::IsWakeSourceAcquired(WakeSource source) {
 void WakelockImpl::AcquireWakelock() {
   std::unique_lock<std::recursive_mutex> lock(mutex_);
   if (!wakelock_acquired_) {
-    ANCHOR_LOG_INFO(AnchorType::WAKELOCK_ACQUIRE) << "Acuqire system wakelock";
+    HAL_LOG(DEBUG) << "Acuqire system wakelock";
     PowerInterface::GetInterface().AcquireWakelock();
     wakelock_acquired_ = true;
   }
@@ -119,10 +122,19 @@ void WakelockImpl::AcquireWakelock() {
 void WakelockImpl::ReleaseWakelock() {
   std::unique_lock<std::recursive_mutex> lock(mutex_);
   if (wakelock_acquired_) {
-    ANCHOR_LOG_INFO(AnchorType::WAKELOCK_RELEASE) << "Release system wakelock";
+    HAL_LOG(DEBUG) << "Release system wakelock";
     PowerInterface::GetInterface().ReleaseWakelock();
     wakelock_acquired_ = false;
   }
+}
+
+void WakelockImpl::SetWakelockTimeout(const int timeout) {
+  if (timeout == wakelock_timeout_) {
+    return;
+  }
+
+  HAL_LOG(DEBUG) << "Wakelock timeout set to " << timeout;
+  wakelock_timeout_ = timeout;
 }
 
 std::string WakelockImpl::ToString() {

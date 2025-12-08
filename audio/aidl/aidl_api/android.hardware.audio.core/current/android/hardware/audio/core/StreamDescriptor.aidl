@@ -88,6 +88,9 @@ parcelable StreamDescriptor {
   @VintfStability
   union AudioBuffer {
     android.hardware.common.fmq.MQDescriptor<byte,android.hardware.common.fmq.SynchronizedReadWrite> fmq;
+    /**
+     * @deprecated Since V4, the client uses 'IStreamCommon.createMmapBuffer' to obtain the MMap shared buffer. The value returned from 'IModule.open{Input|Output}Stream' is not used. Note that since it is not allowed to pass an invalid file descriptor in a parcel, the HAL implementation must still provide some valid file descriptor in this parcelable when opening a stream. However, the returned file descriptor is not used by the client. Instead, the client calls 'IStreamCommon.createMmapBuffer' to obtain the actual shared buffer.
+     */
     android.hardware.audio.core.MmapBufferDescriptor mmap;
   }
 }

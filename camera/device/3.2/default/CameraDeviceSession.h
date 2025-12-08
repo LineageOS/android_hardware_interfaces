@@ -25,7 +25,9 @@
 #include <include/convert.h>
 #include <deque>
 #include <map>
+#include <memory>
 #include <unordered_map>
+#include <utility>
 #include "CameraMetadata.h"
 #include "HandleImporter.h"
 #include "hardware/camera3.h"

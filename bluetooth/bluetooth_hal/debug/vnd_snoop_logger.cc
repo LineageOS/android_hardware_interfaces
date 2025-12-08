@@ -14,23 +14,29 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "bthal.vndsnoop"
+#define LOG_TAG "bluetooth_hal.vndsnoop"
 
 #include "bluetooth_hal/debug/vnd_snoop_logger.h"
 
 #include <arpa/inet.h>
-#include <stdint.h>
 #include <sys/stat.h>
 #include <time.h>
 
+#include <cerrno>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <fstream>
+#include <functional>
+#include <iomanip>
 #include <memory>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 #include "android-base/logging.h"
 #include "android-base/properties.h"
@@ -96,6 +102,9 @@ constexpr std::string_view kBtLogPathPrefix =
     "/data/vendor/bluetooth/btsnoop_hci_vnd";
 constexpr int kMaxLogFileCount = 10;
 
+constexpr std::string kBtLogModeFull = "full";
+constexpr std::string kBtLogModeFiltered = "filtered";
+constexpr std::string kBtLogModeDisabled = "disabled";
 // Truncate to certain length for packet types that need to be filtered.
 constexpr int kFilteredPacketLength = 32;
 
@@ -119,14 +128,27 @@ std::string GetLogPathWithTimeStamp(std::string_view prefix) {
   return ss.str();
 }
 
-bool IsVndSnoopLogEnabled() {
-  const std::string btsnoop_log_mode = android::base::GetProperty(
-      Property::kBtSnoopLogMode,
-      HalConfigLoader::GetLoader().IsUserDebugOrEngBuild() ? "filtered"
-                                                           : "disabled");
-  const bool is_enabled = android::base::GetBoolProperty(
-      Property::kBtVendorSnoopEnabledProperty, false);
-  return btsnoop_log_mode != "disabled" && is_enabled;
+std::string GetBtSnoopLogMode() {
+  return android::base::GetProperty(Property::kBtSnoopLogMode,
+                                    kBtLogModeDisabled);
+}
+
+bool IsBtVndSnoopLogEnabled() {
+  return android::base::GetBoolProperty(Property::kBtVendorSnoopEnabledProperty,
+                                        false);
+}
+
+std::string GetBtVndSnoopLogMode() {
+  if (!IsBtVndSnoopLogEnabled()) {
+    return kBtLogModeDisabled;
+  }
+  std::string bt_snoop_log_mode = GetBtSnoopLogMode();
+  if (bt_snoop_log_mode == kBtLogModeDisabled) {
+    return HalConfigLoader::GetLoader().IsUserDebugOrEngBuild()
+               ? kBtLogModeFiltered
+               : kBtLogModeDisabled;
+  }
+  return bt_snoop_log_mode;
 }
 
 size_t GetMaxPacketsPerFile() {
@@ -226,13 +248,15 @@ class LoggerHandler {
   }
 
   void StartNewRecording() {
-    LOG(INFO) << __func__ << ": Start Recording bluetooth.";
-    log_file_path_ = GetLogPathWithTimeStamp(kBtLogPathPrefix);
-    max_packets_per_file_ = GetMaxPacketsPerFile();
+    LOG(INFO) << __func__ << ": Start recording vendor btsnoop log.";
 
-    const bool enabled = IsVndSnoopLogEnabled();
-    LOG(INFO) << __func__ << ": Vendor btsnoop log enabled: " << enabled << ".";
-    if (enabled) {
+    std::string vnd_snoop_log_mode = GetBtVndSnoopLogMode();
+    LOG(INFO) << __func__ << ": Vendor btsnoop log mode: " << vnd_snoop_log_mode
+              << ".";
+
+    max_packets_per_file_ = GetMaxPacketsPerFile();
+    filtered = vnd_snoop_log_mode != kBtLogModeFull;
+    if (vnd_snoop_log_mode != kBtLogModeDisabled) {
       PrepareNewLogFile();
       state_ = State::kRecording;
     } else {
@@ -242,8 +266,7 @@ class LoggerHandler {
   }
 
   void StopRecording() {
-    LOG(INFO) << __func__ << ": Close btsnoop log data at " << log_file_path_
-              << ".";
+    LOG(INFO) << __func__ << ": Stop recording vendor btsnoop log.";
     CloseCurrentLogFile();
     state_ = State::kStoppedOrDisabled;
   }
@@ -261,8 +284,6 @@ class LoggerHandler {
     // Bit 0: Direction (0 for Sent/Outgoing, 1 for Received/Incoming)
     // Bit 1: Type (0 for Data, 1 for Command/Event)
     uint32_t flags = 0;
-    // Set filtered for data packet types.
-    bool filtered = false;
     switch (type) {
       case HciPacketType::kCommand:
         flags |= (1 << 1);
@@ -278,7 +299,6 @@ class LoggerHandler {
         if (direction == VndSnoopLogger::Direction::kIncoming) {
           flags |= (1 << 0);
         }
-        filtered = true;
         break;
       default:
         break;
@@ -325,26 +345,29 @@ class LoggerHandler {
   }
 
   void CloseCurrentLogFile() {
+    LOG(INFO) << __func__ << ": Close btsnoop log file.";
     os::CloseLogFileStream(log_ostream_);
     packet_counter_ = 0;
   }
 
   void OpenNewLogFile() {
+    const std::string log_file_path = GetLogPathWithTimeStamp(kBtLogPathPrefix);
     const mode_t previous_umask = umask(0);
+
     // Open file in binary write mode, without append, to overwrite existing
     // data.
-    log_ostream_.open(log_file_path_, std::ios::binary | std::ios::out);
+    log_ostream_.open(log_file_path, std::ios::binary | std::ios::out);
 
     // Set file permissions to OWNER Read/Write, GROUP Read, OTHER Read.
-    if (chmod(log_file_path_.c_str(), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) !=
+    if (chmod(log_file_path.c_str(), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) !=
         0) {
       LOG(ERROR) << __func__ << ": Unable to change file permissions for "
-                 << log_file_path_ << ".";
+                 << log_file_path << ".";
     }
 
     if (!log_ostream_.is_open()) {
       LOG(ERROR) << __func__ << ": Unable to open snoop log at \""
-                 << log_file_path_ << "\", error: \"" << strerror(errno)
+                 << log_file_path << "\", error: \"" << strerror(errno)
                  << "\".";
     }
 
@@ -353,7 +376,7 @@ class LoggerHandler {
     if (!log_ostream_.write(reinterpret_cast<const char*>(&kBtSnoopFileHeader),
                             sizeof(FileHeaderType))) {
       LOG(ERROR) << __func__ << ": Unable to write file header to \""
-                 << log_file_path_ << "\", error: \"" << strerror(errno)
+                 << log_file_path << "\", error: \"" << strerror(errno)
                  << "\".";
     }
 
@@ -362,7 +385,7 @@ class LoggerHandler {
                  << strerror(errno) << "\".";
     }
 
-    LOG(INFO) << __func__ << ": Open new btsnoop log file at " << log_file_path_
+    LOG(INFO) << __func__ << ": Open new btsnoop log file at " << log_file_path
               << ".";
   }
 
@@ -373,10 +396,10 @@ class LoggerHandler {
   }
 
   std::ofstream log_ostream_;
-  std::string log_file_path_;
   State state_{State::kStoppedOrDisabled};
   size_t max_packets_per_file_{0};
   size_t packet_counter_{0};
+  bool filtered = true;
   std::unique_ptr<Worker<LoggerTask>> logger_thread_;
 };
 

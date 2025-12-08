@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "bthal.timer_manager"
+#define LOG_TAG "bluetooth_hal.timer_manager"
 
 #include "bluetooth_hal/util/timer_manager.h"
 

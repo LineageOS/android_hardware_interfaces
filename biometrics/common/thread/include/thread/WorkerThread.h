@@ -27,7 +27,7 @@ namespace aidl::android::hardware::biometrics {
 
 // A class that encapsulates a worker thread and a task queue, and provides a convenient interface
 // for a Session to schedule its tasks for asynchronous execution.
-class WorkerThread final {
+class WorkerThread {
   public:
     // Internally creates a queue that cannot exceed maxQueueSize elements and a new thread that
     // polls the queue for tasks until this instance is destructed.
@@ -35,7 +35,7 @@ class WorkerThread final {
 
     // Unblocks the internal queue and calls join on the internal thread allowing it to gracefully
     // exit.
-    ~WorkerThread();
+    virtual ~WorkerThread();
 
     // Disallow copying this class.
     WorkerThread(const WorkerThread&) = delete;
@@ -52,7 +52,7 @@ class WorkerThread final {
     // represent functions with move-only captures because std::function is inherently copyable.
     // Not being able to pass move-only lambdas is a major limitation for the HAL implementation,
     // so heap-allocated tasks that share a common interface (Callable) were chosen instead.
-    bool schedule(std::unique_ptr<Callable> task);
+    virtual bool schedule(std::unique_ptr<Callable> task);
 
   private:
     // The function that runs on the internal thread. Sequentially runs the available tasks from

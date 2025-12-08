@@ -50,4 +50,10 @@ enum SuggestedAction {
      * an available RAT that meets the carrier requirements.
      */
     TRIGGER_CLEAR_RAT_BLOCKS,
+    /**
+     * Indicates whether to apply the registration throttling time.
+     * If this action is suggested, the value provided in should be used to delay subsequent
+     * IMS registration attempts.
+     */
+    TRIGGER_THROTTLE_TIME,
 }

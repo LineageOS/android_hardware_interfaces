@@ -87,7 +87,7 @@ class GraphicsCompositionTestBase : public ::testing::Test {
                                 .setEnableProtectedContext(false)
                                 .setPrecacheToneMapperShaderOnly(false)
                                 .setContextPriority(
-                                        renderengine::RenderEngine::ContextPriority::HIGH)
+                                        renderengine::RenderEngine::ContextPriority::High)
                                 .build())));
 
         renderengine::DisplaySettings clientCompositionDisplay;

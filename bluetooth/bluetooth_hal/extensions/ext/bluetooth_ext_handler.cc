@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "bthal.extensions.ext"
+#define LOG_TAG "bluetooth_hal.extensions.ext"
 
 #include "bluetooth_hal/extensions/ext/bluetooth_ext_handler.h"
 

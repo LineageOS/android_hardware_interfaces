@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 #include <vector>
 
@@ -31,7 +32,16 @@ class BluetoothCccHandlerCallback {
   BluetoothCccHandlerCallback(
       const ::bluetooth_hal::hci::BluetoothAddress& address,
       const std::vector<CccLmpEventId>& lmp_event_ids)
-      : address_(address), lmp_event_ids_(lmp_event_ids) {};
+      : address_(address),
+        address_type_(AddressType::kRandom),
+        lmp_event_ids_(lmp_event_ids) {};
+  BluetoothCccHandlerCallback(
+      const ::bluetooth_hal::hci::BluetoothAddress& address,
+      const AddressType address_type,
+      const std::vector<CccLmpEventId>& lmp_event_ids)
+      : address_(address),
+        address_type_(address_type),
+        lmp_event_ids_(lmp_event_ids) {};
   virtual ~BluetoothCccHandlerCallback() = default;
   virtual void OnEventGenerated(
       const CccTimestamp& timestamp,
@@ -46,14 +56,16 @@ class BluetoothCccHandlerCallback {
                      lmp_event_id) != lmp_event_ids_.end();
   }
 
-  bool IsAddressEqual(
-      const ::bluetooth_hal::hci::BluetoothAddress& address) const {
-    return (address_ == address);
+  bool IsAddressEqual(const ::bluetooth_hal::hci::BluetoothAddress& address,
+                      const AddressType address_type) const {
+    return ((address_ == address) && (address_type_ == address_type));
   }
 
   const ::bluetooth_hal::hci::BluetoothAddress& GetAddress() const {
     return address_;
   }
+
+  AddressType GetAddressType() const { return address_type_; }
 
   const std::vector<CccLmpEventId>& GetLmpEventIds() const {
     return lmp_event_ids_;
@@ -61,6 +73,7 @@ class BluetoothCccHandlerCallback {
 
  private:
   const ::bluetooth_hal::hci::BluetoothAddress address_;
+  const AddressType address_type_;
   const std::vector<CccLmpEventId> lmp_event_ids_;
 };
 

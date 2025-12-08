@@ -20,7 +20,7 @@
 #include <memory>
 #include <variant>
 
-#include "bluetooth_hal/chip/chip_provisioner.h"
+#include "bluetooth_hal/chip/chip_provisioner_interface.h"
 #include "bluetooth_hal/hal_types.h"
 #include "bluetooth_hal/util/worker.h"
 
@@ -91,7 +91,7 @@ class AsyncChipProvisioner {
   void HandleResetFirmware();
 
   ::bluetooth_hal::util::Worker<ChipProvisionMessage> worker_;
-  std::unique_ptr<ChipProvisioner> chip_provisioner_;
+  std::unique_ptr<ChipProvisionerInterface> chip_provisioner_;
 };
 
 }  // namespace chip

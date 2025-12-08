@@ -35,8 +35,9 @@ enum class MonitorType : int {
 
 class HciMonitor {
  public:
-  HciMonitor(MonitorType type, uint16_t primary_code)
-      : type_(type), primary_code_(primary_code) {}
+  HciMonitor(MonitorType type, uint16_t primary_code,
+             PacketDestination direction)
+      : type_(type), primary_code_(primary_code), direction_(direction) {}
 
   void MonitorOffset(int offset, uint8_t data) {
     monitor_offset_map_[offset] = data;
@@ -45,12 +46,18 @@ class HciMonitor {
   bool operator==(const HciMonitor& other) const {
     return type_ == other.GetType() &&
            primary_code_ == other.GetPrimaryCode() &&
+           direction_ == other.GetDestination() &&
            monitor_offset_map_ == other.monitor_offset_map_;
   }
 
   bool operator==(const ::bluetooth_hal::hci::HalPacket& packet) const {
     uint16_t packet_primary_code = 0;
     bool type_match = false;
+
+    if (packet.GetDestination() != PacketDestination::kNone &&
+        packet.GetDestination() != GetDestination()) {
+      return false;
+    }
 
     if (packet.GetType() == ::bluetooth_hal::hci::HciPacketType::kCommand &&
         type_ == MonitorType::kCommand) {
@@ -104,6 +111,7 @@ class HciMonitor {
  protected:
   MonitorType GetType() const { return type_; }
   uint16_t GetPrimaryCode() const { return primary_code_; }
+  PacketDestination GetDestination() const { return direction_; };
 
   const std::map<int, uint8_t>& GetMonitorOffsets() const {
     return monitor_offset_map_;
@@ -112,17 +120,20 @@ class HciMonitor {
  private:
   MonitorType type_;
   uint16_t primary_code_;
+  PacketDestination direction_;
   std::map<int, uint8_t> monitor_offset_map_;
 };
 
 class HciEventMonitor : public HciMonitor {
  public:
   explicit HciEventMonitor(uint8_t event_code)
-      : HciMonitor(MonitorType::kEvent, static_cast<uint16_t>(event_code)) {}
+      : HciMonitor(MonitorType::kEvent, static_cast<uint16_t>(event_code),
+                   PacketDestination::kHost) {}
 
   HciEventMonitor(uint8_t event_code, uint8_t sub_event_code,
                   int sub_event_offset)
-      : HciMonitor(MonitorType::kEvent, static_cast<uint16_t>(event_code)) {
+      : HciMonitor(MonitorType::kEvent, static_cast<uint16_t>(event_code),
+                   PacketDestination::kHost) {
     MonitorOffset(sub_event_offset, sub_event_code);
   }
 };
@@ -176,17 +187,20 @@ class HciCommandStatusEventMonitor : public HciEventMonitor {
 class HciCommandMonitor : public HciMonitor {
  public:
   explicit HciCommandMonitor(uint16_t opcode)
-      : HciMonitor(MonitorType::kCommand, opcode) {}
+      : HciMonitor(MonitorType::kCommand, opcode,
+                   PacketDestination::kController) {}
 
   HciCommandMonitor(uint16_t opcode, uint8_t sub_opcode, int sub_opcode_offset)
-      : HciMonitor(MonitorType::kCommand, opcode) {
+      : HciMonitor(MonitorType::kCommand, opcode,
+                   PacketDestination::kController) {
     MonitorOffset(sub_opcode_offset, sub_opcode);
   }
 };
 
 class HciThreadMonitor : public HciMonitor {
  public:
-  HciThreadMonitor() : HciMonitor(MonitorType::kThread, 0) {}
+  HciThreadMonitor()
+      : HciMonitor(MonitorType::kThread, 0, PacketDestination::kHost) {}
 
   HciThreadMonitor(int offset, uint8_t data) : HciThreadMonitor() {
     MonitorOffset(offset, data);

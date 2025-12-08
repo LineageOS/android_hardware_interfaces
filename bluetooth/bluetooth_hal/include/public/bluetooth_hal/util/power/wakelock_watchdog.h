@@ -40,6 +40,18 @@ class WakelockWatchdog {
    */
   virtual void Stop(WakeSource source) = 0;
 
+  /**
+   * @brief Pause all wakelock watchdog from barking or biting. This is used
+   * when the HAL is handling error and do not want the watchdog interrupts the
+   * process.
+   */
+  virtual void Pause() = 0;
+
+  /**
+   * @brief Resume the watchdog to bark or bite from a Pause.
+   */
+  virtual void Resume() = 0;
+
   static WakelockWatchdog& GetWatchdog();
 
  protected:

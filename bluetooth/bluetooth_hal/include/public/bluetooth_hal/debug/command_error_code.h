@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 The Android Open Source Project
+ * Copyright 2025 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,13 @@
 #pragma once
 
 #include <cstdint>
+#include <string_view>
 
 namespace bluetooth_hal {
 namespace debug {
 
 /* HCI connect/disconnect event result codes to human readable strings. */
-static const char* result_code_strings[] = {
+inline constexpr std::string_view kResultCodeToStrings[] = {
     "Success",                                                   // 0x00
     "Unknown HCI Command",                                       // 0x01
     "Unknown Connection Identifier",                             // 0x02
@@ -51,22 +52,16 @@ static const char* result_code_strings[] = {
     "Unknown LMP PDU",                                           // 0x19
     "Unknown result code"};                                      // 0x1A
 
-/*******************************************************************************
+/**
+ * @brief Converts the given result code into human-readable string.
  *
- * Function         GetResultString
- *
- * Description      This function returns the human-readable string for a given
- *                  result code.
- *
- * Returns          a pointer to the human-readable string for the given result.
- *
- ******************************************************************************/
-const char* GetResultString(const uint8_t result_code) {
-  if (result_code > 0x19) {
-    return result_code_strings[0x1A];
+ * @return a string_view of the string for the given result code.
+ */
+inline std::string_view GetResultString(const uint8_t result_code) {
+  if (result_code >= std::size(kResultCodeToStrings)) {
+    return kResultCodeToStrings[std::size(kResultCodeToStrings) - 1];
   }
-
-  return result_code_strings[result_code];
+  return kResultCodeToStrings[result_code];
 }
 
 }  // namespace debug

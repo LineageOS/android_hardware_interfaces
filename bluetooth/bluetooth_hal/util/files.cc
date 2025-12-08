@@ -22,10 +22,18 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <cerrno>
+#include <chrono>
 #include <cstring>
+#include <filesystem>
 #include <fstream>
+#include <optional>
+#include <ostream>
+#include <sstream>
 #include <string>
+#include <string_view>
+#include <vector>
 
 #include "android-base/logging.h"
 #include "bluetooth_hal/util/logging.h"

@@ -87,10 +87,10 @@ TEST_F(HciRouterClientAgentTest, HandleDispatchPacketToClients) {
       .WillByDefault(Return(expected_mode));
   EXPECT_CALL(mock_router_client, OnPacketCallback).Times(1);
 
-  EXPECT_TRUE(agent_->RegisterRouterClient(&mock_router_client));
+  EXPECT_TRUE(agent_->RegisterClient(&mock_router_client));
   EXPECT_EQ(expected_mode, agent_->DispatchPacketToClients(packet));
 
-  EXPECT_TRUE(agent_->UnregisterRouterClient(&mock_router_client));
+  EXPECT_TRUE(agent_->UnregisterClient(&mock_router_client));
   EXPECT_EQ(MonitorMode::kNone, agent_->DispatchPacketToClients(packet));
 }
 
@@ -111,14 +111,14 @@ TEST_F(HciRouterClientAgentTest,
   EXPECT_CALL(mock_router_client2, OnPacketCallback).Times(1);
   EXPECT_CALL(mock_router_client3, OnPacketCallback).Times(1);
 
-  EXPECT_TRUE(agent_->RegisterRouterClient(&mock_router_client1));
-  EXPECT_TRUE(agent_->RegisterRouterClient(&mock_router_client2));
-  EXPECT_TRUE(agent_->RegisterRouterClient(&mock_router_client3));
+  EXPECT_TRUE(agent_->RegisterClient(&mock_router_client1));
+  EXPECT_TRUE(agent_->RegisterClient(&mock_router_client2));
+  EXPECT_TRUE(agent_->RegisterClient(&mock_router_client3));
   EXPECT_EQ(MonitorMode::kIntercept, agent_->DispatchPacketToClients(packet));
 
-  EXPECT_TRUE(agent_->UnregisterRouterClient(&mock_router_client1));
-  EXPECT_TRUE(agent_->UnregisterRouterClient(&mock_router_client2));
-  EXPECT_TRUE(agent_->UnregisterRouterClient(&mock_router_client3));
+  EXPECT_TRUE(agent_->UnregisterClient(&mock_router_client1));
+  EXPECT_TRUE(agent_->UnregisterClient(&mock_router_client2));
+  EXPECT_TRUE(agent_->UnregisterClient(&mock_router_client3));
   EXPECT_EQ(MonitorMode::kNone, agent_->DispatchPacketToClients(packet));
 }
 
@@ -132,7 +132,7 @@ TEST_F(HciRouterClientAgentTest, HandleNotifyHalStateChangeShutdownToInit) {
               OnHalStateChanged(HalState::kInit, HalState::kShutdown))
       .Times(1);
 
-  EXPECT_TRUE(agent_->RegisterRouterClient(&mock_router_client));
+  EXPECT_TRUE(agent_->RegisterClient(&mock_router_client));
 
   ASSERT_FALSE(agent_->IsBluetoothChipReady());
   ASSERT_FALSE(agent_->IsBluetoothEnabled());
@@ -140,7 +140,7 @@ TEST_F(HciRouterClientAgentTest, HandleNotifyHalStateChangeShutdownToInit) {
   ASSERT_FALSE(agent_->IsBluetoothChipReady());
   ASSERT_FALSE(agent_->IsBluetoothEnabled());
 
-  EXPECT_TRUE(agent_->UnregisterRouterClient(&mock_router_client));
+  EXPECT_TRUE(agent_->UnregisterClient(&mock_router_client));
 }
 
 TEST_F(HciRouterClientAgentTest,
@@ -155,7 +155,7 @@ TEST_F(HciRouterClientAgentTest,
       OnHalStateChanged(HalState::kFirmwareDownloading, HalState::kInit))
       .Times(1);
 
-  EXPECT_TRUE(agent_->RegisterRouterClient(&mock_router_client));
+  EXPECT_TRUE(agent_->RegisterClient(&mock_router_client));
 
   ASSERT_FALSE(agent_->IsBluetoothChipReady());
   ASSERT_FALSE(agent_->IsBluetoothEnabled());
@@ -163,7 +163,7 @@ TEST_F(HciRouterClientAgentTest,
   ASSERT_FALSE(agent_->IsBluetoothChipReady());
   ASSERT_FALSE(agent_->IsBluetoothEnabled());
 
-  EXPECT_TRUE(agent_->UnregisterRouterClient(&mock_router_client));
+  EXPECT_TRUE(agent_->UnregisterClient(&mock_router_client));
 }
 
 TEST_F(
@@ -179,7 +179,7 @@ TEST_F(
                                 HalState::kFirmwareDownloading))
       .Times(1);
 
-  EXPECT_TRUE(agent_->RegisterRouterClient(&mock_router_client));
+  EXPECT_TRUE(agent_->RegisterClient(&mock_router_client));
 
   ASSERT_FALSE(agent_->IsBluetoothChipReady());
   ASSERT_FALSE(agent_->IsBluetoothEnabled());
@@ -188,7 +188,7 @@ TEST_F(
   ASSERT_FALSE(agent_->IsBluetoothChipReady());
   ASSERT_FALSE(agent_->IsBluetoothEnabled());
 
-  EXPECT_TRUE(agent_->UnregisterRouterClient(&mock_router_client));
+  EXPECT_TRUE(agent_->UnregisterClient(&mock_router_client));
 }
 
 TEST_F(HciRouterClientAgentTest,
@@ -203,7 +203,7 @@ TEST_F(HciRouterClientAgentTest,
                                 HalState::kFirmwareDownloadCompleted))
       .Times(1);
 
-  EXPECT_TRUE(agent_->RegisterRouterClient(&mock_router_client));
+  EXPECT_TRUE(agent_->RegisterClient(&mock_router_client));
 
   ASSERT_FALSE(agent_->IsBluetoothChipReady());
   ASSERT_FALSE(agent_->IsBluetoothEnabled());
@@ -212,7 +212,7 @@ TEST_F(HciRouterClientAgentTest,
   ASSERT_FALSE(agent_->IsBluetoothChipReady());
   ASSERT_FALSE(agent_->IsBluetoothEnabled());
 
-  EXPECT_TRUE(agent_->UnregisterRouterClient(&mock_router_client));
+  EXPECT_TRUE(agent_->UnregisterClient(&mock_router_client));
 }
 
 TEST_F(HciRouterClientAgentTest,
@@ -226,7 +226,7 @@ TEST_F(HciRouterClientAgentTest,
                                                     HalState::kFirmwareReady))
       .Times(1);
 
-  EXPECT_TRUE(agent_->RegisterRouterClient(&mock_router_client));
+  EXPECT_TRUE(agent_->RegisterClient(&mock_router_client));
 
   ASSERT_FALSE(agent_->IsBluetoothChipReady());
   ASSERT_FALSE(agent_->IsBluetoothEnabled());
@@ -235,7 +235,7 @@ TEST_F(HciRouterClientAgentTest,
   ASSERT_TRUE(agent_->IsBluetoothChipReady());
   ASSERT_FALSE(agent_->IsBluetoothEnabled());
 
-  EXPECT_TRUE(agent_->UnregisterRouterClient(&mock_router_client));
+  EXPECT_TRUE(agent_->UnregisterClient(&mock_router_client));
 }
 
 TEST_F(HciRouterClientAgentTest,
@@ -249,7 +249,7 @@ TEST_F(HciRouterClientAgentTest,
               OnHalStateChanged(HalState::kRunning, HalState::kBtChipReady))
       .Times(1);
 
-  EXPECT_TRUE(agent_->RegisterRouterClient(&mock_router_client));
+  EXPECT_TRUE(agent_->RegisterClient(&mock_router_client));
 
   ASSERT_FALSE(agent_->IsBluetoothChipReady());
   ASSERT_FALSE(agent_->IsBluetoothEnabled());
@@ -257,7 +257,7 @@ TEST_F(HciRouterClientAgentTest,
   ASSERT_TRUE(agent_->IsBluetoothChipReady());
   ASSERT_FALSE(agent_->IsBluetoothEnabled());
 
-  EXPECT_TRUE(agent_->UnregisterRouterClient(&mock_router_client));
+  EXPECT_TRUE(agent_->UnregisterClient(&mock_router_client));
 }
 
 TEST_F(HciRouterClientAgentTest,
@@ -271,7 +271,7 @@ TEST_F(HciRouterClientAgentTest,
               OnHalStateChanged(HalState::kRunning, HalState::kBtChipReady))
       .Times(1);
 
-  EXPECT_TRUE(agent_->RegisterRouterClient(&mock_router_client));
+  EXPECT_TRUE(agent_->RegisterClient(&mock_router_client));
 
   ASSERT_FALSE(agent_->IsBluetoothChipReady());
   ASSERT_FALSE(agent_->IsBluetoothEnabled());
@@ -279,7 +279,7 @@ TEST_F(HciRouterClientAgentTest,
   ASSERT_TRUE(agent_->IsBluetoothChipReady());
   ASSERT_TRUE(agent_->IsBluetoothEnabled());
 
-  EXPECT_TRUE(agent_->UnregisterRouterClient(&mock_router_client));
+  EXPECT_TRUE(agent_->UnregisterClient(&mock_router_client));
 }
 
 TEST_F(HciRouterClientAgentTest,
@@ -302,9 +302,9 @@ TEST_F(HciRouterClientAgentTest,
   EXPECT_CALL(mock_router_client3, OnBluetoothEnabled()).Times(1);
   EXPECT_CALL(mock_router_client3, OnBluetoothDisabled()).Times(1);
 
-  EXPECT_TRUE(agent_->RegisterRouterClient(&mock_router_client1));
-  EXPECT_TRUE(agent_->RegisterRouterClient(&mock_router_client2));
-  EXPECT_TRUE(agent_->RegisterRouterClient(&mock_router_client3));
+  EXPECT_TRUE(agent_->RegisterClient(&mock_router_client1));
+  EXPECT_TRUE(agent_->RegisterClient(&mock_router_client2));
+  EXPECT_TRUE(agent_->RegisterClient(&mock_router_client3));
 
   ASSERT_FALSE(agent_->IsBluetoothChipReady());
   ASSERT_FALSE(agent_->IsBluetoothEnabled());
@@ -325,12 +325,12 @@ TEST_F(HciRouterClientAgentTest,
   ASSERT_FALSE(agent_->IsBluetoothChipReady());
   ASSERT_FALSE(agent_->IsBluetoothEnabled());
 
-  EXPECT_TRUE(agent_->UnregisterRouterClient(&mock_router_client1));
-  EXPECT_TRUE(agent_->UnregisterRouterClient(&mock_router_client2));
-  EXPECT_TRUE(agent_->UnregisterRouterClient(&mock_router_client3));
+  EXPECT_TRUE(agent_->UnregisterClient(&mock_router_client1));
+  EXPECT_TRUE(agent_->UnregisterClient(&mock_router_client2));
+  EXPECT_TRUE(agent_->UnregisterClient(&mock_router_client3));
 }
 
-TEST_F(HciRouterClientAgentTest, HandleRegisterRouterClientWhenEnabled) {
+TEST_F(HciRouterClientAgentTest, HandleRegisterClientWhenEnabled) {
   MockHciRouterClient mock_router_client;
   EXPECT_CALL(mock_router_client, OnBluetoothChipReady()).Times(1);
   EXPECT_CALL(mock_router_client, OnBluetoothChipClosed()).Times(0);
@@ -339,8 +339,8 @@ TEST_F(HciRouterClientAgentTest, HandleRegisterRouterClientWhenEnabled) {
 
   EnableBluetooth();
 
-  EXPECT_TRUE(agent_->RegisterRouterClient(&mock_router_client));
-  EXPECT_TRUE(agent_->UnregisterRouterClient(&mock_router_client));
+  EXPECT_TRUE(agent_->RegisterClient(&mock_router_client));
+  EXPECT_TRUE(agent_->UnregisterClient(&mock_router_client));
 }
 
 }  // namespace

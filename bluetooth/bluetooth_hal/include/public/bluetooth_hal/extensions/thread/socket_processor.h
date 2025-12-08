@@ -194,6 +194,9 @@ class SocketProcessor {
    *
    */
   virtual int GetSocketFileMonitor() = 0;
+
+ private:
+  static inline SocketProcessor* processor_{nullptr};
 };
 
 }  // namespace thread

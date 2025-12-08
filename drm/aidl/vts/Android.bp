@@ -26,6 +26,7 @@ package {
 cc_test {
     name: "VtsAidlHalDrmTargetTest",
     defaults: [
+        "android.hardware.drm-media_drm-ndk-shared",
         "VtsHalTargetTestDefaults",
         "use_libaidlvintf_gtest_helper_static",
     ],
@@ -49,7 +50,6 @@ cc_test {
     static_libs: [
         "android.hardware.drm@1.0-helper",
         "android.hardware.drm.common-V1-ndk",
-        "android.hardware.drm-V1-ndk",
         "android.hardware.common-V2-ndk",
         "libaidlcommonsupport",
         "libgmock_ndk",

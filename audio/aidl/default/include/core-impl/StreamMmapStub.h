@@ -65,7 +65,9 @@ class DriverMmapStubImpl : public DriverStubImpl {
     explicit DriverMmapStubImpl(const StreamContext& context);
     ::android::status_t init(DriverCallbackInterface* callback) override;
     ::android::status_t drain(StreamDescriptor::DrainMode drainMode) override;
+    ::android::status_t flush() override;
     ::android::status_t pause() override;
+    ::android::status_t standby() override;
     ::android::status_t start() override;
     ::android::status_t transfer(void* buffer, size_t frameCount, size_t* actualFrameCount,
                                  int32_t* latencyMs) override;
@@ -97,10 +99,9 @@ class StreamMmapStub : public StreamCommonImpl, public DriverMmapStubImpl {
                                            std::vector<VendorParameter>* _aidl_return) override;
     ndk::ScopedAStatus setVendorParameters(const std::vector<VendorParameter>& in_parameters,
                                            bool in_async) override;
+    ndk::ScopedAStatus createMmapBuffer(MmapBufferDescriptor* _aidl_return) override;
 
   private:
-    ndk::ScopedAStatus createMmapBuffer(MmapBufferDescriptor* desc);
-
     ndk::ScopedFileDescriptor mSharedMemoryFd;
 };
 

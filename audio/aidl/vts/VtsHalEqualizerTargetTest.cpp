@@ -285,7 +285,7 @@ TEST_P(EqualizerDataTest, testBandLevels) {
                     << mDescriptor.toString();
 
             ASSERT_NO_FATAL_FAILURE(processAndWriteToOutput(mInputBuffer, mOutputBuffer, mEffect,
-                                                            &mOpenEffectReturn, mVersion));
+                                                            mOpenEffectReturn, mVersion));
 
             EXPECT_NO_FATAL_FAILURE(
                     calculateMagnitudeMono(mOutputMag, mOutputBuffer, mBinOffsets, kNPointFFT));
@@ -332,7 +332,7 @@ TEST_P(EqualizerDataTest, testPresets) {
                                                                    << mDescriptor.toString();
 
         ASSERT_NO_FATAL_FAILURE(processAndWriteToOutput(mInputBuffer, mOutputBuffer, mEffect,
-                                                        &mOpenEffectReturn, mVersion));
+                                                        mOpenEffectReturn, mVersion));
 
         EXPECT_NO_FATAL_FAILURE(
                 calculateMagnitudeMono(mOutputMag, mOutputBuffer, mBinOffsets, kNPointFFT));

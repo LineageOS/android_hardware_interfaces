@@ -20,15 +20,11 @@
 #include <vector>
 
 #include "bluetooth_hal/config/hal_config_loader.h"
-#include "bluetooth_hal/hal_packet.h"
 #include "bluetooth_hal/hal_types.h"
 #include "gmock/gmock.h"
 
 namespace bluetooth_hal {
 namespace config {
-
-class MockHalConfigLoader;
-static MockHalConfigLoader* mock_hal_config_loader = nullptr;
 
 class MockHalConfigLoader : public HalConfigLoader {
  public:
@@ -54,7 +50,7 @@ class MockHalConfigLoader : public HalConfigLoader {
   MOCK_METHOD(const std::vector<std::string>&,
               GetHwStagesWithoutLppControlBtPowerPin, (), (const, override));
 
-  MOCK_METHOD(const std::vector<std::string>&, GetFwUnsupportedHwStages, (),
+  MOCK_METHOD(const std::vector<std::string>&, GetUnsupportedHwStages, (),
               (const, override));
 
   MOCK_METHOD(int, GetVendorTransportCrashIntervalSec, (), (const, override));
@@ -95,16 +91,12 @@ class MockHalConfigLoader : public HalConfigLoader {
   MOCK_METHOD(const std::string&, GetRfkillTypeBluetooth, (),
               (const, override));
 
+  MOCK_METHOD(bool, IsEnhancedPacketValidationSupported, (), (const, override));
+
   static void SetMockLoader(MockHalConfigLoader* loader);
+
+  static inline MockHalConfigLoader* mock_hal_config_loader_{nullptr};
 };
-
-HalConfigLoader& HalConfigLoader::GetLoader() {
-  return *mock_hal_config_loader;
-}
-
-void MockHalConfigLoader::SetMockLoader(MockHalConfigLoader* loader) {
-  mock_hal_config_loader = loader;
-}
 
 }  // namespace config
 }  // namespace bluetooth_hal

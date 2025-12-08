@@ -291,6 +291,9 @@ class SupplicantStaIfaceCallback : public BnSupplicantStaIfaceCallback {
 class SupplicantStaIfaceAidlTest : public testing::TestWithParam<std::string> {
    public:
     void SetUp() override {
+        if (!::testing::deviceSupportsFeature("android.hardware.wifi")) {
+            GTEST_SKIP() << "Skipping this test since wifi is not supported.";
+        }
         initializeService();
         supplicant_ = getSupplicant(GetParam().c_str());
         ASSERT_NE(supplicant_, nullptr);

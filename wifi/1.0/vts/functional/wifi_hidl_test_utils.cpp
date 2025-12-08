@@ -23,6 +23,8 @@
 #include "wifi_hidl_call_util.h"
 #include "wifi_hidl_test_utils.h"
 
+#undef NAN  // Undefine NAN from math.h so IfaceType::NAN is usable.
+
 using ::android::hardware::wifi::V1_0::IWifi;
 using ::android::hardware::wifi::V1_0::IWifiApIface;
 using ::android::hardware::wifi::V1_0::IWifiChip;

@@ -66,6 +66,13 @@ oneway interface IRadioModemIndication {
     /**
      * Indicates when radio state changes.
      *
+     * For DSDS device, this API should follow below rules:
+     * 1) The radio state is a global property of the entire modem and is not specific to an
+     *    individual stack. Therefore, the state indicated must be identical for both stacks.
+     * 2) For example, in a single-SIM scenario, the modem cannot selectively process a "radio on"
+     *    request exclusively for the stack with the inserted SIM while blocking the same request
+     *    for the stack without a SIM.
+     *
      * @param type Type of radio indication
      * @param radioState Current radio state
      */

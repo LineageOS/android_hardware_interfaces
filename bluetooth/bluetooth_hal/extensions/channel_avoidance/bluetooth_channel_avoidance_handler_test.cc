@@ -83,7 +83,7 @@ class BluetoothChannelAvoidanceHandlerTest : public Test {
     MockHciRouter::SetMockRouter(&mock_hci_router_);
 
     MockHciRouterClientAgent::SetMockAgent(&mock_hci_router_client_agent_);
-    EXPECT_CALL(mock_hci_router_client_agent_, RegisterRouterClient(NotNull()))
+    EXPECT_CALL(mock_hci_router_client_agent_, RegisterClient(NotNull()))
         .WillOnce(
             DoAll(SaveArg<0>(&registered_callback_on_router_), Return(true)));
 
@@ -93,8 +93,7 @@ class BluetoothChannelAvoidanceHandlerTest : public Test {
   }
 
   void TearDown() override {
-    EXPECT_CALL(mock_hci_router_client_agent_,
-                UnregisterRouterClient(handler_.get()))
+    EXPECT_CALL(mock_hci_router_client_agent_, UnregisterClient(handler_.get()))
         .WillOnce(Return(true));
     handler_.reset();
     MockHciRouter::SetMockRouter(nullptr);

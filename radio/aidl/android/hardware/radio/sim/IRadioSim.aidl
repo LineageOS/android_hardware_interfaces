@@ -492,7 +492,8 @@ oneway interface IRadioSim {
 
     /**
      * Supplies ICC PIN2. Only called following operation where SIM_PIN2 was returned as a failure
-     * from a previous operation.
+     * from a previous operation. If the supplied PIN2 is empty, this should just query the number
+     * of retries.
      *
      * @param serial Serial number of request.
      * @param pin2 PIN2 value
@@ -505,7 +506,8 @@ oneway interface IRadioSim {
     void supplyIccPin2ForApp(in int serial, in String pin2, in String aid);
 
     /**
-     * Supplies ICC PIN. Only called if CardStatus has AppState.PIN state
+     * Supplies ICC PIN. Only called if CardStatus has AppState.PIN state. If the supplied PIN is
+     * empty, this should just query the number of retries.
      *
      * @param serial Serial number of request.
      * @param pin PIN value
@@ -518,7 +520,8 @@ oneway interface IRadioSim {
     void supplyIccPinForApp(in int serial, in String pin, in String aid);
 
     /**
-     * Supplies ICC PUK2 and new PIN2.
+     * Supplies ICC PUK2 and new PIN2. If the supplied PUK2 is empty, this should just query the
+     * number of retries.
      *
      * @param serial Serial number of request.
      * @param puk2 PUK2 value
@@ -532,7 +535,8 @@ oneway interface IRadioSim {
     void supplyIccPuk2ForApp(in int serial, in String puk2, in String pin2, in String aid);
 
     /**
-     * Supplies ICC PUK and new PIN.
+     * Supplies ICC PUK and new PIN. If the supplied PUK is empty, this should just query the
+     * number of retries.
      *
      * @param serial Serial number of request.
      * @param puk PUK value

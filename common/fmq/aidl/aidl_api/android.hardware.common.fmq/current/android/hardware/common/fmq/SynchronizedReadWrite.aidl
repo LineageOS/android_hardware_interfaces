@@ -35,5 +35,5 @@ package android.hardware.common.fmq;
 /* @hide */
 @VintfStability
 enum SynchronizedReadWrite {
-  EMPTY = 0,
+  EMPTY,
 }

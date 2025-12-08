@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "bthal.fd_watcher"
+#define LOG_TAG "bluetooth_hal.fd_watcher"
 
 #include "bluetooth_hal/util/fd_watcher.h"
 

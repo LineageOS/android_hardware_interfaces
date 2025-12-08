@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "bthal.debug.watcher"
+#define LOG_TAG "bluetooth_hal.debug_watcher"
 
 #include "bluetooth_hal/debug/debug_event_watcher.h"
 

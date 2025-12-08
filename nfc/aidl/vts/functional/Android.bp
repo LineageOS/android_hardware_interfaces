@@ -71,6 +71,7 @@ cc_test {
         "libbinder_ndk",
         "libnativehelper",
         "libstatssocket",
+        "libpower",
     ],
     static_libs: [
         "android.hardware.nfc-V2-ndk",

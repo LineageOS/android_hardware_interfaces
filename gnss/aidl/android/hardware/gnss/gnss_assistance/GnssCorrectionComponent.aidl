@@ -46,7 +46,10 @@ parcelable GnssCorrectionComponent {
         /* Correction to be added to the measured pseudorange, in meters. */
         double correctionMeters;
 
-        /* Uncertainty of the correction, in meters. */
+        /**
+         * Uncertainty of the correction, in meters.
+         * If the uncertainty is not available, it should be set to zero.
+         */
         double correctionUncertaintyMeters;
 
         /**

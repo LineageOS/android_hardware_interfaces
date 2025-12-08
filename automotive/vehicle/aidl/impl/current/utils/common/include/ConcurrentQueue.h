@@ -20,10 +20,15 @@
 #include <android-base/thread_annotations.h>
 
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
+#include <functional>
 #include <iostream>
+#include <mutex>
 #include <queue>
 #include <thread>
+#include <utility>
+#include <vector>
 
 namespace android {
 namespace hardware {

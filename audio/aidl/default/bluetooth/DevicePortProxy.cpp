@@ -307,7 +307,8 @@ bool BluetoothAudioPortAidl::getPreferredDataIntervalUs(size_t& interval_us) con
     return true;
 }
 
-bool BluetoothAudioPortAidl::getRecommendedLatencyModes(std::vector<LatencyMode>* latency_modes) {
+bool BluetoothAudioPortAidl::getRecommendedLatencyModes(std::vector<LatencyMode>* latency_modes,
+                                                        std::optional<bool>* supports_low_latency) {
     if (!inUse()) {
         LOG(ERROR) << __func__ << debugMessage() << ": BluetoothAudioPortAidl is not in use";
         return false;
@@ -315,12 +316,14 @@ bool BluetoothAudioPortAidl::getRecommendedLatencyModes(std::vector<LatencyMode>
     *latency_modes = BluetoothAudioSessionControl::GetSupportedLatencyModes(mSessionType);
     LOG(INFO) << __func__ << debugMessage() << ": "
               << ::android::internal::ToString(*latency_modes);
-    {
-        std::lock_guard guard(mCvMutex);
-        mSupportsLowLatency = std::find(latency_modes->begin(), latency_modes->end(),
-                                        LatencyMode::LOW_LATENCY) != latency_modes->end();
-    }
+    *supports_low_latency = std::find(latency_modes->begin(), latency_modes->end(),
+                                      LatencyMode::LOW_LATENCY) != latency_modes->end();
     return true;
+}
+
+bool BluetoothAudioPortAidl::getRecommendedLatencyModes(std::vector<LatencyMode>* latency_modes) {
+    std::lock_guard guard(mCvMutex);
+    return getRecommendedLatencyModes(latency_modes, &mSupportsLowLatency);
 }
 
 bool BluetoothAudioPortAidl::loadAudioConfig(PcmConfiguration& audio_cfg) {
@@ -381,6 +384,7 @@ bool BluetoothAudioPortAidl::condWaitState(std::unique_lock<std::mutex>* lock) {
     if (state == BluetoothStreamState::STARTING || state == BluetoothStreamState::SUSPENDING) {
         LOG(DEBUG) << __func__ << debugMessage() << " waiting to change from " << state;
         mInternalCv.wait_for(*lock, waitTime, [this, state] {
+            // No aliasing support in thread safety analysis, specify lock name explicitly.
             base::ScopedLockAssertion lock_assertion(mCvMutex);
             return mState != state;
         });
@@ -424,7 +428,7 @@ bool BluetoothAudioPortAidl::start() {
         } else if (mState == BluetoothStreamState::STANDBY) {
             if (!mSupportsLowLatency.has_value()) {
                 std::vector<LatencyMode> latency_modes;
-                getRecommendedLatencyModes(&latency_modes);
+                getRecommendedLatencyModes(&latency_modes, &mSupportsLowLatency);
             }
             const bool low_latency = mSupportsLowLatency.value_or(false);
             mState = BluetoothStreamState::STARTING;

@@ -28,6 +28,7 @@
 using ::aidl::android::hardware::drm::EventType;
 using ::aidl::android::hardware::drm::HdcpLevels;
 using ::aidl::android::hardware::drm::KeyRequest;
+using ::aidl::android::hardware::drm::KeyHandleResult;
 using ::aidl::android::hardware::drm::HdcpLevel;
 using ::aidl::android::hardware::drm::IDrmPluginListener;
 using ::aidl::android::hardware::drm::KeyRequestType;
@@ -387,6 +388,17 @@ TEST_P(DrmHalTest, EncryptedAesCtrSegmentTestNoKeys) {
             closeSession(sessionId);
         }
     }
+}
+
+/**
+ * A get key handle should fail if no keyId is provided
+ */
+TEST_P(DrmHalTest, GetKeyHandleNoKeyId) {
+    KeyHandleResult result;
+    vector<uint8_t> emptyKeyId = {};
+    auto ret = cryptoPlugin->getKeyHandle(emptyKeyId, Mode::UNENCRYPTED, &result);
+    EXPECT_TXN(ret);
+    EXPECT_NE(Status::OK, DrmErr(ret));
 }
 
 /**

@@ -18,6 +18,11 @@
 
 RadioNetworkIndication::RadioNetworkIndication(RadioServiceTest& parent) : parent_network(parent) {}
 
+ndk::ScopedAStatus RadioNetworkIndication::displayNetworkTypeChanged(RadioIndicationType /*type*/,
+                                                                     DisplayNetworkType /*dnt*/) {
+    return ndk::ScopedAStatus::ok();
+}
+
 ndk::ScopedAStatus RadioNetworkIndication::barringInfoChanged(
         RadioIndicationType /*type*/, const CellIdentity& /*cellIdentity*/,
         const std::vector<BarringInfo>& /*barringInfos*/) {

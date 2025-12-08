@@ -20,7 +20,6 @@
 #include <vector>
 
 namespace aidl::android::hardware::bluetooth::ranging::impl {
-
 using ::aidl::android::hardware::bluetooth::ranging::ChannelSoudingRawData;
 using ::aidl::android::hardware::bluetooth::ranging::
     ChannelSoundingProcedureData;

@@ -163,7 +163,7 @@ class EnvironmentalReverbHelper : public EffectHelper {
         Parameter::Common common = createParamCommon(
                 0 /* session */, 1 /* ioHandle */, 44100 /* iSampleRate */, 44100 /* oSampleRate */,
                 mFrameCount /* iFrameCount */, mFrameCount /* oFrameCount */);
-        ASSERT_NO_FATAL_FAILURE(open(mEffect, common, specific, &ret, EX_NONE));
+        ASSERT_NO_FATAL_FAILURE(open(mEffect, common, specific, &mOpenEffectReturn, EX_NONE));
         ASSERT_NE(nullptr, mEffect);
     }
 
@@ -276,7 +276,8 @@ class EnvironmentalReverbHelper : public EffectHelper {
         createEnvParam(tag, val);
         if (isParamValid(mEnvParam)) {
             ASSERT_NO_FATAL_FAILURE(setAndVerifyParam(EX_NONE, mEnvParam, tag));
-            ASSERT_NO_FATAL_FAILURE(processAndWriteToOutput(input, output, mEffect, &ret));
+            ASSERT_NO_FATAL_FAILURE(
+                    processAndWriteToOutput(input, output, mEffect, mOpenEffectReturn));
         }
     }
 
@@ -291,7 +292,7 @@ class EnvironmentalReverbHelper : public EffectHelper {
 
     std::shared_ptr<IFactory> mFactory;
     std::shared_ptr<IEffect> mEffect;
-    IEffect::OpenEffectReturn ret;
+    IEffect::OpenEffectReturn mOpenEffectReturn;
     Descriptor mDescriptor;
     EnvironmentalReverb mEnvParam;
 };

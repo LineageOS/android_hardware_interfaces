@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "bthal.data_processor"
+#define LOG_TAG "bluetooth_hal.transport.data_processor"
 
 #include "bluetooth_hal/transport/uart_h4/data_processor.h"
 
@@ -29,18 +29,18 @@
 
 #include "android-base/logging.h"
 #include "bluetooth_hal/debug/debug_central.h"
-#include "bluetooth_hal/hal_packet.h"
-#include "bluetooth_hal/hal_types.h"
+#include "bluetooth_hal/debug/debug_types.h"
 #include "bluetooth_hal/util/fd_watcher.h"
 #include "bluetooth_hal/util/system_call_wrapper.h"
+#include "com_android_bluetooth_bluetooth_hal_flags.h"
 
 namespace bluetooth_hal {
 namespace transport {
 
+namespace hal_flags = ::com::android::bluetooth::bluetooth_hal::flags;
+
+using ::bluetooth_hal::debug::CoredumpErrorCode;
 using ::bluetooth_hal::debug::DebugCentral;
-using ::bluetooth_hal::hci::HalPacket;
-using ::bluetooth_hal::hci::HciPacketType;
-using ::bluetooth_hal::util::FdWatcher;
 using ::bluetooth_hal::util::SystemCallWrapper;
 
 DataProcessor::~DataProcessor() { fd_watcher_.StopWatching(); }
@@ -69,12 +69,11 @@ size_t DataProcessor::Send(std::span<const uint8_t> packet) {
       if (errno == EAGAIN) {
         continue;
       }
-      ANCHOR_LOG_ERROR(AnchorType::H4_TX_ERR)
-          << __func__ << ": Error writing to UART (" << strerror(errno) << ").";
+      HAL_LOG(ERROR) << __func__ << ": Error writing to UART ("
+                     << strerror(errno) << ").";
       break;
     } else if (ret == 0) {
-      ANCHOR_LOG_ERROR(AnchorType::H4_TX_ERR)
-          << __func__ << ": Zero bytes written.";
+      HAL_LOG(ERROR) << __func__ << ": Zero bytes written.";
       break;
     } else if (static_cast<size_t>(ret) == remaining_bytes) {
       bytes_written += ret;
@@ -83,9 +82,8 @@ size_t DataProcessor::Send(std::span<const uint8_t> packet) {
 
     bytes_written += ret;
     remaining_bytes -= ret;
-    ANCHOR_LOG_WARNING(AnchorType::H4_TX_ERR)
-        << __func__ << ": " << bytes_written << " bytes written, "
-        << remaining_bytes << " bytes remaining.";
+    HAL_LOG(WARNING) << __func__ << ": " << bytes_written << " bytes written, "
+                     << remaining_bytes << " bytes remaining.";
 
     // Adjust iov to skip the written data.
     iov.iov_base = static_cast<uint8_t*>(iov.iov_base) + ret;
@@ -104,8 +102,7 @@ void DataProcessor::Recv(int fd) {
       SystemCallWrapper::GetWrapper().Read(fd, buffer, max_len));
   if (bytes_read == 0) {
     // This is only expected if the UART got closed when shutting down.
-    ANCHOR_LOG_WARNING(AnchorType::H4_RX_ERR)
-        << __func__ << ": Unexpected EOF reading the packet type!";
+    HAL_LOG(WARNING) << __func__ << ": Unexpected EOF reading the packet type!";
     return;
   } else if (bytes_read < 0) {
     LOG(FATAL) << __func__ << ": Read packet type error: " << strerror(errno)
@@ -120,7 +117,13 @@ void DataProcessor::ParseHciPacket(std::span<const uint8_t> buffer) {
     const size_t bytes_handled = hci_packetizer_.ProcessData(buffer);
 
     if (!bytes_handled) {
-      LOG(FATAL) << __func__ << ": Cannot process data from hci packetizer!";
+      if (hal_flags::coredump_when_receiving_unimplemented_packet_type()) {
+        DebugCentral::Get().GenerateCoredump(
+            CoredumpErrorCode::kControllerUnimplementedPacketType);
+        break;
+      } else {
+        LOG(FATAL) << __func__ << ": Cannot process data from hci packetizer!";
+      }
     }
 
     buffer = buffer.subspan(bytes_handled);

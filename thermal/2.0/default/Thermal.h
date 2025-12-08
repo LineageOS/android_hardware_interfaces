@@ -21,6 +21,9 @@
 #include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
 
+#include <mutex>
+#include <vector>
+
 namespace android {
 namespace hardware {
 namespace thermal {

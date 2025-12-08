@@ -25,17 +25,10 @@
 #include <media/nbaio/MonoPipe.h>
 #include <media/nbaio/MonoPipeReader.h>
 
+#include <Utils.h>
 #include <aidl/android/media/audio/common/AudioChannelLayout.h>
 #include <aidl/android/media/audio/common/AudioDeviceAddress.h>
 #include <aidl/android/media/audio/common/AudioFormatDescription.h>
-
-using aidl::android::media::audio::common::AudioChannelLayout;
-using aidl::android::media::audio::common::AudioFormatDescription;
-using aidl::android::media::audio::common::AudioFormatType;
-using aidl::android::media::audio::common::PcmType;
-using ::android::MonoPipe;
-using ::android::MonoPipeReader;
-using ::android::sp;
 
 namespace aidl::android::hardware::audio::core::r_submix {
 
@@ -61,13 +54,17 @@ static_assert(kMaxReadFailureAttempts * kReadAttemptSleepFrames * 7 <
 // Configuration of the audio stream.
 struct AudioConfig {
     int sampleRate = kDefaultSampleRateHz;
-    AudioFormatDescription format =
-            AudioFormatDescription{.type = AudioFormatType::PCM, .pcm = PcmType::INT_16_BIT};
-    AudioChannelLayout channelLayout =
-            AudioChannelLayout::make<AudioChannelLayout::Tag::layoutMask>(
-                    AudioChannelLayout::LAYOUT_STEREO);
-    size_t frameSize;
-    size_t frameCount;
+    ::aidl::android::media::audio::common::AudioFormatDescription format =
+            ::aidl::android::media::audio::common::AudioFormatDescription{
+                    .type = ::aidl::android::media::audio::common::AudioFormatType::PCM,
+                    .pcm = ::aidl::android::media::audio::common::PcmType::INT_16_BIT};
+    ::aidl::android::media::audio::common::AudioChannelLayout channelLayout =
+            ::aidl::android::media::audio::common::AudioChannelLayout::make<
+                    ::aidl::android::media::audio::common::AudioChannelLayout::Tag::layoutMask>(
+                    ::aidl::android::media::audio::common::AudioChannelLayout::LAYOUT_STEREO);
+    size_t frameSize =
+            ::aidl::android::hardware::audio::common::getFrameSizeInBytes(format, channelLayout);
+    size_t frameCount = 0;
 };
 
 class SubmixRoute {
@@ -77,10 +74,10 @@ class SubmixRoute {
             const AudioConfig& pipeConfig);
     static std::shared_ptr<SubmixRoute> findRoute(
             const ::aidl::android::media::audio::common::AudioDeviceAddress& deviceAddress);
-    static void removeRoute(
-            const ::aidl::android::media::audio::common::AudioDeviceAddress& deviceAddress);
     static std::string dumpRoutes();
 
+    SubmixRoute(const ::aidl::android::media::audio::common::AudioDeviceAddress& deviceAddress)
+        : mDeviceAddress(deviceAddress) {}
     bool isStreamInOpen() {
         std::lock_guard guard(mLock);
         return mStreamInOpen;
@@ -101,11 +98,11 @@ class SubmixRoute {
         std::lock_guard guard(mLock);
         return mReadCounterFrames;
     }
-    sp<MonoPipe> getSink() {
+    ::android::sp<::android::MonoPipe> getSink() {
         std::lock_guard guard(mLock);
         return mSink;
     }
-    sp<MonoPipeReader> getSource() {
+    ::android::sp<::android::MonoPipeReader> getSource() {
         std::lock_guard guard(mLock);
         return mSource;
     }
@@ -114,6 +111,9 @@ class SubmixRoute {
         return mPipeConfig;
     }
 
+    ::aidl::android::media::audio::common::AudioDeviceAddress getDeviceAddress() const {
+        return mDeviceAddress;
+    }
     bool isStreamConfigValid(bool isInput, const AudioConfig& streamConfig);
     void closeStream(bool isInput);
     ::android::status_t createPipe(const AudioConfig& streamConfig);
@@ -122,6 +122,7 @@ class SubmixRoute {
     int notifyReadError();
     void openStream(bool isInput);
     AudioConfig releasePipe();
+    void remove();
     ::android::status_t resetPipe();
     bool shouldBlockWrite();
     void standby(bool isInput);
@@ -148,6 +149,7 @@ class SubmixRoute {
 
     bool isStreamConfigCompatible(const AudioConfig& streamConfig);
 
+    const ::aidl::android::media::audio::common::AudioDeviceAddress mDeviceAddress;
     std::mutex mLock;
     AudioConfig mPipeConfig GUARDED_BY(mLock);
     bool mStreamInOpen GUARDED_BY(mLock) = false;
@@ -167,8 +169,8 @@ class SubmixRoute {
     // A usecase example is one where the component capturing the audio is then sending it over
     // Wifi for presentation on a remote Wifi Display device (e.g. a dongle attached to a TV, or a
     // TV with Wifi Display capabilities), or to a wireless audio player.
-    sp<MonoPipe> mSink GUARDED_BY(mLock);
-    sp<MonoPipeReader> mSource GUARDED_BY(mLock);
+    ::android::sp<::android::MonoPipe> mSink GUARDED_BY(mLock);
+    ::android::sp<::android::MonoPipeReader> mSource GUARDED_BY(mLock);
 };
 
 }  // namespace aidl::android::hardware::audio::core::r_submix

@@ -18,6 +18,8 @@
 
 #include <android-base/logging.h>
 
+#include <algorithm>
+
 #include "aidl_return_util.h"
 #include "aidl_struct_util.h"
 #include "wifi_status_util.h"

@@ -21,7 +21,12 @@
 #include <fmq/MessageQueue.h>
 #include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <string>
 #include <unordered_map>
+#include <vector>
 
 namespace android {
 namespace hardware {

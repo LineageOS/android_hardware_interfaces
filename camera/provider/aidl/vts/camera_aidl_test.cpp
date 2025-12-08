@@ -1456,7 +1456,7 @@ void CameraAidlTest::verifyLogicalOrUltraHighResCameraMetadata(
         camera_metadata_ro_entry physicalStreamConfigs;
         camera_metadata_ro_entry physicalMaxResolutionStreamConfigs;
         CameraMetadata physChars;
-        bool isUltraHighRes = false;
+        bool supportsSensorPixelModeMaxRes = false;
         std::unordered_set<int32_t> subCameraPrivacyTestPatterns;
         if (isPublicId) {
             std::shared_ptr<ICameraDevice> subDevice;
@@ -1484,7 +1484,7 @@ void CameraAidlTest::verifyLogicalOrUltraHighResCameraMetadata(
             getMultiResolutionStreamConfigurations(
                     &physicalMultiResStreamConfigs, &physicalStreamConfigs,
                     &physicalMaxResolutionStreamConfigs, staticMetadata);
-            isUltraHighRes = isUltraHighResolution(staticMetadata);
+            supportsSensorPixelModeMaxRes = supportsSensorPixelModeMaxResolution(staticMetadata);
 
             getPrivacyTestPatternModes(staticMetadata, &subCameraPrivacyTestPatterns);
         } else {
@@ -1504,7 +1504,7 @@ void CameraAidlTest::verifyLogicalOrUltraHighResCameraMetadata(
             getMultiResolutionStreamConfigurations(
                     &physicalMultiResStreamConfigs, &physicalStreamConfigs,
                     &physicalMaxResolutionStreamConfigs, staticMetadata);
-            isUltraHighRes = isUltraHighResolution(staticMetadata);
+            supportsSensorPixelModeMaxRes = supportsSensorPixelModeMaxResolution(staticMetadata);
             getPrivacyTestPatternModes(staticMetadata, &subCameraPrivacyTestPatterns);
 
             // Check calling getCameraDeviceInterface_V3_x() on hidden camera id returns
@@ -1552,8 +1552,8 @@ void CameraAidlTest::verifyLogicalOrUltraHighResCameraMetadata(
                 }
                 // Check if the resolution is the max resolution in max
                 // resolution stream configuration map
-                bool supportedUltraHighRes = false;
-                bool isUltraHighResMaxSize = true;
+                bool supportedByMaxRes = false;
+                bool isMaxResMaxSize = true;
                 for (size_t j = 0; j < physicalMaxResolutionStreamConfigs.count / 4; j++) {
                     int32_t format = physicalMaxResolutionStreamConfigs.data.i32[j * 4];
                     int32_t width = physicalMaxResolutionStreamConfigs.data.i32[j * 4 + 1];
@@ -1561,24 +1561,23 @@ void CameraAidlTest::verifyLogicalOrUltraHighResCameraMetadata(
                     int32_t input = physicalMaxResolutionStreamConfigs.data.i32[j * 4 + 3];
                     if (format == multiResFormat && input == multiResInput) {
                         if (width == multiResWidth && height == multiResHeight) {
-                            supportedUltraHighRes = true;
+                            supportedByMaxRes = true;
                         } else if (width * height > multiResWidth * multiResHeight) {
-                            isUltraHighResMaxSize = false;
+                            isMaxResMaxSize = false;
                         }
                     }
                 }
 
-                if (isUltraHighRes) {
-                    // For ultra high resolution camera, the configuration must
-                    // be the maximum size in stream configuration map, or max
-                    // resolution stream configuration map
-                    ASSERT_TRUE((supported && isMaxSize) ||
-                                (supportedUltraHighRes && isUltraHighResMaxSize));
+                if (supportsSensorPixelModeMaxRes) {
+                    // For a camera that supports maximum resolution sensor pixel mode, the
+                    // configuration must be the maximum size in stream configuration map,
+                    // or max resolution stream configuration map
+                    ASSERT_TRUE((supported && isMaxSize) || (supportedByMaxRes && isMaxResMaxSize));
                 } else {
                     // The configuration must be the maximum size in stream
                     // configuration map
                     ASSERT_TRUE(supported && isMaxSize);
-                    ASSERT_FALSE(supportedUltraHighRes);
+                    ASSERT_FALSE(supportedByMaxRes);
                 }
 
                 // Increment the counter for the configuration's format.
@@ -1677,6 +1676,20 @@ bool CameraAidlTest::isUltraHighResolution(const camera_metadata_t* staticMeta) 
         }
     }
     return false;
+}
+
+bool CameraAidlTest::supportsSensorPixelModeMaxResolution(const camera_metadata_t* staticMeta) {
+    camera_metadata_ro_entry entry;
+    int retcode = find_camera_metadata_ro_entry(staticMeta, ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS,
+                                                &entry);
+    bool hasSensorPixelMode = false;
+    if ((0 == retcode) && (entry.count > 0)) {
+        hasSensorPixelMode = std::find(entry.data.i32, entry.data.i32 + entry.count,
+                                       ANDROID_SENSOR_PIXEL_MODE) != entry.data.i32 + entry.count;
+    } else {
+        ADD_FAILURE() << "Get camera availableRequestKeys failed!";
+    }
+    return hasSensorPixelMode;
 }
 
 Status CameraAidlTest::getSupportedKeys(camera_metadata_t* staticMeta, uint32_t tagId,

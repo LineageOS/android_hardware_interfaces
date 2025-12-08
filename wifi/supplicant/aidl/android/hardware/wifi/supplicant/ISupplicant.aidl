@@ -169,4 +169,16 @@ interface ISupplicant {
      *         |SupplicantStatusCode.FAILURE_UNKNOWN|
      */
     void registerNonStandardCertCallback(in INonStandardCertCallback callback);
+
+    /**
+     * Set the current user's identity for loading per supplicant configuration file
+     * from user's storage.
+     *
+     * @param userId the identity of the current foreground user which the user credential
+     *               encrypted (CE) storage has unlocked in the device. It can be observed from
+     *。             ActivityManager#getCurrentUser.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+     */
+    void setCurrentUserIdentity(in int userId);
 }

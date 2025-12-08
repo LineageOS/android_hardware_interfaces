@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "bthal.cs_config"
+#define LOG_TAG "bluetooth_hal.cs_config"
 
 #include "bluetooth_hal/config/cs_config_loader.h"
 
@@ -27,20 +27,23 @@
 
 #include "android-base/logging.h"
 #include "bluetooth_hal/hal_packet.h"
+#include "bluetooth_hal/hal_types.h"
+#include "bluetooth_hal/util/android_base_wrapper.h"
 #include "cs_config.pb.h"
 #include "google/protobuf/util/json_util.h"
 
 namespace bluetooth_hal {
 namespace config {
 
+using ::bluetooth_hal::Property;
 using ::bluetooth_hal::config::proto::CalibrationCommands;
 using ::bluetooth_hal::hci::HalPacket;
+using ::bluetooth_hal::util::AndroidBaseWrapper;
 
 using ::google::protobuf::util::JsonParseOptions;
 using ::google::protobuf::util::JsonStringToMessage;
-using ::google::protobuf::util::Status;
 
-constexpr std::string_view kCsConfigFile =
+constexpr std::string_view kDefaultCsConfigFile =
     "/vendor/etc/bluetooth/bluetooth_channel_sounding_calibration.json";
 
 class CsConfigLoaderImpl : public CsConfigLoader {
@@ -66,7 +69,29 @@ CsConfigLoaderImpl::CsConfigLoaderImpl() {
 }
 
 bool CsConfigLoaderImpl::LoadConfig() {
-  return LoadConfigFromFile(kCsConfigFile);
+  std::string file_path = AndroidBaseWrapper::GetWrapper().GetProperty(
+      Property::kCsConfigFile, std::string(kDefaultCsConfigFile));
+
+  if (LoadConfigFromFile(file_path)) {
+    return true;
+  }
+
+  LOG(INFO) << __func__ << ": Failed to load " << file_path
+            << ", trying product specific file.";
+
+  std::string product_name =
+      AndroidBaseWrapper::GetWrapper().GetProperty(Property::kProductName, "");
+
+  if (product_name.empty()) {
+    LOG(WARNING) << __func__ << ": Product name is empty.";
+    return false;
+  }
+
+  size_t pos = kDefaultCsConfigFile.rfind(".json");
+  std::string product_specific_path =
+      file_path.substr(0, pos) + "_" + product_name + ".json";
+
+  return LoadConfigFromFile(product_specific_path);
 }
 
 bool CsConfigLoaderImpl::LoadConfigFromFile(std::string_view path) {
@@ -87,7 +112,7 @@ bool CsConfigLoaderImpl::LoadConfigFromString(std::string_view content) {
   JsonParseOptions options;
   options.ignore_unknown_fields = true;
 
-  Status status = JsonStringToMessage(content, &calibration_commands, options);
+  auto status = JsonStringToMessage(content, &calibration_commands, options);
   if (!status.ok()) {
     LOG(ERROR) << __func__
                << ": Failed to parse json content, error: " << status.message();

@@ -17,15 +17,16 @@
 #pragma once
 
 #include <condition_variable>
+#include <cstdint>
 #include <deque>
 #include <list>
 #include <memory>
 #include <mutex>
-#include <vector>
 
 #include "bluetooth_hal/bluetooth_address.h"
 #include "bluetooth_hal/extensions/ccc/bluetooth_ccc_handler_callback.h"
 #include "bluetooth_hal/hal_packet.h"
+#include "bluetooth_hal/hal_types.h"
 #include "bluetooth_hal/hci_router_client.h"
 
 namespace bluetooth_hal {
@@ -43,6 +44,10 @@ class BluetoothCccHandler : public ::bluetooth_hal::hci::HciRouterClient {
 
   bool UnregisterLmpEvents(
       const ::bluetooth_hal::hci::BluetoothAddress& address);
+
+  bool UnregisterLmpEventsWithType(
+      const ::bluetooth_hal::hci::BluetoothAddress& address,
+      AddressType address_type);
 
  protected:
   void OnCommandCallback(

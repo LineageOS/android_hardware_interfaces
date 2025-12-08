@@ -7,12 +7,17 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
+cc_defaults {
+    name: "android.hardware.drm-media_drm-ndk-shared",
+    shared_libs: ["android.hardware.drm-V2-ndk"],
+}
+
 aidl_interface {
     name: "android.hardware.drm",
     vendor_available: true,
     srcs: ["android/hardware/drm/*.aidl"],
     stability: "vintf",
-    frozen: true,
+    frozen: false,
     imports: [
         "android.hardware.common-V2",
         "android.hardware.drm.common-V1",

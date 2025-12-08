@@ -52,7 +52,7 @@ cc_defaults {
         "VtsHalWifiV1_5TargetTestUtil",
         "VtsHalWifiSupplicantV1_0TargetTestUtil",
         "android.hardware.wifi.common-V2-ndk",
-        "android.hardware.wifi-V3-ndk",
+        "android.hardware.wifi-V4-ndk",
         "VtsHalWifiTargetTestUtil",
     ],
     test_suites: [

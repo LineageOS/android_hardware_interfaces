@@ -53,6 +53,10 @@ using test_utils::validateAttestationCertificate;
 class EndToEndTests : public testing::TestWithParam<std::string> {
   public:
     virtual void SetUp() override {
+        if (test_utils::isGsiImage()) {
+            GTEST_SKIP() << "Test not applicable because RKP-only status cannot be determined";
+        }
+
         credentialStore_ = android::waitForDeclaredService<IIdentityCredentialStore>(
                 String16(GetParam().c_str()));
         ASSERT_NE(credentialStore_, nullptr);

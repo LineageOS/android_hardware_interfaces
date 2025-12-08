@@ -1,0 +1,73 @@
+{
+  "presubmit": [
+    {
+      "name": "bluetooth_hal_core_test"
+    },
+    {
+      "name": "bluetooth_hal_router_client_agent_test"
+    },
+    {
+      "name": "bluetooth_hal_hci_router_test"
+    },
+    {
+      "name": "bluetooth_hal_finder_test"
+    },
+    {
+      "name": "bluetooth_hal_ext_test"
+    },
+    {
+      "name": "bluetooth_hal_sar_test"
+    },
+    {
+      "name": "bluetooth_hal_channel_sounding_test"
+    },
+    {
+      "name": "bluetooth_hal_thread_handler_test"
+    },
+    {
+      "name": "bluetooth_hal_socket_processor_test"
+    },
+    {
+      "name": "bluetooth_hal_thread_daemon_test"
+    },
+    {
+      "name": "bluetooth_hal_ccc_test"
+    },
+    {
+      "name": "bluetooth_hal_channel_avoidance_test"
+    },
+    {
+      "name": "bluetooth_hal_config_loader_test"
+    },
+    {
+      "name": "bluetooth_hal_cs_config_loader_test"
+    },
+    {
+      "name": "bluetooth_hal_firmware_config_loader_test"
+    },
+    {
+      "name": "bluetooth_hal_hci_packetizer_test"
+    },
+    {
+      "name": "bluetooth_hal_hci_packet_rescuer_test"
+    },
+    {
+      "name": "bluetooth_hal_transport_interface_test"
+    },
+    {
+      "name": "bluetooth_hal_transport_uart_h4_test"
+    },
+    {
+      "name": "bluetooth_hal_data_processor_test"
+    },
+    {
+      "name": "bluetooth_hal_timer_manager_test"
+    },
+    {
+      "name": "bluetooth_hal_bqr_test"
+    },
+    {
+      "name": "bluetooth_hal_bluetooth_activities_test"
+    }
+  ]
+}

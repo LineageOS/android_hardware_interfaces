@@ -25,12 +25,15 @@ using ::android::renderengine::LayerSettings;
 
 class TestLayer {
   public:
-    TestLayer(const std::shared_ptr<ComposerClientWrapper>& client, int64_t display,
-              ComposerClientWriter& writer)
+    TestLayer(ComposerClientWrapper& client, int64_t display, ComposerClientWriter& writer)
         : mDisplay(display) {
-        const auto& [status, layer] = client->createLayer(display, kBufferSlotCount, &writer);
+        auto [status, layer] = client.createLayer(display, kBufferSlotCount, &writer);
         EXPECT_TRUE(status.isOk());
         mLayer = layer;
+
+        OverlayProperties properties;
+        std::tie(status, properties) = client.getOverlaySupport();
+        mLutsSupported = status.isOk() && properties.lutProperties.has_value();
     }
 
     // ComposerClient will take care of destroying layers, no need to explicitly
@@ -82,6 +85,8 @@ class TestLayer {
     uint32_t mZOrder = 0;
     Dataspace mDataspace = Dataspace::UNKNOWN;
     Luts mLuts;
+
+    bool mLutsSupported = true;
 };
 
 }  // namespace aidl::android::hardware::graphics::composer3::libhwc_aidl_test

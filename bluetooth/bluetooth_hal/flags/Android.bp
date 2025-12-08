@@ -1,0 +1,21 @@
+aconfig_declarations {
+    name: "libbluetooth_hal_flags",
+    package: "com.android.bluetooth.bluetooth_hal.flags",
+    container: "vendor",
+    srcs: ["bluetooth_hal.aconfig"],
+}
+
+cc_aconfig_library {
+    name: "libbluetooth_hal_flags_c_lib",
+    proprietary: true,
+    host_supported: true,
+    aconfig_declarations: "libbluetooth_hal_flags",
+}
+
+cc_aconfig_library {
+    name: "libbluetooth_hal_flags_c_lib_for_test",
+    mode: "test",
+    proprietary: true,
+    host_supported: true,
+    aconfig_declarations: "libbluetooth_hal_flags",
+}

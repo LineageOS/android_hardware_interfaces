@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "bthal.hci_packetizer"
+#define LOG_TAG "bluetooth_hal.transport.hci_packetizer"
 
 #include "bluetooth_hal/transport/uart_h4/hci_packetizer.h"
 
@@ -28,12 +28,16 @@
 #include <string>
 #include <vector>
 
+#include "android-base/logging.h"
+#include "bluetooth_hal/config/hal_config_loader.h"
 #include "bluetooth_hal/hal_types.h"
+#include "bluetooth_hal/transport/hci_packet_rescuer.h"
 
 namespace bluetooth_hal {
 namespace transport {
 namespace {
 
+using ::bluetooth_hal::config::HalConfigLoader;
 using ::bluetooth_hal::hci::HciConstants;
 using ::bluetooth_hal::hci::HciPacketType;
 
@@ -107,14 +111,25 @@ size_t HciPacketizer::ProcessData(std::span<const uint8_t> data) {
       const auto hci_packet_type = static_cast<HciPacketType>(data[0]);
       packet_.clear();
 
-      if (!IsValidHciPacketType(hci_packet_type)) {
+      size_t offset = 0;
+      bool packet_found = IsValidHciPacketType(hci_packet_type);
+      if (!packet_found &&
+          HalConfigLoader::GetLoader().IsEnhancedPacketValidationSupported()) {
+        offset = hci_packet_rescuer_.FindValidPacketOffset(data);
+        if (offset < len) {
+          packet_found = true;
+          LOG(INFO) << __func__ << ": Drop " << offset << " bytes to recovery.";
+        }
+      }
+
+      if (!packet_found) {
         const std::string err_msg =
             GenerateUnimplementedPacketLog(hci_packet_type, data);
+        LOG(ERROR) << __func__ << ": " << err_msg;
       } else {
-        packet_.push_back(data[0]);
-
+        packet_.push_back(data[offset]);
         state_ = State::kHciPreamble;
-        cur_bytes_read = 1;
+        cur_bytes_read = offset + 1;
       }
       break;
     }

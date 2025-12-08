@@ -29,7 +29,7 @@ import android.hardware.common.fmq.GrantorDescriptor;
  * @hide
  */
 @VintfStability
-parcelable MQDescriptor<T, Flavor> {
+parcelable MQDescriptor<@FixedSize T, Flavor> {
     /*
      * Describes each of the grantors for the message queue. They are used to
      * get the readptr, writeptr, dataptr, and the optional EventFlag word

@@ -778,7 +778,7 @@ enum CameraMetadataTag {
     /**
      * android.lens.focalLength [dynamic, float, public]
      *
-     * <p>The desired lens focal length; used for optical zoom.</p>
+     * <p>The desired lens focal length</p>
      */
     ANDROID_LENS_FOCAL_LENGTH,
     /**

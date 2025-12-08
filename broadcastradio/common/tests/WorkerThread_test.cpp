@@ -16,6 +16,7 @@
 
 #include <broadcastradio-utils/WorkerThread.h>
 #include <gtest/gtest.h>
+#include <algorithm>
 
 namespace {
 

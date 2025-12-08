@@ -17,11 +17,16 @@
 #ifndef android_hardware_automotive_vehicle_V2_0_ConcurrentQueue_H_
 #define android_hardware_automotive_vehicle_V2_0_ConcurrentQueue_H_
 
-#include <queue>
 #include <atomic>
-#include <thread>
+#include <chrono>
 #include <condition_variable>
+#include <functional>
 #include <iostream>
+#include <mutex>
+#include <queue>
+#include <thread>
+#include <utility>
+#include <vector>
 
 namespace android {
 

@@ -36,23 +36,22 @@ class HciRouterClientAgent {
   static HciRouterClientAgent& GetAgent();
 
   /**
-   * @brief Reigster HciRouterClientCallback for the agent to service.
+   * @brief Register HciRouterClientCallback for the agent to service.
    *
    * @param callback The callback for the HciRouter client.
    * @return true if the callback is registered, otherwise false.
    *
    */
-  virtual bool RegisterRouterClient(HciRouterClientCallback* callback) = 0;
+  virtual bool RegisterClient(HciRouterClientCallback* callback) = 0;
 
   /**
-   * @brief Unreigster HciRouterClientCallback from the agent.
+   * @brief Unregister HciRouterClientCallback from the agent.
    *
    * @param callback The callback for the HciRouter client.
-   *
-   * @return true if the callback is registered, otherwise false.
+   * @return true if the callback is unregistered, otherwise false.
    *
    */
-  virtual bool UnregisterRouterClient(HciRouterClientCallback* callback) = 0;
+  virtual bool UnregisterClient(HciRouterClientCallback* callback) = 0;
 
   /**
    * @brief Called when the router receives an HCI packet. The router agent will

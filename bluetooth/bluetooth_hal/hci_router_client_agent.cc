@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "bthal.router_client_agent"
+#define LOG_TAG "bluetooth_hal.router_client_agent"
 
 #include "bluetooth_hal/hci_router_client_agent.h"
 
+#include <algorithm>
 #include <mutex>
 #include <unordered_set>
 
@@ -34,8 +35,8 @@ class HciRouterClientAgentImpl : public HciRouterClientAgent {
       : current_state_(HalState::kShutdown),
         is_bluetooth_chip_ready_(false),
         is_bluetooth_enabled_(false) {};
-  bool RegisterRouterClient(HciRouterClientCallback* callback) override;
-  bool UnregisterRouterClient(HciRouterClientCallback* callback) override;
+  bool RegisterClient(HciRouterClientCallback* callback) override;
+  bool UnregisterClient(HciRouterClientCallback* callback) override;
   MonitorMode DispatchPacketToClients(const HalPacket& packet) override;
   void NotifyHalStateChange(HalState new_state, HalState old_state) override;
   bool IsBluetoothEnabled() override;
@@ -43,10 +44,7 @@ class HciRouterClientAgentImpl : public HciRouterClientAgent {
 
  private:
   void HandleBluetoothEnable(const HalPacket& packet);
-  void NotifyClientsBluetoothDisabled();
-  void NotifyClientsBluetoothEnabled();
-  void NotifyClientsBluetoothChipClosed();
-  void NotifyClientsBluetoothChipReady();
+  void ForEachClient(std::function<void(HciRouterClientCallback*)> action);
 
   std::recursive_mutex mutex_;
   HalState current_state_;
@@ -60,9 +58,8 @@ HciRouterClientAgent& HciRouterClientAgent::GetAgent() {
   return agent;
 }
 
-bool HciRouterClientAgentImpl::RegisterRouterClient(
-    HciRouterClientCallback* client) {
-  std::unique_lock<std::recursive_mutex> lock(mutex_);
+bool HciRouterClientAgentImpl::RegisterClient(HciRouterClientCallback* client) {
+  std::scoped_lock<std::recursive_mutex> lock(mutex_);
   if (router_clients_.count(client) > 0) {
     LOG(WARNING) << "callback already registered!";
     return false;
@@ -78,9 +75,9 @@ bool HciRouterClientAgentImpl::RegisterRouterClient(
   return true;
 }
 
-bool HciRouterClientAgentImpl::UnregisterRouterClient(
+bool HciRouterClientAgentImpl::UnregisterClient(
     HciRouterClientCallback* callback) {
-  std::unique_lock<std::recursive_mutex> lock(mutex_);
+  std::scoped_lock<std::recursive_mutex> lock(mutex_);
   if (router_clients_.erase(callback) == 0) {
     LOG(WARNING) << "callback was not registered!";
     return false;
@@ -90,21 +87,17 @@ bool HciRouterClientAgentImpl::UnregisterRouterClient(
 
 MonitorMode HciRouterClientAgentImpl::DispatchPacketToClients(
     const HalPacket& packet) {
-  std::unique_lock<std::recursive_mutex> lock(mutex_);
+  std::scoped_lock<std::recursive_mutex> lock(mutex_);
   if (!IsBluetoothEnabled()) {
     // Look for HCI_RESET complete event if Bluetooth is not enabled.
     HandleBluetoothEnable(packet);
   }
 
   MonitorMode result = MonitorMode::kNone;
-  for (auto client : router_clients_) {
-    if (client == nullptr) {
-      LOG(WARNING) << "null router client callback in the registration list!";
-      continue;
-    }
+  ForEachClient([&](HciRouterClientCallback* client) {
     MonitorMode mode = client->OnPacketCallback(packet);
-    result = (mode > result) ? mode : result;
-  }
+    result = std::max(result, mode);
+  });
   return result;
 }
 
@@ -117,9 +110,12 @@ void HciRouterClientAgentImpl::NotifyHalStateChange(HalState new_state,
     LOG(FATAL) << __func__
                << " (old_state, current_state_in_client) is mismatched! "
                   "[ old_state("
+               << HalStateToString(old_state) << ":"
                << static_cast<int>(old_state) << ") -> new_state("
+               << HalStateToString(new_state) << ":"
                << static_cast<int>(new_state)
                << ") ], current_state_in_client: "
+               << HalStateToString(current_state_) << ":"
                << static_cast<int>(current_state_);
     return;
   }
@@ -130,17 +126,23 @@ void HciRouterClientAgentImpl::NotifyHalStateChange(HalState new_state,
   switch (new_state) {
     case HalState::kBtChipReady:
       if (!is_bluetooth_chip_ready_) {
-        NotifyClientsBluetoothChipReady();
+        ForEachClient([](HciRouterClientCallback* client) {
+          client->OnBluetoothChipReady();
+        });
       }
       if (is_bluetooth_enabled_) {
-        NotifyClientsBluetoothDisabled();
+        ForEachClient([](HciRouterClientCallback* client) {
+          client->OnBluetoothDisabled();
+        });
       }
       is_bluetooth_chip_ready_ = true;
       is_bluetooth_enabled_ = false;
       break;
     case HalState::kRunning:
       if (!is_bluetooth_chip_ready_) {
-        NotifyClientsBluetoothChipReady();
+        ForEachClient([](HciRouterClientCallback* client) {
+          client->OnBluetoothChipReady();
+        });
       }
       // We do not handle is_bluetooth_enabled_ here because the clients have to
       // wait for a HCI_RESET before they can send packets to the chip.
@@ -148,24 +150,23 @@ void HciRouterClientAgentImpl::NotifyHalStateChange(HalState new_state,
       break;
     default:
       if (is_bluetooth_chip_ready_) {
-        NotifyClientsBluetoothChipClosed();
+        ForEachClient([](HciRouterClientCallback* client) {
+          client->OnBluetoothChipClosed();
+        });
       }
       if (is_bluetooth_enabled_) {
-        NotifyClientsBluetoothDisabled();
+        ForEachClient([](HciRouterClientCallback* client) {
+          client->OnBluetoothDisabled();
+        });
       }
       is_bluetooth_chip_ready_ = false;
       is_bluetooth_enabled_ = false;
       break;
   }
 
-  for (auto client : router_clients_) {
-    if (client == nullptr) {
-      LOG(WARNING) << __func__
-                   << ": null router client callback in the registration list!";
-      continue;
-    }
+  ForEachClient([&](HciRouterClientCallback* client) {
     client->OnHalStateChanged(new_state, old_state);
-  }
+  });
 }
 
 bool HciRouterClientAgentImpl::IsBluetoothEnabled() {
@@ -187,51 +188,20 @@ void HciRouterClientAgentImpl::HandleBluetoothEnable(const HalPacket& packet) {
     // Inform the client that Bluetooth has enabled after a HCI_RESET command is
     // sent in kRunning state.
     is_bluetooth_enabled_ = true;
-    NotifyClientsBluetoothEnabled();
+    ForEachClient(
+        [](HciRouterClientCallback* client) { client->OnBluetoothEnabled(); });
   }
 }
 
-void HciRouterClientAgentImpl::NotifyClientsBluetoothDisabled() {
+void HciRouterClientAgentImpl::ForEachClient(
+    std::function<void(HciRouterClientCallback*)> action) {
   for (auto client : router_clients_) {
     if (client == nullptr) {
       LOG(WARNING) << __func__
                    << ": null router client callback in the registration list!";
       continue;
     }
-    client->OnBluetoothDisabled();
-  }
-}
-
-void HciRouterClientAgentImpl::NotifyClientsBluetoothEnabled() {
-  for (auto client : router_clients_) {
-    if (client == nullptr) {
-      LOG(WARNING) << __func__
-                   << ": null router client callback in the registration list!";
-      continue;
-    }
-    client->OnBluetoothEnabled();
-  }
-}
-
-void HciRouterClientAgentImpl::NotifyClientsBluetoothChipClosed() {
-  for (auto client : router_clients_) {
-    if (client == nullptr) {
-      LOG(WARNING) << __func__
-                   << ": null router client callback in the registration list!";
-      continue;
-    }
-    client->OnBluetoothChipClosed();
-  }
-}
-
-void HciRouterClientAgentImpl::NotifyClientsBluetoothChipReady() {
-  for (auto client : router_clients_) {
-    if (client == nullptr) {
-      LOG(WARNING) << __func__
-                   << ": null router client callback in the registration list!";
-      continue;
-    }
-    client->OnBluetoothChipReady();
+    action(client);
   }
 }
 

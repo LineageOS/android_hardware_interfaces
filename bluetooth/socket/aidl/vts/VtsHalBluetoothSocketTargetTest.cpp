@@ -25,6 +25,7 @@
 #include <binder/IServiceManager.h>
 #include <utils/Log.h>
 
+#include <functional>
 #include <future>
 
 using ::aidl::android::hardware::bluetooth::socket::BnBluetoothSocketCallback;

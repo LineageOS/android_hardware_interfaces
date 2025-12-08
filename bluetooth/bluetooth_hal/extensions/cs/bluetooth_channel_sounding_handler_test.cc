@@ -95,8 +95,6 @@ class TestBluetoothChannelSoundingHandler
       uint16_t connection_handle) {
     return GetTracker(connection_handle);
   }
-
-  void OnBluetoothEnabledWrapper() { OnBluetoothEnabled(); }
 };
 
 class BluetoothChannelSoundingHandlerTest : public Test {
@@ -219,7 +217,9 @@ TEST_F(BluetoothChannelSoundingHandlerTest, HandleCalibrationCommands) {
       .WillOnce(ReturnRef(calibration_commands));
   EXPECT_CALL(mock_hci_router_, SendCommand(_, _)).Times(2);
 
-  bluetooth_channel_sounding_handler_->OnBluetoothEnabledWrapper();
+  std::optional<std::vector<std::optional<VendorSpecificData>>> data;
+  EXPECT_TRUE(
+      bluetooth_channel_sounding_handler_->GetVendorSpecificData(&data));
 }
 
 TEST_F(BluetoothChannelSoundingHandlerTest, HandleEmptyCalibrationCommands) {
@@ -229,11 +229,19 @@ TEST_F(BluetoothChannelSoundingHandlerTest, HandleEmptyCalibrationCommands) {
       .WillOnce(ReturnRef(empty_calibration_commands));
   EXPECT_CALL(mock_hci_router_, SendCommand(_, _)).Times(0);
 
-  bluetooth_channel_sounding_handler_->OnBluetoothEnabledWrapper();
+  std::optional<std::vector<std::optional<VendorSpecificData>>> data;
+  EXPECT_TRUE(
+      bluetooth_channel_sounding_handler_->GetVendorSpecificData(&data));
 }
 
 TEST_F(BluetoothChannelSoundingHandlerTest, GetVendorSpecificDataReturnEmpty) {
   std::optional<std::vector<std::optional<VendorSpecificData>>> data;
+
+  ON_CALL(mock_cs_config_loader_, GetCsCalibrationCommands)
+      .WillByDefault([]() -> const std::vector<HalPacket>& {
+        static const std::vector<HalPacket> kEmpty;
+        return kEmpty;
+      });
 
   EXPECT_TRUE(
       bluetooth_channel_sounding_handler_->GetVendorSpecificData(&data));
@@ -477,12 +485,9 @@ class VendorSpecificRepliesTest
  public:
   static std::vector<std::optional<VendorSpecificData>> BuildData(
       bool is_fake_notification_enabled, bool is_mode_0_channel_map_enabled) {
-    uint8_t enable_one_side_pct = is_fake_notification_enabled
-                                      ? kCommandValueEnable
-                                      : kCommandValueIgnore;
-    uint8_t enable_cs_subevent_report = is_fake_notification_enabled
-                                            ? kCommandValueDisable
-                                            : kCommandValueIgnore;
+    uint8_t enable_inline_pct = is_fake_notification_enabled
+                                    ? kCommandValueEnable
+                                    : kCommandValueIgnore;
     uint8_t enable_mode_0_channel_map = is_mode_0_channel_map_enabled
                                             ? kCommandValueEnable
                                             : kCommandValueIgnore;
@@ -493,9 +498,9 @@ class VendorSpecificRepliesTest
 
     VendorSpecificData command;
     command.characteristicUuid = kUuidSpecialRangingSettingCommand;
-    command.opaqueValue = {kDataTypeReply, enable_one_side_pct,
-                           enable_cs_subevent_report,
-                           enable_mode_0_channel_map};
+    command.opaqueValue = {
+        kDataTypeReply,           enable_inline_pct, 0, 0, 0, 0,
+        enable_mode_0_channel_map};
 
     return {capability, command};
   }

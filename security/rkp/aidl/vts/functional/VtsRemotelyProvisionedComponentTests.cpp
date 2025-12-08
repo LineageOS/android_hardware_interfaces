@@ -33,6 +33,7 @@
 #include <openssl/ec_key.h>
 #include <openssl/x509.h>
 #include <remote_prov/remote_prov_utils.h>
+#include <vendorsupport/api_level.h>
 #include <optional>
 #include <set>
 #include <string_view>
@@ -276,7 +277,7 @@ TEST(NonParameterizedTests, eachRpcHasAUniqueId) {
 // @VsrTest = 3.10-015
 // @VsrTest = 3.10-018.001
 TEST(NonParameterizedTests, requireDiceOnDefaultInstanceIfProtectedVmSupported) {
-    int first_vendor_api_level = get_first_vendor_api_level();
+    int first_vendor_api_level = AVendorSupport_getFirstVendorApiLevel();
     if (first_vendor_api_level < 202504) {
         GTEST_SKIP() << "Applies only to devices that shipped with vendor API level >= 202504, but "
                      << "this device shipped with: " << first_vendor_api_level;

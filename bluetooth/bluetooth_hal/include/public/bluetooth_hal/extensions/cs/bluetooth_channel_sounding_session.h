@@ -27,6 +27,7 @@
 #include "aidl/android/hardware/bluetooth/ranging/ResultType.h"
 #include "aidl/android/hardware/bluetooth/ranging/VendorSpecificData.h"
 #include "android/binder_auto_utils.h"
+#include "bluetooth_hal/extensions/cs/bluetooth_channel_sounding_distance_estimator_interface.h"
 
 namespace bluetooth_hal {
 namespace extensions {
@@ -36,7 +37,7 @@ class BluetoothChannelSoundingSession
     : public ::aidl::android::hardware::bluetooth::ranging::
           BnBluetoothChannelSoundingSession {
  public:
-  BluetoothChannelSoundingSession(
+  explicit BluetoothChannelSoundingSession(
       std::shared_ptr<::aidl::android::hardware::bluetooth::ranging::
                           IBluetoothChannelSoundingSessionCallback>
           callback,
@@ -70,6 +71,9 @@ class BluetoothChannelSoundingSession
   bool uuid_matched_ = false;
   bool enable_fake_notification_ = false;
   bool enable_mode_0_channel_map_ = false;
+
+  std::unique_ptr<ChannelSoundingDistanceEstimatorInterface>
+      distance_estimator_;
 };
 
 }  // namespace cs

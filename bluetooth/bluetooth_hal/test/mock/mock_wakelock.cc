@@ -16,15 +16,21 @@
 
 #include "bluetooth_hal/test/mock/mock_wakelock.h"
 
+#include "android-base/logging.h"
 #include "bluetooth_hal/util/power/wakelock.h"
 
 namespace bluetooth_hal {
 namespace util {
 namespace power {
 
-static MockWakelock* mock_wakelock_;
-
-Wakelock& Wakelock::GetWakelock() { return *mock_wakelock_; }
+Wakelock& Wakelock::GetWakelock() {
+  if (!MockWakelock::mock_wakelock_) {
+    LOG(FATAL) << __func__
+               << ": mock_wakelock_ is nullptr. Did you forget to call "
+                  "SetMockWakelock in your test SetUp?";
+  }
+  return *MockWakelock::mock_wakelock_;
+}
 
 void MockWakelock::SetMockWakelock(MockWakelock* wakelock) {
   mock_wakelock_ = wakelock;

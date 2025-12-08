@@ -16,6 +16,7 @@
 
 #include "VirtualRadio.h"
 #include <broadcastradio-utils-aidl/Utils.h>
+#include <algorithm>
 #include <unordered_set>
 
 namespace aidl::android::hardware::broadcastradio {

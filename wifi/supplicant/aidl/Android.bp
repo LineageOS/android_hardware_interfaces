@@ -48,6 +48,11 @@ aidl_interface {
         },
         ndk: {
             gen_trace: true,
+            apex_available: [
+                "//apex_available:platform",
+                "com.android.wifi",
+            ],
+            min_sdk_version: "30",
         },
         cpp: {
             enabled: false,
@@ -75,5 +80,5 @@ aidl_interface {
         },
 
     ],
-    frozen: true,
+    frozen: false,
 }

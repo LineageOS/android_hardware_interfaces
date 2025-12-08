@@ -14,11 +14,16 @@
  * limitations under the License.
  */
 
+#include <cstdint>
+#include <string>
+
 #include "android-base/logging.h"
-#include "bluetooth_hal/debug/debug_central.h"
+#include "bluetooth_hal/bqr/bqr_types.h"
 
 namespace bluetooth_hal {
 namespace debug {
+
+using ::bluetooth_hal::bqr::BqrErrorCode;
 
 typedef struct {
   BqrErrorCode error_code;
@@ -94,45 +99,44 @@ void ChreArbitratorUnimplementedPacket(std::string msg) { LOG(FATAL) << msg; }
 void ChreArbitratorInvalidPacketSize(std::string msg) { LOG(FATAL) << msg; }
 
 ErrorCodeMap kErrorCodeMap[]{
-    {BqrErrorCode::UART_PARSING, UartParsing},
-    {BqrErrorCode::UART_INCOMPLETE_PACKET, UartIncompletePacket},
-    {BqrErrorCode::FIRMWARE_CHECKSUM, FirmwareChecksum},
-    {BqrErrorCode::FIRMWARE_HARD_FAULT, FirmwareHardFault},
-    {BqrErrorCode::FIRMWARE_MEM_MANAGE_FAULT, FirmwareMemManageFault},
-    {BqrErrorCode::FIRMWARE_BUS_FAULT, FirmwareBusFault},
-    {BqrErrorCode::FIRMWARE_USAGE_FAULT, FirmwareFirmwareUsageFault},
-    {BqrErrorCode::FIRMWARE_WATCHDOG_TIMEOUT, FirmwareWatchdogTimeout},
-    {BqrErrorCode::FIRMWARE_ASSERTION_FAILURE, FirmwareAssertionFailure},
-    {BqrErrorCode::FIRMWARE_MISCELLANEOUS, FirmwareMiscellaneous},
-    {BqrErrorCode::FIRMWARE_MISCELLANEOUS_MAJOR_FAULT,
+    {BqrErrorCode::kUartParsing, UartParsing},
+    {BqrErrorCode::kUartIncompletePacket, UartIncompletePacket},
+    {BqrErrorCode::kFirmwareChecksum, FirmwareChecksum},
+    {BqrErrorCode::kFirmwareHardFault, FirmwareHardFault},
+    {BqrErrorCode::kFirmwareMemManageFault, FirmwareMemManageFault},
+    {BqrErrorCode::kFirmwareBusFault, FirmwareBusFault},
+    {BqrErrorCode::kFirmwareUsageFault, FirmwareFirmwareUsageFault},
+    {BqrErrorCode::kFirmwareWatchdogTimeout, FirmwareWatchdogTimeout},
+    {BqrErrorCode::kFirmwareAssertionFailure, FirmwareAssertionFailure},
+    {BqrErrorCode::kFirmwareMiscellaneous, FirmwareMiscellaneous},
+    {BqrErrorCode::kFirmwareMiscellaneousMajorFault,
      FirmwareMiscellaneousMajorFault},
-    {BqrErrorCode::FIRMWARE_MISCELLANEOUS_CRITICAL_FAULT,
+    {BqrErrorCode::kFirmwareMiscellaneousCriticalFault,
      FirmwareMiscellaneousCriticalFault},
-    {BqrErrorCode::FIRMWARE_THREAD_GENERIC_ERROR, FirmwareThreadGenericError},
-    {BqrErrorCode::FIRMWARE_THREAD_INVALID_FRAME, FirmwareThreadInvalidFrame},
-    {BqrErrorCode::FIRMWARE_THREAD_INVALID_PARAM, FirmwareThreadInvalidParam},
-    {BqrErrorCode::FIRMWARE_THREAD_UNSUPPORTED_FRAME,
+    {BqrErrorCode::kFirmwareThreadGenericError, FirmwareThreadGenericError},
+    {BqrErrorCode::kFirmwareThreadInvalidFrame, FirmwareThreadInvalidFrame},
+    {BqrErrorCode::kFirmwareThreadInvalidParam, FirmwareThreadInvalidParam},
+    {BqrErrorCode::kFirmwareThreadUnsupportedFrame,
      FirmwareThreadUnsupportedFrame},
-    {BqrErrorCode::SOC_BIG_HAMMER_FAULT, SocBigHammerFault},
-    {BqrErrorCode::HOST_RX_THREAD_STUCK, HostRxThreadStuck},
-    {BqrErrorCode::HOST_HCI_COMMAND_TIMEOUT, HostHciCommandTimeout},
-    {BqrErrorCode::HOST_INVALID_HCI_EVENT, HostInvalidHciEvent},
-    {BqrErrorCode::HOST_UNIMPLEMENTED_PACKET_TYPE, HostUnimplementedPacketType},
-    {BqrErrorCode::HOST_HCI_H4_TX_ERROR, HosHcitH4TxError},
-    {BqrErrorCode::HOST_OPEN_USERIAL, HostOpenUserial},
-    {BqrErrorCode::HOST_POWER_UP_CONTROLLER, HostPowerUpController},
-    {BqrErrorCode::HOST_CHANGE_BAUDRATE, HostChangeBaudrate},
-    {BqrErrorCode::HOST_RESET_BEFORE_FW, HostResetBeforeFw},
-    {BqrErrorCode::HOST_DOWNLOAD_FW, HostDownloadFw},
-    {BqrErrorCode::HOST_RESET_AFTER_FW, HostResetAfterFw},
-    {BqrErrorCode::HOST_BDADDR_FAULT, HostBdaddrFault},
-    {BqrErrorCode::HOST_OPEN_COEX_DEVICE_ERROR, HostCoexDeviceOpenError},
-    {BqrErrorCode::HOST_ACCEL_BT_INIT_FAILED, HostAccelatedBtInitFailed},
-    {BqrErrorCode::HOST_ACCEL_BT_SHUTDOWN_FAILED,
-     HostAccelatedBtShutdownFailed},
-    {BqrErrorCode::CHRE_ARBITRATOR_UNIMPLEMENTED_PACKET,
+    {BqrErrorCode::kSocBigHammerFault, SocBigHammerFault},
+    {BqrErrorCode::kHostRxThreadStuck, HostRxThreadStuck},
+    {BqrErrorCode::kHostHciCommandTimeout, HostHciCommandTimeout},
+    {BqrErrorCode::kHostInvalidHciEvent, HostInvalidHciEvent},
+    {BqrErrorCode::kHostUnimplementedPacketType, HostUnimplementedPacketType},
+    {BqrErrorCode::kHostHciH4TxError, HosHcitH4TxError},
+    {BqrErrorCode::kHostOpenUserial, HostOpenUserial},
+    {BqrErrorCode::kHostPowerUpController, HostPowerUpController},
+    {BqrErrorCode::kHostChangeBaudrate, HostChangeBaudrate},
+    {BqrErrorCode::kHostResetBeforeFw, HostResetBeforeFw},
+    {BqrErrorCode::kHostDownloadFw, HostDownloadFw},
+    {BqrErrorCode::kHostResetAfterFw, HostResetAfterFw},
+    {BqrErrorCode::kHostBdaddrFault, HostBdaddrFault},
+    {BqrErrorCode::kHostOpenCoexDeviceError, HostCoexDeviceOpenError},
+    {BqrErrorCode::kHostAccelBtInitFailed, HostAccelatedBtInitFailed},
+    {BqrErrorCode::kHostAccelBtShutdownFailed, HostAccelatedBtShutdownFailed},
+    {BqrErrorCode::kChreArbitratorUnimplementedPacket,
      ChreArbitratorUnimplementedPacket},
-    {BqrErrorCode::CHRE_ARBITRATOR_INVALID_PACKET_SIZE,
+    {BqrErrorCode::kChreArbitratorInvalidPacketSize,
      ChreArbitratorInvalidPacketSize}};
 
 void LogFatal(BqrErrorCode error_code, std::string extra_info) {

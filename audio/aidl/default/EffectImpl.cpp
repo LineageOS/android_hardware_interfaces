@@ -300,7 +300,7 @@ ndk::ScopedAStatus EffectImpl::command(CommandId command) {
                                                                     "CommandIdNotSupported");
     }
     LOG(VERBOSE) << getEffectNameWithVersion() << __func__
-                 << " transfer to state: " << toString(mState);
+                 << " transfer to state: " << toString(mState) << " with " << toString(command);
     return ndk::ScopedAStatus::ok();
 }
 
@@ -392,6 +392,7 @@ void EffectImpl::process() {
         auto outputMQ = mImplContext->getOutputDataFmq();
         auto buffer = mImplContext->getWorkBuffer();
         if (!inputMQ || !outputMQ) {
+            LOG(WARNING) << __func__ << " skip processing with empty FMQs";
             return;
         }
 
@@ -403,6 +404,8 @@ void EffectImpl::process() {
             IEffect::Status status = effectProcessImpl(buffer, buffer, processSamples);
             outputMQ->write(buffer, status.fmqProduced);
             statusMQ->writeBlocking(&status, 1);
+        } else {
+            drainingComplete_l();
         }
     }
 }
@@ -413,6 +416,13 @@ IEffect::Status EffectImpl::effectProcessImpl(float* in, float* out, int samples
         *out++ = *in++;
     }
     return {STATUS_OK, samples, samples};
+}
+
+void EffectImpl::drainingComplete_l() {
+    if (mState != State::DRAINING) return;
+
+    finishDraining();
+    mState = State::IDLE;
 }
 
 }  // namespace aidl::android::hardware::audio::effect

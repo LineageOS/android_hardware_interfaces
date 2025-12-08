@@ -44,7 +44,7 @@ $ adb reboot
 ```shell
 $ adb shell locksettings set-pin 0000
 $ adb shell setprop persist.vendor.face.virtual.enrollments 1
-$ adb shell cmd face syncadb shell cmd face sync
+$ adb shell cmd face sync
 ```
 
 ## Authenticating

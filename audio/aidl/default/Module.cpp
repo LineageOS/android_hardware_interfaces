@@ -982,10 +982,24 @@ ndk::ScopedAStatus Module::getAudioRoutesForAudioPort(int32_t in_portId,
     return ndk::ScopedAStatus::ok();
 }
 
+ndk::ScopedAStatus Module::validateMetadataAttributeTags(const std::vector<std::string>& tags) {
+    for (auto& tag : tags) {
+        if (!common::isVendorExtension(tag)) {
+            LOG(ERROR) << __func__ << ": " << mType << ": metadata attribute tag " << tag
+                       << " is invalid.";
+            return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+        }
+    }
+    return ndk::ScopedAStatus::ok();
+}
+
 ndk::ScopedAStatus Module::openInputStream(const OpenInputStreamArguments& in_args,
                                            OpenInputStreamReturn* _aidl_return) {
     LOG(DEBUG) << __func__ << ": " << mType << ": port config id " << in_args.portConfigId
                << ", buffer size " << in_args.bufferSizeFrames << " frames";
+    for (const auto& track : in_args.sinkMetadata.tracks) {
+        RETURN_STATUS_IF_ERROR(validateMetadataAttributeTags(track.tags));
+    }
     AudioPort* port = nullptr;
     RETURN_STATUS_IF_ERROR(findPortIdForNewStream(in_args.portConfigId, &port));
     if (port->flags.getTag() != AudioIoFlags::Tag::input) {
@@ -1018,6 +1032,9 @@ ndk::ScopedAStatus Module::openOutputStream(const OpenOutputStreamArguments& in_
     LOG(DEBUG) << __func__ << ": " << mType << ": port config id " << in_args.portConfigId
                << ", has offload info? " << (in_args.offloadInfo.has_value()) << ", buffer size "
                << in_args.bufferSizeFrames << " frames";
+    for (const auto& track : in_args.sourceMetadata.tracks) {
+        RETURN_STATUS_IF_ERROR(validateMetadataAttributeTags(track.tags));
+    }
     AudioPort* port = nullptr;
     RETURN_STATUS_IF_ERROR(findPortIdForNewStream(in_args.portConfigId, &port));
     if (port->flags.getTag() != AudioIoFlags::Tag::output) {
@@ -1237,6 +1254,15 @@ ndk::ScopedAStatus Module::setAudioPortConfigImpl(
                    << ": requested port config points to non-existent portId " << portId;
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
+
+    if (portIt->ext.getTag() == AudioPortExt::Tag::device &&
+        !portIt->ext.get<AudioPortExt::Tag::device>().device.type.connection.empty() &&
+        mConnectedDevicePorts.find(portId) == mConnectedDevicePorts.end()) {
+        LOG(ERROR) << __func__ << ": " << mType << ": requested portId " << portId
+                   << " is not connected to an external device (is it a template port?).";
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
+
     if (existing != configs.end()) {
         *out_suggested = *existing;
     } else {
@@ -1372,7 +1398,6 @@ ndk::ScopedAStatus Module::setAudioPortConfigImpl(
 }
 
 bool Module::setAudioPortConfigGain(const AudioPort& port, const AudioGainConfig& gainRequested) {
-    auto& ports = getConfig().ports;
     if (gainRequested.index < 0 || gainRequested.index >= (int)port.gains.size()) {
         LOG(ERROR) << __func__ << ": gains for port " << port.id << " is undefined";
         return false;
@@ -1437,6 +1462,8 @@ ndk::ScopedAStatus Module::resetAudioPatch(int32_t in_patchId) {
 
 ndk::ScopedAStatus Module::resetAudioPortConfig(int32_t in_portConfigId) {
     auto& configs = getConfig().portConfigs;
+    LOG(DEBUG) << __func__ << ": " << mType << ": in_portConfigId " << in_portConfigId
+               << " configs size: " << configs.size();
     auto configIt = findById<AudioPortConfig>(configs, in_portConfigId);
     if (configIt != configs.end()) {
         if (mStreams.count(in_portConfigId) != 0) {

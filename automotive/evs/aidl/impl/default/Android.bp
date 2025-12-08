@@ -91,13 +91,23 @@ cc_binary {
         "android.hardware.automotive.evs-aidl-default-service-lib",
     ],
     include_dirs: ["frameworks/native/include/"],
-    required: ["evs_mock_hal_configuration.xml"],
+    required: [
+        "evs_mock_hal_configuration.xml",
+        "evs_mock_rear_camera.mp4",
+    ],
 }
 
 prebuilt_etc {
     name: "evs_mock_hal_configuration.xml",
     soc_specific: true,
     src: "resources/evs_mock_configuration.xml",
+    sub_dir: "automotive/evs",
+}
+
+prebuilt_etc {
+    name: "evs_mock_rear_camera.mp4",
+    soc_specific: true,
+    src: "resources/evs_mock_rear_camera.mp4",
     sub_dir: "automotive/evs",
 }
 

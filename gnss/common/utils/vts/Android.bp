@@ -37,6 +37,9 @@ cc_library_static {
         "v2_1/GnssCallback.cpp",
     ],
     export_include_dirs: ["include"],
+    defaults: [
+        "gnss_use_latest_hal_aidl_cpp_shared",
+    ],
     shared_libs: [
         "android.hardware.gnss@1.0",
         "android.hardware.gnss@1.1",
@@ -44,7 +47,6 @@ cc_library_static {
         "android.hardware.gnss@2.1",
         "android.hardware.gnss.measurement_corrections@1.0",
         "android.hardware.gnss.measurement_corrections@1.1",
-        "android.hardware.gnss-V6-cpp",
     ],
     static_libs: [
         "libgtest",

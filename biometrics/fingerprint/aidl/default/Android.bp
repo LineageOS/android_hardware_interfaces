@@ -84,7 +84,10 @@ cc_binary {
     vendor: true,
     relative_install_path: "hw",
     init_rc: ["fingerprint-default.rc"],
-    vintf_fragment_modules: ["android.hardware.biometrics.fingerprint-service.default.vintf"],
+    vintf_fragment_modules: select(soong_config_variable("fingerprint_virtual", "inactive"), {
+        true: [],
+        default: ["android.hardware.biometrics.fingerprint-service.default.vintf"],
+    }),
     local_include_dirs: ["include"],
     srcs: [
     ],
@@ -281,12 +284,11 @@ apex {
     certificate: ":com.android.hardware.certificate",
     updatable: false,
     system_ext_specific: true,
-
     binaries: [
         "android.hardware.biometrics.fingerprint-service.example",
     ],
-    prebuilts: [
-        // init_rc
-        "fingerprint-virtual.rc",
-    ],
+    prebuilts: select(soong_config_variable("fingerprint_virtual", "inactive"), {
+        true: [],
+        default: ["fingerprint-virtual.rc"],
+    }),
 }

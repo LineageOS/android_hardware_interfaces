@@ -402,7 +402,7 @@ const cppbor::SemanticTag* findSemanticValueForTstr(const cppbor::Map* map,
 const std::string findStringValueForTstr(const cppbor::Map* map, const string& keyValue) {
     const cppbor::Item* item = findValueForTstr(map, keyValue);
     if (item == nullptr) {
-        return nullptr;
+        return "";
     }
     const cppbor::Tstr* tstr = item->asTstr();
     if (tstr == nullptr) {

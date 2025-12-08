@@ -23,14 +23,13 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
-cc_library {
-    name: "libkeymint_support",
+cc_defaults {
+    name: "libkeymint_support_defaults",
     vendor_available: true,
     cflags: [
         "-Wall",
         "-Wextra",
         "-Werror",
-        "-DKEYMINT_HAL_V4",
     ],
     srcs: [
         "attestation_record.cpp",
@@ -43,9 +42,6 @@ cc_library {
     ],
     header_libs: [
         "libhardware_headers",
-    ],
-    defaults: [
-        "keymint_use_latest_hal_aidl_ndk_shared",
     ],
     shared_libs: [
         "libbase",
@@ -56,31 +52,36 @@ cc_library {
 }
 
 cc_library {
-    name: "libkeymint_support_V3",
-    vendor_available: true,
+    name: "libkeymint_support",
     cflags: [
-        "-Wall",
-        "-Wextra",
-        "-Werror",
+        "-DKEYMINT_HAL_V4",
     ],
-    srcs: [
-        "attestation_record.cpp",
-        "authorization_set.cpp",
-        "keymint_utils.cpp",
-        "key_param_output.cpp",
+    defaults: [
+        "keymint_use_latest_hal_aidl_ndk_shared",
+        "libkeymint_support_defaults",
     ],
-    export_include_dirs: [
-        "include",
+}
+
+cc_library {
+    name: "libkeymint_support_V4",
+    cflags: [
+        "-DKEYMINT_HAL_V4",
     ],
-    header_libs: [
-        "libhardware_headers",
+    defaults: [
+        "libkeymint_support_defaults",
+    ],
+    shared_libs: [
+        "android.hardware.security.keymint-V4-ndk",
+    ],
+}
+
+cc_library {
+    name: "libkeymint_support_V3",
+    defaults: [
+        "libkeymint_support_defaults",
     ],
     shared_libs: [
         "android.hardware.security.keymint-V3-ndk",
-        "libbase",
-        "libcrypto",
-        "libutils",
-        "libhardware",
     ],
 }
 

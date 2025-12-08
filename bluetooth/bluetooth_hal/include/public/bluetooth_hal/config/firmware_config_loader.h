@@ -21,10 +21,12 @@
 #include <mutex>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "bluetooth_hal/config/config_loader.h"
 #include "bluetooth_hal/hal_packet.h"
+#include "bluetooth_hal/hal_types.h"
 
 namespace bluetooth_hal {
 namespace config {
@@ -40,11 +42,34 @@ enum class SetupCommandType : int {
   kUpdateChipBaudRate,
   kSetFastDownload,
   kDownloadMinidrv,
-  kLaunchRam,
   kReadFwVersion,
   kSetupLowPowerMode,
   kWriteBdAddress,
 };
+
+inline constexpr std::string_view SetupCommandTypeToString(
+    SetupCommandType type) {
+  switch (type) {
+    case SetupCommandType::kReset:
+      return "Reset";
+    case SetupCommandType::kReadChipId:
+      return "ReadChipId";
+    case SetupCommandType::kUpdateChipBaudRate:
+      return "UpdateChipBaudRate";
+    case SetupCommandType::kSetFastDownload:
+      return "SetFastDownload";
+    case SetupCommandType::kDownloadMinidrv:
+      return "DownloadMinidrv";
+    case SetupCommandType::kReadFwVersion:
+      return "ReadFwVersion";
+    case SetupCommandType::kSetupLowPowerMode:
+      return "SetupLowPowerMode";
+    case SetupCommandType::kWriteBdAddress:
+      return "WriteBdAddress";
+    default:
+      return "Unknown";
+  }
+}
 
 enum class DataType : int { kDataFragment = 0, kDataEnd };
 
@@ -103,6 +128,20 @@ class FirmwareConfigLoader : public ConfigLoader {
 
   virtual bool LoadConfig() override = 0;
   virtual std::string DumpConfigToString() const override = 0;
+
+  /**
+   * @brief Selects the firmware configuration for a given transport type.
+   *
+   * This method sets the internal active configuration to the one matching
+   * the provided transport_type. Subsequent calls to getters will use this
+   * active configuration.
+   *
+   * @param transport_type The transport type to select configuration for.
+   *
+   * @return true if a configuration was found and selected, false otherwise.
+   */
+  virtual bool SelectFirmwareConfiguration(
+      ::bluetooth_hal::transport::TransportType transport_type) = 0;
 
   /**
    * @brief Resets the state of the firmware data loading process.
@@ -169,13 +208,20 @@ class FirmwareConfigLoader : public ConfigLoader {
    */
   virtual int GetLaunchRamDelayMs() const = 0;
 
+  /**
+   * @brief Retrieves the number of configured firmware files.
+   *
+   * @return The count of firmware files for the active configuration.
+   */
+  virtual size_t GetFirmwareFileCount() const = 0;
+
   static FirmwareConfigLoader& GetLoader();
 
   static void ResetLoader();
 
  private:
-  static FirmwareConfigLoader* loader_;
-  static std::mutex loader_mutex_;
+  static inline FirmwareConfigLoader* loader_{nullptr};
+  static inline std::mutex loader_mutex_;
 };
 
 }  // namespace config

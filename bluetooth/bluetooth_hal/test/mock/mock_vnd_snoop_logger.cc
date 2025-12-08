@@ -16,14 +16,20 @@
 
 #include "bluetooth_hal/test/mock/mock_vnd_snoop_logger.h"
 
+#include "android-base/logging.h"
 #include "bluetooth_hal/debug/vnd_snoop_logger.h"
 
 namespace bluetooth_hal {
 namespace debug {
 
-static MockVndSnoopLogger* mock_vnd_snoop_logger_;
-
-VndSnoopLogger& VndSnoopLogger::GetLogger() { return *mock_vnd_snoop_logger_; }
+VndSnoopLogger& VndSnoopLogger::GetLogger() {
+  if (!MockVndSnoopLogger::mock_vnd_snoop_logger_) {
+    LOG(FATAL) << __func__
+               << ": mock_vnd_snoop_logger_ is nullptr. Did you forget to call "
+                  "SetMockVndSnoopLogger in your test SetUp?";
+  }
+  return *MockVndSnoopLogger::mock_vnd_snoop_logger_;
+}
 
 void MockVndSnoopLogger::SetMockVndSnoopLogger(MockVndSnoopLogger* logger) {
   mock_vnd_snoop_logger_ = logger;

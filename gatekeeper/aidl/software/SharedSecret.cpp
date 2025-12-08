@@ -23,7 +23,6 @@
 
 #include <openssl/rand.h>
 
-#include <KeyMintUtils.h>
 #include <aidl/android/hardware/security/sharedsecret/BnSharedSecret.h>
 #include <aidl/android/hardware/security/sharedsecret/SharedSecretParameters.h>
 #include <android-base/logging.h>
@@ -33,6 +32,16 @@
 #include <keymaster/km_openssl/hmac.h>
 
 namespace aidl::android::hardware::security::sharedsecret {
+
+namespace {
+
+inline ::ndk::ScopedAStatus kmError2ScopedAStatus(const keymaster_error_t value) {
+    return (value == KM_ERROR_OK ? ::ndk::ScopedAStatus::ok()
+                                 : ::ndk::ScopedAStatus(AStatus_fromServiceSpecificError(
+                                           static_cast<int32_t>(value))));
+}
+
+}  // namespace
 
 ::ndk::ScopedAStatus SoftSharedSecret::getSharedSecretParameters(
         SharedSecretParameters* out_params) {
@@ -60,7 +69,7 @@ namespace aidl::android::hardware::security::sharedsecret {
     keymaster::KeymasterKeyBlob key_agreement_key;
     if (key_agreement_key.Reset(32) == nullptr) {
         LOG(ERROR) << "key agreement key memory allocation failed";
-        return keymint::km_utils::kmError2ScopedAStatus(KM_ERROR_MEMORY_ALLOCATION_FAILED);
+        return kmError2ScopedAStatus(KM_ERROR_MEMORY_ALLOCATION_FAILED);
     }
     // Matching:
     // - kFakeAgreementKey in system/keymaster/km_openssl/soft_keymaster_enforcement.cpp
@@ -69,7 +78,7 @@ namespace aidl::android::hardware::security::sharedsecret {
     keymaster::KeymasterBlob label((uint8_t*)KEY_AGREEMENT_LABEL, strlen(KEY_AGREEMENT_LABEL));
     if (label.data == nullptr) {
         LOG(ERROR) << "label memory allocation failed";
-        return keymint::km_utils::kmError2ScopedAStatus(KM_ERROR_MEMORY_ALLOCATION_FAILED);
+        return kmError2ScopedAStatus(KM_ERROR_MEMORY_ALLOCATION_FAILED);
     }
 
     static_assert(sizeof(keymaster_blob_t) == sizeof(keymaster::KeymasterBlob));
@@ -80,13 +89,13 @@ namespace aidl::android::hardware::security::sharedsecret {
         auto& seed_blob = context_blobs.emplace_back();
         if (seed_blob.Reset(param.seed.size()) == nullptr) {
             LOG(ERROR) << "seed memory allocation failed";
-            return keymint::km_utils::kmError2ScopedAStatus(KM_ERROR_MEMORY_ALLOCATION_FAILED);
+            return kmError2ScopedAStatus(KM_ERROR_MEMORY_ALLOCATION_FAILED);
         }
         std::copy(param.seed.begin(), param.seed.end(), seed_blob.writable_data());
         auto& nonce_blob = context_blobs.emplace_back();
         if (nonce_blob.Reset(param.nonce.size()) == nullptr) {
             LOG(ERROR) << "Nonce memory allocation failed";
-            return keymint::km_utils::kmError2ScopedAStatus(KM_ERROR_MEMORY_ALLOCATION_FAILED);
+            return kmError2ScopedAStatus(KM_ERROR_MEMORY_ALLOCATION_FAILED);
         }
         std::copy(param.nonce.begin(), param.nonce.end(), nonce_blob.writable_data());
         if (param.seed == seed_ && param.nonce == nonce_) {
@@ -95,18 +104,18 @@ namespace aidl::android::hardware::security::sharedsecret {
     }
     if (!found_mine) {
         LOG(ERROR) << "Did not receive my own shared secret parameter back";
-        return keymint::km_utils::kmError2ScopedAStatus(KM_ERROR_INVALID_ARGUMENT);
+        return kmError2ScopedAStatus(KM_ERROR_INVALID_ARGUMENT);
     }
     auto context_blobs_ptr = reinterpret_cast<keymaster_blob_t*>(context_blobs.data());
     if (hmac_key_.Reset(32) == nullptr) {
         LOG(ERROR) << "hmac key allocation failed";
-        return keymint::km_utils::kmError2ScopedAStatus(KM_ERROR_MEMORY_ALLOCATION_FAILED);
+        return kmError2ScopedAStatus(KM_ERROR_MEMORY_ALLOCATION_FAILED);
     }
     auto error = keymaster::ckdf(key_agreement_key, label, context_blobs_ptr, context_blobs.size(),
                                  &hmac_key_);
     if (error != KM_ERROR_OK) {
         LOG(ERROR) << "CKDF failed";
-        return keymint::km_utils::kmError2ScopedAStatus(error);
+        return kmError2ScopedAStatus(error);
     }
 
     keymaster::HmacSha256 hmac_impl;

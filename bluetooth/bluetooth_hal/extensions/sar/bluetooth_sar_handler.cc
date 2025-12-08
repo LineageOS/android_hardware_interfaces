@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "bthal.extensions.sar"
+#define LOG_TAG "bluetooth_hal.extensions.sar"
 
 #include "bluetooth_hal/extensions/sar/bluetooth_sar_handler.h"
 
 #include <array>
 #include <cstdint>
+#include <sstream>
 #include <string>
 
 #include "android-base/logging.h"
@@ -65,6 +66,10 @@ uint8_t scopeCap(uint8_t cap, bool high_resolution_cap) {
   } else {
     return cap / kHciVscPowerCapScale;
   }
+}
+
+BluetoothSarHandler::BluetoothSarHandler() {
+  SetClientLogTag("Bluetooth SAR Handler");
 }
 
 HalPacket BluetoothSarHandler::BuildCommandHRMode(
@@ -154,11 +159,12 @@ bool BluetoothSarHandler::SetBluetoothTechBasedTxPowerCap(int8_t br_cap,
                                                           int8_t edr_cap,
                                                           int8_t ble_cap) {
   if (!IsBluetoothEnabled()) {
-    LOG(WARNING) << __func__ << ": Unable to set power cap "
-                 << logPowerLimit(br_cap, edr_cap, ble_cap);
+    CLIENT_LOG(WARNING) << __func__ << ": Unable to set power cap "
+                        << logPowerLimit(br_cap, edr_cap, ble_cap);
     return false;
   }
-  LOG(INFO) << __func__ << ": " << logPowerLimit(br_cap, edr_cap, ble_cap);
+  CLIENT_LOG(INFO) << __func__ << ": "
+                   << logPowerLimit(br_cap, edr_cap, ble_cap);
   HalPacket set_power_cap =
       BuildCommand(br_cap, edr_cap, ble_cap, high_resolution_cap_);
   return SendCommand(set_power_cap);
@@ -168,31 +174,26 @@ bool BluetoothSarHandler::SetBluetoothModeBasedTxPowerCap(
     const std::array<uint8_t, 3>& chain_0_cap,
     const std::array<uint8_t, 3>& chain_1_cap,
     const std::array<uint8_t, 6>& beamforming_cap) {
+  std::stringstream tx_power_cap_ss;
+  tx_power_cap_ss << "Chain 0 Power Cap:"
+                  << logPowerLimit(chain_0_cap[0], chain_0_cap[1],
+                                   chain_0_cap[2])
+                  << ", Chain 1 Power Cap:"
+                  << logPowerLimit(chain_1_cap[0], chain_1_cap[1],
+                                   chain_1_cap[2])
+                  << ", Beamforming Power Cap Chain 0: "
+                  << logPowerLimit(beamforming_cap[0], beamforming_cap[1],
+                                   beamforming_cap[2])
+                  << ", Chain 1:"
+                  << logPowerLimit(beamforming_cap[3], beamforming_cap[4],
+                                   beamforming_cap[5]);
+
   if (!IsBluetoothEnabled()) {
-    LOG(WARNING) << __func__ << ": Unable to set power cap Chain 0:"
-                 << logPowerLimit(chain_0_cap[0], chain_0_cap[1],
-                                  chain_0_cap[2])
-                 << ", Chain 1:"
-                 << logPowerLimit(chain_1_cap[0], chain_1_cap[1],
-                                  chain_1_cap[2])
-                 << "Beamforming: Chain 0:"
-                 << logPowerLimit(beamforming_cap[0], beamforming_cap[1],
-                                  beamforming_cap[2])
-                 << ", Chain 1:"
-                 << logPowerLimit(beamforming_cap[3], beamforming_cap[4],
-                                  beamforming_cap[5]);
+    CLIENT_LOG(WARNING) << __func__ << ": Unable to set power cap - "
+                        << tx_power_cap_ss.str();
     return false;
   }
-  LOG(INFO) << __func__ << ": Chain 0 Power Cap:"
-            << logPowerLimit(chain_0_cap[0], chain_0_cap[1], chain_0_cap[2])
-            << ", Chain 1 Power Cap:"
-            << logPowerLimit(chain_1_cap[0], chain_1_cap[1], chain_1_cap[2])
-            << ", Beamforming Power Cap Chain 0: "
-            << logPowerLimit(beamforming_cap[0], beamforming_cap[1],
-                             beamforming_cap[2])
-            << ", Chain 1:"
-            << logPowerLimit(beamforming_cap[3], beamforming_cap[4],
-                             beamforming_cap[5]);
+  CLIENT_LOG(INFO) << __func__ << ": " << tx_power_cap_ss.str();
 
   HalPacket set_power_cap = BuildCommand(chain_0_cap, chain_1_cap,
                                          beamforming_cap, high_resolution_cap_);
@@ -202,33 +203,26 @@ bool BluetoothSarHandler::SetBluetoothModeBasedTxPowerCapPlusHR(
     const std::array<uint8_t, 4>& chain_0_cap,
     const std::array<uint8_t, 4>& chain_1_cap,
     const std::array<uint8_t, 8>& beamforming_cap) {
+  std::stringstream tx_power_cap_ss;
+  tx_power_cap_ss << "Chain 0 Power Cap:"
+                  << logPowerLimit(chain_0_cap[0], chain_0_cap[1],
+                                   chain_0_cap[2], chain_0_cap[3])
+                  << ", Chain 1 Power Cap:"
+                  << logPowerLimit(chain_1_cap[0], chain_1_cap[1],
+                                   chain_1_cap[2], chain_1_cap[3])
+                  << ", Beamforming Power Cap Chain 0: "
+                  << logPowerLimit(beamforming_cap[0], beamforming_cap[1],
+                                   beamforming_cap[2], beamforming_cap[3])
+                  << ", Chain 1:"
+                  << logPowerLimit(beamforming_cap[4], beamforming_cap[5],
+                                   beamforming_cap[6], beamforming_cap[7]);
+
   if (!IsBluetoothEnabled()) {
-    LOG(WARNING) << __func__ << ": Unable to set power cap Chain 0:"
-                 << logPowerLimit(chain_0_cap[0], chain_0_cap[1],
-                                  chain_0_cap[2], chain_0_cap[3])
-                 << ", Chain 1:"
-                 << logPowerLimit(chain_1_cap[0], chain_1_cap[1],
-                                  chain_1_cap[2], chain_1_cap[3])
-                 << "Beamforming: Chain 0:"
-                 << logPowerLimit(beamforming_cap[0], beamforming_cap[1],
-                                  beamforming_cap[2], beamforming_cap[3])
-                 << ", Chain 1:"
-                 << logPowerLimit(beamforming_cap[4], beamforming_cap[5],
-                                  beamforming_cap[6], beamforming_cap[7]);
+    CLIENT_LOG(WARNING) << __func__ << ": Unable to set power cap "
+                        << tx_power_cap_ss.str();
     return false;
   }
-  LOG(INFO) << __func__ << ": Chain 0 Power Cap:"
-            << logPowerLimit(chain_0_cap[0], chain_0_cap[1], chain_0_cap[2],
-                             chain_0_cap[3])
-            << ", Chain 1 Power Cap:"
-            << logPowerLimit(chain_1_cap[0], chain_1_cap[1], chain_1_cap[2],
-                             chain_1_cap[3])
-            << ", Beamforming Power Cap Chain 0: "
-            << logPowerLimit(beamforming_cap[0], beamforming_cap[1],
-                             beamforming_cap[2], beamforming_cap[3])
-            << ", Chain 1:"
-            << logPowerLimit(beamforming_cap[4], beamforming_cap[5],
-                             beamforming_cap[6], beamforming_cap[7]);
+  CLIENT_LOG(INFO) << __func__ << ": " << tx_power_cap_ss.str();
 
   HalPacket set_power_cap =
       BuildCommandHRMode(chain_0_cap, chain_1_cap, beamforming_cap,
@@ -249,9 +243,8 @@ void BluetoothSarHandler::OnMonitorPacketCallback(
 void BluetoothSarHandler::OnCommandCallback(const HalPacket& event) {
   bool success = (event.GetCommandCompleteEventResult() ==
                   static_cast<uint8_t>(EventResultCode::kSuccess));
-  LOG(success ? INFO : WARNING)
-      << __func__ << ": Recv VSE <" << event.ToString() << "> "
-      << (success ? "[Success]" : "[Failed]");
+  CLIENT_LOG(INFO) << __func__ << ": Recv VSE <" << event.ToString() << "> "
+                   << (success ? "[Success]" : "[Failed]");
 }
 
 void BluetoothSarHandler::OnBluetoothEnabled() {

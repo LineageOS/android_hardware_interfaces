@@ -54,5 +54,6 @@ parcelable GnssAlmanac {
     double m0;
     double af0;
     double af1;
+    int toaSeconds;
   }
 }

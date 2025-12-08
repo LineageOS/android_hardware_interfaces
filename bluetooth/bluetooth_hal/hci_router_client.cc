@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "bthal.router_client"
+#define LOG_TAG "bluetooth_hal.router_client"
 
 #include "bluetooth_hal/hci_router_client.h"
 
@@ -36,13 +36,13 @@ namespace hci {
 using ::bluetooth_hal::HalState;
 
 HciRouterClient::HciRouterClient() {
-  HciRouterClientAgent::GetAgent().RegisterRouterClient(this);
+  HciRouterClientAgent::GetAgent().RegisterClient(this);
 }
 
 HciRouterClient::~HciRouterClient() {
   std::scoped_lock<std::recursive_mutex> lock(mutex_);
   monitors_.clear();
-  HciRouterClientAgent::GetAgent().UnregisterRouterClient(this);
+  HciRouterClientAgent::GetAgent().UnregisterClient(this);
 }
 
 MonitorMode HciRouterClient::OnPacketCallback(const HalPacket& packet) {
@@ -51,7 +51,7 @@ MonitorMode HciRouterClient::OnPacketCallback(const HalPacket& packet) {
   MonitorMode mode = MonitorMode::kNone;
   for (const auto& it : monitors_) {
     if (it.first == packet) {
-      mode = (it.second > mode) ? it.second : mode;
+      mode = std::max(mode, it.second);
     }
   }
 
@@ -76,10 +76,7 @@ bool HciRouterClient::RegisterMonitor(const HciMonitor& monitor,
     LOG(ERROR) << __func__ << ": Monitor mode cannot be kNone!";
     return false;
   }
-  auto it = std::find_if(
-      monitors_.begin(), monitors_.end(),
-      [&monitor](const auto& entry) { return entry.first == monitor; });
-  if (it != monitors_.end()) {
+  if (monitors_.count(monitor)) {
     LOG(ERROR) << __func__ << ": The same monitor already exist!";
     return false;
   }
@@ -89,14 +86,10 @@ bool HciRouterClient::RegisterMonitor(const HciMonitor& monitor,
 
 bool HciRouterClient::UnregisterMonitor(const HciMonitor& monitor) {
   std::scoped_lock<std::recursive_mutex> lock(mutex_);
-  auto it = std::find_if(
-      monitors_.begin(), monitors_.end(),
-      [&monitor](const auto& entry) { return entry.first == monitor; });
-  if (it == monitors_.end()) {
+  if (monitors_.erase(monitor) == 0) {
     LOG(ERROR) << __func__ << ": Monitor not registered!";
     return false;
   }
-  monitors_.erase(it);
   return true;
 }
 

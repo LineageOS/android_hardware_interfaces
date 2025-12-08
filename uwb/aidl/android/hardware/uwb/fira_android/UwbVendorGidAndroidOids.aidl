@@ -37,6 +37,14 @@ enum UwbVendorGidAndroidOids {
     // Supported only if the UwbVendorCapabilityTlvTypes.SUPPORTED_DIAGNOSTICS set
     // to 1.
     ANDROID_RANGE_DIAGNOSTICS = 0x2,
+    // Convert an anchor-point timestamp to the UWBS clock domain.
+    // Parameters:
+    // - system_timestamp_us (uint64_t) - Timestamp in "System" domain
+    // - bt_timestamp_us (uint64_t) - Timestamp in Bluetooth domain
+    // Results:
+    // - uwbs_timestamp_us (uint64_t) - Estimated timestamp in UWBS domain
+    // - uncertainty_us (uint32_t) - True value is estimate +/- uncertainty
+    ANDROID_TIMESTAMP_ANCHOR_TO_UWBS = 0x3,
 
     /*********************************************
      * Range 0x10 - 0x1F reserved for RADAR specific

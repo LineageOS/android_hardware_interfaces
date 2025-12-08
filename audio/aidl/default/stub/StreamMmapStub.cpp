@@ -105,9 +105,25 @@ DriverMmapStubImpl::DriverMmapStubImpl(const StreamContext& context)
     return ::android::OK;
 }
 
+::android::status_t DriverMmapStubImpl::flush() {
+    RETURN_STATUS_IF_ERROR(DriverStubImpl::flush());
+    mDspWorker.pause();
+    if (mIsInput) {
+        RETURN_STATUS_IF_ERROR(standby());
+    }
+    return ::android::OK;
+}
+
 ::android::status_t DriverMmapStubImpl::pause() {
     RETURN_STATUS_IF_ERROR(DriverStubImpl::pause());
     mDspWorker.pause();
+    return ::android::OK;
+}
+
+::android::status_t DriverMmapStubImpl::standby() {
+    RETURN_STATUS_IF_ERROR(DriverStubImpl::standby());
+    std::lock_guard l(mState.lock);
+    RETURN_STATUS_IF_ERROR(releaseSharedMemory());
     return ::android::OK;
 }
 
@@ -255,7 +271,17 @@ ndk::ScopedAStatus StreamMmapStub::setVendorParameters(
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus StreamMmapStub::createMmapBuffer(MmapBufferDescriptor* desc) {
+ndk::ScopedAStatus StreamMmapStub::createMmapBuffer(MmapBufferDescriptor* _aidl_return) {
+    LOG(DEBUG) << __func__;
+    if (isClosed()) {
+        LOG(ERROR) << __func__ << ": stream was closed";
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+    }
+    if (getConnectedDevices().empty()) {
+        LOG(ERROR) << __func__ << ": stream is not connected";
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+    }
+
     const size_t bufferSizeFrames = mContext.getBufferSizeInFrames();
     const size_t bufferSizeBytes = static_cast<size_t>(bufferSizeFrames) * mContext.getFrameSize();
     const std::string regionName =
@@ -270,11 +296,11 @@ ndk::ScopedAStatus StreamMmapStub::createMmapBuffer(MmapBufferDescriptor* desc) 
     if (initSharedMemory(mSharedMemoryFd.get()) != ::android::OK) {
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
     }
-    desc->sharedMemory.fd = mSharedMemoryFd.dup();
-    desc->sharedMemory.size = bufferSizeBytes;
-    desc->burstSizeFrames = bufferSizeFrames / 4;
-    desc->flags = 1 << MmapBufferDescriptor::FLAG_INDEX_APPLICATION_SHAREABLE;
-    LOG(DEBUG) << __func__ << ": " << desc->toString();
+    _aidl_return->sharedMemory.fd = mSharedMemoryFd.dup();
+    _aidl_return->sharedMemory.size = bufferSizeBytes;
+    _aidl_return->burstSizeFrames = bufferSizeFrames / 4;
+    _aidl_return->flags = 1 << MmapBufferDescriptor::FLAG_INDEX_APPLICATION_SHAREABLE;
+    LOG(DEBUG) << __func__ << ": " << _aidl_return->toString();
     return ndk::ScopedAStatus::ok();
 }
 

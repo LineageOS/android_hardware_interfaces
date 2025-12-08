@@ -80,7 +80,11 @@ TEST_P(MemtrackAidlTest, GetMemoryInvalidType) {
         return;
     }
 
-    EXPECT_EQ(status.getExceptionCode(), EX_ILLEGAL_ARGUMENT);
+    // Accept EX_UNSUPPORTED_OPERATION as a valid exception for backwards
+    // compatibility. Future Memtrack HAL implementations should return
+    // EX_ILLEGAL_ARGUMENT when handling invalid types.
+    ASSERT_TRUE(status.getExceptionCode() == EX_ILLEGAL_ARGUMENT ||
+                status.getExceptionCode() == EX_UNSUPPORTED_OPERATION);
 }
 
 TEST_P(MemtrackAidlTest, GetMemory) {

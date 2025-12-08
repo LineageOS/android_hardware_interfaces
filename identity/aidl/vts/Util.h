@@ -95,6 +95,8 @@ struct TestProfile {
     uint64_t timeoutMillis;
 };
 
+bool isGsiImage();
+
 bool setupWritableCredential(sp<IWritableIdentityCredential>& writableCredential,
                              sp<IIdentityCredentialStore>& credentialStore, bool testCredential);
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "bthal.wakelock_watchdog"
+#define LOG_TAG "bluetooth_hal.wakelock_watchdog"
 
 #include "bluetooth_hal/util/power/wakelock_watchdog.h"
 
@@ -50,6 +50,11 @@ class WatchdogBiteHandler {
     LOG(FATAL) << __func__ << ": wakelock watchdog BITE due to HCI timeout!";
   }
 
+  void RouterTaskTimeout() {
+    LOG(FATAL) << __func__
+               << ": wakelock watchdog BITE due to Router Task timeout!";
+  }
+
   void InitializeTimeout() {
     LOG(FATAL) << __func__
                << ": wakelock watchdog BITE due to initialize timeout!";
@@ -64,6 +69,8 @@ class WakelockWatchdogImpl : public WakelockWatchdog {
  public:
   void Start(WakeSource source) override;
   void Stop(WakeSource source) override;
+  void Pause() override;
+  void Resume() override;
 
  private:
   void WatchdogTimerExpired();
@@ -75,12 +82,14 @@ class WakelockWatchdogImpl : public WakelockWatchdog {
   std::unordered_map<WakeSource, int> watchdog_map_;
   static constexpr int kWatchdogBarkMs = 1000;
   static const std::unordered_map<WakeSource, int> kWatchdogMs;
+  bool watchdog_paused_;
 };
 
 const std::unordered_map<WakeSource, int> WakelockWatchdogImpl::kWatchdogMs = {
     {WakeSource::kTx, 5000},           //  5 seconds for TX timeout.
     {WakeSource::kRx, 5000},           //  5 seconds for RX timeout.
     {WakeSource::kHciBusy, 10000},     // 10 seconds for HCI timeout.
+    {WakeSource::kRouterTask, 5000},   // 5 seconds for Router Task timeout.
     {WakeSource::kTransport, 20000},   // 20 seconds for Transport timeout.
     {WakeSource::kInitialize, 20000},  // 20 seconds for HAL Initialization.
     {WakeSource::kClose, 20000},       // 20 seconds for HAL Closing.
@@ -105,6 +114,18 @@ void WakelockWatchdogImpl::Stop(WakeSource source) {
   }
 }
 
+void WakelockWatchdogImpl::Pause() {
+  std::scoped_lock<std::recursive_mutex> lock(mutex_);
+  HAL_LOG(WARNING) << __func__ << ": Watchdog is paused!";
+  watchdog_paused_ = true;
+}
+
+void WakelockWatchdogImpl::Resume() {
+  std::scoped_lock<std::recursive_mutex> lock(mutex_);
+  HAL_LOG(INFO) << __func__ << ": Watchdog is resumed";
+  watchdog_paused_ = false;
+}
+
 void WakelockWatchdogImpl::WatchdogTimerExpired() {
   std::scoped_lock<std::recursive_mutex> lock(mutex_);
   if (watchdog_map_.empty()) {
@@ -112,6 +133,7 @@ void WakelockWatchdogImpl::WatchdogTimerExpired() {
   }
 
   for (auto& it : watchdog_map_) {
+    if (watchdog_paused_) break;
     WakeSource source = it.first;
     it.second -= kWatchdogBarkMs;
     int remain_time = it.second;
@@ -133,7 +155,7 @@ void WakelockWatchdogImpl::WatchdogTimerExpired() {
 }
 
 void WakelockWatchdogImpl::Bark(WakeSource source, int remain_time) {
-  ANCHOR_LOG_WARNING(AnchorType::WATCHDOG)
+  ANCHOR_LOG_WARNING(AnchorType::kWatchdog)
       << ": Watchdog BARK! WakeSource = "
       << WakelockUtil::WakeSourceToString(source)
       << ", remain time = " << remain_time << "ms.";
@@ -151,10 +173,13 @@ void WakelockWatchdogImpl::Bite(WakeSource source) {
     case WakeSource::kHciBusy:
       watchdog_bite_handler.HciTimeout();
       break;
+    case WakeSource::kRouterTask:
+      watchdog_bite_handler.RouterTaskTimeout();
+      break;
     case WakeSource::kTransport:
       // Long Transport wakelock can happen in heavy BT traffic, print log here
       // as a nice-to-have battery information instead of crash.
-      ANCHOR_LOG(AnchorType::WATCHDOG) << "Long transport wakelock detected.";
+      ANCHOR_LOG(AnchorType::kWatchdog) << "Long transport wakelock detected.";
       Start(source);
       break;
     case WakeSource::kInitialize:

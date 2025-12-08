@@ -99,7 +99,7 @@ interface IVibratorManager {
      *
      * @param callback A callback used to inform Frameworks of state change, if supported.
      */
-    void triggerSynced(in IVibratorCallback callback);
+    void triggerSynced(in @nullable IVibratorCallback callback);
 
     /**
      * Cancel preparation of synced vibration
@@ -134,8 +134,8 @@ interface IVibratorManager {
      *         - EX_ILLEGAL_STATE for vibrator IDs already in a session or in a prepareSynced state.
      *         - EX_SERVICE_SPECIFIC for bad vendor data.
      */
-    IVibrationSession startSession(
-            in int[] vibratorIds, in VibrationSessionConfig config, in IVibratorCallback callback);
+    IVibrationSession startSession(in int[] vibratorIds, in VibrationSessionConfig config,
+            in @nullable IVibratorCallback callback);
 
     /**
      * Abort and clear all ongoing vibration sessions.

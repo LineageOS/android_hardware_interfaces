@@ -56,6 +56,9 @@ void stopWifiService(const char* instance_name);
 int32_t getChipFeatureSet(const std::shared_ptr<IWifiChip>& wifi_chip);
 bool checkStatusCode(ndk::ScopedAStatus* status, WifiStatusCode expected_code);
 bool isAidlServiceAvailable(const char* instance_name);
+// Check and update the Wifi framework state.
+bool isWifiFrameworkEnabled();
+void setWifiFrameworkEnabled(bool enable);
 // Generate test vendor data.
 std::vector<OuiKeyedData> generateOuiKeyedDataList(int size);
 std::optional<std::vector<std::optional<OuiKeyedData>>> generateOuiKeyedDataListOptional(int size);

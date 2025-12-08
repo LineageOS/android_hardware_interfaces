@@ -22,7 +22,10 @@
 #include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
 
+#include <mutex>
+#include <string>
 #include <thread>
+#include <vector>
 
 using namespace ::android::hardware::automotive::sv::V1_0;
 using ::android::hardware::Return;

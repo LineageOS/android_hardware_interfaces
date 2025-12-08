@@ -255,14 +255,18 @@ class DisplayWrapper {
 
     Rect getFrameRect() const { return {0, 0, mDisplayWidth, mDisplayHeight}; }
 
-    void setDimensions(int32_t displayWidth, int32_t displayHeight) {
+    void setDimensionsAndVsyncPeriod(int32_t displayWidth, int32_t displayHeight,
+                                     int32_t vsyncPeriod) {
         mDisplayWidth = displayWidth;
         mDisplayHeight = displayHeight;
+        mVsyncPeriod = vsyncPeriod;
     }
 
     int32_t getDisplayWidth() const { return mDisplayWidth; }
 
     int32_t getDisplayHeight() const { return mDisplayHeight; }
+
+    int32_t getVsyncPeriod() const { return mVsyncPeriod; }
 
     struct DisplayConfig {
         DisplayConfig(int32_t vsyncPeriod_, int32_t configGroup_,
@@ -315,6 +319,7 @@ class DisplayWrapper {
     int64_t mDisplayId;
     int32_t mDisplayWidth;
     int32_t mDisplayHeight;
+    int32_t mVsyncPeriod;
     std::unordered_map<int32_t, DisplayConfig> mDisplayConfigs;
 };
 }  // namespace aidl::android::hardware::graphics::composer3::libhwc_aidl_test

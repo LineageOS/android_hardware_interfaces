@@ -245,6 +245,15 @@ void stopWifiService(const char* instance_name) {
     }
 }
 
+bool isWifiFrameworkEnabled() {
+    return testing::checkSubstringInCommandOutput("/system/bin/cmd wifi status", "Wifi is enabled");
+}
+
+void setWifiFrameworkEnabled(bool enable) {
+    const char* toggleCommand = enable ? "svc wifi enable" : "svc wifi disable";
+    std::system(toggleCommand);
+}
+
 int32_t getChipFeatureSet(const std::shared_ptr<IWifiChip>& wifi_chip) {
     if (!wifi_chip.get()) {
         return 0;

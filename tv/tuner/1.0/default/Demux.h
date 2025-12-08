@@ -20,6 +20,8 @@
 #include <android/hardware/tv/tuner/1.0/IDemux.h>
 #include <fmq/MessageQueue.h>
 #include <math.h>
+#include <map>
+#include <mutex>
 #include <set>
 #include "Dvr.h"
 #include "Filter.h"

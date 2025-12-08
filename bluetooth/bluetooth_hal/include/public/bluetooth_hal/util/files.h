@@ -18,6 +18,8 @@
 
 #include <chrono>
 #include <optional>
+#include <string>
+#include <string_view>
 
 namespace bluetooth_hal {
 namespace os {

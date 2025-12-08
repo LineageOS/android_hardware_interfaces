@@ -19,8 +19,12 @@
 #include <aidl/android/hardware/contexthub/BnContextHub.h>
 #include <aidl/android/hardware/contexthub/BnEndpointCommunication.h>
 
+#include <array>
 #include <atomic>
+#include <memory>
 #include <mutex>
+#include <optional>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 

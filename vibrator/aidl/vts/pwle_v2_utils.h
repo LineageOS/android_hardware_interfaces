@@ -18,6 +18,7 @@
 #define VIBRATOR_HAL_PWLE_V2_UTILS_H
 
 #include <aidl/android/hardware/vibrator/IVibrator.h>
+#include <algorithm>
 #include "test_utils.h"
 
 using aidl::android::hardware::vibrator::FrequencyAccelerationMapEntry;

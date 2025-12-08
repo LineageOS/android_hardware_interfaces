@@ -44,7 +44,7 @@ aidl_interface {
             enabled: false,
         },
         rust: {
-            enabled: false,
+            enabled: true,
         },
     },
     frozen: true,

@@ -39,7 +39,8 @@ using aidl::android::hardware::audio::effect::IFactory;
 using aidl::android::hardware::audio::effect::Parameter;
 using android::hardware::audio::common::testing::detail::TestExecutionTracer;
 
-constexpr int32_t kMinDataTestHalVersion = 3;
+constexpr int32_t kHalVersion3 = 3;
+constexpr int32_t kHalVersion4 = 4;
 
 /**
  * Here we focus on specific parameter checking, general IEffect interfaces testing performed in
@@ -490,7 +491,7 @@ void DynamicsProcessingTestHelper::setUpDataTest(const std::vector<int>& testFre
                                                  float fullScaleSineDb) {
     ASSERT_NO_FATAL_FAILURE(SetUpDynamicsProcessingEffect());
     SKIP_TEST_IF_DATA_UNSUPPORTED(mDescriptor.common.flags);
-    SKIP_TEST_IF_VERSION_UNSUPPORTED(mEffect, kMinDataTestHalVersion);
+    SKIP_TEST_IF_VERSION_UNSUPPORTED(mEffect, kHalVersion3);
 
     mInput.resize(kFrameCount * mChannelCount);
     ASSERT_NO_FATAL_FAILURE(
@@ -558,7 +559,7 @@ void DynamicsProcessingTestHelper::setParamsAndProcess(ConfigType& configs,
     ASSERT_NO_FATAL_FAILURE(SetAndGetDynamicsProcessingParameters());
     if (isAllParamsValid()) {
         ASSERT_NO_FATAL_FAILURE(
-                processAndWriteToOutput(mInput, output, mEffect, &mOpenEffectReturn));
+                processAndWriteToOutput(mInput, output, mEffect, mOpenEffectReturn));
         ASSERT_GT(output.size(), kStartIndex);
     }
 }
@@ -1425,7 +1426,7 @@ TEST_P(DynamicsProcessingTestEqBandConfig, SetAndGetPreEqBandConfig) {
 }
 
 TEST_P(DynamicsProcessingTestEqBandConfig, SetAndGetPostEqBandConfig) {
-    SKIP_TEST_IF_VERSION_UNSUPPORTED(mEffect, kMinDataTestHalVersion);
+    SKIP_TEST_IF_VERSION_UNSUPPORTED(mEffect, kHalVersion3);
     PostEqConfigs postEqConfigs{mCfgs};
     applyConfig(postEqConfigs);
     ASSERT_NO_FATAL_FAILURE(SetAndGetDynamicsProcessingParameters());
@@ -1600,6 +1601,7 @@ TEST_P(DynamicsProcessingEqBandConfigDataTest, PostEqEnableDisable) {
 }
 
 TEST_P(DynamicsProcessingEqBandConfigDataTest, PreEqStageEnableDisable) {
+    SKIP_TEST_IF_VERSION_UNSUPPORTED(mEffect, kHalVersion4);
     for (bool isStageEnabled : testing::Bool()) {
         ASSERT_NO_FATAL_FAILURE(analyseMultiBandOutput(10 /*gain dB*/, true /*pre-equalizer*/,
                                                        true /*enable equalizer*/, isStageEnabled));
@@ -1607,6 +1609,7 @@ TEST_P(DynamicsProcessingEqBandConfigDataTest, PreEqStageEnableDisable) {
 }
 
 TEST_P(DynamicsProcessingEqBandConfigDataTest, PostEqStageEnableDisable) {
+    SKIP_TEST_IF_VERSION_UNSUPPORTED(mEffect, kHalVersion4);
     for (bool isStageEnabled : testing::Bool()) {
         ASSERT_NO_FATAL_FAILURE(analyseMultiBandOutput(10 /*gain dB*/, false /*post-equalizer*/,
                                                        true /*enable equalizer*/, isStageEnabled));
@@ -1994,6 +1997,7 @@ TEST_P(DynamicsProcessingMbcBandConfigDataTest, MBCNotEngagedAttackTime) {
 }
 
 TEST_P(DynamicsProcessingMbcBandConfigDataTest, StageEnableDisableMBC) {
+    SKIP_TEST_IF_VERSION_UNSUPPORTED(mEffect, kHalVersion4);
     const float threshold = -20;
     const float ratio = 10;
     for (bool isMbcStageEnabled : testing::Bool()) {

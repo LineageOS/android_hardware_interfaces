@@ -41,4 +41,5 @@ interface IStreamCommon {
   void setVendorParameters(in android.hardware.audio.core.VendorParameter[] parameters, boolean async);
   void addEffect(in android.hardware.audio.effect.IEffect effect);
   void removeEffect(in android.hardware.audio.effect.IEffect effect);
+  android.hardware.audio.core.MmapBufferDescriptor createMmapBuffer();
 }

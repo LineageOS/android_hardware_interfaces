@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "bthal.transport_interface"
+#define LOG_TAG "bluetooth_hal.transport_interface"
 
 #include "bluetooth_hal/transport/transport_interface.h"
 
@@ -28,7 +28,6 @@
 #include <vector>
 
 #include "android-base/logging.h"
-#include "bluetooth_hal/config/config_constants.h"
 #include "bluetooth_hal/config/hal_config_loader.h"
 #include "bluetooth_hal/hal_types.h"
 #include "bluetooth_hal/transport/uart_h4/transport_uart_h4.h"
@@ -38,22 +37,16 @@ namespace transport {
 
 using ::bluetooth_hal::HalState;
 using ::bluetooth_hal::config::HalConfigLoader;
-namespace cfg_consts = ::bluetooth_hal::config::constants;
-
-TransportType TransportInterface::current_transport_type_ =
-    cfg_consts::kDefaultBtTransportType;
-std::unique_ptr<TransportInterface> TransportInterface::current_transport_;
-std::unordered_map<TransportType, std::unique_ptr<TransportInterface>>
-    TransportInterface::vendor_transports_;
-std::recursive_mutex TransportInterface::transport_mutex_;
-std::atomic<bool> TransportInterface::is_hci_router_busy_ = false;
-std::atomic<HalState> TransportInterface::hal_state_ = HalState::kInit;
-std::vector<std::reference_wrapper<Subscriber>>
-    TransportInterface::subscribers_;
 
 TransportInterface& TransportInterface::GetTransport() {
   std::lock_guard<std::recursive_mutex> lock(transport_mutex_);
 
+  if (current_transport_) {
+    return *current_transport_;
+  }
+
+  // TODO: b/442448282 - It is not safe to do auto initialize here, need to
+  // separate the logic from GetTransport().
   const std::vector<TransportType>& current_transport_type_priorities =
       HalConfigLoader::GetLoader().GetTransportTypePriority();
 
@@ -78,13 +71,19 @@ TransportInterface::CreateOrAcquireTransport(TransportType requested_type) {
 
   switch (requested_type) {
     case TransportType::kVendorStart... TransportType::kVendorEnd: {
-      auto it = vendor_transports_.find(requested_type);
-      if (it != vendor_transports_.end() && it->second) {
-        new_transport = std::move(it->second);
-      } else {
-        LOG(ERROR) << __func__
-                   << ": Vendor transport not found or is null for type: "
-                   << static_cast<int>(requested_type);
+      new_transport = VendorFactory::Create(requested_type);
+      if (!new_transport) {
+        LOG(ERROR) << __func__ << ": Vendor factory for type "
+                   << static_cast<int>(requested_type)
+                   << " not found or returned null.";
+        return {nullptr, requested_type};
+      }
+      if (new_transport->GetInstanceTransportType() != requested_type) {
+        LOG(ERROR) << __func__ << ": Vendor factory for type "
+                   << static_cast<int>(requested_type)
+                   << " returned mismatched transport type: "
+                   << static_cast<int>(
+                          new_transport->GetInstanceTransportType());
         return {nullptr, requested_type};
       }
       break;
@@ -97,7 +96,7 @@ TransportInterface::CreateOrAcquireTransport(TransportType requested_type) {
     default:
       LOG(WARNING) << __func__ << ": Requested unhandled or kUnknown type: "
                    << static_cast<int>(requested_type)
-                   << ". Defaulting to kUartH4.";
+                   << ".  Defaulting to kUartH4.";
       new_transport_type = TransportType::kUartH4;
       new_transport = std::make_unique<TransportUartH4>();
       break;
@@ -126,15 +125,7 @@ bool TransportInterface::UpdateTransportType(TransportType requested_type) {
 
   // New transport is ready. Now, cleanup and replace the old one.
   if (current_transport_) {
-    current_transport_->Cleanup();
-    if (current_transport_type_ >= TransportType::kVendorStart &&
-        current_transport_type_ <= TransportType::kVendorEnd) {
-      // Move the old vendor transport back to the map.
-      vendor_transports_[current_transport_type_] =
-          std::move(current_transport_);
-      LOG(INFO) << __func__ << ": Moved back old vendor transport type: "
-                << static_cast<int>(current_transport_type_);
-    }
+    CleanupTransport();
   }
 
   // Activate the new transport.
@@ -150,16 +141,22 @@ bool TransportInterface::UpdateTransportType(TransportType requested_type) {
   return current_transport_ != nullptr;
 }
 
-bool TransportInterface::RegisterVendorTransport(
-    std::unique_ptr<TransportInterface> transport) {
+void TransportInterface::CleanupTransport() {
+  if (current_transport_) {
+    current_transport_->Cleanup();
+    current_transport_.reset();
+    current_transport_type_ = TransportType::kUnknown;
+  }
+}
+
+bool TransportInterface::RegisterVendorTransport(TransportType type,
+                                                 FactoryFn factory) {
   std::lock_guard<std::recursive_mutex> lock(transport_mutex_);
 
-  if (!transport) {
-    LOG(ERROR) << __func__ << ": Cannot register null transport.";
+  if (!factory) {
+    LOG(ERROR) << __func__ << ": Cannot register null factory.";
     return false;
   }
-
-  TransportType type = transport->GetInstanceTransportType();
 
   if (current_transport_ && current_transport_type_ == type) {
     LOG(WARNING) << __func__ << ": Current vendor transport is active for type "
@@ -173,12 +170,12 @@ bool TransportInterface::RegisterVendorTransport(
     return false;
   }
 
-  if (vendor_transports_.count(type)) {
-    LOG(WARNING) << __func__ << ": Vendor transport type already registered: "
-                 << static_cast<int>(type);
+  if (VendorFactory::IsRegistered(type)) {
+    LOG(WARNING) << __func__
+                 << ": Vendor transport factory already registered for type: "
+                 << static_cast<int>(type) << ". Overwriting.";
   }
-
-  vendor_transports_[type] = std::move(transport);
+  VendorFactory::RegisterProviderFactory(type, std::move(factory));
 
   return true;
 }
@@ -200,17 +197,16 @@ bool TransportInterface::UnregisterVendorTransport(TransportType type) {
     return false;
   }
 
-  auto it = vendor_transports_.find(type);
-  if (it == vendor_transports_.end() || !it->second) {
+  if (!VendorFactory::IsRegistered(type)) {
     LOG(WARNING) << __func__
-                 << ": Vendor transport not found or is null for type: "
+                 << ": Vendor transport factory not found for type: "
                  << static_cast<int>(type);
     return false;
   }
 
-  it->second->Cleanup();  // Ensure cleanup is called before removing.
-  vendor_transports_.erase(it);
-  LOG(INFO) << __func__ << ": Successfully unregistered vendor transport type: "
+  VendorFactory::UnregisterProviderFactory(type);
+  LOG(INFO) << __func__
+            << ": Successfully unregistered vendor transport factory for type: "
             << static_cast<int>(type);
   return true;
 }

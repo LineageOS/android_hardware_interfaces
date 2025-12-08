@@ -29,7 +29,6 @@
 #include <android-base/strings.h>
 #include <android/binder_manager.h>
 #include <android/content/pm/IPackageManagerNative.h>
-#include <android_security_keystore2.h>
 #include <cppbor_parse.h>
 #include <cutils/properties.h>
 #include <gmock/gmock.h>
@@ -330,19 +329,20 @@ std::optional<vector<uint8_t>> KeyMintAidlTestBase::getModuleHash() {
 }
 
 /**
- * An API to determine device IDs attestation is required or not,
- * which is mandatory for KeyMint version 2 and first_api_level 33 or greater.
+ * Returns whether support for device ID attestation is required, which is the case if the KeyMint
+ * version is >= 2 and the device first shipped with vendor API level 33+ (since support relies on
+ * ID provisioning done in the factory).
  */
 bool KeyMintAidlTestBase::isDeviceIdAttestationRequired() {
     if (!is_gsi_image()) {
-        return AidlVersion() >= 2 &&
-            get_vendor_api_level() >= AVendorSupport_getVendorApiLevelOf(__ANDROID_API_T__);
+        return AidlVersion() >= 2 && AVendorSupport_getFirstVendorApiLevel() >=
+                                             AVendorSupport_getVendorApiLevelOf(__ANDROID_API_T__);
     } else {
         // The device ID properties may not be set properly when testing earlier implementations
         // under GSI, e.g. `ro.product.<id>` is overridden by the GSI image, but the
         // `ro.product.vendor.<id>` value (which does survive GSI installation) was not set.
-        return AidlVersion() >= 2 &&
-            get_vendor_api_level() >= AVendorSupport_getVendorApiLevelOf(__ANDROID_API_U__);
+        return AidlVersion() >= 2 && AVendorSupport_getFirstVendorApiLevel() >=
+                                             AVendorSupport_getVendorApiLevelOf(__ANDROID_API_U__);
     }
 }
 
@@ -392,20 +392,6 @@ void KeyMintAidlTestBase::InitializeKeyMint(std::shared_ptr<IKeyMintDevice> keyM
     os_version_ = getOsVersion();
     os_patch_level_ = getOsPatchlevel();
     vendor_patch_level_ = getVendorPatchlevel();
-
-    if (!::android::security::keystore2::attest_modules()) {
-        // Some tests (for v4+) require that the KeyMint instance has been
-        // provided with a module hash value.  If the keystore2 flag is off,
-        // this will not happen, so set a fake value here instead.
-        GTEST_LOG_(INFO) << "Setting MODULE_HASH to fake value as fallback when flag off";
-        vector<uint8_t> fakeModuleHash = {
-                0xf3, 0xf1, 0x1f, 0xe5, 0x13, 0x05, 0xfe, 0xfa, 0xe9, 0xc3, 0x53,
-                0xef, 0x69, 0xdf, 0x9f, 0xd7, 0x0c, 0x1e, 0xcc, 0x2c, 0x2c, 0x62,
-                0x1f, 0x5e, 0x2c, 0x1d, 0x19, 0xa1, 0xfd, 0xac, 0xa1, 0xb4,
-        };
-        vector<KeyParameter> info = {Authorization(TAG_MODULE_HASH, fakeModuleHash)};
-        keymint_->setAdditionalAttestationInfo(info);
-    }
 }
 
 int32_t KeyMintAidlTestBase::AidlVersion() const {
@@ -1761,7 +1747,7 @@ bool KeyMintAidlTestBase::is_chipset_allowed_km4_strongbox(void) const {
     const string allowed_soc_models[] = {"SM8450", "SM8475", "SM8550", "SXR2230P",
                                          "SM4450", "SM7450", "SM6450"};
 
-    for (const string model : allowed_soc_models) {
+    for (const string& model : allowed_soc_models) {
         if (model.compare(buffer.data()) == 0) {
             GTEST_LOG_(INFO) << "QTI SOC Model " + model + " is allowed SB KM 4.0";
             return true;
@@ -1866,19 +1852,6 @@ int get_vendor_api_level() {
         return product_api_level;
     }
     return std::min(product_api_level, vendor_api_level);
-}
-
-int get_first_vendor_api_level() {
-    // `ro.board.first_api_level` is only populated for GRF chipsets.
-    int first_vendor_api_level = ::android::base::GetIntProperty("ro.board.first_api_level", -1);
-    if (first_vendor_api_level != -1) {
-        return first_vendor_api_level;
-    }
-
-    // `ro.product.first_api_level` is always populated.
-    first_vendor_api_level = ::android::base::GetIntProperty("ro.product.first_api_level", -1);
-    EXPECT_NE(first_vendor_api_level, -1) << "Could not find ro.product.first_api_level";
-    return AVendorSupport_getVendorApiLevelOf(first_vendor_api_level);
 }
 
 bool is_gsi_image() {

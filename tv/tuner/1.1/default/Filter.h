@@ -24,7 +24,10 @@
 #include <ion/ion.h>
 #include <math.h>
 #include <sys/stat.h>
+#include <map>
+#include <mutex>
 #include <set>
+#include <vector>
 #include "Demux.h"
 #include "Dvr.h"
 #include "Frontend.h"

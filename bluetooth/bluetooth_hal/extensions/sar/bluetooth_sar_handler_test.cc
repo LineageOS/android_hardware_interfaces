@@ -83,7 +83,7 @@ class BluetoothSarTest : public Test {
     MockHalConfigLoader::SetMockLoader(&mock_hal_config_loader_);
 
     MockHciRouterClientAgent::SetMockAgent(&mock_hci_router_client_agent_);
-    EXPECT_CALL(mock_hci_router_client_agent_, RegisterRouterClient(NotNull()))
+    EXPECT_CALL(mock_hci_router_client_agent_, RegisterClient(NotNull()))
         .WillOnce(DoAll(SaveArg<0>(&router_client_callback_), Return(true)));
     ON_CALL(mock_hci_router_client_agent_, IsBluetoothChipReady())
         .WillByDefault(Return(false));
@@ -98,7 +98,7 @@ class BluetoothSarTest : public Test {
 
   void TearDown() override {
     EXPECT_CALL(mock_hci_router_client_agent_,
-                UnregisterRouterClient(bluetooth_sar_handler_.get()))
+                UnregisterClient(bluetooth_sar_handler_.get()))
         .WillOnce(Return(true));
     bluetooth_sar_handler_ = nullptr;
   }

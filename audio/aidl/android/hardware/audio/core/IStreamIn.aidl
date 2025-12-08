@@ -129,6 +129,7 @@ interface IStreamIn {
      *
      * @param sinkMetadata Updated metadata.
      * @throws EX_ILLEGAL_STATE If the stream is closed.
+     * @throws EX_ILLEGAL_ARGUMENT If the 'RecordTrackMetadata.tags' value is invalid.
      */
     void updateMetadata(in SinkMetadata sinkMetadata);
 

@@ -99,9 +99,6 @@ cc_library_static {
     name: "VehicleHalProtos",
     vendor: true,
     host_supported: true,
-    include_dirs: [
-        "external/protobuf/src",
-    ],
     generated_headers: [
         "VehicleProtoStub_h",
     ],
@@ -113,6 +110,7 @@ cc_library_static {
     ],
     shared_libs: [
         "libgrpc++_unsecure",
+        "libprotobuf-cpp-full",
     ],
     cflags: [
         "-Wno-unused-parameter",

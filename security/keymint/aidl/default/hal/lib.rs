@@ -17,8 +17,36 @@
 //! KeyMint helper functions that are only suitable for non-secure environments
 //! such as Cuttlefish.
 
-use kmr_hal::env::get_property;
-use log::error;
+use kmr_hal::{env::get_property, HalServiceError, SerializedChannel};
+use log::{error, info};
+use std::{sync::{Arc, Mutex}, ops::DerefMut};
+
+/// Send boot info and attestation info to TA via the given communication channel.
+pub fn send_boot_info_and_attestation_id_info<T: SerializedChannel>(
+    channel: &Arc<Mutex<T>>
+) -> Result<(), HalServiceError> {
+    // Retrieve root-of-trust information (with the exception of the verified boot key
+    // hash) from Android properties, and populate the TA with this information. On a
+    // real device, the bootloader should provide this data to the TA directly.
+    let boot_req = get_boot_info();
+    info!("boot/HAL->TA: boot info is {:?}", boot_req);
+    kmr_hal::send_boot_info(channel.lock().unwrap().deref_mut(), boot_req)
+        .map_err(|e| format!("Failed to send boot info: {e:?}"))?;
+    info!("Successfully sent non-secure boot info to TA.");
+
+    // Retrieve device ID information (except for IMEI/MEID values) from Android properties
+    // and populate the TA with this information. On a real device, a factory provisioning
+    // process would populate this information.
+    let attest_ids = attestation_id_info();
+    if let Err(e) = kmr_hal::send_attest_ids(channel.lock().unwrap().deref_mut(), attest_ids) {
+        error!("Failed to send attestation ID info: {e:?}. \
+               Core functionality will be available, but attestation functionality will likely \
+               to be affected");
+    } else {
+        info!("Successfully sent non-secure attestation ID info to TA.");
+    }
+    Ok(())
+}
 
 /// Retrieve the most significant attestation property for `name`.
 fn attestation_property(name: &str) -> Vec<u8> {

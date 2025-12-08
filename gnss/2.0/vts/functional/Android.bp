@@ -26,7 +26,10 @@ package {
 
 cc_test {
     name: "VtsHalGnssV2_0TargetTest",
-    defaults: ["VtsHalTargetTestDefaults"],
+    defaults: [
+        "VtsHalTargetTestDefaults",
+        "gnss_use_latest_hal_aidl_cpp_static",
+    ],
     srcs: [
         "gnss_hal_test.cpp",
         "gnss_hal_test_cases.cpp",
@@ -40,7 +43,6 @@ cc_test {
         "android.hardware.gnss@2.0",
         "android.hardware.gnss@2.1",
         "android.hardware.gnss@common-vts-lib",
-        "android.hardware.gnss-V6-cpp",
     ],
     test_suites: [
         "general-tests",

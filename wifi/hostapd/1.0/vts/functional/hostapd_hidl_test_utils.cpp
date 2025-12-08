@@ -111,10 +111,6 @@ void toggleWifiScanAlwaysAvailable(bool enable) {
     testing::checkSubstringInCommandOutput(cmd.c_str(), "X");
 }
 
-bool isWifiFrameworkEnabled() {
-    return testing::checkSubstringInCommandOutput("/system/bin/cmd wifi status", "Wifi is enabled");
-}
-
 bool isWifiScanAlwaysAvailable() {
     return testing::checkSubstringInCommandOutput("/system/bin/cmd wifi status",
                                                   "Wifi scanning is always available");

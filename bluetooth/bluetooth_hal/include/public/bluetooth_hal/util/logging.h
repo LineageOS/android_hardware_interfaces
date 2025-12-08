@@ -18,6 +18,14 @@
 
 #include <string>
 
+/*
+ * Helper mecro for LogHelper to print system log with a specific tag.
+ */
+#define LOG_WITH_TAG(severity, tag)                                          \
+  ::android::base::LogMessage(__FILE__, __LINE__, SEVERITY_LAMBDA(severity), \
+                              tag, -1)                                       \
+      .stream()
+
 namespace bluetooth_hal {
 namespace util {
 

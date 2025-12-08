@@ -25,7 +25,10 @@
 
 #include <tinyxml2.h>
 
+#include <condition_variable>
 #include <limits>
+#include <memory>
+#include <mutex>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -122,6 +125,11 @@ class ConfigManager final {
          * only for DeviceType::VIDEO.
          */
         PixelFormat format;
+
+        /* Path of a media file to use for camera emulation. This field is effective
+         * only for DeviceType::VIDEO.
+         */
+        std::string filePath;
     };
 
     class CameraGroupInfo : public CameraInfo {

@@ -42,7 +42,7 @@ cc_binary {
         "-Wextra",
     ],
     defaults: [
-        "keymint_use_latest_hal_aidl_ndk_shared",
+        "keymint_cpp_impl_hal_aidl_ndk_shared",
     ],
     shared_libs: [
         "android.hardware.security.rkp-V3-ndk",

@@ -219,3 +219,28 @@ cc_test {
     defaults: ["VtsHalAudioEffectTargetTestDefaults"],
     srcs: ["VtsHalSpatializerTargetTest.cpp"],
 }
+
+cc_test {
+    name: "VtsHalEraserTargetTest",
+    defaults: [
+        "latest_android_hardware_audio_effect_ndk_static",
+        "VtsHalAudioTargetTestDefaults",
+    ],
+    test_config_template: "VtsHalAudioEraserTest.xml",
+    srcs: [
+        ":effectCommonFile",
+        "VtsHalEraserTargetTest.cpp",
+    ],
+    static_libs: [
+        "libsndfile",
+    ],
+    data: [
+        "data/bird.16khz.1ch.f32.wav",
+        "data/motorcycle.16khz.1ch.f32.wav",
+        "data/speech.16khz.1ch.f32.wav",
+        "data/wind.16khz.1ch.f32.wav",
+        "data/music.16khz.1ch.f32.wav",
+        "data/rain.16khz.1ch.f32.wav",
+        "data/pinknoise.16khz.1ch.f32.wav",
+    ],
+}

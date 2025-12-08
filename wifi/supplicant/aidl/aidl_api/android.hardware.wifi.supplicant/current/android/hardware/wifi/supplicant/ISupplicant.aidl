@@ -48,5 +48,6 @@ interface ISupplicant {
   void setDebugParams(in android.hardware.wifi.supplicant.DebugLevel level, in boolean showTimestamp, in boolean showKeys);
   oneway void terminate();
   void registerNonStandardCertCallback(in android.hardware.wifi.supplicant.INonStandardCertCallback callback);
+  void setCurrentUserIdentity(in int userId);
   const int EXT_RADIO_WORK_TIMEOUT_IN_SECS = 10;
 }

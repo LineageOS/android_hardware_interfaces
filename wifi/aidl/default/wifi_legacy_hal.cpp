@@ -20,6 +20,7 @@
 #include <cutils/properties.h>
 #include <net/if.h>
 
+#include <algorithm>
 #include <array>
 #include <chrono>
 
@@ -1469,7 +1470,8 @@ wifi_error WifiLegacyHal::startRttRangeRequest(
 wifi_error WifiLegacyHal::cancelRttRangeRequest(
         const std::string& iface_name, wifi_request_id id,
         const std::vector<std::array<uint8_t, ETH_ALEN>>& mac_addrs) {
-    if (!on_rtt_results_internal_callback && !on_rtt_results_internal_callback_v2) {
+    if (!on_rtt_results_internal_callback && !on_rtt_results_internal_callback_v2 &&
+        !on_rtt_results_internal_callback_v3 && !on_rtt_results_internal_callback_v4) {
         return WIFI_ERROR_NOT_AVAILABLE;
     }
     static_assert(sizeof(mac_addr) == sizeof(std::array<uint8_t, ETH_ALEN>),

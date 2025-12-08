@@ -1152,19 +1152,14 @@ optional<vector<uint8_t>> ecKeyPairGetPkcs12(const vector<uint8_t>& keyPair, con
         return {};
     }
 
-    // Ideally we wouldn't encrypt it (we're only using this function for
-    // sending a key-pair over binder to the Android app) but BoringSSL does not
-    // support this: from pkcs8_x509.c in BoringSSL: "In OpenSSL, -1 here means
-    // to use no encryption, which we do not currently support."
-    //
     // Passing nullptr as |pass|, though, means "no password". So we'll do that.
     // Compare with the receiving side - CredstoreIdentityCredential.java - where
     // an empty char[] is passed as the password.
     //
     auto pkcs12 = PKCS12_Ptr(PKCS12_create(nullptr, name.c_str(), pkey.get(), x509.get(),
                                            nullptr,  // ca
-                                           0,        // nid_key
-                                           0,        // nid_cert
+                                           -1,        // nid_key
+                                           -1,        // nid_cert
                                            0,        // iter,
                                            0,        // mac_iter,
                                            0));      // keytype

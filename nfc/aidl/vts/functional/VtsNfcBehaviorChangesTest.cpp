@@ -293,11 +293,13 @@ protected:
         NFA_SendRawVsCommand(sizeof(rf_discovery_cmd), rf_discovery_cmd, nfaVSCallback);
         usleep(10000);
 
-        uint8_t cmd[] = {NCI_ANDROID_SET_PASSIVE_OBSERVER_TECH, 0x0B};
-        status = NFA_SendVsCommand(NCI_MSG_PROP_ANDROID, sizeof(cmd), cmd, nfaVSCallback);
-        if (status == NFA_STATUS_OK) {
-            if (!sNfaVsCommand.wait(1000)) {
-                LOG(WARNING) << "Timeout waiting for observemode response";
+        if (get_vsr_api_level() >= 202504) {
+            uint8_t cmd[] = {NCI_ANDROID_SET_PASSIVE_OBSERVER_TECH, 0x03};
+            status = NFA_SendVsCommand(NCI_MSG_PROP_ANDROID, sizeof(cmd), cmd, nfaVSCallback);
+            if (status == NFA_STATUS_OK) {
+                if (!sNfaVsCommand.wait(1000)) {
+                    LOG(WARNING) << "Timeout waiting for observemode response";
+                }
             }
         }
     }
@@ -336,14 +338,12 @@ TEST_P(NfcBehaviorChanges, SetPassiveObserverTech_allExceptF) {
     }
 
     tNFC_STATUS status = nfaSetPassiveObserverTech(NCI_ANDROID_PASSIVE_OBSERVE_PARAM_ENABLE_A |
-                                       NCI_ANDROID_PASSIVE_OBSERVE_PARAM_ENABLE_B |
-                                       NCI_ANDROID_PASSIVE_OBSERVE_PARAM_ENABLE_V);
+                                       NCI_ANDROID_PASSIVE_OBSERVE_PARAM_ENABLE_B);
     ASSERT_EQ(status, NFA_STATUS_OK);
     status = nfaQueryObserveModeState();
     ASSERT_EQ(status, NFA_STATUS_OK);
     ASSERT_EQ(sObserveModeState, NCI_ANDROID_PASSIVE_OBSERVE_PARAM_ENABLE_A |
-                        NCI_ANDROID_PASSIVE_OBSERVE_PARAM_ENABLE_B |
-                        NCI_ANDROID_PASSIVE_OBSERVE_PARAM_ENABLE_V);
+                        NCI_ANDROID_PASSIVE_OBSERVE_PARAM_ENABLE_B);
 }
 
 /*
@@ -358,14 +358,12 @@ TEST_P(NfcBehaviorChanges, SetPassiveObserverTech_allOnAndOff) {
     }
 
     tNFC_STATUS status = nfaSetPassiveObserverTech(NCI_ANDROID_PASSIVE_OBSERVE_PARAM_ENABLE_A |
-                                                   NCI_ANDROID_PASSIVE_OBSERVE_PARAM_ENABLE_B |
-                                                   NCI_ANDROID_PASSIVE_OBSERVE_PARAM_ENABLE_V);
+                                                   NCI_ANDROID_PASSIVE_OBSERVE_PARAM_ENABLE_B);
     ASSERT_EQ(status, NFA_STATUS_OK);
     status = nfaQueryObserveModeState();
     ASSERT_EQ(status, NFA_STATUS_OK);
     ASSERT_EQ(sObserveModeState, NCI_ANDROID_PASSIVE_OBSERVE_PARAM_ENABLE_A |
-                                         NCI_ANDROID_PASSIVE_OBSERVE_PARAM_ENABLE_B |
-                                         NCI_ANDROID_PASSIVE_OBSERVE_PARAM_ENABLE_V);
+                                         NCI_ANDROID_PASSIVE_OBSERVE_PARAM_ENABLE_B);
 
     status = nfaSetPassiveObserverTech(0x00);
     ASSERT_EQ(status, NFA_STATUS_OK);
@@ -387,8 +385,7 @@ TEST_P(NfcBehaviorChanges, SetPassiveObserverTech_testThroughput) {
 
     for (int i = 0; i < 100; ++i) {
         tNFC_STATUS status = nfaSetPassiveObserverTech(NCI_ANDROID_PASSIVE_OBSERVE_PARAM_ENABLE_A |
-                                                       NCI_ANDROID_PASSIVE_OBSERVE_PARAM_ENABLE_B |
-                                                       NCI_ANDROID_PASSIVE_OBSERVE_PARAM_ENABLE_V);
+                                                       NCI_ANDROID_PASSIVE_OBSERVE_PARAM_ENABLE_B);
         ASSERT_EQ(status, NFA_STATUS_OK);
 
         status = nfaSetPassiveObserverTech(0x00);

@@ -167,6 +167,10 @@ bool ConfigManager::readCameraDeviceInfo(CameraInfo* aCamera, const XMLElement* 
         aCamera->format = CameraInfo::pixelFormatFromSV(formatAttr->Value());
     }
 
+    if (const auto filePathAttr = aDeviceElem->FindAttribute("file_path")) {
+        aCamera->filePath = filePathAttr->Value();
+    }
+
     /* size information to allocate camera_metadata_t */
     size_t totalEntries = 0;
     size_t totalDataSize = 0;

@@ -18,6 +18,8 @@
 
 #include <hidl/HidlSupport.h>
 
+#include <functional>
+
 #include "async_fd_watcher.h"
 #include "bt_vendor_lib.h"
 #include "hci_protocol.h"

@@ -270,7 +270,7 @@ std::optional<std::string> waitFor(std::set<std::string> ifnames, WaitCondition 
 
     using StatesMap = std::map<std::string, WaitState>;
     StatesMap states = {};
-    for (const auto ifname : ifnames) {
+    for (const auto& ifname : ifnames) {
         const auto present = exists(ifname);
         const auto up = present && isUp(ifname).value_or(false);
         const auto hasIpv4Addr = present && hasIpv4(ifname);

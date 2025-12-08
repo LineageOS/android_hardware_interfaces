@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "bthal.extensions.ccc"
+#define LOG_TAG "bluetooth_hal.extensions.ccc"
 
 #include "bluetooth_hal/extensions/ccc/bluetooth_ccc.h"
 

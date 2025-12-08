@@ -66,6 +66,7 @@ using aidl::android::hardware::wifi::RttResult;
 
 namespace {
 const auto& kTestVendorDataOptional = generateOuiKeyedDataListOptional(5);
+static bool sWifiFrameworkDisabledByTest = false;
 }
 
 class WifiNanIfaceAidlTest : public testing::TestWithParam<std::string> {
@@ -84,6 +85,24 @@ class WifiNanIfaceAidlTest : public testing::TestWithParam<std::string> {
     }
 
     void TearDown() override { stopWifiService(getInstanceName()); }
+
+    // Runs at the beginning of the test suite.
+    static void SetUpTestSuite() {
+        if (isWifiFrameworkEnabled()) {
+            LOG(INFO) << "Disabling the Wifi framework for testing";
+            setWifiFrameworkEnabled(false);
+            sleep(2);
+            sWifiFrameworkDisabledByTest = true;
+        }
+    }
+
+    // Runs at the end of the test suite.
+    static void TearDownTestSuite() {
+        if (sWifiFrameworkDisabledByTest) {
+            LOG(INFO) << "Re-enabling the Wifi framework after testing";
+            setWifiFrameworkEnabled(true);
+        }
+    }
 
     enum CallbackType {
         INVALID = 0,

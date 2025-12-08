@@ -33,6 +33,8 @@ class MockVndSnoopLogger : public VndSnoopLogger {
               (override));
 
   static void SetMockVndSnoopLogger(MockVndSnoopLogger* logger);
+
+  static inline MockVndSnoopLogger* mock_vnd_snoop_logger_{nullptr};
 };
 
 }  // namespace debug

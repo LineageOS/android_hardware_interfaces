@@ -25,6 +25,7 @@ bpf {
     name: "filterPowerSupplyEvents.o_non_vendor",
     srcs: ["filterPowerSupplyEvents.c"],
     include_dirs: [
+        "system/bpf/include/bpf",
         "system/bpf/include/defs",
     ],
     visibility: ["//visibility:private"],
@@ -34,6 +35,7 @@ bpf {
     name: "filterPowerSupplyEvents.o",
     srcs: ["filterPowerSupplyEvents.c"],
     include_dirs: [
+        "system/bpf/include/bpf",
         "system/bpf/include/defs",
     ],
     // "vendor: true" because all binaries that use this BPF filter are vendor

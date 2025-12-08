@@ -24,6 +24,7 @@ import android.hardware.gnss.gnss_assistance.GlonassAlmanac;
 import android.hardware.gnss.gnss_assistance.GlonassSatelliteEphemeris;
 import android.hardware.gnss.gnss_assistance.GnssAlmanac;
 import android.hardware.gnss.gnss_assistance.GpsSatelliteEphemeris;
+import android.hardware.gnss.gnss_assistance.IonexAssistance;
 import android.hardware.gnss.gnss_assistance.IonosphericCorrection;
 import android.hardware.gnss.gnss_assistance.KlobucharIonosphericModel;
 import android.hardware.gnss.gnss_assistance.LeapSecondsModel;
@@ -252,4 +253,7 @@ parcelable GnssAssistance {
 
     /** QZSS assistance. */
     @nullable QzssAssistance qzssAssistance;
+
+    /** IONEX assistance. */
+    @nullable IonexAssistance ionexAssistance;
 }

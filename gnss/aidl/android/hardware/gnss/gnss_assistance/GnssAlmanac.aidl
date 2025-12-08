@@ -37,6 +37,7 @@ parcelable GnssAlmanac {
 
     /**
      * Almanac issue of data.
+     *
      * This is defined Galileo-OS-SIS-ICD-v2.1 section 5.1.10.
      * This is unused for GPS/QZSS/Baidou.
      */
@@ -51,7 +52,12 @@ parcelable GnssAlmanac {
      */
     int weekNumber;
 
-    /** Almanac reference time in seconds. */
+    /**
+     * Almanac reference time in seconds.
+     *
+     * This is unused for Beidou.
+     * For Beidou, each satellite has its own toaSeconds.
+     */
     int toaSeconds;
 
     /**
@@ -95,10 +101,11 @@ parcelable GnssAlmanac {
         /**
          * Inclination in semi-circles.
          *
-         * For GPS and Galileo, this is the difference between the inclination angle at reference
-         * time and the nominal inclination in semi-circles.
+         * For GPS, QZSS(QZO) and Galileo, this is the difference between the inclination
+         * angle at reference time and the nominal inclination in semi-circles.
          *
-         * For Beidou and QZSS, this is the inclination angle at reference time in semi-circles.
+         * For Beidou and QZSS(GEO/QGEO), this is the inclination angle at reference
+         * time in semi-circles.
          */
         double inclination;
 
@@ -127,6 +134,14 @@ parcelable GnssAlmanac {
 
         /** Satellite clock time drift correction coefficient in seconds per second. */
         double af1;
+
+        /**
+         * Almanac reference time in seconds.
+         *
+         * This is unused for GPS/QZSS/Galileo.
+         * For Beidou, each satellite has its own toaSeconds.
+         */
+        int toaSeconds;
     }
 
     /** Array of GnssSatelliteAlmanac. */

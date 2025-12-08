@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "bthal.extensions.ccc"
+#define LOG_TAG "bluetooth_hal.extensions.ccc"
 
 #include "bluetooth_hal/extensions/ccc/bluetooth_ccc_handler.h"
 
 #include <fcntl.h>
 
-#include <array>
+#include <algorithm>
 #include <chrono>
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <string_view>
 #include <vector>
 
@@ -76,6 +77,7 @@ bool BluetoothCccHandler::RegisterForLmpEvents(
     const std::shared_ptr<BluetoothCccHandlerCallback>& callback) {
   std::unique_lock<std::mutex> lock(mutex_);
   const auto address = callback->GetAddress();
+  const auto address_type = callback->GetAddressType();
   const auto lmp_event_ids = callback->GetLmpEventIds();
 
   if (!IsBluetoothEnabled() || callback == nullptr || lmp_event_ids.empty()) {
@@ -96,11 +98,16 @@ bool BluetoothCccHandler::RegisterForLmpEvents(
   // event.
   pending_callbacks_deque_.emplace_back(callback);
   auto command = BluetoothCccTimesyncCommand::CreateAddCommand(
-      address, AddressType::kRandom, CccDirection::kTx, lmp_event_ids);
+      address, address_type, CccDirection::kTx, lmp_event_ids);
   return SendCommand(command);
 }
 
 bool BluetoothCccHandler::UnregisterLmpEvents(const BluetoothAddress& address) {
+  return UnregisterLmpEventsWithType(address, AddressType::kRandom);
+}
+
+bool BluetoothCccHandler::UnregisterLmpEventsWithType(
+    const BluetoothAddress& address, const AddressType address_type) {
   std::unique_lock<std::mutex> lock(mutex_);
   LOG(INFO) << __func__ << ": address: " << address.ToString();
 
@@ -121,9 +128,9 @@ bool BluetoothCccHandler::UnregisterLmpEvents(const BluetoothAddress& address) {
   std::vector<BluetoothAddress> removed_addresses;
   auto it = std::remove_if(
       monitor_callbacks_.begin(), monitor_callbacks_.end(),
-      [&address, &removed_addresses](
+      [&address, address_type, &removed_addresses](
           const std::shared_ptr<BluetoothCccHandlerCallback>& callback) {
-        if (callback->IsAddressEqual(address)) {
+        if (callback->IsAddressEqual(address, address_type)) {
           removed_addresses.push_back(address);
           return true;
         }
@@ -140,7 +147,7 @@ bool BluetoothCccHandler::UnregisterLmpEvents(const BluetoothAddress& address) {
   bool all_success = true;
   for (const auto& removed_address : removed_addresses) {
     auto command = BluetoothCccTimesyncCommand::CreateRemoveCommand(
-        removed_address, AddressType::kRandom);
+        removed_address, address_type);
     if (!SendCommand(command)) {
       LOG(WARNING) << __func__
                    << ": Failed to send REMOVE command for address: "
@@ -206,11 +213,13 @@ void BluetoothCccHandler::OnMonitorPacketCallback(
                          static_cast<long>(time_sync_event.GetTimestamp()));
 
   auto address = time_sync_event.GetAddress();
+  auto address_type = time_sync_event.GetAddressType();
   auto direction = time_sync_event.GetDirection();
   auto lmp_event_id = time_sync_event.GetEventId();
   uint8_t event_counter = time_sync_event.GetEventCount();
 
   LOG(INFO) << "Recv address: " << address.ToString()
+            << "Recv address_type:" << static_cast<int>(address_type)
             << ", direction: " << static_cast<int>(direction)
             << ", lmp_event_id: " << static_cast<int>(lmp_event_id)
             << ", event_counter: " << static_cast<int>(event_counter)
@@ -220,7 +229,8 @@ void BluetoothCccHandler::OnMonitorPacketCallback(
             << ", system_time: " << timestamp.system_time;
 
   for (const auto& callback : monitor_callbacks_) {
-    if (callback->IsAddressEqual(address) &&
+    if (callback->IsAddressEqual(address,
+                                 static_cast<AddressType>(address_type)) &&
         callback->ContainsEventId(lmp_event_id)) {
       callback->OnEventGenerated(timestamp, address, direction, lmp_event_id,
                                  event_counter);

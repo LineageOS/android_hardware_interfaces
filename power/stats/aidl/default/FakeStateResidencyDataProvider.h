@@ -18,6 +18,7 @@
 
 #include <PowerStats.h>
 
+#include <functional>
 #include <random>
 
 namespace aidl {

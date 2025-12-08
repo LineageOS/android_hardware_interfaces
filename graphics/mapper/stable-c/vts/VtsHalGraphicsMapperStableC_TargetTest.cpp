@@ -538,6 +538,7 @@ class GraphicsTestsBase {
             case PixelFormat::RGBX_8888:
             case PixelFormat::RGB_888:
             case PixelFormat::RGB_565:
+            case PixelFormat::BGRX_1010102:
                 return {gralloc4::PlaneLayoutComponentType_R, gralloc4::PlaneLayoutComponentType_G,
                         gralloc4::PlaneLayoutComponentType_B};
             case PixelFormat::RGBA_8888:
@@ -606,6 +607,7 @@ class GraphicsTestsBase {
             case PixelFormat::R_8:
                 return 8;
             case PixelFormat::RGBA_10101010:
+            case PixelFormat::BGRX_1010102:
                 return 10;
             case PixelFormat::RGBA_1010102:
             case PixelFormat::BGRA_1010102:
@@ -712,6 +714,14 @@ class GraphicsTestsBase {
                 } else {
                     return 30;
                 }
+            case PixelFormat::BGRX_1010102:
+                if (channel == gralloc4::PlaneLayoutComponentType_R) {
+                    return 20;
+                } else if (channel == gralloc4::PlaneLayoutComponentType_G) {
+                    return 10;
+                } else {
+                    return 0;
+                }
             case PixelFormat::R_8:
             case PixelFormat::R_12_UINT:
             case PixelFormat::R_14_UINT:
@@ -781,6 +791,7 @@ class GraphicsTestsBase {
             case PixelFormat::RGBX_8888:
             case PixelFormat::RGBA_1010102:
             case PixelFormat::BGRA_1010102:
+            case PixelFormat::BGRX_1010102:
             case PixelFormat::RG_1212_UINT:
             case PixelFormat::RG_1414_UINT:
             case PixelFormat::RG_1616_UINT:
@@ -884,6 +895,7 @@ class GraphicsMapperStableCRgbaLockTests
             case PixelFormat::RGBA_12121212_UINT:
             case PixelFormat::RGBA_14141414_UINT:
             case PixelFormat::BGRA_1010102:
+            case PixelFormat::BGRX_1010102:
                 return false;
         }
     }

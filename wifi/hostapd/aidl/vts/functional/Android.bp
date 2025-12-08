@@ -38,7 +38,7 @@ cc_test {
         "android.hardware.wifi@1.5",
         "android.hardware.wifi@1.6",
         "android.hardware.wifi.common-V2-ndk",
-        "android.hardware.wifi-V3-ndk",
+        "android.hardware.wifi-V4-ndk",
         "libwifi-system",
         "libwifi-system-iface",
         "VtsHalWifiTargetTestUtil",

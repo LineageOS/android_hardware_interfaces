@@ -22,6 +22,7 @@ import android.hardware.radio.network.BarringInfo;
 import android.hardware.radio.network.CellIdentity;
 import android.hardware.radio.network.CellInfo;
 import android.hardware.radio.network.CellularIdentifierDisclosure;
+import android.hardware.radio.network.DisplayNetworkType;
 import android.hardware.radio.network.EmergencyRegResult;
 import android.hardware.radio.network.LinkCapacityEstimate;
 import android.hardware.radio.network.NetworkScanResult;
@@ -297,10 +298,45 @@ oneway interface IRadioNetworkIndication {
      *
      * Determining the value of isUnprotectedEmergency
      * ===============================================
-     * 2G: isUnprotectedEmergency is true if the ciphering algorithm is NULL.
-     * 3G: isUnprotectedEmergency is true if the ciphering and integrity algorithm are NULL.
-     * 4G: isUnprotectedEmergency is true if the ciphering algorithm is NULL.
-     * 5G: isUnprotectedEmergency is true if the ciphering algorithm is NULL.
+     * - 2G ConnectionEvents:
+     *    - For CS_SIGNALLING_GSM and PS_SIGNALLING_GPRS isUnprotectedEmergency is true if emergency
+     *      mode is ongoing and the ciphering algorithm is NULL (A5/0).
+     * - 3G ConnectionEvents:
+     *    - For CS_SIGNALLING_3G and PS_SIGNALLING_3G isUnprotectedEmergency is true if emergency
+     *      mode is ongoing and the ciphering OR integrity algorithms are NULL (UEA0 or UIA0).
+     * - 4G ConnectionEvents:
+     *    - For NAS_SIGNALLING_LTE, isUnprotectedEmergency is true if emergency mode is ongoing and
+     *      ciphering OR integrity are NULL (EEA0 or EIA0).
+     *    - For AS_SIGNALLING_LTE, isUnprotectedEmergency is true if emergency mode is ongoing and
+     *      a null encryption algorithm is used (EEA0).
+     *    - For VOLTE_SIP, isUnprotectedEmergency is true if (1) emergency call is over IMS PDN, AND
+     *      (2) IPSec configuration is absent (SIP_NO_IPSEC_CONFIG) OR NULL encryption OR NULL
+     *      integrity algorithms are in use (e.g. SIP_NULL).
+     *    - For VOLTE_SIP_SOS, isUnprotectedEmergency is true if (1) emergency call is over
+     *      emergency IMS PDN, AND (2) IPSec configuration is absent (SIP_NO_IPSEC_CONFIG) OR NULL
+     *      encryption OR NULL integrity algorithm are in use (e.g. SIP_NULL).
+     *    - For VOLTE_RTP, isUnprotectedEmergency is true if (1) emergency call is over normal PDN,
+     *      and (2) SRTP is not utilized (e.g. RTP or SRTP_NULL enums) OR NULL encryption OR NULL
+     *      integrity algorithms are used.
+     *    - For VOLTE_RTP_SOS, isUnprotectedEmergency is true if (1) emergency call is over
+     *      emergency IMS PDN, and (2) SRTP is not utilized (RTP or SRTP_NULL enums) OR NULL
+     *      encryption OR NULL integrity algorithms are used.
+     * - 5G ConnectionEvents:
+     *    - For NAS_SIGNALLING_5G, isUnprotectedEmergency is true if emergency mode is ongoing and
+     *      NULL encryption OR NULL integrity are used (e.g. NEA0 or NIA0).
+     *    - For AS_SIGNALLING_5G, isUnprotectedEmergency is true if emergency mode is ongoing and
+     *      a NULL encryption algorithm us used (e.g. NEA0).
+     *    - For VONR_SIP, isUnprotectedEmergency is true if (1) emergency call is over normal IMS
+     *      PDN, AND (2) IPSec configuration is absent OR NULL encryption or NULL integrity
+     *      algorithms are used.
+     *    - For VONR_SIP_SOS, isUnprotectedEmergency is true if (1) emergency call is over emergency
+     *      IMS PDN, and (2) IPSec configuration is absent OR NULL encryption or NULL integrity
+     *      algorithm is used.
+     *    - For VONR_RTP, isUnprotectedEmergency is true if (1) emergency call is over normal IMS
+     *      PDN, AND (2) SRTP is not utilized OR NULL encryption OR NULL integrity algorithm is used
+     *    - For VONR_RTP_SOS, isUnprotectedEmergency is true if (1) Emergency call is over emergency
+     *      IMS PDN, AND (2) SRTP is not utilized OR NULL encryption OR NULL integrity algorithm is
+     *      used.
      * Notes:
      *    - On integrity: In 4G, PDCP can be LTE-based or NR-based. Starting from 5G Rel 17, only
      *      the NR-based PDCP supports DRB integrity. As the PDCP version can change during a DRB's
@@ -318,4 +354,24 @@ oneway interface IRadioNetworkIndication {
      */
     void securityAlgorithmsUpdated(
             in RadioIndicationType type, in SecurityAlgorithmUpdate securityAlgorithmUpdate);
+
+    /**
+     * Indicates that the modem suggests display network type has changed.
+     *
+     * This unsolicited indication is sent by the modem to the framework whenever
+     * it determines that the user-facing representation of the network service
+     * (e.g., "5G+", "5G UW", "5G UC") should be updated.
+     *
+     * The Android framework, upon receiving this indication, should evaluate the
+     * new {@link DisplayNetworkType}. If the feature is enabled (e.g., via the
+     * {@code KEY_USE_MODEM_DISPLAY_NETWORK_TYPE_BOOL} carrier configuration),
+     * the framework should update the network indicator icon and related text in the UI
+     * accordingly.
+     *
+     * @param type The type of indication, which will be {@link RadioIndicationType#UNSOLICITED}
+     * for this message.
+     * @param dnt The new display network type category suggested by the modem.
+     * @hide
+     */
+    void displayNetworkTypeChanged(in RadioIndicationType type, in DisplayNetworkType dnt);
 }

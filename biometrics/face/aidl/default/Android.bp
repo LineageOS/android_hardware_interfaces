@@ -78,7 +78,10 @@ cc_binary {
     vendor: true,
     relative_install_path: "hw",
     init_rc: ["face-default.rc"],
-    vintf_fragment_modules: ["android.hardware.biometrics.face-service.default.vintf"],
+    vintf_fragment_modules: select(soong_config_variable("face_virtual", "inactive"), {
+        true: [],
+        default: ["android.hardware.biometrics.face-service.default.vintf"],
+    }),
     shared_libs: [
         "libbinder_ndk",
         "liblog",

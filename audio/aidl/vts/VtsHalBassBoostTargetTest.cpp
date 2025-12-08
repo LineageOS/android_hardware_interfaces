@@ -229,8 +229,7 @@ TEST_P(BassBoostDataTest, IncreasingStrength) {
         GTEST_SKIP() << "Strength not supported, skipping the test\n";
     }
 
-    ASSERT_NO_FATAL_FAILURE(
-            processAndWriteToOutput(input, baseOutput, mEffect, &mOpenEffectReturn));
+    ASSERT_NO_FATAL_FAILURE(processAndWriteToOutput(input, baseOutput, mEffect, mOpenEffectReturn));
 
     std::vector<float> baseMag(testFrequencies.size());
 
@@ -250,8 +249,7 @@ TEST_P(BassBoostDataTest, IncreasingStrength) {
         std::vector<float> output(kInputSize);
         std::vector<float> outputMag(testFrequencies.size());
 
-        ASSERT_NO_FATAL_FAILURE(
-                processAndWriteToOutput(input, output, mEffect, &mOpenEffectReturn));
+        ASSERT_NO_FATAL_FAILURE(processAndWriteToOutput(input, output, mEffect, mOpenEffectReturn));
 
         ASSERT_NO_FATAL_FAILURE(
                 calculateAndVerifyMagnitude(outputMag, mChannelLayout, output, binOffsets));

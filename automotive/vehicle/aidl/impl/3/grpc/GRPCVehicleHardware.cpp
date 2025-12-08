@@ -372,7 +372,7 @@ void GRPCVehicleHardware::pollValue() {
     proto::VehiclePropValues protoValues;
     while (!mShuttingDownFlag.load() && value_stream->Read(&protoValues)) {
         std::vector<aidlvhal::VehiclePropValue> values;
-        for (const auto protoValue : protoValues.values()) {
+        for (const auto& protoValue : protoValues.values()) {
             aidlvhal::VehiclePropValue aidlValue = {};
             proto_msg_converter::protoToAidl(protoValue, &aidlValue);
 

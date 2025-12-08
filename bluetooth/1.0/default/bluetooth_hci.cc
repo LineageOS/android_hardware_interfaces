@@ -61,6 +61,15 @@ Return<void> BluetoothHci::initialize(
     return Void();
   }
 
+  if (VendorInterface::get() != nullptr) {
+    ALOGW("BluetoothHci is already initialized");
+    auto hidl_status = cb->initializationComplete(Status::INITIALIZATION_ERROR);
+    if (!hidl_status.isOk()) {
+      ALOGE("Unable to call initializationComplete(ERR)");
+    }
+    return Void();
+  }
+
   death_recipient_->setHasDied(false);
   cb->linkToDeath(death_recipient_, 0);
 
@@ -93,6 +102,7 @@ Return<void> BluetoothHci::initialize(
       [cb](const hidl_vec<uint8_t>&) {
         ALOGE("VendorInterface -> No callback for ISO packets in HAL V1_0");
       });
+
   if (!rc) {
     auto hidl_status = cb->initializationComplete(Status::INITIALIZATION_ERROR);
     if (!hidl_status.isOk()) {

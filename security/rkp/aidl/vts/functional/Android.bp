@@ -36,6 +36,7 @@ cc_test {
         "libcppbor",
         "libgmock_ndk",
         "libkeymint_vts_test_utils",
+        "libvendorsupport",
     ],
     test_config: "VtsRemotelyProvisionedComponentTests.xml",
     test_suites: [

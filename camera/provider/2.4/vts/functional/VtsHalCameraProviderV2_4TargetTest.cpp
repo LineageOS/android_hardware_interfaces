@@ -3472,7 +3472,6 @@ TEST_P(CameraHidlTest, configureConcurrentStreamsAvailableOutputs) {
     for (const auto& cameraDeviceIds : concurrentDeviceCombinations) {
         std::vector<CameraIdAndStreamCombination> cameraIdsAndStreamCombinations;
         std::vector<CameraTestInfo> cameraTestInfos;
-        size_t i = 0;
         for (const auto& id : cameraDeviceIds) {
             CameraTestInfo cti;
             Return<void> ret;
@@ -3530,7 +3529,6 @@ TEST_P(CameraHidlTest, configureConcurrentStreamsAvailableOutputs) {
             cameraIdAndStreamCombination.cameraId = id;
             cameraIdAndStreamCombination.streamConfiguration = cti.config3_4;
             cameraIdsAndStreamCombinations.push_back(cameraIdAndStreamCombination);
-            i++;
             cameraTestInfos.push_back(cti);
         }
         // Now verify that concurrent streams are supported

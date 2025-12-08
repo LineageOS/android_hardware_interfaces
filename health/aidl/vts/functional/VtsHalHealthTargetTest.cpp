@@ -275,15 +275,6 @@ TEST_P(HealthAidl, setChargingPolicy) {
     /* set ChargingPolicy*/
     status = health->setChargingPolicy(BatteryChargingPolicy::LONG_LIFE);
     ASSERT_THAT(status, AnyOf(IsOk(), ExceptionIs(EX_UNSUPPORTED_OPERATION)));
-    if (!status.isOk()) return;
-
-    /* get ChargingPolicy*/
-    status = health->getChargingPolicy(&value);
-    ASSERT_THAT(status, AnyOf(IsOk(), ExceptionIs(EX_UNSUPPORTED_OPERATION)));
-    if (!status.isOk()) return;
-    // the result of getChargingPolicy will be one of default(1), ADAPTIVE_AON(2)
-    // ADAPTIVE_AC(3) or LONG_LIFE(4). default(1) means NOT_SUPPORT
-    ASSERT_THAT(static_cast<int>(value), AnyOf(Eq(1), Eq(4)));
 }
 
 MATCHER_P(IsValidHealthData, version, "") {

@@ -15,6 +15,10 @@ aidl_interface {
     srcs: ["android/hardware/radio/*.aidl"],
     stability: "vintf",
     flags: ["-Werror"],
+    always_use_unfrozen: select(release_flag("RELEASE_ALWAYS_USE_UNFROZEN_RADIO_HAL"), {
+        true: true,
+        default: false,
+    }),
     backend: {
         cpp: {
             enabled: true,
@@ -54,6 +58,10 @@ aidl_interface {
     stability: "vintf",
     imports: ["android.hardware.radio-V5"],
     flags: ["-Werror"],
+    always_use_unfrozen: select(release_flag("RELEASE_ALWAYS_USE_UNFROZEN_RADIO_HAL"), {
+        true: true,
+        default: false,
+    }),
     backend: {
         cpp: {
             enabled: true,
@@ -93,6 +101,10 @@ aidl_interface {
     stability: "vintf",
     imports: ["android.hardware.radio-V5"],
     flags: ["-Werror"],
+    always_use_unfrozen: select(release_flag("RELEASE_ALWAYS_USE_UNFROZEN_RADIO_HAL"), {
+        true: true,
+        default: false,
+    }),
     backend: {
         cpp: {
             enabled: true,
@@ -131,6 +143,10 @@ aidl_interface {
     stability: "vintf",
     imports: ["android.hardware.radio-V5"],
     flags: ["-Werror"],
+    always_use_unfrozen: select(release_flag("RELEASE_ALWAYS_USE_UNFROZEN_RADIO_HAL"), {
+        true: true,
+        default: false,
+    }),
     backend: {
         cpp: {
             enabled: true,
@@ -169,6 +185,10 @@ aidl_interface {
     stability: "vintf",
     imports: ["android.hardware.radio-V5"],
     flags: ["-Werror"],
+    always_use_unfrozen: select(release_flag("RELEASE_ALWAYS_USE_UNFROZEN_RADIO_HAL"), {
+        true: true,
+        default: false,
+    }),
     backend: {
         cpp: {
             enabled: true,
@@ -207,6 +227,10 @@ aidl_interface {
     stability: "vintf",
     imports: ["android.hardware.radio-V5"],
     flags: ["-Werror"],
+    always_use_unfrozen: select(release_flag("RELEASE_ALWAYS_USE_UNFROZEN_RADIO_HAL"), {
+        true: true,
+        default: false,
+    }),
     backend: {
         cpp: {
             enabled: true,
@@ -244,6 +268,10 @@ aidl_interface {
     srcs: ["android/hardware/radio/sap/*.aidl"],
     stability: "vintf",
     flags: ["-Werror"],
+    always_use_unfrozen: select(release_flag("RELEASE_ALWAYS_USE_UNFROZEN_RADIO_HAL"), {
+        true: true,
+        default: false,
+    }),
     backend: {
         cpp: {
             enabled: true,
@@ -273,6 +301,10 @@ aidl_interface {
     srcs: ["android/hardware/radio/sim/*.aidl"],
     stability: "vintf",
     flags: ["-Werror"],
+    always_use_unfrozen: select(release_flag("RELEASE_ALWAYS_USE_UNFROZEN_RADIO_HAL"), {
+        true: true,
+        default: false,
+    }),
     imports: [
         "android.hardware.radio-V5",
         "android.hardware.radio.config-V5",
@@ -327,6 +359,10 @@ aidl_interface {
     stability: "vintf",
     imports: ["android.hardware.radio-V5"],
     flags: ["-Werror"],
+    always_use_unfrozen: select(release_flag("RELEASE_ALWAYS_USE_UNFROZEN_RADIO_HAL"), {
+        true: true,
+        default: false,
+    }),
     backend: {
         cpp: {
             enabled: true,
@@ -367,6 +403,10 @@ aidl_interface {
         "android.hardware.radio.data-V5",
     ],
     flags: ["-Werror"],
+    always_use_unfrozen: select(release_flag("RELEASE_ALWAYS_USE_UNFROZEN_RADIO_HAL"), {
+        true: true,
+        default: false,
+    }),
     backend: {
         cpp: {
             enabled: false,
@@ -409,6 +449,10 @@ aidl_interface {
     stability: "vintf",
     imports: ["android.hardware.radio-V5"],
     flags: ["-Werror"],
+    always_use_unfrozen: select(release_flag("RELEASE_ALWAYS_USE_UNFROZEN_RADIO_HAL"), {
+        true: true,
+        default: false,
+    }),
     backend: {
         cpp: {
             enabled: false,

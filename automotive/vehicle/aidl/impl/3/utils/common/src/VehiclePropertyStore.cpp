@@ -115,7 +115,6 @@ VhalResult<void> VehiclePropertyStore::writeValue(VehiclePropValuePool::Recyclab
     OnValueChangeCallback onValueChangeCallback = nullptr;
     OnValuesChangeCallback onValuesChangeCallback = nullptr;
     int32_t propId;
-    int32_t areaId;
     {
         std::scoped_lock<std::mutex> g(mLock);
 
@@ -126,7 +125,6 @@ VhalResult<void> VehiclePropertyStore::writeValue(VehiclePropValuePool::Recyclab
         }
 
         propId = propValue->prop;
-        areaId = propValue->areaId;
 
         VehiclePropertyStore::Record* record = getRecordLocked(propId);
         if (record == nullptr) {

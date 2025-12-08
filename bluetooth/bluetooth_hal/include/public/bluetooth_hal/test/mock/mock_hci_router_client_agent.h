@@ -18,9 +18,8 @@
 
 #include "bluetooth_hal/hal_packet.h"
 #include "bluetooth_hal/hal_types.h"
-#include "bluetooth_hal/hci_monitor.h"
-#include "bluetooth_hal/hci_router_callback.h"
 #include "bluetooth_hal/hci_router_client_agent.h"
+#include "bluetooth_hal/hci_router_client_callback.h"
 #include "gmock/gmock.h"
 
 namespace bluetooth_hal {
@@ -31,16 +30,18 @@ class MockHciRouterClientAgent : public HciRouterClientAgent {
  public:
   static void SetMockAgent(MockHciRouterClientAgent* mock_agent);
 
-  MOCK_METHOD(bool, RegisterRouterClient, (HciRouterClientCallback * callback),
+  MOCK_METHOD(bool, RegisterClient, (HciRouterClientCallback * callback),
               (override));
-  MOCK_METHOD(bool, UnregisterRouterClient,
-              (HciRouterClientCallback * callback), (override));
+  MOCK_METHOD(bool, UnregisterClient, (HciRouterClientCallback * callback),
+              (override));
   MOCK_METHOD(MonitorMode, DispatchPacketToClients, (const HalPacket& packet),
               (override));
   MOCK_METHOD(void, NotifyHalStateChange,
               (HalState new_state, HalState old_state), (override));
   MOCK_METHOD(bool, IsBluetoothEnabled, (), (override));
   MOCK_METHOD(bool, IsBluetoothChipReady, (), (override));
+
+  static inline MockHciRouterClientAgent* mock_agent_{nullptr};
 };
 
 }  // namespace hci

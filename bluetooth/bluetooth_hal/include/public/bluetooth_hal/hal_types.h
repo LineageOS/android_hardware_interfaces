@@ -18,6 +18,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string_view>
 
 namespace bluetooth_hal {
 
@@ -35,10 +36,11 @@ class Property {
       "bluetooth.transport.fallback";
   static constexpr char kIsAcceleratedBtOnEnabled[] =
       "persist.bluetooth.accelerate.bt.on.enabled";
-  static constexpr char kCdtHwId[] = "ro.boot.cdt_hwid";
   static constexpr char kProductName[] = "ro.product.name";
   static constexpr char kBuildType[] = "ro.build.type";
   static constexpr char kShutDownAction[] = "sys.shutdown.requested";
+  static constexpr char kCsConfigFile[] =
+      "persist.vendor.bluetooth.cs_config_path";
 
   // Transport properties.
   static constexpr char kUartPathOverride[] =
@@ -67,6 +69,8 @@ enum class HalState : uint8_t {
   kShutdown = 0,
   // HAL service is initially started.
   kInit,
+  // HAL is about to start firmware download.
+  kPreFirmwareDownload,
   // Firmware is currently being downloaded.
   kFirmwareDownloading,
   // Firmware download is complete, ready to be loaded into RAM.
@@ -78,6 +82,28 @@ enum class HalState : uint8_t {
   // HAL is running with Bluetooth enabled.
   kRunning,
 };
+
+inline std::string_view HalStateToString(HalState state) {
+  switch (state) {
+    case HalState::kShutdown:
+      return "Shutdown";
+    case HalState::kInit:
+      return "Init";
+    case HalState::kPreFirmwareDownload:
+      return "PreFirmwareDownload";
+    case HalState::kFirmwareDownloading:
+      return "FirmwareDownloading";
+    case HalState::kFirmwareDownloadCompleted:
+      return "FirmwareDownloadCompleted";
+    case HalState::kFirmwareReady:
+      return "FirmwareReady";
+    case HalState::kBtChipReady:
+      return "BtChipReady";
+    case HalState::kRunning:
+      return "Running";
+  }
+  return "Unknown";
+}
 
 namespace hci {
 // HCI UART transport packet types (refer to Bluetooth Core Specification,
@@ -91,6 +117,12 @@ enum class HciPacketType : uint8_t {
   kIsoData = 0x05,
   kThreadData = 0x70,  // Vendor-specific.
   kHdlcData = 0x7e,    // Vendor-specific.
+};
+
+enum class PacketDestination : uint8_t {
+  kNone,
+  kController,
+  kHost,
 };
 
 enum class MonitorMode : int {
@@ -154,6 +186,9 @@ class HciConstants {
   static constexpr size_t kHciBqrEventSubCodeOffset = 3;
   static constexpr size_t kHciBqrReportIdOffset = 4;
 
+  // Vendor Specific Event Constants.
+  static constexpr size_t kHciVendorSpecificEventSubCodeOffset = 3;
+
   static constexpr size_t GetPreambleSize(HciPacketType type) {
     switch (type) {
       case HciPacketType::kCommand:
@@ -196,8 +231,23 @@ class HciConstants {
 // Event codes as defined in Bluetooth Core Specification 5.4 Volume 4,
 // Part E, section 7.7.
 enum class EventCode : uint8_t {
+  kConnectionComplete = 0x03,
+  kConnectionRequest = 0x04,
+  kDisconnectionComplete = 0x05,
+  kReadRemoteVersionInformationComplete = 0x0c,
+  kQosSetupComplete = 0x0d,
   kCommandComplete = 0x0e,
   kCommandStatus = 0x0f,
+  kRoleChange = 0x12,
+  kNumberOfCompletedPackets = 0x13,
+  kModeChange = 0x14,
+  kLinkKeyRequest = 0x17,
+  kMaxSlotsChange = 0x1b,
+  kReadRemoteExtendedFeaturesComplete = 0x23,
+  kSniffSubrating = 0x2e,
+  kEncryptionKeyRefreshComplete = 0x30,
+  kLinkSupervisionTimeoutChanged = 0x38,
+  kEnhancedFlushComplete = 0x39,
   kBleMeta = 0x3e,
   kVendorSpecific = 0xff,
 };
@@ -205,6 +255,14 @@ enum class EventCode : uint8_t {
 enum class GoogleEventSubCode : uint8_t {
   kControllerDebugInfo = 0x57,
   kBqrEvent = 0x58,
+};
+
+enum class BleMetaEventSubCode : uint8_t {
+  // SubCode of BLE Meta Events as defined in Bluetooth Core Specification 6.0
+  // Volume 4, Part E, section 7.7.65.
+  kConnectionComplete = 0x01,
+  kEnhancedConnectionCompleteV1 = 0x0a,
+  kEnhancedConnectionCompleteV2 = 0x29,
 };
 
 enum class CommandOpCode : uint16_t {
@@ -296,18 +354,39 @@ namespace power {
  * signal a wake-up condition. Each enumerator represents a specific source
  * and provides context for why a wake-up might be necessary.
  *
- * kTx: Used in all TX tasks, release after packet is written to transport.
- * kRx: Used in all RX tasks, release when packet is despatched to the client.
- * kHciBusy: Used to cover HCI command and event flow control.
- * kTransport: Used by the transport layer. The use case can be variant based on
- * it's requirement.
- * kInitialize: Used during the initialization of the HAL.
- * kClose: Used during the closing of the HAL.
+ * ╔═══════════════╦═══════════════╦═══════════════════════════════════════╗
+ * ║ WakeSource    ║ Used By       ║ Description                           ║
+ * ╠═══════════════╬═══════════════╬═══════════════════════════════════════╣
+ * ║ kTx           ║ TX thread     ║ Used in all TX tasks, released after  ║
+ * ║               ║               ║ the packet is written to transport.   ║
+ * ╠═══════════════╬═══════════════╬═══════════════════════════════════════╣
+ * ║ kRx           ║ RX thread     ║ Used in all RX tasks, released when   ║
+ * ║               ║               ║ the packet is dispatched to the       ║
+ * ║               ║               ║ client.                               ║
+ * ╠═══════════════╬═══════════════╬═══════════════════════════════════════╣
+ * ║ kHciBusy      ║ TX thread     ║ Used to cover HCI command and event   ║
+ * ║               ║               ║ flow control.                         ║
+ * ╠═══════════════╬═══════════════╬═══════════════════════════════════════╣
+ * ║ kRouterTask   ║ Binder thread ║ Acquired by the binder thread after   ║
+ * ║               ║ TX thread     ║ posting a task to the TX worker.      ║
+ * ║               ║               ║ Released by the TX thread after       ║
+ * ║               ║               ║ completing the task.                  ║
+ * ╠═══════════════╬═══════════════╬═══════════════════════════════════════╣
+ * ║ kTransport    ║ Optional      ║ Used by the transport layer. The use  ║
+ * ║               ║               ║ case can vary based on its            ║
+ * ║               ║               ║ requirement.                          ║
+ * ╠═══════════════╬═══════════════╬═══════════════════════════════════════╣
+ * ║ kInitialize   ║ Binder thread ║ Used during the initialization of the ║
+ * ║               ║               ║ HAL.                                  ║
+ * ╠═══════════════╬═══════════════╬═══════════════════════════════════════╣
+ * ║ kClose        ║ Binder thread ║ Used during the closing of the HAL.   ║
+ * ╚═══════════════╩═══════════════╩═══════════════════════════════════════╝
  */
 enum class WakeSource : uint8_t {
   kTx,
   kRx,
   kHciBusy,
+  kRouterTask,
   kTransport,
   kInitialize,
   kClose,

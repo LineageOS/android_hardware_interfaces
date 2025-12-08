@@ -17,6 +17,9 @@
 #define ANDROID_HARDWARE_BROADCASTRADIO_COMMON_WORKERTHREAD_H
 
 #include <chrono>
+#include <condition_variable>
+#include <functional>
+#include <mutex>
 #include <queue>
 #include <thread>
 

@@ -2,20 +2,6 @@ package: "com.android.btaudio.hal.flags"
 container: "system"
 
 flag {
-    name: "dsa_lea"
-    namespace: "pixel_bluetooth"
-    description: "Flag for DSA Over LEA"
-    bug: "270987427"
-}
-
-flag {
-    name: "leaudio_report_broadcast_ac_to_hal"
-    namespace: "pixel_bluetooth"
-    description: "Flag for reporting lea broadcast audio config to HAL"
-    bug: "321168976"
-}
-
-flag {
     name: "leaudio_sw_offload"
     namespace: "pixel_bluetooth"
     description: "Flag for using sw offload path to send premium audio"

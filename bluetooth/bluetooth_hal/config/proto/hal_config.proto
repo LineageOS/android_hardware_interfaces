@@ -28,7 +28,7 @@ message HalConfig {
   optional bool thread_dispatcher_enabled = 7;
   optional bool bt_power_controlled_by_lpp = 8;
   repeated string hw_stages_without_lpp_control_bt_power_pin = 9;
-  repeated string fw_unsupported_hw_stages = 10;
+  repeated string unsupported_hw_stages = 10;
   optional int32 vendor_transport_crash_interval_sec = 12;
   optional bool hp_uart_skip_suspend_enabled = 13;
   optional bool energy_controller_logging_enabled = 14;
@@ -44,4 +44,5 @@ message HalConfig {
   optional string lpm_wakelock_ctrl_proc_node = 24;
   optional string rfkill_folder_prefix = 25;
   optional string rfkill_type_bluetooth = 26;
+  optional bool enhanced_packet_validation_supported = 27;
 }

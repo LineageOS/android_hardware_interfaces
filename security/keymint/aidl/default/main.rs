@@ -23,29 +23,13 @@
 //! The additional device-specific components that are required for a real implementation of KeyMint
 //! that is based on the Rust reference implementation are described in system/keymint/README.md.
 
-use kmr_hal::SerializedChannel;
-use kmr_hal_nonsecure::{attestation_id_info, get_boot_info};
-use log::{debug, error, info, warn};
+use kmr_hal::{register_binder_services, HalServiceError, SerializedChannel, ALL_HALS};
+use log::{error, info, warn};
 use std::ops::DerefMut;
 use std::sync::{mpsc, Arc, Mutex};
 
 /// Name of KeyMint binder device instance.
 static SERVICE_INSTANCE: &str = "default";
-
-static KM_SERVICE_NAME: &str = "android.hardware.security.keymint.IKeyMintDevice";
-static RPC_SERVICE_NAME: &str = "android.hardware.security.keymint.IRemotelyProvisionedComponent";
-static CLOCK_SERVICE_NAME: &str = "android.hardware.security.secureclock.ISecureClock";
-static SECRET_SERVICE_NAME: &str = "android.hardware.security.sharedsecret.ISharedSecret";
-
-/// Local error type for failures in the HAL service.
-#[derive(Debug, Clone)]
-struct HalServiceError(String);
-
-impl From<String> for HalServiceError {
-    fn from(s: String) -> Self {
-        Self(s)
-    }
-}
 
 fn main() {
     if let Err(HalServiceError(e)) = inner_main() {
@@ -74,63 +58,15 @@ fn inner_main() -> Result<(), HalServiceError> {
     // Create a TA in-process, which acts as a local channel for communication.
     let channel = Arc::new(Mutex::new(LocalTa::new()));
 
-    // Let the TA know information about the boot environment. In a real device this
-    // is communicated directly from the bootloader to the TA, but here we retrieve
-    // the information from system properties and send from the HAL service.
-    let boot_req = get_boot_info();
-    debug!("boot/HAL->TA: boot info is {:?}", boot_req);
-    kmr_hal::send_boot_info(channel.lock().unwrap().deref_mut(), boot_req)
-        .map_err(|e| HalServiceError(format!("Failed to send boot info: {:?}", e)))?;
+    kmr_hal_nonsecure::send_boot_info_and_attestation_id_info(&channel)?;
 
     // Let the TA know information about the userspace environment.
     if let Err(e) = kmr_hal::send_hal_info(channel.lock().unwrap().deref_mut()) {
         error!("Failed to send HAL info: {:?}", e);
     }
 
-    // Let the TA know about attestation IDs. (In a real device these would be pre-provisioned into
-    // the TA.)
-    let attest_ids = attestation_id_info();
-    if let Err(e) = kmr_hal::send_attest_ids(channel.lock().unwrap().deref_mut(), attest_ids) {
-        error!("Failed to send attestation ID info: {:?}", e);
-    }
+    register_binder_services(&channel, ALL_HALS, SERVICE_INSTANCE)?;
 
-    let secret_service = kmr_hal::sharedsecret::Device::new_as_binder(channel.clone());
-    let service_name = format!("{}/{}", SECRET_SERVICE_NAME, SERVICE_INSTANCE);
-    binder::add_service(&service_name, secret_service.as_binder()).map_err(|e| {
-        HalServiceError(format!(
-            "Failed to register service {} because of {:?}.",
-            service_name, e
-        ))
-    })?;
-
-    let km_service = kmr_hal::keymint::Device::new_as_binder(channel.clone());
-    let service_name = format!("{}/{}", KM_SERVICE_NAME, SERVICE_INSTANCE);
-    binder::add_service(&service_name, km_service.as_binder()).map_err(|e| {
-        HalServiceError(format!(
-            "Failed to register service {} because of {:?}.",
-            service_name, e
-        ))
-    })?;
-
-    let rpc_service = kmr_hal::rpc::Device::new_as_binder(channel.clone());
-    let service_name = format!("{}/{}", RPC_SERVICE_NAME, SERVICE_INSTANCE);
-    binder::add_service(&service_name, rpc_service.as_binder()).map_err(|e| {
-        HalServiceError(format!(
-            "Failed to register service {} because of {:?}.",
-            service_name, e
-        ))
-    })?;
-
-    let clock_service = kmr_hal::secureclock::Device::new_as_binder(channel.clone());
-    let service_name = format!("{}/{}", CLOCK_SERVICE_NAME, SERVICE_INSTANCE);
-    binder::add_service(&service_name, clock_service.as_binder()).map_err(|e| {
-        HalServiceError(format!(
-            "Failed to register service {} because of {:?}.",
-            service_name, e
-        ))
-    })?;
-
-    info!("Successfully registered KeyMint HAL services.");
     binder::ProcessState::join_thread_pool();
     info!("KeyMint HAL service is terminating."); // should not reach here
     Ok(())

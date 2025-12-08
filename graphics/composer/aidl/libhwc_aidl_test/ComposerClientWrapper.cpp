@@ -154,7 +154,7 @@ ScopedAStatus ComposerClientWrapper::setPeakRefreshRateConfig(DisplayWrapper* di
     auto peakConfig = activeConfig;
 
     const auto displayConfigs = display->getDisplayConfigs();
-    for (const auto [config, displayConfig] : displayConfigs) {
+    for (const auto& [config, displayConfig] : displayConfigs) {
         if (displayConfig.configGroup == peakDisplayConfig.configGroup &&
             displayConfig.vsyncPeriod < peakDisplayConfig.vsyncPeriod) {
             peakDisplayConfig = displayConfig;
@@ -580,7 +580,8 @@ ScopedAStatus ComposerClientWrapper::updateDisplayProperties(DisplayWrapper* dis
         if (status.isOk()) {
             for (const auto& displayConfig : configs) {
                 if (displayConfig.configId == config) {
-                    display->setDimensions(displayConfig.width, displayConfig.height);
+                    display->setDimensionsAndVsyncPeriod(displayConfig.width, displayConfig.height,
+                                                        displayConfig.vsyncPeriod);
                     return ScopedAStatus::ok();
                 }
             }
@@ -591,8 +592,10 @@ ScopedAStatus ComposerClientWrapper::updateDisplayProperties(DisplayWrapper* dis
                 getDisplayAttribute(display->getDisplayId(), config, DisplayAttribute::WIDTH);
         const auto height =
                 getDisplayAttribute(display->getDisplayId(), config, DisplayAttribute::HEIGHT);
-        if (width.first.isOk() && height.first.isOk()) {
-            display->setDimensions(width.second, height.second);
+        const auto vsyncPeriod =
+                getDisplayAttribute(display->getDisplayId(), config, DisplayAttribute::VSYNC_PERIOD);
+        if (width.first.isOk() && height.first.isOk() && vsyncPeriod.first.isOk()) {
+            display->setDimensionsAndVsyncPeriod(width.second, height.second, vsyncPeriod.second);
             return ScopedAStatus::ok();
         }
 

@@ -31,14 +31,22 @@ static constexpr int32_t kDefaultVibratorId = 1;
 
 class VibratorCallback : public BnVibratorCallback {
   public:
-    VibratorCallback(const std::function<void()>& callback) : mCallback(callback) {}
+    VibratorCallback(int32_t delayMs, std::shared_ptr<IVibrationSession> session,
+                     std::shared_ptr<VibratorManager> manager)
+        : mDelayMs(delayMs), mSession(std::move(session)), mManager(std::move(manager)) {}
     ndk::ScopedAStatus onComplete() override {
-        mCallback();
+        LOG(VERBOSE) << "Closing session after vibrator became idle";
+        usleep(mDelayMs * 1000);
+        if (mManager) {
+            mManager->clearSession(mSession);
+        }
         return ndk::ScopedAStatus::ok();
     }
 
   private:
-    std::function<void()> mCallback;
+    const int32_t mDelayMs;
+    std::shared_ptr<IVibrationSession> mSession;
+    std::shared_ptr<VibratorManager> mManager;
 };
 
 ndk::ScopedAStatus VibratorManager::getCapabilities(int32_t* _aidl_return) {
@@ -100,17 +108,19 @@ ndk::ScopedAStatus VibratorManager::prepareSynced(const std::vector<int32_t>& vi
 ndk::ScopedAStatus VibratorManager::triggerSynced(
         const std::shared_ptr<IVibratorCallback>& callback) {
     LOG(VERBOSE) << "Vibrator Manager trigger synced";
-    std::lock_guard lock(mMutex);
-    if (!mIsPreparing) {
-        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+    {
+        std::lock_guard lock(mMutex);
+        if (!mIsPreparing) {
+            return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+        }
+        mIsPreparing = false;
     }
-    std::thread([callback] {
-        if (callback != nullptr) {
+    if (callback) {
+        std::thread([callback] {
             LOG(VERBOSE) << "Notifying perform complete";
             callback->onComplete();
-        }
-    }).detach();
-    mIsPreparing = false;
+        }).detach();
+    }
     return ndk::ScopedAStatus::ok();
 }
 
@@ -141,9 +151,9 @@ ndk::ScopedAStatus VibratorManager::startSession(const std::vector<int32_t>& vib
     if (mIsPreparing || mSession) {
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
     }
-    mSessionCallback = callback;
+    mSessionCallback = std::shared_ptr<IVibratorCallback>(callback);  // Keep a separate reference.
     mSession = ndk::SharedRefBase::make<VibrationSession>(this->ref<VibratorManager>());
-    *_aidl_return = static_cast<std::shared_ptr<IVibrationSession>>(mSession);
+    *_aidl_return = std::shared_ptr<IVibrationSession>(mSession);  // Return a separate reference.
     return ndk::ScopedAStatus::ok();
 }
 
@@ -169,37 +179,27 @@ void VibratorManager::closeSession(int32_t delayMs) {
     std::shared_ptr<IVibrationSession> session;
     {
         std::lock_guard lock(mMutex);
-        if (mIsClosingSession) {
-            // Already closing session, ignore this.
-            return;
-        }
         session = mSession;
-        mIsClosingSession = true;
     }
     if (session) {
-        auto callback = ndk::SharedRefBase::make<VibratorCallback>(
-                [session, delayMs, sharedThis = this->ref<VibratorManager>()] {
-                    LOG(VERBOSE) << "Closing session after vibrator became idle";
-                    usleep(delayMs * 1000);
-
-                    if (sharedThis) {
-                        sharedThis->clearSession(session);
-                    }
-                });
+        auto callback = ndk::SharedRefBase::make<VibratorCallback>(delayMs, session,
+                                                                   this->ref<VibratorManager>());
         mDefaultVibrator->setGlobalVibrationCallback(callback);
     }
 }
 
 void VibratorManager::clearSession(const std::shared_ptr<IVibrationSession>& session) {
-    std::lock_guard lock(mMutex);
-    if (mSession != session) {
-        // Probably a delayed call from an old session that was already cleared, ignore it.
-        return;
+    std::shared_ptr<IVibratorCallback> callback;
+    {
+        std::lock_guard lock(mMutex);
+        if (mSession != session) {
+            // Probably a delayed call from an old session that was already cleared, ignore it.
+            return;
+        }
+        callback = std::move(mSessionCallback);
+        mSession = nullptr;
+        mSessionCallback = nullptr;  // make sure any delayed call will not trigger this again.
     }
-    std::shared_ptr<IVibratorCallback> callback = mSessionCallback;
-    mSession = nullptr;
-    mSessionCallback = nullptr;  // make sure any delayed call will not trigger this again.
-    mIsClosingSession = false;
     if (callback) {
         std::thread([callback] {
             LOG(VERBOSE) << "Notifying session complete";

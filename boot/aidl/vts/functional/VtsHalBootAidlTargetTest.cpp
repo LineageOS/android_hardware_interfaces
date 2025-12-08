@@ -50,27 +50,32 @@ class BootAidlTest : public ::testing::TestWithParam<std::string> {
 // validity check Boot::getNumberSlots().
 TEST_P(BootAidlTest, GetNumberSlots) {
     int32_t slots{};
-    boot->getNumberSlots(&slots);
+    auto result = boot->getNumberSlots(&slots);
+    ASSERT_TRUE(result.isOk()) << result;
     ASSERT_LE(2, slots);
 }
 
 // validity check Boot::getCurrentSlot().
 TEST_P(BootAidlTest, GetCurrentSlot) {
     int curSlot = -1;
-    boot->getCurrentSlot(&curSlot);
+    auto result = boot->getCurrentSlot(&curSlot);
+    ASSERT_TRUE(result.isOk()) << result;
     int slots = 0;
-    boot->getNumberSlots(&slots);
+    result = boot->getNumberSlots(&slots);
+    ASSERT_TRUE(result.isOk()) << result;
     ASSERT_LT(curSlot, slots);
 }
 
 // validity check Boot::markBootSuccessful().
 TEST_P(BootAidlTest, MarkBootSuccessful) {
-    const auto result = boot->markBootSuccessful();
+    auto result = boot->markBootSuccessful();
     ASSERT_TRUE(result.isOk());
     int curSlot = 0;
-    boot->getCurrentSlot(&curSlot);
+    result = boot->getCurrentSlot(&curSlot);
+    ASSERT_TRUE(result.isOk()) << result;
     bool ret = false;
-    boot->isSlotMarkedSuccessful(curSlot, &ret);
+    result = boot->isSlotMarkedSuccessful(curSlot, &ret);
+    ASSERT_TRUE(result.isOk()) << result;
     ASSERT_TRUE(ret);
 }
 
@@ -113,11 +118,13 @@ TEST_P(BootAidlTest, SetSlotAsUnbootable) {
     ASSERT_GE(curSlot, 0);
     int otherSlot = curSlot ? 0 : 1;
     bool otherBootable = false;
-    boot->isSlotBootable(otherSlot, &otherBootable);
+    auto result = boot->isSlotBootable(otherSlot, &otherBootable);
+    ASSERT_TRUE(result.isOk()) << result;
     {
         auto result = boot->setSlotAsUnbootable(otherSlot);
         ASSERT_TRUE(result.isOk()) << result;
-        boot->isSlotBootable(otherSlot, &otherBootable);
+        result = boot->isSlotBootable(otherSlot, &otherBootable);
+        ASSERT_TRUE(result.isOk()) << result;
         ASSERT_FALSE(otherBootable);
 
         // Restore original flags to avoid problems on reboot

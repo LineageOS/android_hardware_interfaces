@@ -66,6 +66,30 @@ aidl_interface {
         },
 
     ],
-    frozen: true,
+    frozen: false,
 
+}
+
+// cc_defaults that includes the latest gnss AIDL library.
+// Modules that depend on gnss directly can include this cc_defaults to avoid
+// managing dependency versions explicitly.
+cc_defaults {
+    name: "gnss_use_latest_hal_aidl_cpp_static",
+    static_libs: [
+        "android.hardware.gnss-V7-cpp",
+    ],
+}
+
+cc_defaults {
+    name: "gnss_use_latest_hal_aidl_cpp_shared",
+    shared_libs: [
+        "android.hardware.gnss-V7-cpp",
+    ],
+}
+
+cc_defaults {
+    name: "gnss_use_latest_hal_aidl_ndk_shared",
+    shared_libs: [
+        "android.hardware.gnss-V7-ndk",
+    ],
 }

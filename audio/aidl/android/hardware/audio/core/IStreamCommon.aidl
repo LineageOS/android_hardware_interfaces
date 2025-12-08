@@ -16,6 +16,7 @@
 
 package android.hardware.audio.core;
 
+import android.hardware.audio.core.MmapBufferDescriptor;
 import android.hardware.audio.core.VendorParameter;
 import android.hardware.audio.effect.IEffect;
 
@@ -144,4 +145,27 @@ interface IStreamCommon {
      *                         is null (depending on the implementation backend).
      */
     void removeEffect(in IEffect effect);
+
+    /**
+     * Create a shared buffer for MMap data transfer. This replaces the
+     * 'StreamDescriptor.audio.mmap' returned by 'IModule.open{Input|Output}Stream'.
+     * The reason for introducing this method is that in typical tinyALSA-based
+     * implementations it is only possible to obtain the DMA buffer after opening
+     * the audio device. This contradicts the idea that streams are initially
+     * opened in the 'STANDBY' state and reduces possibilities for power saving.
+     * Thus, creation of the MMap shared buffer needs to be done after the stream
+     * has been created, just before starting the data transfer.
+     *
+     * This method is called by the client after it drives the stream out of
+     * the 'STANDBY' state. It can be called multiple times during the stream
+     * lifetime because the buffer may need to be recreated after the stream
+     * goes into 'STANDBY' state and the underlying audio device was closed
+     * in order to save power.
+     *
+     * @throws EX_ILLEGAL_STATE If the buffer can not be created in the current
+     *                          state of the stream, for example the stream is
+     *                          closed or is in the 'STANDBY' state.
+     * @throws EX_UNSUPPORTED_OPERATION If it is not an MMap stream.
+     */
+    MmapBufferDescriptor createMmapBuffer();
 }

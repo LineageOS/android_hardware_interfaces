@@ -44,4 +44,5 @@ enum IndicationFilter {
   PHYSICAL_CHANNEL_CONFIG = (1 << 4) /* 16 */,
   REGISTRATION_FAILURE = (1 << 5) /* 32 */,
   BARRING_INFO = (1 << 6) /* 64 */,
+  DISPLAY_NETWORK_TYPE_CHANGED = (1 << 7) /* 128 */,
 }

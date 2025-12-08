@@ -27,11 +27,15 @@
 
 #include <atomic>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <queue>
 #include <set>
+#include <string>
+#include <tuple>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 struct hwc_composer_device_1;

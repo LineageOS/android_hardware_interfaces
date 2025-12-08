@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "bthal.thread_dispatcher.daemon"
+#define LOG_TAG "bluetooth_hal.thread_dispatcher.daemon"
 
 #include "bluetooth_hal/extensions/thread/thread_daemon.h"
 
@@ -84,7 +84,7 @@ void ThreadDaemon::SendDownlink(const std::vector<uint8_t>& packet) {
   }
 
   // Handle hardware reset if a specific packet is received.
-  ANCHOR_LOG_WARNING(AnchorType::THREAD_HARDWARE_RESET)
+  ANCHOR_LOG_WARNING(AnchorType::kThreadHardwareReset)
       << __func__ << ": Hardware reset from Thread HAL.";
   SocketProcessor::Cleanup();
   SystemCallWrapper::GetWrapper().Kill(getpid(), SIGKILL);
@@ -200,8 +200,8 @@ bool ThreadDaemon::NotifyDaemonToStop() {
 }
 
 bool ThreadDaemon::AcceptClient() {
-  DURATION_TRACKER(AnchorType::THREAD_ACCEPT_CLIENT,
-                   ::android::base::StringPrintf("Accept Thread client"));
+  SCOPED_ANCHOR(AnchorType::kThreadAcceptClient,
+                ::android::base::StringPrintf("Accept Thread client"));
   LOG(DEBUG) << __func__ << ": Start processing connect request from client.";
 
   int new_client_socket = socket_processor_->AcceptClient();
@@ -243,7 +243,7 @@ void ThreadDaemon::MonitorSocket() {
 
     if (SystemCallWrapper::GetWrapper().FdIsSet(notification_listen_fd_,
                                                 &monitor_fds)) {
-      ANCHOR_LOG(AnchorType::THREAD_DADEMON_CLOSED)
+      ANCHOR_LOG(AnchorType::kThreadDaemonClosed)
           << __func__ << ": Daemon is terminated by notification...";
       LOG(DEBUG) << __func__ << ": Daemon is terminated by notification...";
       uint8_t stub_buffer = 0;  // Reading one byte to clear the notification.
@@ -263,7 +263,7 @@ void ThreadDaemon::MonitorSocket() {
         inotify_event* event = reinterpret_cast<inotify_event*>(buffer);
         if (event->mask & IN_DELETE &&
             !socket_processor_->IsSocketFileExisted()) {
-          ANCHOR_LOG_DEBUG(AnchorType::THREAD_SOCKET_FILE_DELETED)
+          ANCHOR_LOG_DEBUG(AnchorType::kThreadSocketFileDeleted)
               << __func__ << ": Socket file is deleted, need to restart...";
           socket_processor_->CloseSocketFileMonitor();
           require_starting_ = true;
@@ -276,7 +276,7 @@ void ThreadDaemon::MonitorSocket() {
         SystemCallWrapper::GetWrapper().FdIsSet(
             socket_processor_->GetClientSocket(), &monitor_fds)) {
       if (!socket_processor_->Recv()) {
-        ANCHOR_LOG_ERROR(AnchorType::THREAD_CLIENT_ERROR)
+        ANCHOR_LOG_ERROR(AnchorType::kThreadClientError)
             << __func__ << ": Daemon receives from client failed...";
         CleanUpClient();
       }
@@ -284,7 +284,7 @@ void ThreadDaemon::MonitorSocket() {
 
     if (SystemCallWrapper::GetWrapper().FdIsSet(
             socket_processor_->GetServerSocket(), &monitor_fds)) {
-      ANCHOR_LOG_DEBUG(AnchorType::THREAD_CLIENT_CONNECT)
+      ANCHOR_LOG_DEBUG(AnchorType::kThreadClientConnect)
           << __func__ << ": Daemon receives client connect request...";
       AcceptClient();
     }

@@ -18,6 +18,8 @@
 
 #include <libminradio/debug.h>
 #include <libminradio/response.h>
+#include <chrono>
+#include <thread>
 
 #define RADIO_MODULE "Modem"
 
@@ -139,7 +141,21 @@ ScopedAStatus RadioModem::nvReadItem(int32_t serial, aidl::NvItem) {
 
 ScopedAStatus RadioModem::nvResetConfig(int32_t serial, aidl::ResetNvType resetType) {
     LOG_CALL << resetType;  // RELOAD is the only non-deprecated argument
-    respond()->nvResetConfigResponse(notSupported(serial));
+    if (resetType == aidl::ResetNvType::RELOAD) {
+        respond()->nvResetConfigResponse(noError(serial));
+
+        // Broadcasting radio unavailable and then on a different thread to simulate reboot.
+        std::thread([this] {
+            using namespace std::chrono_literals;
+            std::this_thread::sleep_for(1s);
+            indicate()->radioStateChanged(RadioIndicationType::UNSOLICITED,
+                                          aidl::RadioState::UNAVAILABLE);
+            std::this_thread::sleep_for(1s);
+            indicate()->radioStateChanged(RadioIndicationType::UNSOLICITED, aidl::RadioState::ON);
+        }).detach();
+    } else {
+        respond()->nvResetConfigResponse(notSupported(serial));
+    }
     return ok();
 }
 

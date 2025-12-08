@@ -20,6 +20,7 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "bluetooth_hal/debug/debug_client.h"
 #include "bluetooth_hal/hal_packet.h"
 #include "bluetooth_hal/hal_types.h"
 #include "bluetooth_hal/hci_router_client.h"
@@ -57,8 +58,10 @@ constexpr size_t kHciVscSetPowerCapCmdLengthPlusHR =
     kHciVscSetPowerCapBeamformingPowerLimitSizePlusHR;
 constexpr uint8_t kHciVscPowerCapScale = 4;
 
-class BluetoothSarHandler : public ::bluetooth_hal::hci::HciRouterClient {
+class BluetoothSarHandler : public ::bluetooth_hal::hci::HciRouterClient,
+                            public ::bluetooth_hal::debug::DebugClient {
  public:
+  BluetoothSarHandler();
   bool SetBluetoothTxPowerCap(int8_t cap);
   bool SetBluetoothTechBasedTxPowerCap(int8_t br_cap, int8_t edr_cap,
                                        int8_t ble_cap);

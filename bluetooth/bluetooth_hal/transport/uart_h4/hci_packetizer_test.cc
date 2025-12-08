@@ -25,16 +25,22 @@
 #include "bluetooth_hal/hal_packet.h"
 #include "bluetooth_hal/hal_types.h"
 #include "bluetooth_hal/test/common/test_helper.h"
+#include "bluetooth_hal/test/mock/mock_bluetooth_activities.h"
+#include "bluetooth_hal/test/mock/mock_hal_config_loader.h"
 #include "gtest/gtest.h"
 
 namespace bluetooth_hal {
 namespace transport {
 namespace {
 
+using ::testing::_;
+using ::testing::Return;
 using ::testing::Test;
 using ::testing::Values;
 using ::testing::WithParamInterface;
 
+using ::bluetooth_hal::config::MockHalConfigLoader;
+using ::bluetooth_hal::debug::MockBluetoothActivities;
 using ::bluetooth_hal::hci::HalPacket;
 using ::bluetooth_hal::hci::HalPacketCallback;
 using ::bluetooth_hal::hci::HciPacketType;
@@ -66,9 +72,14 @@ class HciPacketizerTest : public Test {
   void SetUp() override {
     test_hci_packetizer_ = std::make_unique<HciPacketizer>(std::bind_front(
         &MockPacketHandler::HalPacketCallback, &mock_packet_handler_));
+    MockHalConfigLoader::SetMockLoader(&mock_hal_config_loader_);
+    MockBluetoothActivities::SetMockBluetoothActivities(
+        &mock_bluetooth_activities_);
   }
 
-  void TearDown() override {}
+  void TearDown() override {
+    MockBluetoothActivities::SetMockBluetoothActivities(nullptr);
+  }
 
   void ProcessDataStream(std::span<const uint8_t> data_stream,
                          size_t chunk_size = 0) {
@@ -92,6 +103,8 @@ class HciPacketizerTest : public Test {
 
   std::unique_ptr<HciPacketizer> test_hci_packetizer_;
   MockPacketHandler mock_packet_handler_;
+  MockHalConfigLoader mock_hal_config_loader_;
+  MockBluetoothActivities mock_bluetooth_activities_;
 };
 
 class LargePacketTest : public HciPacketizerTest,
@@ -158,6 +171,64 @@ INSTANTIATE_TEST_SUITE_P(
             .packet_type = HciPacketType::kThreadData,
             .preamble = std::vector<uint8_t>{0x00, 0x00, 0x03, 0x00},
             .payload = std::vector<uint8_t>{0x01, 0x02, 0x03}}));
+
+TEST_F(HciPacketizerTest, PacketFoundWithEnhancedValidationOn) {
+  EXPECT_CALL(mock_hal_config_loader_, IsEnhancedPacketValidationSupported())
+      .WillRepeatedly(Return(true));
+
+  std::vector<uint8_t> valid_packet =
+      GenerateStreamWithHciPacket(HciPacketTestParam{
+          .packet_type = HciPacketType::kEvent,
+          .preamble = std::vector<uint8_t>{0x05, 0x04},
+          .payload = std::vector<uint8_t>{0x00, 0x0C, 0x00, 0x00}});
+
+  std::vector<uint8_t> data_stream = {0xFF, 0xFF};
+  data_stream.insert(data_stream.end(), valid_packet.begin(),
+                     valid_packet.end());
+
+  EXPECT_CALL(mock_packet_handler_,
+              HalPacketCallback(MatcherFactory::CreateHalPacketMatcher(
+                  HalPacket(valid_packet))))
+      .Times(1);
+  ProcessDataStream(std::span(data_stream));
+}
+
+TEST_F(HciPacketizerTest, PacketNotFoundWithEnhancedValidationOn) {
+  EXPECT_CALL(mock_hal_config_loader_, IsEnhancedPacketValidationSupported())
+      .WillRepeatedly(Return(true));
+
+  const std::vector<uint8_t> data_stream = {0xFF, 0xFF, 0xAA, 0xBB, 0xCC};
+
+  EXPECT_CALL(mock_packet_handler_, HalPacketCallback(_)).Times(0);
+  ProcessDataStream(std::span(data_stream));
+}
+
+TEST_F(HciPacketizerTest, EnhancedValidationOffWithValidPacket) {
+  EXPECT_CALL(mock_hal_config_loader_, IsEnhancedPacketValidationSupported())
+      .WillRepeatedly(Return(false));
+
+  std::vector<uint8_t> valid_packet = GenerateStreamWithHciPacket(
+      HciPacketTestParam{.packet_type = HciPacketType::kEvent,
+                         .preamble = std::vector<uint8_t>{0x3e, 0x13},
+                         .payload = std::vector<uint8_t>{0x01, 0x00}});
+
+  std::vector<uint8_t> data_stream = {0xFF, 0xFF};
+  data_stream.insert(data_stream.end(), valid_packet.begin(),
+                     valid_packet.end());
+
+  EXPECT_CALL(mock_packet_handler_, HalPacketCallback(_)).Times(0);
+  ProcessDataStream(std::span(data_stream));
+}
+
+TEST_F(HciPacketizerTest, EnhancedValidationOffWithoutValidPacket) {
+  EXPECT_CALL(mock_hal_config_loader_, IsEnhancedPacketValidationSupported())
+      .WillRepeatedly(Return(false));
+
+  const std::vector<uint8_t> data_stream = {0xFF, 0xFF, 0xAA, 0xBB, 0xCC};
+
+  EXPECT_CALL(mock_packet_handler_, HalPacketCallback(_)).Times(0);
+  ProcessDataStream(std::span(data_stream));
+}
 
 }  // namespace
 }  // namespace transport

@@ -55,4 +55,6 @@ interface IRadioNetworkIndication {
   oneway void emergencyNetworkScanResult(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.network.EmergencyRegResult result);
   oneway void cellularIdentifierDisclosed(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.network.CellularIdentifierDisclosure disclosure);
   oneway void securityAlgorithmsUpdated(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.network.SecurityAlgorithmUpdate securityAlgorithmUpdate);
+  /* @hide */
+  oneway void displayNetworkTypeChanged(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.network.DisplayNetworkType dnt);
 }

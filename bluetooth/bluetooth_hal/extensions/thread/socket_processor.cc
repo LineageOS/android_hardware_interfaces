@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "bthal.thread_dispatcher.socket"
+#define LOG_TAG "bluetooth_hal.thread_dispatcher.socket"
 
 #include "bluetooth_hal/extensions/thread/socket_processor.h"
 
@@ -51,9 +51,6 @@ enum class ReadState {
   kDataFlag,
   kDataPayload,
 };
-
-class SocketProcessorImpl;
-SocketProcessorImpl* processor = nullptr;
 
 class SocketProcessorImpl : public SocketProcessor {
  public:
@@ -467,32 +464,31 @@ void SocketProcessorImpl::PrintSocketErr(int ret_val, SocketDirection dir) {
 void SocketProcessor::Initialize(
     const std::string& socket_path,
     std::optional<HalPacketCallback> hal_packet_cb) {
-  if (processor) {
+  if (processor_) {
     LOG(WARNING) << __func__ << "Already initialize the socket processor.";
     return;
   }
   CHECK(hal_packet_cb != std::nullopt)
       << __func__ << ": hal_packet_cb == nullptr";
-  processor = new SocketProcessorImpl(socket_path, hal_packet_cb);
+  processor_ = new SocketProcessorImpl(socket_path, hal_packet_cb);
 }
 
 void SocketProcessor::Cleanup() {
   LOG(DEBUG) << __func__;
-  if (!processor) {
+  if (!processor_) {
     return;
   }
-
-  SocketProcessorImpl* ptr = processor;
-  processor = nullptr;
+  SocketProcessor* ptr = processor_;
+  processor_ = nullptr;
 
   delete ptr;
 }
 
 SocketProcessor* SocketProcessor::GetProcessor() {
-  if (!processor) {
+  if (!processor_) {
     LOG(FATAL) << __func__ << ": processor == nullptr.";
   }
-  return processor;
+  return processor_;
 }
 
 }  // namespace thread

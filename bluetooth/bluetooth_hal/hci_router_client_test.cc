@@ -87,19 +87,17 @@ class HciRouterClientTest : public Test {
 
     ON_CALL(mock_hci_router_, Send(_)).WillByDefault(Return(true));
     ON_CALL(mock_hci_router_, SendCommand(_, _)).WillByDefault(Return(true));
-    ON_CALL(mock_hci_router_client_agent_, RegisterRouterClient(_))
+    ON_CALL(mock_hci_router_client_agent_, RegisterClient(_))
         .WillByDefault(Return(true));
-    ON_CALL(mock_hci_router_client_agent_, UnregisterRouterClient(_))
+    ON_CALL(mock_hci_router_client_agent_, UnregisterClient(_))
         .WillByDefault(Return(true));
-    EXPECT_CALL(mock_hci_router_client_agent_, RegisterRouterClient(_))
-        .Times(1);
+    EXPECT_CALL(mock_hci_router_client_agent_, RegisterClient(_)).Times(1);
 
     router_client_ = new HciRouterClientTestInstance();
   }
 
   void TearDown() override {
-    EXPECT_CALL(mock_hci_router_client_agent_, UnregisterRouterClient(_))
-        .Times(1);
+    EXPECT_CALL(mock_hci_router_client_agent_, UnregisterClient(_)).Times(1);
     delete (router_client_);
   }
 

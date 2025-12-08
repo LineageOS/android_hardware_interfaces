@@ -88,8 +88,10 @@ class MockBluetoothCccHandlerCallback : public BluetoothCccHandlerCallback {
  public:
   MockBluetoothCccHandlerCallback(
       BluetoothAddress& address, std::vector<CccLmpEventId> lmp_ids,
-      std::shared_ptr<MockCallbackVerifier> verifier)
-      : BluetoothCccHandlerCallback(address, lmp_ids), verifier_(verifier) {};
+      std::shared_ptr<MockCallbackVerifier> verifier,
+      AddressType address_type = AddressType::kRandom)
+      : BluetoothCccHandlerCallback(address, address_type, lmp_ids),
+        verifier_(verifier) {};
 
   void OnEventGenerated(const CccTimestamp& timestamp,
                         const BluetoothAddress& address, CccDirection direction,
@@ -114,7 +116,7 @@ class BluetoothCccHandlerTest : public Test {
     ON_CALL(mock_system_call_wrapper_, Open(_, _)).WillByDefault(Return(1));
 
     MockHciRouterClientAgent::SetMockAgent(&mock_hci_router_client_agent_);
-    EXPECT_CALL(mock_hci_router_client_agent_, RegisterRouterClient(NotNull()))
+    EXPECT_CALL(mock_hci_router_client_agent_, RegisterClient(NotNull()))
         .WillOnce(Return(true));
 
     MockHciRouter::SetMockRouter(&mock_hci_router_);
@@ -125,8 +127,7 @@ class BluetoothCccHandlerTest : public Test {
   }
 
   void TearDown() override {
-    EXPECT_CALL(mock_hci_router_client_agent_,
-                UnregisterRouterClient(ccc_handler_))
+    EXPECT_CALL(mock_hci_router_client_agent_, UnregisterClient(ccc_handler_))
         .WillOnce(Return(true));
     delete (ccc_handler_);
   }
@@ -166,31 +167,35 @@ class BluetoothCccHandlerTest : public Test {
     return HalPacket({0x04, 0x0E, 0x04, 0x01, 0x63, 0xFD, status});
   }
 
-  BluetoothCccTimesyncEvent CreateTimesyncEvent(BluetoothAddress& address,
-                                                uint8_t toggle_count = 0x01) {
-    auto packet =
-        HalPacket({0x04,  // HCI Event (1 byte)
-                   0xFF,  // Vendor event code (1 byte)
-                   0x17,  // Length (1 byte - 23 decimal, payload length)
-                   0xD0,  // Time sync sub event code (1 byte)
+  BluetoothCccTimesyncEvent CreateTimesyncEvent(
+      BluetoothAddress& address, uint8_t toggle_count = 0x01,
+      uint16_t event_count = 0x5678,
+      AddressType address_type = AddressType::kRandom) {
+    auto packet = HalPacket({
+        0x04,  // HCI Event (1 byte)
+        0xFF,  // Vendor event code (1 byte)
+        0x17,  // Length (1 byte - 23 decimal, payload length)
+        0xD0,  // Time sync sub event code (1 byte)
 
-                   address[5], address[4], address[3], address[2], address[1],
-                   address[0],  // Address (6 bytes)
+        address[5], address[4], address[3], address[2], address[1],
+        address[0],  // Address (6 bytes)
 
-                   0x01,  // AddressType (1 byte - Random)
-                   0x00,  // Direction (1 byte - Tx)
+        static_cast<uint8_t>(address_type),  // Address type
+        0x00,                                // Direction (1 byte - Tx)
 
-                   // Timestamp (8 bytes - 0xAABBCCDDEEFF0011, little-endian)
-                   0x11, 0x00, 0xFF, 0xEE, 0xDD, 0xCC, 0xBB, 0xAA,
+        // Timestamp (8 bytes - 0xAABBCCDDEEFF0011, little-endian)
+        0x11, 0x00, 0xFF, 0xEE, 0xDD, 0xCC, 0xBB, 0xAA,
 
-                   0xFF,          // EventId (1 byte - EventIdConnInd)
-                   toggle_count,  // ToggleCount (1 byte)
+        0xFF,          // EventId (1 byte - EventIdConnInd)
+        toggle_count,  // ToggleCount (1 byte)
 
-                   // Timesync offset (2 bytes - 0x1234, little-endian)
-                   0x34, 0x12,
+        // Timesync offset (2 bytes - 0x1234, little-endian)
+        0x34, 0x12,
 
-                   // Event count (2 bytes - 0x5678, little-endian)
-                   0x78, 0x56});
+        // Event count (2 bytes - 0x5678, little-endian)
+        static_cast<uint8_t>(event_count & 0xFF),  // 0x78
+        static_cast<uint8_t>(event_count >> 8)     // 0x56
+    });
 
     return BluetoothCccTimesyncEvent(packet);
   }
@@ -243,7 +248,8 @@ TEST_F(BluetoothCccHandlerTest, HandleRegisterForLmpEventsFailed) {
   ccc_handler_->OnCommandCallback(GenerateTimesyncCommandCompleteEvent(false));
 
   // This UnregisterLmpEvents does not invoke SendCommand to the HciRouter due
-  // to the failure in the command complete event for the RegisterForLmpEvents.
+  // to the failure in the command complete event for the
+  // RegisterForLmpEvents.
   EXPECT_FALSE(ccc_handler_->UnregisterLmpEvents(address_));
   ccc_handler_->OnCommandCallback(GenerateTimesyncCommandCompleteEvent(false));
 }
@@ -375,8 +381,38 @@ TEST_F(BluetoothCccHandlerTest,
 
   ccc_handler_->OnCommandCallback(GenerateTimesyncCommandCompleteEvent(true));
 
-  // timesync event for different_address_, should trigger a callback.
+  // timesync event for different_address_, should not trigger callback.
   ccc_handler_->OnPacketCallback(timesync_event);
+}
+
+TEST_F(BluetoothCccHandlerTest,
+       HandleMonitoringTimeSyncEventWithDifferentAddressType) {
+  std::vector<CccLmpEventId> lmp_ids = {CccLmpEventId::kConnectInd,
+                                        CccLmpEventId::kLlPhyUpdateInd};
+  auto mock_callback = std::make_shared<MockCallbackVerifier>();
+  auto timesync_event = CreateTimesyncEvent(address_, 1, 0x1);
+  auto address_type_public =
+      CreateTimesyncEvent(address_, 2, 0x2, AddressType::kPublic);
+
+  // One additional system wrapper invoke for Enabling BT
+  EXPECT_CALL(mock_system_call_wrapper_, Open(_, _)).Times(3);
+  EXPECT_CALL(mock_system_call_wrapper_, Read(_, _, _)).Times(3);
+  EXPECT_CALL(mock_system_call_wrapper_, Close(_)).Times(3);
+  EXPECT_CALL(mock_hci_router_, SendCommand(_, _)).Times(1);
+  EXPECT_CALL(*mock_callback, OnRegistered(true)).Times(1);
+  EXPECT_CALL(*mock_callback, OnEventGenerated(_, address_, _, _, 0x2))
+      .Times(1);
+
+  EnableBluetooth();
+  // Register LMP event for address_ kPublic
+  EXPECT_TRUE(ccc_handler_->RegisterForLmpEvents(
+      std::make_unique<MockBluetoothCccHandlerCallback>(
+          address_, lmp_ids, mock_callback, AddressType::kPublic)));
+  ccc_handler_->OnCommandCallback(GenerateTimesyncCommandCompleteEvent(true));
+
+  // timesync events for each address type, should only trigger callbakc once
+  ccc_handler_->OnPacketCallback(timesync_event);
+  ccc_handler_->OnPacketCallback(address_type_public);
 }
 
 TEST_F(BluetoothCccHandlerTest, HandleMonitoringMultipleTimeSyncEvent) {

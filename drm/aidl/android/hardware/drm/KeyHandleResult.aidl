@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 The Android Open Source Project
+ * Copyright (C) 2025 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-#pragma once
+package android.hardware.drm;
 
-#include "aidl/android/hardware/bluetooth/ranging/ChannelSoudingRawData.h"
-
-using ::aidl::android::hardware::bluetooth::ranging::ChannelSoudingRawData;
-
-class ChannelSoundingAlgorithm {
- public:
-  void reset_variables() {};
-
-  double estimate_distance([[maybe_unused]] const ChannelSoudingRawData&) {
-    return 0;
-  }
-
-  double get_confidence_level() { return 0; }
-};
+/**
+ * The result of a getKeyHandle call from ICryptoPlugin.
+ *
+ * This structure holds the resulting opaque key handle.
+ * The key handle is used by components that perform decryption and decoding
+ * in the same step.
+ */
+@VintfStability
+parcelable KeyHandleResult {
+    /**
+     * An opaque handle to the selected key.
+     */
+    byte[] keyHandle;
+}

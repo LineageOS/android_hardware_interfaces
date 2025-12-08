@@ -25,7 +25,7 @@
     <!-- system configuration -->
     <system>
         <!-- number of cameras available to EVS -->
-        <num_cameras value='1'/>
+        <num_cameras value='3'/>
     </system>
 
     <!-- camera information -->
@@ -56,6 +56,30 @@
             </characteristics>
         </device>
         <device id='/dev/video11' position='front'>
+            <caps>
+                <!-- list of supported controls -->
+                <supported_controls>
+                    <control name='BRIGHTNESS' min='0' max='255'/>
+                    <control name='CONTRAST' min='0' max='255'/>
+                </supported_controls>
+
+                <stream id='0' width='640'  height='360'  format='RGBA_8888' framerate='30'/>
+            </caps>
+
+            <!-- list of parameters -->
+            <characteristics>
+                <!-- Camera intrinsic calibration matrix. See
+                     https://developer.android.com/reference/android/hardware/camera2/CameraCharacteristics.html#LENS_INTRINSIC_CALIBRATION
+                -->
+                <parameter
+                    name='LENS_INTRINSIC_CALIBRATION'
+                    type='float'
+                    size='5'
+                    value='0.0,0.0,0.0,0.0,0.0'
+                />
+            </characteristics>
+        </device>
+        <device id='mock_camera' type='video' file_path="/vendor/etc/automotive/evs/evs_mock_rear_camera.mp4" position='rear'>
             <caps>
                 <!-- list of supported controls -->
                 <supported_controls>

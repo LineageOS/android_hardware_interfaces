@@ -143,7 +143,7 @@ parcelable SupportInfo {
         /**
          * Minimum calculation window size for getCpuHeadroom in milliseconds.
          *
-         * This should be no larger than 50ms.
+         * This should be no larger than 1000ms.
          */
         int cpuMinCalculationWindowMillis = 50;
 
@@ -157,7 +157,7 @@ parcelable SupportInfo {
         /**
          * Minimum calculation window size for getGpuHeadroom in milliseconds.
          *
-         * This should be no larger than 50ms.
+         * This should be no larger than 1000ms.
          */
         int gpuMinCalculationWindowMillis = 50;
 

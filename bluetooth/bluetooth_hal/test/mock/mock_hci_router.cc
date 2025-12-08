@@ -16,14 +16,20 @@
 
 #include "bluetooth_hal/test/mock/mock_hci_router.h"
 
+#include "android-base/logging.h"
 #include "bluetooth_hal/hci_router.h"
 
 namespace bluetooth_hal {
 namespace hci {
 
-static MockHciRouter* mock_hci_router_;
-
-HciRouter& HciRouter::GetRouter() { return *mock_hci_router_; }
+HciRouter& HciRouter::GetRouter() {
+  if (!MockHciRouter::mock_hci_router_) {
+    LOG(FATAL) << __func__
+               << ": mock_hci_router_ is nullptr. Did you forget to call "
+                  "SetMockRouter in your test SetUp?";
+  }
+  return *MockHciRouter::mock_hci_router_;
+}
 
 void MockHciRouter::SetMockRouter(MockHciRouter* router) {
   mock_hci_router_ = router;

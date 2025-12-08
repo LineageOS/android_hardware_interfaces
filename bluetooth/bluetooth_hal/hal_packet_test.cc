@@ -365,6 +365,25 @@ TEST(HalPacketTest, HandleHdlcData) {
   ASSERT_EQ(packet.GetBleSubEventCode(), 0);
 }
 
+TEST(HalPacketTest, GetValidBluetoothAddressFromPacket) {
+  HalPacket packet({0x04, 0x04, 0x0a, 0xcb, 0x24, 0x60, 0xc8, 0x8b, 0x08, 0x0c,
+                    0x42, 0x5a, 0x01});
+  BluetoothAddress expected_address({0x08, 0x8b, 0xc8, 0x60, 0x24, 0xcb});
+  std::string expected_address_in_full_string = "08:8B:C8:60:24:CB";
+
+  EXPECT_EQ(packet.GetBluetoothAddressAt(3), expected_address);
+  EXPECT_EQ(packet.GetBluetoothAddressAt(3).ToFullString(),
+            expected_address_in_full_string);
+}
+
+TEST(HalPacketTest, GetInvalidBluetoothAddressFromPacket) {
+  HalPacket packet({0x04, 0x04, 0x05, 0xcb, 0x24, 0x60, 0xc8, 0x8b});
+  std::string expected_address_in_full_string = "00:00:00:00:00:00";
+
+  EXPECT_EQ(packet.GetBluetoothAddressAt(3).ToFullString(),
+            expected_address_in_full_string);
+}
+
 }  // namespace
 }  // namespace hci
 }  // namespace bluetooth_hal

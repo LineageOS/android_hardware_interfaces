@@ -46,6 +46,7 @@ interface IStreamOut {
      *
      * @param sourceMetadata Updated metadata.
      * @throws EX_ILLEGAL_STATE If the stream is closed.
+     * @throws EX_ILLEGAL_ARGUMENT If the 'PlaybackTrackMetadata.tags' value is invalid.
      */
     void updateMetadata(in SourceMetadata sourceMetadata);
 

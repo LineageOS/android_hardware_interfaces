@@ -68,4 +68,11 @@ enum IndicationFilter {
      * Control the unsolicited sending of barring info updates via onBarringInfo
      */
     BARRING_INFO = 1 << 6,
+    /**
+     * Enables the {@link IRadioNetworkIndication.displayNetworkTypeChanged} indication.
+     * If this bit is set, the modem will send {@code displayNetworkTypeChanged}
+     * indications when the suggested display network type changes.
+     * If this bit is not set, the modem must suppress these indications.
+     */
+    DISPLAY_NETWORK_TYPE_CHANGED = 1 << 7,
 }

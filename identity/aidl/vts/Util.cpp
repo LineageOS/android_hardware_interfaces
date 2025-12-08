@@ -30,11 +30,13 @@
 #include <openssl/evp.h>
 
 #include <charconv>
+#include <fstream>
 #include <map>
 
 namespace android::hardware::identity::test_utils {
 
 using std::endl;
+using std::ifstream;
 using std::map;
 using std::optional;
 using std::string;
@@ -48,6 +50,14 @@ using ::android::base::StringPrintf;
 using ::android::binder::Status;
 using ::android::hardware::security::keymint::MacedPublicKey;
 using ::keymaster::X509_Ptr;
+
+bool isGsiImage() {
+    // GSI replaces the values for remote_prov_prop properties (since they’re system_internal_prop
+    // properties), so on GSI the properties are not reliable indicators of whether StrongBox/TEE is
+    // RKP-only or not.
+    std::ifstream ifs("/system/system_ext/etc/init/init.gsi.rc");
+    return ifs.good();
+}
 
 bool setupWritableCredential(sp<IWritableIdentityCredential>& writableCredential,
                              sp<IIdentityCredentialStore>& credentialStore, bool testCredential) {

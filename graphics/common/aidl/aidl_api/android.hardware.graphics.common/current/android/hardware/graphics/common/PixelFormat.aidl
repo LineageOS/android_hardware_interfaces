@@ -76,4 +76,5 @@ enum PixelFormat {
   RGBA_12121212_UINT = 0x41,
   RGBA_14141414_UINT = 0x42,
   BGRA_1010102 = 0x43,
+  BGRX_1010102 = 0x44,
 }

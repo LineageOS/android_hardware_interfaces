@@ -17,6 +17,8 @@
 #ifndef EVS_VTS_FRAMEHANDLER_H
 #define EVS_VTS_FRAMEHANDLER_H
 
+#include <condition_variable>
+#include <mutex>
 #include <queue>
 
 #include <FrameHandler.h>

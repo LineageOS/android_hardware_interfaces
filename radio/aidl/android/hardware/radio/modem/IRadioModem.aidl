@@ -241,6 +241,9 @@ oneway interface IRadioModem {
      * 3) Timeout after 30 seconds if dial or emergencyDial is not called.
      * Once one of these conditions is reached, the modem should move into normal operation.
      *
+     * 4) The power state is a common setting that affects all modems,
+     *    and warn that independent power states may cause undesirable behavior.
+     *
      * @param serial Serial number of request.
      * @param powerOn To turn on radio -> on = true, to turn off radio -> on = false.
      * @param forEmergencyCall To indication to radio if this request is due to emergency call.

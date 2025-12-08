@@ -251,7 +251,7 @@ TEST_P(CanControllerHalTest, ConfigCompatibility) {
             {InterfaceType::INDEXED, indexedCfg},
     };
 
-    for (const auto [iftype, cfg] : compatMatrix) {
+    for (const auto& [iftype, cfg] : compatMatrix) {
         LOG(INFO) << "Compatibility testing: " << iftype << " / " << cfg;
 
         ICanController::BusConfig config = {};

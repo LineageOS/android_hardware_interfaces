@@ -54,7 +54,10 @@ ScopedAStatus Gnss::setCallback(const std::shared_ptr<IGnssCallback>& callback) 
         ALOGE("%s: Null callback ignored", __func__);
         return ScopedAStatus::fromExceptionCode(STATUS_INVALID_OPERATION);
     }
-    sGnssCallback = callback;
+    {
+        std::unique_lock<std::mutex> lock(mMutex);
+        sGnssCallback = callback;
+    }
 
     int capabilities =
             (int)(IGnssCallback::CAPABILITY_MEASUREMENTS | IGnssCallback::CAPABILITY_SCHEDULING |
@@ -63,7 +66,7 @@ ScopedAStatus Gnss::setCallback(const std::shared_ptr<IGnssCallback>& callback) 
                   IGnssCallback::CAPABILITY_CORRELATION_VECTOR |
                   IGnssCallback::CAPABILITY_ANTENNA_INFO |
                   IGnssCallback::CAPABILITY_ACCUMULATED_DELTA_RANGE);
-    auto status = sGnssCallback->gnssSetCapabilitiesCb(capabilities);
+    auto status = callback->gnssSetCapabilitiesCb(capabilities);
     if (!status.isOk()) {
         ALOGE("%s: Unable to invoke callback.gnssSetCapabilitiesCb", __func__);
     }
@@ -72,7 +75,7 @@ ScopedAStatus Gnss::setCallback(const std::shared_ptr<IGnssCallback>& callback) 
             .yearOfHw = 2022,
             .name = "Google, Cuttlefish, AIDL v3",
     };
-    status = sGnssCallback->gnssSetSystemInfoCb(systemInfo);
+    status = callback->gnssSetSystemInfoCb(systemInfo);
     if (!status.isOk()) {
         ALOGE("%s: Unable to invoke callback.gnssSetSystemInfoCb", __func__);
     }
@@ -86,7 +89,7 @@ ScopedAStatus Gnss::setCallback(const std::shared_ptr<IGnssCallback>& callback) 
             .carrierFrequencyHz = 1.5980625e+09,
             .codeType = GnssSignalType::CODE_TYPE_C,
     };
-    status = sGnssCallback->gnssSetSignalTypeCapabilitiesCb(
+    status = callback->gnssSetSignalTypeCapabilitiesCb(
             std::vector<GnssSignalType>({signalType1, signalType2}));
     if (!status.isOk()) {
         ALOGE("%s: Unable to invoke callback.gnssSetSignalTypeCapabilitiesCb", __func__);
@@ -178,7 +181,10 @@ ScopedAStatus Gnss::stop() {
 
 ScopedAStatus Gnss::close() {
     ALOGD("close");
-    sGnssCallback = nullptr;
+    {
+        std::unique_lock<std::mutex> lock(mMutex);
+        sGnssCallback = nullptr;
+    }
     mIsInitialized = false;
     mThreadBlocker.notify();
     if (mThread.joinable()) {
@@ -188,13 +194,17 @@ ScopedAStatus Gnss::close() {
 }
 
 void Gnss::reportLocation(const GnssLocation& location) {
-    std::unique_lock<std::mutex> lock(mMutex);
-    if (sGnssCallback == nullptr) {
-        ALOGE("%s: GnssCallback is null.", __func__);
-        return;
+    std::shared_ptr<IGnssCallback> callback;
+    {
+        std::unique_lock<std::mutex> lock(mMutex);
+        if (sGnssCallback == nullptr) {
+            ALOGE("%s: GnssCallback is null.", __func__);
+            return;
+        }
+        callback = sGnssCallback;
     }
     mLastLocation = std::make_shared<GnssLocation>(location);
-    auto status = sGnssCallback->gnssLocationCb(location);
+    auto status = callback->gnssLocationCb(location);
     if (!status.isOk()) {
         ALOGE("%s: Unable to invoke gnssLocationCb", __func__);
     }
@@ -209,12 +219,16 @@ void Gnss::reportSvStatus() const {
 }
 
 void Gnss::reportSvStatus(const std::vector<GnssSvInfo>& svInfoList) const {
-    std::unique_lock<std::mutex> lock(mMutex);
-    if (sGnssCallback == nullptr) {
-        ALOGE("%s: sGnssCallback is null.", __func__);
-        return;
+    std::shared_ptr<IGnssCallback> callback;
+    {
+        std::unique_lock<std::mutex> lock(mMutex);
+        if (sGnssCallback == nullptr) {
+            ALOGE("%s: GnssCallback is null.", __func__);
+            return;
+        }
+        callback = sGnssCallback;
     }
-    auto status = sGnssCallback->gnssSvStatusCb(svInfoList);
+    auto status = callback->gnssSvStatusCb(svInfoList);
     if (!status.isOk()) {
         ALOGE("%s: Unable to invoke callback", __func__);
     }
@@ -231,12 +245,16 @@ std::vector<GnssSvInfo> Gnss::filterBlocklistedSatellites(
 }
 
 void Gnss::reportGnssStatusValue(const IGnssCallback::GnssStatusValue gnssStatusValue) const {
-    std::unique_lock<std::mutex> lock(mMutex);
-    if (sGnssCallback == nullptr) {
-        ALOGE("%s: sGnssCallback is null.", __func__);
-        return;
+    std::shared_ptr<IGnssCallback> callback;
+    {
+        std::unique_lock<std::mutex> lock(mMutex);
+        if (sGnssCallback == nullptr) {
+            ALOGE("%s: GnssCallback is null.", __func__);
+            return;
+        }
+        callback = sGnssCallback;
     }
-    auto status = sGnssCallback->gnssStatusCb(gnssStatusValue);
+    auto status = callback->gnssStatusCb(gnssStatusValue);
     if (!status.isOk()) {
         ALOGE("%s: Unable to invoke gnssStatusCb", __func__);
     }
@@ -244,13 +262,17 @@ void Gnss::reportGnssStatusValue(const IGnssCallback::GnssStatusValue gnssStatus
 
 void Gnss::reportNmea() const {
     if (mIsNmeaActive) {
-        std::unique_lock<std::mutex> lock(mMutex);
-        if (sGnssCallback == nullptr) {
-            ALOGE("%s: sGnssCallback is null.", __func__);
-            return;
+        std::shared_ptr<IGnssCallback> callback;
+        {
+            std::unique_lock<std::mutex> lock(mMutex);
+            if (sGnssCallback == nullptr) {
+                ALOGE("%s: GnssCallback is null.", __func__);
+                return;
+            }
+            callback = sGnssCallback;
         }
         nsecs_t now = systemTime(SYSTEM_TIME_MONOTONIC);
-        auto status = sGnssCallback->gnssNmeaCb(now, "$TEST,0,1,2,3,4,5");
+        auto status = callback->gnssNmeaCb(now, "$TEST,0,1,2,3,4,5");
         if (!status.isOk()) {
             ALOGE("%s: Unable to invoke callback", __func__);
         }

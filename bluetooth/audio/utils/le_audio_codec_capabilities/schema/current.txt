@@ -35,6 +35,7 @@ package aidl.android.hardware.bluetooth.audio.setting {
     enum_constant public static final aidl.android.hardware.bluetooth.audio.setting.CodecType APTX_ADAPTIVE_LE;
     enum_constant public static final aidl.android.hardware.bluetooth.audio.setting.CodecType APTX_ADAPTIVE_LEX;
     enum_constant public static final aidl.android.hardware.bluetooth.audio.setting.CodecType LC3;
+    enum_constant public static final aidl.android.hardware.bluetooth.audio.setting.CodecType OPUS;
   }
 
   public class Configuration {

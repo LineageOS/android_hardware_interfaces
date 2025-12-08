@@ -203,6 +203,9 @@ class RadioNetworkIndication : public BnRadioNetworkIndication {
     RadioNetworkIndication(RadioServiceTest& parent_network);
     virtual ~RadioNetworkIndication() = default;
 
+    virtual ndk::ScopedAStatus displayNetworkTypeChanged(RadioIndicationType type,
+                                                         DisplayNetworkType dnt) override;
+
     virtual ndk::ScopedAStatus barringInfoChanged(
             RadioIndicationType type, const CellIdentity& cellIdentity,
             const std::vector<BarringInfo>& barringInfos) override;
@@ -262,8 +265,6 @@ class RadioNetworkIndication : public BnRadioNetworkIndication {
 class RadioNetworkTest : public RadioServiceTest {
   public:
     void SetUp() override;
-
-    bool shouldTestCdma();
 
     /* radio network service handle */
     std::shared_ptr<IRadioNetwork> radio_network;

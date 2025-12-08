@@ -19,6 +19,7 @@
 
 #include <log/log.h>
 #include <pthread.h>
+#include <memory>
 #include <vector>
 
 typedef void (*threadEntryFunc)(void* ret);

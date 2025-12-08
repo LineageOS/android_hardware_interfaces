@@ -182,8 +182,7 @@ TEST_P(VirtualizerProcessTest, IncreasingStrength) {
             continue;
         }
         setAndVerifyStrength(strength, EX_NONE);
-        ASSERT_NO_FATAL_FAILURE(
-                processAndWriteToOutput(input, output, mEffect, &mOpenEffectReturn));
+        ASSERT_NO_FATAL_FAILURE(processAndWriteToOutput(input, output, mEffect, mOpenEffectReturn));
 
         const float outputRmse = audio_utils_compute_energy_mono(
                 output.data(), AUDIO_FORMAT_PCM_FLOAT, output.size());

@@ -19,8 +19,13 @@
 #include <android-base/thread_annotations.h>
 
 #include <map>
+#include <mutex>
+#include <optional>
 #include <set>
 #include <span>
+#include <string>
+#include <string_view>
+#include <vector>
 
 namespace android::hardware::radio::minimal::sim {
 

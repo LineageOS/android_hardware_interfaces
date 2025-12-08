@@ -94,6 +94,7 @@ TEST_P(RadioImsTest, updateImsRegistrationInfo) {
     regInfo.accessNetworkType = AccessNetwork::EUTRAN;
     regInfo.suggestedAction = SuggestedAction::NONE;
     regInfo.capabilities = ImsRegistration::IMS_MMTEL_CAPABILITY_NONE;
+    regInfo.throttlingTimeSec = 0;
 
     ndk::ScopedAStatus res =
             radio_ims->updateImsRegistrationInfo(serial, regInfo);
@@ -238,12 +239,23 @@ TEST_P(RadioImsTest, updateImsCallStatus) {
               toString(radioRsp_ims->rspInfo.error).c_str());
 
     verifyError(radioRsp_ims->rspInfo.error);
+
+    // Disconnect all the potential established calls to prevent them affecting other tests.
+    clearPotentialEstablishedCalls();
 }
 
 /*
  * Test IRadioIms.updateAllowedServices() for the response returned.
  */
 TEST_P(RadioImsTest, updateAllowedServices) {
+    int32_t aidl_version;
+    ndk::ScopedAStatus aidl_status = radio_ims->getInterfaceVersion(&aidl_version);
+    ASSERT_OK(aidl_status);
+    if (aidl_version < 4) {
+        ALOGI("Skipped the test since"
+              " updateAllowedServices is not supported on version < 4");
+        GTEST_SKIP();
+    }
     if (!deviceSupportsFeature(FEATURE_TELEPHONY_IMS)) {
         ALOGI("Skipping updateAllowedServices because ims is not supported in device");
         return;
@@ -284,4 +296,19 @@ void RadioImsTest::verifyError(RadioError resp) {
             FAIL();
             break;
     }
+}
+
+void RadioImsTest::clearPotentialEstablishedCalls() {
+    serial = GetRandomSerialNumber();
+
+    ndk::ScopedAStatus res = radio_ims->updateImsCallStatus(serial, {});
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_ims->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_ims->rspInfo.serial);
+
+    ALOGI("clearPotentialEstablishedCalls, rspInfo.error = %s\n",
+          toString(radioRsp_ims->rspInfo.error).c_str());
+
+    verifyError(radioRsp_ims->rspInfo.error);
 }

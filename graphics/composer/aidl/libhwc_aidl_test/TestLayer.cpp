@@ -28,12 +28,14 @@ void TestLayer::write(ComposerClientWriter& writer) {
     writer.setLayerBlendMode(mDisplay, mLayer, mBlendMode);
     writer.setLayerBrightness(mDisplay, mLayer, mBrightness);
     writer.setLayerDataspace(mDisplay, mLayer, mDataspace);
-    Luts luts{
-            .pfd = ::ndk::ScopedFileDescriptor(dup(mLuts.pfd.get())),
-            .offsets = mLuts.offsets,
-            .lutProperties = mLuts.lutProperties,
-    };
-    writer.setLayerLuts(mDisplay, mLayer, luts);
+    if (mLutsSupported) {
+        Luts luts{
+                .pfd = ::ndk::ScopedFileDescriptor(dup(mLuts.pfd.get())),
+                .offsets = mLuts.offsets,
+                .lutProperties = mLuts.lutProperties,
+        };
+        writer.setLayerLuts(mDisplay, mLayer, luts);
+    }
 }
 
 LayerSettings TestLayer::toRenderEngineLayerSettings() {

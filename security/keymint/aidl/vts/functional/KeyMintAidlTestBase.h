@@ -411,9 +411,6 @@ void add_tag_from_prop(AuthorizationSetBuilder* tags, TypedTag<TagType::BYTES, t
 // Return the vendor API level for this device.
 int get_vendor_api_level();
 
-// Return the vendor API level when the device shipped.
-int get_first_vendor_api_level();
-
 // Indicate whether the test is running on a GSI image.
 bool is_gsi_image();
 

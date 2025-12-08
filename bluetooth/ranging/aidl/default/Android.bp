@@ -11,6 +11,7 @@ cc_binary {
     srcs: [
         "BluetoothChannelSounding.cpp",
         "BluetoothChannelSoundingSession.cpp",
+        "bluetooth_channel_sounding_algorithm.cc",
         "service.cpp",
     ],
     shared_libs: [
@@ -18,8 +19,15 @@ cc_binary {
         "libbase",
         "libbinder_ndk",
         "libhidlbase",
+        "libcutils",
         "libutils",
         "liblog",
+    ],
+    header_libs: [
+        "libeigen",
+    ],
+    export_header_lib_headers: [
+        "libeigen",
     ],
 }
 

@@ -1604,7 +1604,7 @@ static void testGetMmapPositionOfNonMmapedStream(IStream* stream) {
     Result res;
     MmapPosition position;
     ASSERT_OK(stream->getMmapPosition(returnIn(res, position)));
-    ASSERT_RESULT(invalidArgsOrNotSupported, res);
+    ASSERT_RESULT(invalidStateOrNotSupported, res);
 }
 
 TEST_IO_STREAM(GetMmapPositionOfNonMmapedStream,

@@ -82,6 +82,7 @@ class RadioImsIndication : public BnRadioImsIndication {
 class RadioImsTest : public RadioServiceTest {
   protected:
     virtual void verifyError(RadioError resp);
+    virtual void clearPotentialEstablishedCalls();
 
   public:
     void SetUp() override;

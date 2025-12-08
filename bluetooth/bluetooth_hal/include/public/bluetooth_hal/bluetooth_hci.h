@@ -17,51 +17,43 @@
 #pragma once
 
 #include <atomic>
-#include <functional>
 #include <memory>
+#include <mutex>
 
-#include "aidl/android/hardware/bluetooth/BnBluetoothHci.h"
-#include "aidl/android/hardware/bluetooth/IBluetoothHciCallbacks.h"
-#include "android/binder_auto_utils.h"
-#include "android/binder_status.h"
+#include "bluetooth_hal/bluetooth_hci_callback.h"
 #include "bluetooth_hal/hal_packet.h"
 #include "bluetooth_hal/hal_types.h"
 
 namespace bluetooth_hal {
 
-class BluetoothHalDeathRecipient;
-
-class BluetoothHci
-    : public ::aidl::android::hardware::bluetooth::BnBluetoothHci {
+class BluetoothHci {
  public:
   static BluetoothHci& GetHci();
+  static void StartHci() { GetHci(); }
 
   BluetoothHci();
-  ::ndk::ScopedAStatus initialize(
-      const std::shared_ptr<
-          ::aidl::android::hardware::bluetooth::IBluetoothHciCallbacks>& cb)
-      override;
-  ::ndk::ScopedAStatus sendHciCommand(
-      const std::vector<uint8_t>& packet) override;
-  ::ndk::ScopedAStatus sendAclData(const std::vector<uint8_t>& data) override;
-  ::ndk::ScopedAStatus sendScoData(const std::vector<uint8_t>& data) override;
-  ::ndk::ScopedAStatus sendIsoData(const std::vector<uint8_t>& data) override;
-  ::ndk::ScopedAStatus close() override;
-  binder_status_t dump(int fd, const char** args, uint32_t numArgs) override;
+  bool Initialize(const std::shared_ptr<BluetoothHciCallback>& cb);
+
+  bool SendHciCommand(const ::bluetooth_hal::hci::HalPacket& packet);
+  bool SendAclData(const ::bluetooth_hal::hci::HalPacket& packet);
+  bool SendScoData(const ::bluetooth_hal::hci::HalPacket& packet);
+  bool SendIsoData(const ::bluetooth_hal::hci::HalPacket& packet);
+  bool Close();
+  bool Dump(int fd);
+  void HandleSignal(int signum);
+  void HandleServiceDied();
 
  private:
   void DispatchPacketToStack(const ::bluetooth_hal::hci::HalPacket& packet);
   void HandleHalStateChanged(::bluetooth_hal::HalState new_state,
                              ::bluetooth_hal::HalState old_state);
   void SendDataToController(const ::bluetooth_hal::hci::HalPacket& packet);
-  static void SigtermHandler(int signum);
 
-  std::shared_ptr<::aidl::android::hardware::bluetooth::IBluetoothHciCallbacks>
-      bluetooth_hci_callback_;
-  std::shared_ptr<BluetoothHalDeathRecipient> death_recipient_;
-  std::function<void(std::shared_ptr<BluetoothHalDeathRecipient>&)> unlink_cb_;
+  std::shared_ptr<BluetoothHciCallback> bluetooth_hci_callback_;
   bool is_initializing_;
-  static std::atomic<bool> is_signal_handled_;
+  std::mutex callback_mutex_;
+
+  static inline std::atomic<bool> is_sigterm_handled_{false};
 };
 
 }  // namespace bluetooth_hal

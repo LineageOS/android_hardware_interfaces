@@ -25,6 +25,8 @@
 #include <hidl/Status.h>
 #include <android/hardware/biometrics/fingerprint/2.1/IBiometricsFingerprint.h>
 
+#include <mutex>
+
 namespace android {
 namespace hardware {
 namespace biometrics {

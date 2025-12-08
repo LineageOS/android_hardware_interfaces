@@ -21,6 +21,9 @@
     </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <!-- Disable ble services to allow Bluetooth to go full OFF vs BLE_ON -->
+        <option name="run-command" value="settings put system nearby_scanning_enabled 0"/>
+        <option name="run-command" value="settings put system spen_air_action 0"/>
         <option name="run-command" value="settings put global ble_scan_always_enabled 0" />
         <option name="run-command" value="cmd bluetooth_manager disable" />
         <option name="run-command" value="cmd bluetooth_manager wait-for-state:STATE_OFF" />

@@ -39,9 +39,22 @@ ndk::ScopedAStatus GnssAssistanceInterface::injectGnssAssistance(
         ALOGE("Empty GpsAssistance");
         return ndk::ScopedAStatus::fromServiceSpecificError(IGnss::ERROR_INVALID_ARGUMENT);
     }
-    if (gnssAssistance.gpsAssistance->satelliteEphemeris.size() == 0) {
+    if (gnssAssistance.gpsAssistance->satelliteEphemeris.empty()) {
         ALOGE("Empty SatelliteEphemeris");
         return ndk::ScopedAStatus::fromServiceSpecificError(IGnss::ERROR_INVALID_ARGUMENT);
+    }
+    if (gnssAssistance.ionexAssistance) {
+        const IonexAssistance& ionexAssistance = *gnssAssistance.ionexAssistance;
+
+        const size_t tecMapSize = ionexAssistance.tecMapSnapshot.tecMap.size();
+        const size_t expectedSize =
+                static_cast<size_t>(ionexAssistance.header.axesInfo.latitudeAxis.numPoints *
+                                    ionexAssistance.header.axesInfo.longitudeAxis.numPoints);
+        if (tecMapSize == 0 || tecMapSize != expectedSize) {
+            ALOGE("Invalid IONEX tecMap size. Expected: %zu, Actual: %zu", expectedSize,
+                  tecMapSize);
+            return ndk::ScopedAStatus::fromServiceSpecificError(IGnss::ERROR_INVALID_ARGUMENT);
+        }
     }
     return ndk::ScopedAStatus::ok();
 }
