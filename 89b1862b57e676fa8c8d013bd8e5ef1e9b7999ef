@@ -22,6 +22,30 @@
       },
       "revId": "89b1862b57e676fa8c8d013bd8e5ef1e9b7999ef",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cbb80ecb_916eaee9",
+        "filename": "graphics/mapper/2.0/utils/passthrough/include/mapper-passthrough/2.0/GrallocLoader.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 97,
+      "author": {
+        "id": 16185
+      },
+      "writtenOn": "2026-01-11T19:07:59Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "665ce78d_7183ba55",
+      "range": {
+        "startLine": 97,
+        "startChar": 11,
+        "endLine": 97,
+        "endChar": 18
+      },
+      "revId": "89b1862b57e676fa8c8d013bd8e5ef1e9b7999ef",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
