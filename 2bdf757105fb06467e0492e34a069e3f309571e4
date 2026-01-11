@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "be4fcaef_a99ac800",
+        "filename": "graphics/mapper/2.0/default/Android.bp",
+        "patchSetId": 1
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 13648
+      },
+      "writtenOn": "2026-01-11T16:26:44Z",
+      "side": 1,
+      "message": "move select to a newline",
+      "range": {
+        "startLine": 45,
+        "startChar": 42,
+        "endLine": 45,
+        "endChar": 48
+      },
+      "revId": "2bdf757105fb06467e0492e34a069e3f309571e4",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d20f6a2d_50de2dfb",
+        "filename": "graphics/mapper/2.0/default/Android.bp",
+        "patchSetId": 1
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 13648
+      },
+      "writtenOn": "2026-01-11T16:26:44Z",
+      "side": 1,
+      "message": "Remove \" \"",
+      "range": {
+        "startLine": 46,
+        "startChar": 8,
+        "endLine": 46,
+        "endChar": 14
+      },
+      "revId": "2bdf757105fb06467e0492e34a069e3f309571e4",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
