@@ -42,5 +42,10 @@ cc_library_shared {
         "libsync",
         "libutils",
     ],
-    cflags: ["-DLOG_TAG=\"MapperHal\""],
+    cflags: [
+        "-DLOG_TAG=\"MapperHal\""
+    ] + select(soong_config_variable("tegra_gralloc", "unlock_before_hal_free"), {
+        true: ["-DGRALLOC_MAPPER_UNLOCK_BEFORE_HAL_FREE"],
+        default: [],
+    }),
 }
