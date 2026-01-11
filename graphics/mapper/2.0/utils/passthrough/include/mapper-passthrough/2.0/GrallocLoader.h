@@ -93,12 +93,24 @@ class GrallocMapper : public T {
     }
 
     Error freeImportedBuffer(native_handle_t* bufferHandle) override {
+#ifdef GRALLOC_MAPPER_UNLOCK_BEFORE_HAL_FREE
+        // Remove from pool first, then call HAL without holding mutex
+        // This prevents deadlock with NVIDIA driver which has its own internal mutex
+        // that can be acquired in opposite order during buffer allocation
+        {
+            std::lock_guard<std::mutex> lock(*GrallocImportedBufferPool::getInstance().getMutex());
+            GrallocImportedBufferPool::getInstance().removeLocked(bufferHandle);
+        }
+        // HAL call happens without holding the pool mutex
+        return this->mHal->freeBuffer(bufferHandle);
+#else
         std::lock_guard<std::mutex> lock(*GrallocImportedBufferPool::getInstance().getMutex());
         Error error = this->mHal->freeBuffer(bufferHandle);
         if (error == Error::NONE) {
             GrallocImportedBufferPool::getInstance().removeLocked(bufferHandle);
         }
         return error;
+#endif
     }
 
     native_handle_t* getImportedBuffer(void* buffer) const override {
