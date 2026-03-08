@@ -16,6 +16,24 @@
       "message": "put Test: ... above change id.",
       "revId": "3074ed291744900796da4582bc7b82e3966e962e",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7283d817_c4902e7a",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 36656
+      },
+      "writtenOn": "2026-03-08T15:22:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2938f769_16ad8c95",
+      "revId": "3074ed291744900796da4582bc7b82e3966e962e",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
