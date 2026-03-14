@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "856b7789_9d346c1f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 32253
+      },
+      "writtenOn": "2026-03-14T21:39:17Z",
+      "side": 1,
+      "message": "A user reported that the camera was not working on miatoll (due to broken or missing camera IDs).\n\nfor context, we hardcode the remapids property on tree given the camera HAL doesn\u0027t export a similar prop",
+      "revId": "d889535411a43c2eb59f481bc6a94dbcb308f582",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
