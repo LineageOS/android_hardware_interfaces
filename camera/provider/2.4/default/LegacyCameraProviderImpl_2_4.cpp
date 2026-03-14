@@ -350,6 +350,7 @@ bool LegacyCameraProviderImpl_2_4::initialize() {
 
     // Get camera IDs map
     auto cameraIdMap = getLegacyCameraIdMap(mNumberOfLegacyCameras);
+    std::string remapProp = base::GetProperty(CAMERA_REMAP_IDS_PROPERTY, "");
 
     for (int n = 0; n < mNumberOfLegacyCameras; n++) {
         int i = cameraIdMap[n];
@@ -363,6 +364,12 @@ bool LegacyCameraProviderImpl_2_4::initialize() {
         auto rc = mModule->getCameraInfo(i, &info);
         if (rc != NO_ERROR) {
             ALOGE("%s: Camera info query failed!", __func__);
+            if (!remapProp.empty()) {
+                if (!mLegacyCameras.empty()) {
+                    mLegacyCameras.erase(std::prev(mLegacyCameras.end()));
+                }
+                continue;
+            }
             mModule.clear();
             return true;
         }
