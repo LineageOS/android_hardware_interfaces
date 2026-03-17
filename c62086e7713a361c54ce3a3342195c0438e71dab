@@ -74,6 +74,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "1badefb6_799a2ad4",
+        "filename": "camera/provider/2.4/default/LegacyCameraProviderImpl_2_4.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 367,
+      "author": {
+        "id": 11883
+      },
+      "writtenOn": "2026-03-17T11:12:33Z",
+      "side": 1,
+      "message": "Oh so you \"manually\" remap them so the rest of the stack may not be happy with it.\nThat\u0027s kinda a cursed setup, I think I want another prop for that...",
+      "parentUuid": "2a2d4c62_e6a3104e",
+      "revId": "c62086e7713a361c54ce3a3342195c0438e71dab",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "d5f7dee0_cc607d48",
         "filename": "camera/provider/2.4/default/LegacyCameraProviderImpl_2_4.cpp",
         "patchSetId": 1
