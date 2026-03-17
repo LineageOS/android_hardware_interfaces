@@ -1,6 +1,23 @@
 {
   "comments": [
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c7050cda_f4819dc6",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 10067
+      },
+      "writtenOn": "2026-03-17T16:41:15Z",
+      "side": 1,
+      "message": "also migrate to lineage aidl provider and just make changes you *need* there.",
+      "revId": "c62086e7713a361c54ce3a3342195c0438e71dab",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "33b5b38d_5c991501",
