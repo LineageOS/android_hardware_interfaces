@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "c4ee54d0_da202bd0",
+        "filename": "camera/provider/2.4/default/LegacyCameraProviderImpl_2_4.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 367,
+      "author": {
+        "id": 32253
+      },
+      "writtenOn": "2026-03-17T10:50:24Z",
+      "side": 1,
+      "message": "I thought it would be appropriate, given that we hardcode that value on miatoll. I\u0027m not sure if we should really remove that dep and let it slide for the rest :\"D. In a normal scenario, where a camera is actually broken, wouldn\u0027t it report its existence or something?",
+      "parentUuid": "33b5b38d_5c991501",
+      "revId": "c62086e7713a361c54ce3a3342195c0438e71dab",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "d5f7dee0_cc607d48",
         "filename": "camera/provider/2.4/default/LegacyCameraProviderImpl_2_4.cpp",
         "patchSetId": 1
