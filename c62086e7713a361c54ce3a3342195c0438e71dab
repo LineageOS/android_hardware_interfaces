@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "33b5b38d_5c991501",
+        "filename": "camera/provider/2.4/default/LegacyCameraProviderImpl_2_4.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 367,
+      "author": {
+        "id": 11883
+      },
+      "writtenOn": "2026-03-17T09:33:57Z",
+      "side": 1,
+      "message": "why does this depend on remapProp?\nIf camera info is busted then simply don\u0027t add the entry to mLegacyCameras",
+      "revId": "c62086e7713a361c54ce3a3342195c0438e71dab",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d5f7dee0_cc607d48",
+        "filename": "camera/provider/2.4/default/LegacyCameraProviderImpl_2_4.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 375,
+      "author": {
+        "id": 11883
+      },
+      "writtenOn": "2026-03-17T09:33:57Z",
+      "side": 1,
+      "message": "```suggestion\n    for (int n \u003d 0; n \u003c mNumberOfLegacyCameras; n++) {\n        int i \u003d cameraIdMap[n];\n\n        if (n !\u003d i) {\n            ALOGI(\"%s: Camera %d ID remapped to %d\", __func__, n, i);\n        }\n\n        struct camera_info info;\n        auto rc \u003d mModule-\u003egetCameraInfo(i, \u0026info);\n        if (rc !\u003d NO_ERROR) {\n            ALOGE(\"%s: Camera info query failed!\", __func__);\n            continue;\n        }\n\n        mLegacyCameras.insert(i);\n```",
+      "range": {
+        "startLine": 355,
+        "startChar": 0,
+        "endLine": 375,
+        "endChar": 9
+      },
+      "revId": "c62086e7713a361c54ce3a3342195c0438e71dab",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
