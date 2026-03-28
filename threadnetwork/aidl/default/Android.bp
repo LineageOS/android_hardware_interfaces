@@ -164,9 +164,11 @@ apex {
 
     prebuilts: [
         "threadnetwork-default.xml", // vintf_fragment
-        "threadnetwork-service.rc", // init_rc
         "android.hardware.thread_network.prebuilt.xml", // permission
-    ],
+    ] + select(soong_config_variable("threadnetwork_apex", "init_rc_namespace"), {
+        any @ value: ["//" + value + ":custom-threadnetwork-service.rc"],
+        default: ["threadnetwork-service.rc"], // init_rc
+    }),
 }
 
 prebuilt_etc {
