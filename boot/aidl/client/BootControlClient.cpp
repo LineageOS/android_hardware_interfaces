@@ -252,12 +252,23 @@ using namespace android::hardware::boot;
 
 class BootControlClientHIDL final : public BootControlClient {
   public:
-    BootControlClientHIDL(android::sp<V1_2::IBootControl> module_v1_2) : module_(module_v1_2) {
-        CHECK(module_ != nullptr);
+    BootControlClientHIDL(android::sp<V1_0::IBootControl> module_v1,
+                          android::sp<V1_1::IBootControl> module_v1_1,
+                          android::sp<V1_2::IBootControl> module_v1_2)
+        : module_v1_(module_v1), module_v1_1_(module_v1_1), module_v1_2_(module_v1_2) {
+        CHECK(module_v1_ != nullptr);
     }
-    BootControlVersion GetVersion() const override { return BootControlVersion::BOOTCTL_V1_2; }
+    BootControlVersion GetVersion() const override {
+        if (module_v1_2_ != nullptr) {
+            return BootControlVersion::BOOTCTL_V1_2;
+        } else if (module_v1_1_ != nullptr) {
+            return BootControlVersion::BOOTCTL_V1_1;
+        } else {
+            return BootControlVersion::BOOTCTL_V1_0;
+        }
+    }
     int32_t GetNumSlots() const override {
-        const auto ret = module_->getNumberSlots();
+        const auto ret = module_v1_->getNumberSlots();
         if (!ret.isOk()) {
             LOG(ERROR) << __FUNCTION__ << " failed " << ret.description();
         }
@@ -265,7 +276,7 @@ class BootControlClientHIDL final : public BootControlClient {
     }
 
     int32_t GetCurrentSlot() const override {
-        const auto ret = module_->getCurrentSlot();
+        const auto ret = module_v1_->getCurrentSlot();
         if (!ret.isOk()) {
             LOG(ERROR) << __FUNCTION__ << " failed " << ret.description();
         }
@@ -274,7 +285,7 @@ class BootControlClientHIDL final : public BootControlClient {
 
     std::string GetSuffix(int32_t slot) const override {
         std::string suffix;
-        const auto ret = module_->getSuffix(
+        const auto ret = module_v1_->getSuffix(
                 slot,
                 [&](const ::android::hardware::hidl_string& slotSuffix) { suffix = slotSuffix; });
         if (!ret.isOk()) {
@@ -284,7 +295,7 @@ class BootControlClientHIDL final : public BootControlClient {
     }
 
     std::optional<bool> IsSlotBootable(int32_t slot) const override {
-        const auto ret = module_->isSlotBootable(slot);
+        const auto ret = module_v1_->isSlotBootable(slot);
         if (!ret.isOk()) {
             LOG(ERROR) << __FUNCTION__ << "(" << slot << ")" << " failed " << ret.description();
             return {};
@@ -298,10 +309,11 @@ class BootControlClientHIDL final : public BootControlClient {
 
     CommandResult MarkSlotUnbootable(int32_t slot) override {
         CommandResult result;
-        const auto ret = module_->setSlotAsUnbootable(slot, [&](const V1_0::CommandResult& error) {
-            result.success = error.success;
-            result.errMsg = error.errMsg;
-        });
+        const auto ret =
+                module_v1_->setSlotAsUnbootable(slot, [&](const V1_0::CommandResult& error) {
+                    result.success = error.success;
+                    result.errMsg = error.errMsg;
+                });
         if (!ret.isOk()) {
             LOG(ERROR) << __FUNCTION__ << "(" << slot << ")" << " failed " << ret.description();
         }
@@ -310,7 +322,7 @@ class BootControlClientHIDL final : public BootControlClient {
 
     CommandResult SetActiveBootSlot(int32_t slot) override {
         CommandResult result;
-        const auto ret = module_->setActiveBootSlot(slot, [&](const V1_0::CommandResult& error) {
+        const auto ret = module_v1_->setActiveBootSlot(slot, [&](const V1_0::CommandResult& error) {
             result.success = error.success;
             result.errMsg = error.errMsg;
         });
@@ -322,7 +334,7 @@ class BootControlClientHIDL final : public BootControlClient {
 
     CommandResult MarkBootSuccessful() override {
         CommandResult result;
-        const auto ret = module_->markBootSuccessful([&](const V1_0::CommandResult& error) {
+        const auto ret = module_v1_->markBootSuccessful([&](const V1_0::CommandResult& error) {
             result.success = error.success;
             result.errMsg = error.errMsg;
         });
@@ -333,7 +345,7 @@ class BootControlClientHIDL final : public BootControlClient {
     }
 
     std::optional<bool> IsSlotMarkedSuccessful(int32_t slot) const override {
-        const auto ret = module_->isSlotMarkedSuccessful(slot);
+        const auto ret = module_v1_->isSlotMarkedSuccessful(slot);
         if (!ret.isOk()) {
             LOG(ERROR) << __FUNCTION__ << "(" << slot << ")" << " failed " << ret.description();
             return {};
@@ -346,11 +358,11 @@ class BootControlClientHIDL final : public BootControlClient {
     }
 
     MergeStatus getSnapshotMergeStatus() const override {
-        if (module_ == nullptr) {
+        if (module_v1_1_ == nullptr) {
             LOG(ERROR) << __FUNCTION__ << " is unsupported, requires at least boot v1.1";
             return MergeStatus::UNKNOWN;
         }
-        const auto ret = module_->getSnapshotMergeStatus();
+        const auto ret = module_v1_1_->getSnapshotMergeStatus();
         if (!ret.isOk()) {
             LOG(ERROR) << __FUNCTION__ << " failed " << ret.description();
         }
@@ -359,12 +371,12 @@ class BootControlClientHIDL final : public BootControlClient {
     }
 
     CommandResult SetSnapshotMergeStatus(MergeStatus merge_status) override {
-        if (module_ == nullptr) {
+        if (module_v1_1_ == nullptr) {
             return {.success = false,
                     .errMsg = "setSnapshotMergeStatus is unsupported, requires at least boot v1.1"};
         }
         const auto ret =
-                module_->setSnapshotMergeStatus(static_cast<V1_1::MergeStatus>(merge_status));
+                module_v1_1_->setSnapshotMergeStatus(static_cast<V1_1::MergeStatus>(merge_status));
         if (!ret.isOk()) {
             LOG(ERROR) << __FUNCTION__ << "(" << merge_status << ")" << " failed "
                        << ret.description();
@@ -373,11 +385,11 @@ class BootControlClientHIDL final : public BootControlClient {
     }
 
     int32_t GetActiveBootSlot() const override {
-        if (module_ == nullptr) {
+        if (module_v1_2_ == nullptr) {
             LOG(ERROR) << __FUNCTION__ << " is unsupported, requires at least boot v1.2";
             return -1;
         }
-        const auto ret = module_->getActiveBootSlot();
+        const auto ret = module_v1_2_->getActiveBootSlot();
         if (!ret.isOk()) {
             LOG(ERROR) << __FUNCTION__ << " failed " << ret.description();
         }
@@ -385,7 +397,9 @@ class BootControlClientHIDL final : public BootControlClient {
     }
 
   private:
-    android::sp<V1_2::IBootControl> module_;
+    android::sp<V1_0::IBootControl> module_v1_;
+    android::sp<V1_1::IBootControl> module_v1_1_;
+    android::sp<V1_2::IBootControl> module_v1_2_;
 };
 
 std::unique_ptr<BootControlClient> BootControlClient::WaitForService() {
@@ -404,19 +418,25 @@ std::unique_ptr<BootControlClient> BootControlClient::WaitForService() {
     }
     LOG(INFO) << "AIDL IBootControl not available, falling back to HIDL.";
 
-    android::sp<V1_0::IBootControl> v1_0_module = V1_0::IBootControl::getService();
+    android::sp<V1_0::IBootControl> v1_0_module;
+    android::sp<V1_1::IBootControl> v1_1_module;
+    android::sp<V1_2::IBootControl> v1_2_module;
+    v1_0_module = V1_0::IBootControl::getService();
     if (v1_0_module == nullptr) {
         LOG(ERROR) << "Error getting bootctrl v1.0 module.";
         return nullptr;
     }
-    android::sp<V1_2::IBootControl> v1_2_module = V1_2::IBootControl::castFrom(v1_0_module);
-    if (v1_2_module == nullptr) {
-        LOG(ERROR) << "IBootControl HIDL versions 1.1 and earlier are no longer supported";
-        return nullptr;
+    v1_1_module = V1_1::IBootControl::castFrom(v1_0_module);
+    v1_2_module = V1_2::IBootControl::castFrom(v1_0_module);
+    if (v1_2_module != nullptr) {
+        LOG(INFO) << "Using HIDL version 1.2 of IBootControl";
+    } else if (v1_1_module != nullptr) {
+        LOG(INFO) << "Using HIDL version 1.1 of IBootControl";
+    } else {
+        LOG(INFO) << "Using HIDL version 1.0 of IBootControl";
     }
 
-    LOG(INFO) << "Using HIDL version 1.2 of IBootControl";
-    return std::make_unique<BootControlClientHIDL>(v1_2_module);
+    return std::make_unique<BootControlClientHIDL>(v1_0_module, v1_1_module, v1_2_module);
 }
 
 }  // namespace android::hal
