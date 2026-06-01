@@ -17,6 +17,7 @@
 #define LOG_TAG "android.hardware.cas-DescramblerImpl"
 
 #include <aidlcommonsupport/NativeHandle.h>
+#include <android-base/scopeguard.h>
 #include <inttypes.h>
 #include <media/cas/DescramblerAPI.h>
 #include <media/hardware/CryptoAPI.h>
@@ -100,10 +101,14 @@ ScopedAStatus DescramblerImpl::descramble(ScramblingControl scramblingControl,
 
     // Validate if the offset and size in the SharedBuffer is consistent with the
     // mapped heapbase, since the offset and size is controlled by client.
-    if (srcPtr == NULL) {
+    if (srcPtr == MAP_FAILED) {
         ALOGE("Failed to map src buffer.");
         return toStatus(BAD_VALUE);
     }
+
+    auto sg = ::android::base::make_scope_guard(
+            [srcPtr, size = srcBuffer.heapBase.size]() { munmap(srcPtr, size); });
+
     if (!validateRangeForSize(srcBuffer.offset, srcBuffer.size, srcBuffer.heapBase.size)) {
         ALOGE("Invalid src buffer range: offset %" PRIu64 ", size %" PRIu64
               ", srcMem"
