@@ -146,6 +146,7 @@ vintf_compatibility_matrix {
         "compatibility_matrix.8.xml",
     ],
     kernel_configs: [
+        "kernel_config_t_4.19",
         "kernel_config_u_5.15",
         "kernel_config_u_6.1",
     ],
