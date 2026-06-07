@@ -24,6 +24,29 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
+soong_config_module_type {
+    name: "android_hardware_sensors_aidl_multihal_default",
+    module_type: "cc_defaults",
+    config_namespace: "android_hardware_sensors_aidl_multihal",
+    bool_variables: [
+        "run_32bit",
+    ],
+    properties: ["compile_multilib"],
+}
+
+android_hardware_sensors_aidl_multihal_default {
+    name: "android_hardware_sensors_aidl_multihal_defaults",
+
+    soong_config_variables: {
+        run_32bit: {
+            conditions_default: {
+                compile_multilib: "first",
+            },
+            compile_multilib: "32",
+        },
+    },
+}
+
 vintf_fragment {
     name: "android.hardware.sensors-multihal.xml",
     src: "android.hardware.sensors-multihal.xml",
@@ -34,6 +57,9 @@ cc_binary {
     name: "android.hardware.sensors-service.multihal",
     vendor: true,
     relative_install_path: "hw",
+    defaults: [
+        "android_hardware_sensors_aidl_multihal_defaults",
+    ],
     srcs: [
         "service.cpp",
     ],
