@@ -34,6 +34,23 @@
       "parentUuid": "e102393a_649cb831",
       "revId": "0836919433154a32b71c74bfa57fd43df708d796",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "25b90770_6e6b58ec",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 14048
+      },
+      "writtenOn": "2026-06-24T06:37:38Z",
+      "side": 1,
+      "message": "The hal this is used for technically can be used with ack/mainline, but I am not currently doing so. If there\u0027s a desire to do so at some point, this can be pulled back. But for now it can go away.",
+      "revId": "0836919433154a32b71c74bfa57fd43df708d796",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
