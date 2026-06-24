@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1e772ae1_e13565d3",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 16185
+      },
+      "writtenOn": "2026-06-24T04:32:16Z",
+      "side": 1,
+      "message": "this is technically for nv 4.9, but valid on other bcm chipsets, leave pls",
+      "revId": "3356c8730c4baa71c470342f35cc18c974f0f85e",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
