@@ -17,6 +17,7 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "android.hardware.cas@1.1-DescramblerImpl"
 
+#include <inttypes.h>
 #include <hidlmemory/mapping.h>
 #include <media/cas/DescramblerAPI.h>
 #include <media/hardware/CryptoAPI.h>
@@ -87,6 +88,15 @@ Return<void> DescramblerImpl::descramble(ScramblingControl scramblingControl,
                                          const DestinationBuffer& dstBuffer, uint64_t dstOffset,
                                          descramble_cb _hidl_cb) {
     ALOGV("%s", __FUNCTION__);
+
+    if (srcOffset > INT32_MAX || dstOffset > INT32_MAX || srcBuffer.offset > INT32_MAX) {
+        ALOGE("Invalid offsets: srcOffset %" PRIu64 ", dstOffset %" PRIu64
+              ", srcBuffer.offset %" PRIu64,
+              srcOffset, dstOffset, srcBuffer.offset);
+        android_errorWriteLog(0x534e4554, "517593332");
+        _hidl_cb(toStatus(BAD_VALUE), 0, NULL);
+        return Void();
+    }
 
     // hidl_memory's size is stored in uint64_t, but mapMemory's mmap will map
     // size in size_t. If size is over SIZE_MAX, mapMemory mapMemory could succeed
