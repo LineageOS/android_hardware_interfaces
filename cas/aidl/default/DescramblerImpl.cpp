@@ -87,6 +87,15 @@ ScopedAStatus DescramblerImpl::descramble(ScramblingControl scramblingControl,
                                           int32_t* _aidl_return) {
     ALOGV("%s", __FUNCTION__);
 
+    if (srcOffset < 0 || srcOffset > INT32_MAX || dstOffset < 0 || dstOffset > INT32_MAX ||
+        srcBuffer.offset < 0 || srcBuffer.offset > INT32_MAX) {
+        ALOGE("Invalid offsets: srcOffset %" PRId64 ", dstOffset %" PRId64
+              ", srcBuffer.offset %" PRId64,
+              srcOffset, dstOffset, (int64_t)srcBuffer.offset);
+        android_errorWriteLog(0x534e4554, "517593332");
+        return toStatus(BAD_VALUE);
+    }
+
     // heapbase's size is stored in int64_t, but mapMemory's mmap will map size in
     // size_t. If size is over SIZE_MAX, mapMemory mapMemory could succeed but the
     // mapped memory's actual size will be smaller than the reported size.
