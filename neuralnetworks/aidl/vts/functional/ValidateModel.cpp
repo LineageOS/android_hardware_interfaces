@@ -1016,6 +1016,32 @@ static void mutateOperationOutputOperandIndexTest(const std::shared_ptr<IDevice>
     }
 }
 
+///////////////////////// VALIDATE MODEL INPUT/OUTPUT OPERAND INDEXES /////////////////////////
+
+static void mutateModelInputOperandIndexTest(const std::shared_ptr<IDevice>& device,
+                                             const Model& model) {
+    const int32_t invalidOperand = model.main.operands.size();
+    for (size_t input = 0; input < model.main.inputIndexes.size(); ++input) {
+        const std::string message = "mutateModelInputOperandIndexTest: input " + std::to_string(input);
+        validate(device, message, model,
+                 [input, invalidOperand](Model* model, ExecutionPreference*, Priority*) {
+                     model->main.inputIndexes[input] = invalidOperand;
+                 });
+    }
+}
+
+static void mutateModelOutputOperandIndexTest(const std::shared_ptr<IDevice>& device,
+                                              const Model& model) {
+    const int32_t invalidOperand = model.main.operands.size();
+    for (size_t output = 0; output < model.main.outputIndexes.size(); ++output) {
+        const std::string message = "mutateModelOutputOperandIndexTest: output " + std::to_string(output);
+        validate(device, message, model,
+                 [output, invalidOperand](Model* model, ExecutionPreference*, Priority*) {
+                     model->main.outputIndexes[output] = invalidOperand;
+                 });
+    }
+}
+
 ///////////////////////// VALIDATE MODEL OPERANDS WRITTEN ///////////////////////////////////////
 
 static void mutateOperationRemoveWriteTest(const std::shared_ptr<IDevice>& device,
@@ -1359,6 +1385,8 @@ void validateModel(const std::shared_ptr<IDevice>& device, const Model& model) {
     mutateOperandLifeTimeTest(device, model);
     mutateOperandInputOutputTest(device, model);
     mutateOperandAddWriterTest(device, model);
+    mutateModelInputOperandIndexTest(device, model);
+    mutateModelOutputOperandIndexTest(device, model);
     mutateOperationOperandTypeTest(device, model);
     mutateOperationTypeTest(device, model);
     mutateOperationInputOperandIndexTest(device, model);
