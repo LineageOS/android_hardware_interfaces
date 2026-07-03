@@ -46,7 +46,7 @@ ScopedAStatus RadioModem::getBasebandVersion(int32_t serial) {
 ScopedAStatus RadioModem::getDeviceIdentity(int32_t serial) {
     LOG_CALL << serial;
     LOG(ERROR) << " getDeviceIdentity is deprecated, use getImei instead";
-    respond()->getDeviceIdentityResponse(notSupported(serial), nullptr, nullptr, nullptr, nullptr);
+    respond()->getDeviceIdentityResponse(notSupported(serial), "", "", "", "");
     return ok();
 }
 
