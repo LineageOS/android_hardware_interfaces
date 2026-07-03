@@ -18,18 +18,17 @@
 #include <string>
 
 #include <android-base/logging.h>
+#include <android/hardware/light/2.0/ILight.h>
 #include <android/hardware/light/ILights.h>
 #include <binder/IServiceManager.h>
 
 using android::sp;
 using android::waitForVintfService;
 using android::binder::Status;
+using android::hardware::hidl_vec;
 
-using android::hardware::light::BrightnessMode;
-using android::hardware::light::FlashMode;
-using android::hardware::light::HwLight;
-using android::hardware::light::HwLightState;
-using android::hardware::light::ILights;
+namespace V2_0 = android::hardware::light::V2_0;
+namespace aidl = android::hardware::light;
 
 void error(const std::string& msg) {
     LOG(ERROR) << msg;
@@ -58,13 +57,13 @@ int parseArgs(int argc, char* argv[], unsigned int* color) {
     return 0;
 }
 
-void setToColor(sp<ILights> hal, unsigned int color) {
-    static HwLightState off;
+void setToColorAidl(sp<aidl::ILights> hal, unsigned int color) {
+    static aidl::HwLightState off;
     off.color = color;
-    off.flashMode = FlashMode::NONE;
-    off.brightnessMode = BrightnessMode::USER;
+    off.flashMode = aidl::FlashMode::NONE;
+    off.brightnessMode = aidl::BrightnessMode::USER;
 
-    std::vector<HwLight> lights;
+    std::vector<aidl::HwLight> lights;
     Status status = hal->getLights(&lights);
     if (!status.isOk()) {
         error("Failed to list lights");
@@ -79,6 +78,24 @@ void setToColor(sp<ILights> hal, unsigned int color) {
     }
 }
 
+void setToColorHidl(sp<V2_0::ILight> hal, unsigned int color) {
+    static V2_0::LightState off = {
+            .color = color,
+            .flashMode = V2_0::Flash::NONE,
+            .brightnessMode = V2_0::Brightness::USER,
+    };
+
+    hal->getSupportedTypes([&](const hidl_vec<V2_0::Type>& types) {
+        for (auto type : types) {
+            V2_0::Status ret = hal->setLight(type, off);
+            if (ret != V2_0::Status::SUCCESS) {
+                error("Failed to shut off light for type " +
+                      std::to_string(static_cast<int>(type)));
+            }
+        }
+    });
+}
+
 int main(int argc, char* argv[]) {
     unsigned int inputColor;
     int result = parseArgs(argc, argv, &inputColor);
@@ -86,9 +103,15 @@ int main(int argc, char* argv[]) {
         return result;
     }
 
-    auto hal = waitForVintfService<ILights>();
-    if (hal != nullptr) {
-        setToColor(hal, inputColor);
+    auto aidlHal = waitForVintfService<aidl::ILights>();
+    if (aidlHal != nullptr) {
+        setToColorAidl(aidlHal, inputColor);
+        return 0;
+    }
+
+    sp<V2_0::ILight> hidlHal = V2_0::ILight::getService();
+    if (hidlHal != nullptr) {
+        setToColorHidl(hidlHal, inputColor);
         return 0;
     }
 
