@@ -43,7 +43,7 @@ namespace android {
 namespace hardware {
 namespace health {
 
-static constexpr uint32_t kUeventMsgLen = 2048;
+static constexpr uint32_t kUeventMsgLen = 4096;
 
 HealthLoop::HealthLoop() {
     InitHealthdConfig(&healthd_config_);
