@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "480cb32e_d8fcc4b4",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 32245
+      },
+      "writtenOn": "2026-07-31T10:19:14Z",
+      "side": 1,
+      "message": "does that make legacy soundtrigger actually work on 17?",
+      "revId": "6b9a2ab61c0177b5ee8cb42f5fbe5558cca60367",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
