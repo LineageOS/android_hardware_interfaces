@@ -16,6 +16,24 @@
       "message": "does that make legacy soundtrigger actually work on 17?",
       "revId": "6b9a2ab61c0177b5ee8cb42f5fbe5558cca60367",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "eb3a0188_cbba802c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 33857
+      },
+      "writtenOn": "2026-08-04T19:51:55Z",
+      "side": 1,
+      "message": "Sorry for the late reply.\n​On OnePlus 6T (fajita, with k4.19), legacy soundtrigger 2.1 has been verified working with this change.\nThis change relaxes VINTF interface matching, though actual functionality still relies on vendor HAL and driver support. But on fajita, this change alone is all that was needed to get soundtrigger working.",
+      "parentUuid": "480cb32e_d8fcc4b4",
+      "revId": "6b9a2ab61c0177b5ee8cb42f5fbe5558cca60367",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
