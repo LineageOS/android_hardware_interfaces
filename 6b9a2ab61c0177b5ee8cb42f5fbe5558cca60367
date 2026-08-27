@@ -87,6 +87,24 @@
       "parentUuid": "9ecfd2c2_d2740673",
       "revId": "6b9a2ab61c0177b5ee8cb42f5fbe5558cca60367",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "63ebeec3_d3e3fb0b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 16779
+      },
+      "writtenOn": "2026-08-27T18:26:37Z",
+      "side": 1,
+      "message": "The OSS HAL didn\u0027t work either but that I haven\u0027t tried it in a while",
+      "parentUuid": "e58af382_8f9c2524",
+      "revId": "6b9a2ab61c0177b5ee8cb42f5fbe5558cca60367",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
