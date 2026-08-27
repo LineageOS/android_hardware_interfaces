@@ -69,6 +69,24 @@
       "parentUuid": "32f72757_33365fa4",
       "revId": "6b9a2ab61c0177b5ee8cb42f5fbe5558cca60367",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e58af382_8f9c2524",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 4550
+      },
+      "writtenOn": "2026-08-27T17:49:04Z",
+      "side": 1,
+      "message": "Did you try building sound trigger stuff from source like newer SoCs?",
+      "parentUuid": "9ecfd2c2_d2740673",
+      "revId": "6b9a2ab61c0177b5ee8cb42f5fbe5558cca60367",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
