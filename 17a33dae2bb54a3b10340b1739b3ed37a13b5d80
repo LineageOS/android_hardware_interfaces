@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f891d8f9_40156376",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 16185
+      },
+      "writtenOn": "2026-08-27T16:34:49Z",
+      "side": 1,
+      "message": "fine on ayn qcs8550 and cq8725s",
+      "revId": "17a33dae2bb54a3b10340b1739b3ed37a13b5d80",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
