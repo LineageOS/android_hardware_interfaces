@@ -51,6 +51,24 @@
       "message": "Is it not possible to update your soundtrigger impl?",
       "revId": "6b9a2ab61c0177b5ee8cb42f5fbe5558cca60367",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9ecfd2c2_d2740673",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 16779
+      },
+      "writtenOn": "2026-08-27T17:43:43Z",
+      "side": 1,
+      "message": "On oneplus sdm845 soundtrigger breaks with the 2.3 HAL, blobs are probably too old.\n\nI\u0027m not looking to get this merged though",
+      "parentUuid": "32f72757_33365fa4",
+      "revId": "6b9a2ab61c0177b5ee8cb42f5fbe5558cca60367",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
