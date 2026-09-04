@@ -25,11 +25,9 @@
 #include <unistd.h>
 
 #include <cerrno>
-#include <chrono>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <thread>
 
 // Definitions imported from <linux/net/bluetooth/bluetooth.h>
 #define BTPROTO_HCI 1
@@ -121,12 +119,12 @@ int NetBluetoothMgmt::waitHciDev(int hci_interface) {
             .len = 0,
     };
 
-    for (;;) {
-        if (write(fd, &cmd, 6) != 6) {
-            ALOGE("error writing mgmt command: %s", strerror(errno));
-            goto end;
-        }
+    if (write(fd, &cmd, 6) != 6) {
+        ALOGE("error writing mgmt command: %s", strerror(errno));
+        goto end;
+    }
 
+    for (;;) {
         // Poll the control socket waiting for the command response,
         // and subsequent [Index Added] events.
         do {
@@ -140,8 +138,18 @@ int NetBluetoothMgmt::waitHciDev(int hci_interface) {
             break;
         }
 
+        // Read Index List completes immediately, so retrying before a timeout
+        // would spin while no controller is registered.
+        if (ret == 0) {
+            if (write(fd, &cmd, 6) != 6) {
+                ALOGE("error writing mgmt command: %s", strerror(errno));
+                goto end;
+            }
+            continue;
+        }
+
         // Spurious wakeup, try again.
-        if (ret == 0 || (pollfd.revents & POLLIN) == 0) {
+        if ((pollfd.revents & POLLIN) == 0) {
             continue;
         }
 
