@@ -35,5 +35,6 @@ cc_library_shared {
     relative_install_path: "soundfx",
     visibility: [
         "//hardware/interfaces/audio/aidl/default:__subpackages__",
+        "//hardware/mainline/common/interfaces/audio/mainline",
     ],
 }
