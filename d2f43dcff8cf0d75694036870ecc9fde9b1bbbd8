@@ -16,6 +16,24 @@
       "message": "man, idk about the long-ass claude comments everywhere...",
       "revId": "d2f43dcff8cf0d75694036870ecc9fde9b1bbbd8",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6a204b17_b18988d7",
+        "filename": "bluetooth/aidl/default/net_bluetooth_mgmt.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 129,
+      "author": {
+        "id": 19979
+      },
+      "writtenOn": "2026-09-10T03:40:49Z",
+      "side": 1,
+      "message": "Agreed, it needs to be toned down, in both the code and commit message",
+      "parentUuid": "c33a2721_094de87b",
+      "revId": "d2f43dcff8cf0d75694036870ecc9fde9b1bbbd8",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
