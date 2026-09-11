@@ -52,6 +52,24 @@
       "parentUuid": "6a204b17_b18988d7",
       "revId": "d2f43dcff8cf0d75694036870ecc9fde9b1bbbd8",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "663332ea_b861f4f9",
+        "filename": "bluetooth/aidl/default/net_bluetooth_mgmt.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 129,
+      "author": {
+        "id": 13648
+      },
+      "writtenOn": "2026-09-11T00:08:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d9e90f8e_ef4b9451",
+      "revId": "d2f43dcff8cf0d75694036870ecc9fde9b1bbbd8",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
