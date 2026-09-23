@@ -34,6 +34,23 @@
       "parentUuid": "3f1136c9_b0060413",
       "revId": "d240d040ad992445cc9b3e28e2ba7ef1f1efe573",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b55d4f7c_22b6680d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 19979
+      },
+      "writtenOn": "2026-09-23T16:56:13Z",
+      "side": 1,
+      "message": "Will remove from the topic and abandon",
+      "revId": "d240d040ad992445cc9b3e28e2ba7ef1f1efe573",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
