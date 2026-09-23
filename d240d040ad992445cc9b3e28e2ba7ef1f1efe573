@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3f1136c9_b0060413",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 16185
+      },
+      "writtenOn": "2026-09-23T16:05:59Z",
+      "side": 1,
+      "message": "you can go for it but MTK has aidlv1 too, and we aren\u0027t so lucky.",
+      "revId": "d240d040ad992445cc9b3e28e2ba7ef1f1efe573",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
