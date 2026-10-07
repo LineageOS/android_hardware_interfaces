@@ -33,6 +33,10 @@ using android::OK;
 
 using InterfacesList = std::vector<std::string>;
 
+#ifndef BLUETOOTH_AUDIO_IMPL
+#define BLUETOOTH_AUDIO_IMPL "android.hardware.bluetooth.audio-impl"
+#endif
+
 /** Try to register the provided factories in the provided order.
  *  If any registers successfully, do not register any other and return true.
  *  If all fail, return false.
@@ -135,7 +139,7 @@ int main(int /* argc */, char* /* argv */ []) {
 
     const std::vector<std::pair<std::string,std::string>> optionalInterfaceSharedLibs = {
         {
-            "android.hardware.bluetooth.audio-impl",
+            BLUETOOTH_AUDIO_IMPL,
             "createIBluetoothAudioProviderFactory",
         },
         {
