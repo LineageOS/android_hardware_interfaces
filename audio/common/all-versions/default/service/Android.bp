@@ -52,7 +52,10 @@ cc_binary {
         "-Wall",
         "-Wextra",
         "-Werror",
-    ],
+    ] + select(soong_config_variable("android_hardware_audio", "bluetooth_audio_impl"), {
+        any @ flag_val: ["-DBLUETOOTH_AUDIO_IMPL=\"" + flag_val + "\""],
+        default: [],
+    }),
 
     shared_libs: [
         "libcutils",
