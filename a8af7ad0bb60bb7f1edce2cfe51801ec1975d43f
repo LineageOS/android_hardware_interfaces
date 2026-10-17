@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d0d68f8c_eea4d653",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 29742
+      },
+      "writtenOn": "2026-10-17T14:45:45Z",
+      "side": 1,
+      "message": "Reff: https://github.com/LineageOS/android_hardware_interfaces/commit/ae70e5eeb9d27de090322d8068c3ba066a80d4cf",
+      "revId": "a8af7ad0bb60bb7f1edce2cfe51801ec1975d43f",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
