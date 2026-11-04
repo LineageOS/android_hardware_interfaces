@@ -382,14 +382,20 @@ Return<void> RadioResponse::setNrDualConnectivityStateResponse(
 Return<void> RadioResponse::setSignalStrengthReportingCriteriaResponse(
         const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    networkCb()->setSignalStrengthReportingCriteriaResponse(toAidl(info));
+    auto aidlInfo = toAidl(info);
+    if (mContext->collectSignalCriteriaResponse(aidlInfo)) {
+        networkCb()->setSignalStrengthReportingCriteriaResponse(aidlInfo);
+    }
     return {};
 }
 
 Return<void> RadioResponse::setSignalStrengthReportingCriteriaResponse_1_5(
         const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    networkCb()->setSignalStrengthReportingCriteriaResponse(toAidl(info));
+    auto aidlInfo = toAidl(info);
+    if (mContext->collectSignalCriteriaResponse(aidlInfo)) {
+        networkCb()->setSignalStrengthReportingCriteriaResponse(aidlInfo);
+    }
     return {};
 }
 

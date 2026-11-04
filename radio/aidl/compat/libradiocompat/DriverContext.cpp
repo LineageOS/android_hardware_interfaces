@@ -34,4 +34,29 @@ aidl::data::DataProfileInfo DriverContext::getDataProfile(const std::string& apn
     };
 }
 
+void DriverContext::expectSignalCriteriaResponses(int32_t serial, size_t count) {
+    std::lock_guard<std::mutex> lock(mSignalCriteriaLock);
+    mSignalCriteriaResponses[serial] = {
+            .remaining = count,
+            .error = aidl::RadioError::NONE,
+    };
+}
+
+bool DriverContext::collectSignalCriteriaResponse(aidl::RadioResponseInfo& info) {
+    std::lock_guard<std::mutex> lock(mSignalCriteriaLock);
+    const auto it = mSignalCriteriaResponses.find(info.serial);
+    if (it == mSignalCriteriaResponses.end()) return true;
+
+    auto& pending = it->second;
+    if (pending.error == aidl::RadioError::NONE) pending.error = info.error;
+    if (pending.remaining > 1) {
+        pending.remaining--;
+        return false;
+    }
+
+    info.error = pending.error;
+    mSignalCriteriaResponses.erase(it);
+    return true;
+}
+
 }  // namespace android::hardware::radio::compat

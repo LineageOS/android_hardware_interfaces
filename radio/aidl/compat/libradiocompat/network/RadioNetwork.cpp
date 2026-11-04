@@ -258,16 +258,26 @@ ScopedAStatus RadioNetwork::setSignalStrengthReportingCriteria(
         LOG(ERROR) << "Threshold info array is empty - dropping setSignalStrengthReportingCriteria";
         return ok();
     }
-    if (infos.size() > 1) {
-        LOG(WARNING) << "Multi-element reporting criteria are not supported with HIDL HAL";
+    std::vector<aidl::SignalThresholdInfo> supported;
+    for (const auto& info : infos) {
+        if (info.signalMeasurement == aidl::SignalThresholdInfo::SIGNAL_MEASUREMENT_TYPE_ECNO) {
+            LOG(WARNING) << "SIGNAL_MEASUREMENT_TYPE_ECNO are not supported with HIDL HAL";
+            continue;
+        }
+        supported.push_back(info);
     }
-    if (infos[0].signalMeasurement == aidl::SignalThresholdInfo::SIGNAL_MEASUREMENT_TYPE_ECNO) {
-        LOG(WARNING) << "SIGNAL_MEASUREMENT_TYPE_ECNO are not supported with HIDL HAL";
+    if (supported.empty()) {
         respond()->setSignalStrengthReportingCriteriaResponse(notSupported(serial));
         return ok();
     }
-    mHal1_5->setSignalStrengthReportingCriteria_1_5(serial, toHidl(infos[0]),
-                                                    V1_5::AccessNetwork(infos[0].ran));
+
+    // HIDL only takes a single SignalThresholdInfo per request, so send one request per entry.
+    // The HIDL responses are merged into a single AIDL response in RadioResponse.
+    mContext->expectSignalCriteriaResponses(serial, supported.size());
+    for (const auto& info : supported) {
+        mHal1_5->setSignalStrengthReportingCriteria_1_5(serial, toHidl(info),
+                                                        V1_5::AccessNetwork(info.ran));
+    }
     return ok();
 }
 
