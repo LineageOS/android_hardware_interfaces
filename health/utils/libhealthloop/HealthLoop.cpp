@@ -267,11 +267,19 @@ void HealthLoop::MainLoop(void) {
             break;
         }
 
+        bool wakealarm_fired = false;
+        for (int n = 0; n < nevents; ++n) {
+            auto* event_handler = reinterpret_cast<EventHandler*>(events[n].data.ptr);
+            if (event_handler != nullptr && event_handler->fd == wakealarm_fd_.get()) {
+                wakealarm_fired = true;
+            }
+        }
+
         /*
          * Reset slow timer to avoid excessive wakeup on interrupt
          * It's assumed periodic_chores_interval_slow means the device being in non-charging state
          */
-        if (nevents > 0 &&
+        if (nevents > 0 && !wakealarm_fired &&
             wakealarm_wake_interval_ == healthd_config_.periodic_chores_interval_slow) {
             WakeAlarmSetInterval(wakealarm_wake_interval_);
         }
